@@ -30,7 +30,10 @@ class _FactoryConfigMixin:
         applying alias translations (e.g. score_threshold → conf_threshold).
         """
         if hasattr(self, "config") and isinstance(self.config, dict):
-            for key, value in config.items():
+            # Snapshot first: a caller may hand us the very dict we stored as self.config
+            # (factories keep the constructor argument by reference), and inserting the
+            # alias below would then mutate the mapping being iterated.
+            for key, value in list(config.items()):
                 alias = self._CONFIG_ALIASES.get(key)
                 if alias and alias not in config:
                     self.config[alias] = value
