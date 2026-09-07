@@ -391,11 +391,15 @@ E2E_HEAVY_MODELS: frozenset = frozenset({
     # <=20 FPS), but the host-side postprocess is heavy enough to blow the E2E
     # subprocess timeout at a full loop count -- super-resolution writes a
     # large upscaled frame per iteration, DOPE runs belief-map peak extraction
-    # + PnP per iteration. Capped deliberately, not by FPS measurement.
+    # + PnP per iteration, SuperPoint runs a per-keypoint Python NMS loop
+    # (~2.7 s/frame measured on DX-M1: infer 31.6 ms vs postprocess 2691 ms,
+    # 0.4 FPS overall for the Python-postprocess variants). Capped
+    # deliberately, not by FPS measurement.
     "espcn-x2_17x17",
     "espcn-x3_17x17",
     "espcn-x4_17x17",
     "sfa3d_608x608",
+    "superpoint_480x640",
     # semantic_segmentation
     "deeplabv3-resnet101_512x512",
     "deeplabv3-resnet50_512x512",

@@ -571,15 +571,25 @@ do_extract_model_package() {
         OUTPUT_OPT="output"
     fi
 
+    # Pruning is the default. Answering no passes --no-prune for the full tree.
+    local PRUNE_ANS=""
+    local -a PRUNE_OPT=()
+    echo "" >&2
+    echo -e "${DIM}Keeps only the common/ files this model actually depends on.${NC}" >&2
+    read -rp "Prune unused common/ files? [Y/n]: " PRUNE_ANS
+    if [[ "$PRUNE_ANS" =~ ^[Nn] ]]; then
+        PRUNE_OPT=(--no-prune)
+    fi
+
     case "$lang_choice" in
         1|3)
             echo -e "\n${GREEN}[C++]${NC} Extracting standalone package..."
-            bash "$SCRIPT_DIR/extract_model_package.sh" "$MODEL_PATH" --lang cpp ${OUTPUT_OPT:+--output-dir "$OUTPUT_OPT"}
+            bash "$SCRIPT_DIR/extract_model_package.sh" "$MODEL_PATH" --lang cpp ${OUTPUT_OPT:+--output-dir "$OUTPUT_OPT"} "${PRUNE_OPT[@]}"
             echo -e "${GREEN}[C++]${NC} Done"
             ;;&
         2|3)
             echo -e "\n${GREEN}[Python]${NC} Extracting standalone package..."
-            bash "$SCRIPT_DIR/extract_model_package.sh" "$MODEL_PATH" --lang py ${OUTPUT_OPT:+--output-dir "$OUTPUT_OPT"}
+            bash "$SCRIPT_DIR/extract_model_package.sh" "$MODEL_PATH" --lang py ${OUTPUT_OPT:+--output-dir "$OUTPUT_OPT"} "${PRUNE_OPT[@]}"
             echo -e "${GREEN}[Python]${NC} Done"
             ;;
     esac

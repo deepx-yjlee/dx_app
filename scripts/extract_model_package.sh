@@ -3,7 +3,7 @@
 # extract_model_package.sh - Prepare model directories for standalone deployment (C++/Python)
 # =============================================================================
 # Usage:
-#   ./extract_model_package.sh <model_dir|all> [--lang cpp|py|both] [--output-dir <path>] [--clean]
+#   ./extract_model_package.sh <model_dir|all> [--lang cpp|py|both] [--output-dir <path>] [--no-prune] [--clean]
 #
 # C++ mode:  Copy common/, utility/, extern/, generate CMakeLists.txt
 # Python mode: Copy common/
@@ -12,6 +12,10 @@
 #   --output-dir <path>  Export standalone package to a separate directory
 #                        instead of modifying the source tree in-place.
 #                        Creates <path>/<lang>/<category>/<model>/
+#   --no-prune           Copy the whole common/ tree instead of only the files
+#                        the model depends on. Pruning is ON by default.
+#   --prune              Explicitly request pruning (the default). Unlike the
+#                        default, a package with no sources is a hard error.
 #
 # Examples:
 #   ./extract_model_package.sh object_detection/yolov7
@@ -22,6 +26,7 @@
 #   ./extract_model_package.sh all --clean --lang both
 #   ./extract_model_package.sh object_detection/yolov7 --output-dir outputs/
 #   ./extract_model_package.sh all --output-dir /tmp/standalone --lang cpp
+#   ./extract_model_package.sh object_detection/yolov7 --output-dir outputs/ --no-prune
 
 set -e
 
@@ -45,13 +50,14 @@ NC='\033[0m'
 # Usage
 # =========================================================================
 usage() {
-    echo "Usage: $0 <model_dir|all> [--lang cpp|py|both] [--output-dir <path>] [--clean]"
+    echo "Usage: $0 <model_dir|all> [--lang cpp|py|both] [--output-dir <path>] [--no-prune] [--clean]"
     echo ""
     echo "Arguments:"
     echo "  model_dir           Relative path to model directory (e.g., object_detection/yolov7)"
     echo "  all                 Prepare all model directories"
     echo "  --lang <mode>       Language: cpp, py, or both (default: both)"
     echo "  --output-dir <path> Export to a separate directory (default: in-place)"
+    echo "  --no-prune          Copy all of common/ (default: prune to what is used)"
     echo "  --clean             Remove standalone files instead of creating them"
     echo ""
     echo "Examples:"
@@ -61,6 +67,7 @@ usage() {
     echo "  $0 all --clean"
     echo "  $0 all --output-dir outputs/"
     echo "  $0 object_detection/yolov7 --output-dir /tmp/deploy --lang cpp"
+    echo "  $0 object_detection/yolov7 --output-dir /tmp/deploy --no-prune"
     exit 1
 }
 
@@ -73,10 +80,16 @@ CLEAN_MODE=false
 MODEL_ARG=""
 LANG_MODE="both"
 OUTPUT_DIR=""
+# Pruning is the default: a standalone package should carry what it uses, not the
+# whole framework. --no-prune restores the historical full copy.
+PRUNE_MODE=true
+PRUNE_EXPLICIT=false
 
 while [ $# -gt 0 ]; do
     case "$1" in
         --clean)      CLEAN_MODE=true;  shift ;;
+        --no-prune)   PRUNE_MODE=false; shift ;;
+        --prune)      PRUNE_MODE=true;  PRUNE_EXPLICIT=true; shift ;;
         --lang)       LANG_MODE="$2";   shift 2 ;;
         --output-dir) OUTPUT_DIR="$2";  shift 2 ;;
         -h|--help)    usage ;;
@@ -85,6 +98,30 @@ while [ $# -gt 0 ]; do
 done
 
 if [ -z "$MODEL_ARG" ]; then usage; fi
+
+if [ "$PRUNE_EXPLICIT" = true ] && [ "$CLEAN_MODE" = true ]; then
+    echo -e "${RED}[DXAPP] [ERROR]${NC} --prune cannot be combined with --clean"
+    exit 1
+fi
+
+PRUNE_SCRIPT="$SCRIPT_DIR/prune_common.py"
+if [ "$PRUNE_MODE" = true ] && [ ! -f "$PRUNE_SCRIPT" ]; then
+    echo -e "${RED}[DXAPP] [ERROR]${NC} --prune requires $PRUNE_SCRIPT"
+    exit 1
+fi
+
+# Drop common/ files the package does not reach. Failure aborts the extraction
+# rather than leaving a package with a half-pruned common/.
+run_prune() {
+    local target_dir="$1"
+    local lang="$2"
+    [ "$PRUNE_MODE" = true ] || return 0
+    # When the user did not ask for pruning, a package we cannot analyse (no
+    # sources) must not fail the extraction — fall back to the full copy.
+    local lenient=""
+    [ "$PRUNE_EXPLICIT" = true ] || lenient="--allow-no-roots"
+    python3 "$PRUNE_SCRIPT" --lang "$lang" "$target_dir" $lenient
+}
 
 # Resolve output-dir to absolute path
 if [ -n "$OUTPUT_DIR" ]; then
@@ -319,7 +356,10 @@ prepare_model_cpp() {
         echo "  → external factories copied ($ext_factory_count files)"
     fi
 
-    # 6. Generate standalone CMakeLists.txt
+    # 6. Prune unreachable common/ headers (opt-in)
+    run_prune "$target_dir" cpp
+
+    # 7. Generate standalone CMakeLists.txt
     generate_cmake "$target_dir" "$model_name"
     echo "  → CMakeLists.txt generated"
 
@@ -387,6 +427,9 @@ prepare_model_py() {
 
     # Clean up __pycache__
     find "$common_dst" -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+
+    # Prune unreachable common/ modules and rewrite the __init__.py barrels (opt-in)
+    run_prune "$target_dir" py
 
     echo -e "${GREEN}[SUCCESS]${NC} Python standalone ready: $model_dir${OUTPUT_DIR:+ → $target_dir}"
 }
@@ -470,7 +513,9 @@ if [ "$MODEL_ARG" == "all" ]; then
 
     echo "=============================================="
     echo -e "${GREEN}[DONE]${NC} All model directories processed!"
-    [ -n "$OUTPUT_DIR" ] && echo -e "${GREEN}[OUTPUT]${NC} $OUTPUT_DIR"
+    if [ -n "$OUTPUT_DIR" ]; then
+        echo -e "${GREEN}[OUTPUT]${NC} $OUTPUT_DIR"
+    fi
     echo "=============================================="
 else
     # Strip trailing slash
@@ -480,5 +525,7 @@ else
         process_model "$MODEL_ARG" "$lang"
     done
 
-    [ -n "$OUTPUT_DIR" ] && echo -e "\n${GREEN}[OUTPUT]${NC} Exported to: $OUTPUT_DIR"
+    if [ -n "$OUTPUT_DIR" ]; then
+        echo -e "\n${GREEN}[OUTPUT]${NC} Exported to: $OUTPUT_DIR"
+    fi
 fi

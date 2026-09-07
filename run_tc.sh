@@ -244,6 +244,19 @@ run_python_tests() {
             PYTEST_COV_CMD=(pytest -m "not e2e_stream and not visualization and not multi_loop and not signal_handling")
         fi
         PYTEST_COV_CMD+=(--cov=../../src/python_example --cov-config="${SCRIPT_DIR}/.coveragerc" --cov-report=term-missing:skip-covered --cov-report=html:../../htmlcov --tb=short)
+
+        # The examples run as subprocesses, so the child interpreters have to
+        # start coverage themselves. coverage's site .pth hook does that when it
+        # sees COVERAGE_PROCESS_START. Both paths must be absolute: the children
+        # are launched with cwd=PROJECT_ROOT while pytest runs from
+        # tests/python_example, so a relative COVERAGE_FILE would scatter the
+        # data files across two directories and combine would miss half of them.
+        # The target stays tests/python_example/.coverage -- where a
+        # non-parallel run already left it -- so callers that pick the file up
+        # from there keep working.
+        export COVERAGE_PROCESS_START="${SCRIPT_DIR}/.coveragerc"
+        export COVERAGE_FILE="${TEST_DIR}/python_example/.coverage"
+
         if "${PYTEST_COV_CMD[@]}"; then
             PYTHON_COVERAGE_RESULT=0
             print_success "Python coverage tests passed"
@@ -252,6 +265,14 @@ run_python_tests() {
             PYTHON_COVERAGE_RESULT=$?
             print_error "Python coverage tests failed"
         fi
+
+        # Merge the per-process data files back into a single
+        # tests/python_example/.coverage. Harmless if there is only one;
+        # required as soon as parallel mode wrote several. Runs even when the
+        # tests failed, so a partial report is still available.
+        (cd "${TEST_DIR}/python_example" \
+            && python3 -m coverage combine --rcfile="${SCRIPT_DIR}/.coveragerc" >/dev/null 2>&1) || true
+        unset COVERAGE_PROCESS_START COVERAGE_FILE
     fi
 
     cd "${SCRIPT_DIR}"

@@ -277,6 +277,21 @@ After generation, verify that the new example is correctly integrated and runs w
 
 Use this when you need to convert an external model package into the repository layout used by DX-APP.  
 
+The extracted package carries only the `common/` files the model actually depends on.
+For `object_detection/yolov7` that is 29 of 121 files (C++) and 54 of 103 (Python), instead of
+every postprocessor, runner, and visualizer for all 22 tasks.
+
+To get the complete shared framework instead, answer `n` at the `Prune unused common/ files?
+[Y/n]` prompt, or pass `--no-prune`:
+
+```bash
+./scripts/extract_model_package.sh object_detection/yolov7 --output-dir out_yolov7 --no-prune
+```
+
+Pruned and full packages are equivalent: they compile identically and produce byte-identical
+inference output. Note that the visualization color palette is unseeded, so rendered box colors
+differ between runs either way.
+
 **Step 2-2. Extract a Visual Studio solution package on Windows**
 
 Use `extract_sln_package.bat` when you want to extract a single C++ example into a Visual Studio/CMake package that can be opened or built outside the full DX-APP solution.

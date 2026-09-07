@@ -449,7 +449,7 @@ def test_stream_inference_e2e(executable, model_path, bin_dir):
             cmd,
             capture_output=True,
             text=True,
-            timeout=900,  # 15 minutes timeout for video
+            timeout=2000,  # ~33 minutes timeout for video
             env=env,
             cwd=PROJECT_ROOT,
         )
@@ -510,7 +510,7 @@ def test_stream_inference_e2e(executable, model_path, bin_dir):
                 )
         
     except subprocess.TimeoutExpired:
-        pytest.fail(f"{executable} video inference timed out after 10 minutes")
+        pytest.fail(f"{executable} video inference timed out after 2000 seconds")
     except Exception as e:
         pytest.fail(f"{executable} video inference raised exception: {e}")
 

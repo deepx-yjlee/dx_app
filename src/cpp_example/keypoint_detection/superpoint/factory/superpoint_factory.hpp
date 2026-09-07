@@ -155,14 +155,17 @@ class SuperPointFactory : public IPoseFactory {
 public:
     SuperPointFactory(float conf_threshold = 0.015f, int top_k = 500,
                       float nn_thresh = 0.7f, int track_max_length = 5,
-                      int min_track_length = 2, float max_pixel_dist = 100.f)
+                      int min_track_length = 2, float max_pixel_dist = 100.f,
+                      float ratio_thresh = 0.75f)
         : conf_threshold_(conf_threshold),
           top_k_(top_k),
           nn_thresh_(nn_thresh),
           track_max_length_(track_max_length),
           min_track_length_(min_track_length),
           max_pixel_dist_(max_pixel_dist),
-          tracker_(std::make_shared<SuperPointTracker>(track_max_length, nn_thresh, max_pixel_dist)) {}
+          ratio_thresh_(ratio_thresh),
+          tracker_(std::make_shared<SuperPointTracker>(track_max_length, nn_thresh,
+                                                       max_pixel_dist, ratio_thresh)) {}
 
     PreprocessorPtr createPreprocessor(int input_width, int input_height) override {
         return std::make_unique<GrayscaleResizePreprocessor>(input_width, input_height);
@@ -183,8 +186,19 @@ public:
         conf_threshold_ = config.get<float>("conf_threshold", conf_threshold_);
         top_k_ = config.get<int>("top_k", top_k_);
         nn_thresh_ = config.get<float>("nn_thresh", nn_thresh_);
+        track_max_length_ = config.get<int>("track_max_length", track_max_length_);
         min_track_length_ = config.get<int>("min_track_length", min_track_length_);
         max_pixel_dist_ = config.get<float>("max_pixel_dist", max_pixel_dist_);
+        ratio_thresh_ = config.get<float>("ratio_thresh", ratio_thresh_);
+
+        // tracker_ was built in the constructor from the ctor defaults, so the
+        // values just read would otherwise never reach it -- nn_thresh,
+        // track_max_length and max_pixel_dist were silently ignored. Rebuild it
+        // here; createVisualizer() runs after loadConfig and picks up the new
+        // instance. (min_track_length is re-read in createVisualizer, so it was
+        // the one knob that already worked.)
+        tracker_ = std::make_shared<SuperPointTracker>(
+            track_max_length_, nn_thresh_, max_pixel_dist_, ratio_thresh_);
     }
 
     std::string getModelName() const override { return "SuperPoint"; }
@@ -197,6 +211,7 @@ private:
     int track_max_length_;
     int min_track_length_;
     float max_pixel_dist_;
+    float ratio_thresh_;
     std::shared_ptr<SuperPointTracker> tracker_;  // shared by postprocessor + visualizer
 };
 

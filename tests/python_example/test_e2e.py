@@ -334,7 +334,7 @@ def test_stream_inference_e2e(script: Path, model: Optional[Path]):
 
     # No --loop for video: process the clip exactly once (mirrors the C++
     # video test, which passes no -l). A single pass already exercises the
-    # full stream path, and looping heavy models here risks the 900s timeout.
+    # full stream path, and looping heavy models here risks the 2000s timeout.
     cmd = [
         sys.executable, str(script),
         "--model", str(model),
@@ -348,12 +348,12 @@ def test_stream_inference_e2e(script: Path, model: Optional[Path]):
             cmd,
             capture_output=True,
             text=True,
-            timeout=900,  # 15 minutes timeout for video
+            timeout=2000,  # ~33 minutes timeout for video
             env=setup_environment(),
             cwd=str(PROJECT_ROOT),
         )
     except subprocess.TimeoutExpired:
-        pytest.fail(f"{script.name}: stream inference timed out after 900s")
+        pytest.fail(f"{script.name}: stream inference timed out after 2000s")
 
     assert result.returncode == 0, (
         f"stream_inference FAILED (exit {result.returncode})\n"

@@ -21,7 +21,20 @@ class SuperpointFactory(_FactoryConfigMixin):
         return SuperPointPostprocessor(input_width, input_height, self.config)
 
     def create_visualizer(self):
-        return SuperPointVisualizer()
+        # Pass the config through: these knobs used to be unreachable because
+        # the visualizer was constructed with no arguments, so nn_thresh,
+        # track_max_length, min_track_length, max_pixel_dist and ratio_thresh
+        # in config.json were silently ignored.
+        cfg = self.config
+        return SuperPointVisualizer(
+            conf_threshold=float(cfg.get("conf_threshold", 0.015)),
+            max_keypoints=int(cfg.get("top_k", 500)),
+            nn_thresh=float(cfg.get("nn_thresh", 0.7)),
+            track_max_length=int(cfg.get("track_max_length", 5)),
+            min_track_length=int(cfg.get("min_track_length", 2)),
+            max_pixel_dist=float(cfg.get("max_pixel_dist", 100.0)),
+            ratio_thresh=float(cfg.get("ratio_thresh", 0.75)),
+        )
 
     def get_model_name(self) -> str:
         return "superpoint"
