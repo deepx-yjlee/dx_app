@@ -80,27 +80,25 @@ def select_menu(title, options, default=0):
         else:
             print(f"   {i+1}: {opt}")
 
-    prompt_max = len(options) if isinstance(options[0], tuple) else len(options)
-    prompt_min = 0 if isinstance(options[0], tuple) else 1
+    # Grouped menus are 0-indexed; flat menus are 1-indexed.
+    grouped = isinstance(options[0], tuple)
+    prompt_min = 0 if grouped else 1
+    prompt_max = len(options) - 1 if grouped else len(options)
 
     while True:
         try:
-            raw = input(f"\n  Select [{prompt_min}-{prompt_max - (1 if prompt_min == 0 else 0)}, default: {default}]: ").strip()
+            raw = input(f"\n  Select [{prompt_min}-{prompt_max}, default: {default}]: ").strip()
         except (EOFError, KeyboardInterrupt):
             print()
             sys.exit(0)
 
         if not raw:
-            return default if isinstance(options[0], tuple) else default - 1
+            return default if grouped else default - 1
 
         try:
             val = int(raw)
-            if isinstance(options[0], tuple):
-                if 0 <= val < len(options):
-                    return val
-            else:
-                if 1 <= val <= len(options):
-                    return val - 1
+            if prompt_min <= val <= prompt_max:
+                return val if grouped else val - 1
         except ValueError:
             pass
         cprint(f"  Invalid input: '{raw}'", RED)

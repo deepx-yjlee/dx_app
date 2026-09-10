@@ -180,15 +180,13 @@ class MediaPipeHandPostprocessor(IPostprocessor):
             return []
         keep = np.array(indices).reshape(-1)
 
-        # Back to pixel coords
+        # Back to pixel coords. Palm-detection boxes are normalized to [0, 1]
+        # against the input tensor, and the preprocessor stretch-resizes the
+        # whole frame (no letterbox padding), so [0, 1] maps directly onto the
+        # original image — scaling by (ow, oh) needs no scale_x/scale_y
+        # compensation.
         ow = ctx.original_width
         oh = ctx.original_height
-        if ctx.scale_x > 0 and ctx.scale_y > 0:
-            px = ow  # direct: normalized → original pixel (no extra scale needed)
-            py = oh
-        else:
-            px = ow
-            py = oh
 
         results = []
         for i in keep:

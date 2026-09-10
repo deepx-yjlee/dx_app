@@ -17,6 +17,8 @@ The value in models.ver must be the exact S3 directory name under
 https://sdk.deepx.ai/modelzoo/dxnn/<version>/
 """
 
+from __future__ import annotations
+
 import argparse
 import json
 import re

@@ -152,13 +152,16 @@ def _flatten_single_subdir(dest_dir: Path):
         pass
 
 
-def download_and_extract_videos(url: str, dest_dir: Path, force: bool = False):
-    """Download a .tar.gz video archive and extract to dest_dir."""
+def download_and_extract_videos(url: str, dest_dir: Path, force: bool = False) -> int:
+    """Download a .tar.gz video archive and extract to dest_dir.
+
+    Returns 0 on success (or when the archive is already present), 1 on failure.
+    """
     requests = _ensure_requests()
 
     if dest_dir.exists() and not force:
         info(f"Video directory already exists: {dest_dir} -- skipping")
-        return
+        return 0
 
     if dest_dir.exists() and force:
         info(f"Force removing existing video directory: {dest_dir}")
@@ -219,12 +222,13 @@ def download_and_extract_videos(url: str, dest_dir: Path, force: bool = False):
         _flatten_single_subdir(dest_dir)
 
         info(f"[OK] Videos extracted to: {dest_dir}")
+        return 0
 
     except Exception as exc:
         error(f"Video download/extraction failed: {exc}")
         if dest_dir.exists():
             shutil.rmtree(dest_dir)
-        raise SystemExit(1)
+        return 1
     finally:
         if tmp_path.exists():
             tmp_path.unlink()
@@ -240,8 +244,7 @@ def setup_videos(args: argparse.Namespace) -> int:
 
     force = args.force or args.force_remove_videos
 
-    download_and_extract_videos(url, VIDEO_OUTPUT, force=force)
-    return 0
+    return download_and_extract_videos(url, VIDEO_OUTPUT, force=force)
 
 
 # ── CLI ───────────────────────────────────────────────────────────────────────

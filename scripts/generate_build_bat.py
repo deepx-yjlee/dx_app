@@ -57,6 +57,27 @@ def resolve_category_targets(category: str) -> List[str]:
     return targets
 
 
+def resolve_in_project(raw: str, option: str) -> pathlib.Path:
+    """Resolve a CLI-supplied path and confine it to the project tree.
+
+    Both files this script touches -- the CMakeSettings.json it reads and the
+    build_internal.bat / build_env.bat it writes -- are artifacts of this
+    repository, so a path that escapes PROJECT_ROOT is either a mistake or a
+    path-injection attempt via ``..``/absolute path. Reject it rather than
+    reading from or writing to an arbitrary filesystem location.
+
+    Relative paths keep resolving against the current working directory,
+    which is how build.bat and the test suite already invoke this script.
+    """
+    resolved = pathlib.Path(raw).expanduser().resolve()
+    if resolved != PROJECT_ROOT and PROJECT_ROOT not in resolved.parents:
+        sys.exit(
+            f"[DXAPP] [ERROR] {option} must stay inside the project root "
+            f"({PROJECT_ROOT}); refusing path: {resolved}"
+        )
+    return resolved
+
+
 def load_settings(path: pathlib.Path) -> Dict:
     try:
         return json.loads(path.read_text(encoding="utf-8-sig"))
@@ -333,7 +354,7 @@ def main() -> None:
             print(category)
         return
 
-    settings_path = pathlib.Path(args.cmake_settings)
+    settings_path = resolve_in_project(args.cmake_settings, "--cmake-settings")
     data = load_settings(settings_path)
     cfg = find_configuration(data, args.config)
     project_root = pathlib.Path(__file__).resolve().parent.parent
@@ -368,7 +389,7 @@ def main() -> None:
         sys.exit("[DXAPP] [ERROR] No build targets resolved.")
 
     lines = build_configure_lines(cfg, "%PROJECT_DIR%", targets=targets)
-    out_path = pathlib.Path(args.output)
+    out_path = resolve_in_project(args.output, "--output")
     out_path.parent.mkdir(parents=True, exist_ok=True)
     write_bat(lines, out_path)
     print(f"Wrote {out_path}")
