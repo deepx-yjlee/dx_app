@@ -327,7 +327,7 @@ dx_app v3.0.0 Architecture
 ===========================
 
 Layer 3 — Application Layer
-  src/python_example/<task>/<model>/       # 22 task dirs, 347 models
+  src/python_example/<task>/<model>/       # 22 task dirs, 353 models
   src/cpp_example/<task>/<model>/          # C++ counterparts
 
 Layer 2 — Framework Layer
@@ -464,7 +464,10 @@ Optional decisions (can use defaults):
 
 **Auto-detect** whether the compiled .dxnn model is a PPU model by checking:
 1. Model file name contains `_ppu` suffix
-2. `config/model_registry.json` entry has `csv_task: "PPU"` or `add_model_task: "ppu"`
+2. `config/model_registry.json` entry has `add_model_task: "ppu"` (primary check —
+   `csv_task` is NOT a reliable signal: only 5/16 ppu models are tagged
+   `csv_task: "PPU"`, the rest carry their underlying task's code, e.g. `OD`,
+   `FD`, `POSE`)
 3. User explicitly mentions "PPU" or the dx-compiler session indicates PPU was enabled
 4. Model was compiled with PPU config in config.json
 
@@ -593,7 +596,7 @@ After confirmation, hand off to the appropriate sub-agent with the gathered cont
 | panoptic_driving_perception | `src/python_example/panoptic_driving_perception/` | yolopv2 |
 | pose_estimation | `src/python_example/pose_estimation/` | yolov5s_pose, yolov8n_pose |
 | ppu | `src/python_example/ppu/` | yolov5s_ppu, yolov7_ppu |
-| reid | `src/python_example/reid/` | casvit_m, casvit_s |
+| reid | `src/python_example/reid/` | casvit_m, casvit_t |
 | semantic_segmentation | `src/python_example/semantic_segmentation/` | bisenetv1, deeplabv3plusmobilenet, segformer_b0 |
 | super_resolution | `src/python_example/super_resolution/` | espcn_x4 |
 

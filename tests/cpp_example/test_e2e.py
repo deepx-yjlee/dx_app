@@ -20,7 +20,7 @@ from conftest import resolve_bin_dir
 from performance_collector import get_collector, PerformanceMetrics
 
 # -- common module ---------------------------------------------------------
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+# conftest.py puts tests/ on sys.path; hence the noqa: E402 imports below.
 from test_helpers.constants import (  # noqa: E402
     ASSETS_DIR,
     E2E_SHORT_MODELS,

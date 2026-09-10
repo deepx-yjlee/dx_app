@@ -28,14 +28,18 @@ class _FactoryConfigMixin:
         Override in concrete factories for custom behaviour.
         Default implementation merges into ``self.config`` if it exists,
         applying alias translations (e.g. score_threshold → conf_threshold).
+        Passing the factory's own ``config`` dict back in is supported.
         """
         if hasattr(self, "config") and isinstance(self.config, dict):
-            # Snapshot first: a caller may hand us the very dict we stored as self.config
-            # (factories keep the constructor argument by reference), and inserting the
-            # alias below would then mutate the mapping being iterated.
-            for key, value in list(config.items()):
+            # Concrete factories keep their constructor argument by reference, so
+            # ``f.load_config(f.config)`` aliases self.config and the argument.
+            # Iterate a snapshot: inserting the alias into the live dict raised
+            # RuntimeError, and an alias added here must not satisfy its own
+            # ``not in`` check against a later key.
+            incoming = dict(config)
+            for key, value in incoming.items():
                 alias = self._CONFIG_ALIASES.get(key)
-                if alias and alias not in config:
+                if alias and alias not in incoming:
                     self.config[alias] = value
                 self.config[key] = value
 

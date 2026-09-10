@@ -319,7 +319,7 @@ that match the model's AI task. Do NOT use generic `test.jpg` or `input.jpg`.
 
 **Video support**: Most tasks accept `-v <video>`, but these are **image-only (no video
 example)** — use image / point-cloud input, never `-v`: `embedding`, `reid`,
-`attribute_recognition`, `object_pose_estimation`, `3d_object_detection`.
+`attribute_recognition`, `object_pose_estimation`, `3d_object_detection`, `super_resolution`.
 `hand_detection` and `hand_landmark` DO accept `-v` (the single model runs per frame,
 e.g. `assets/videos/hand.mp4`). (Source of truth: `scripts/run_examples.sh` → `IMAGE_ONLY_CATEGORIES`.)
 

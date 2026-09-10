@@ -1,0 +1,150 @@
+# dx_app tests
+
+Six independent test suites live here. They have different prerequisites, so
+pick the one that matches what you want to check before running anything.
+
+| Suite | What it checks | Needs NPU? | Needs `./build.sh`? | Entry point |
+|-------|----------------|:----------:|:-------------------:|-------------|
+| [`python_example/`](python_example/) | `src/python_example` CLI contract + end-to-end inference | E2E only | no | `cd tests/python_example && pytest -m <marker>` |
+| [`python_example/unit/`](python_example/unit/) | Postprocessor / framework logic, fully mocked | no | no | `cd tests/python_example && pytest unit` |
+| [`cpp_example/`](cpp_example/) | `bin/` executables: CLI contract + end-to-end inference | E2E only | yes | `cd tests/cpp_example && pytest -m <marker>` |
+| [`scripts/`](scripts/) | Repo tooling (`scripts/*.py`, `build.bat` generation, docs) | no | no | `pytest tests/scripts` |
+| [`windows/`](windows/) | Windows-specific argument handling and pybind11 bindings | E2E only | yes | `tests\windows\run_tests.bat` |
+| [`req_test/`](req_test/) | SDKREQ requirement verification (static + runtime) | optional | optional | `tests/req_test/run_all.sh` |
+
+Two helper directories are not test suites:
+
+- [`test_helpers/`](test_helpers/) — shared constants, discovery utilities, and
+  the pytest wiring both example suites use. Also a public API for `req_test`
+  (see below).
+- [`compare_e2e_report/`](compare_e2e_report/) — compares two E2E performance
+  reports against `default_threshold.json`.
+
+`tests/.local/` is a scratch area for machine-specific tests and is not part of
+any suite.
+
+## The usual entry point: `run_tc.sh`
+
+Most people should not call `pytest` directly. [`run_tc.sh`](../run_tc.sh) at
+the repo root wires up scope, markers, environment and reporting:
+
+```bash
+./run_tc.sh --cli                 # CLI contract tests, both languages
+./run_tc.sh --python --e2e-quick  # Python examples, image inference only
+./run_tc.sh --cpp --e2e           # C++ executables, video inference
+./run_tc.sh --vis                 # visualization output checks
+./run_tc.sh --coverage            # coverage-instrumented run
+./run_tc.sh --camera --camera-index 0
+./run_tc.sh --rtsp --rtsp-url rtsp://<addr>/stream
+```
+
+Scope flags (`--python`, `--cpp`) default to both. `./run_tc.sh --help` lists
+every option.
+
+## Marker dictionary
+
+Both example suites run under `--strict-markers`, so an unregistered marker is
+an error rather than a silent no-op. The two `pytest.ini` files share the
+descriptions below — keep them in sync when you add a marker.
+
+| Marker | Meaning |
+|--------|---------|
+| `cli` | CLI argument handling tests |
+| `help` | `--help` / usage output tests |
+| `e2e` | End-to-end inference tests (real NPU + models required) |
+| `e2e_image` | E2E image inference tests |
+| `e2e_stream` | E2E stream (video) inference tests |
+| `e2e_camera` | E2E camera input tests (requires `--camera-index`) |
+| `e2e_rtsp` | E2E RTSP input tests (requires `--rtsp-url`) |
+| `e2e_short` | Reduced E2E set of representative models (used with `--e2e-short`) |
+| `save_mode` | `--save` / `--save-dir` output tests |
+| `dump_tensors` | `--dump-tensors` tensor debugging tests |
+| `verify` | `DXAPP_VERIFY` numerical verification tests |
+| `multi_loop` | `--loop N` multi-iteration tests |
+| `signal_handling` | SIGINT graceful shutdown tests |
+| `visualization` | Visualization output tests (run + image verification) |
+| `sync_exec` / `async_exec` | Applied per case to sync / async examples |
+
+Suite-specific markers: `contract` and `golden` (C++ only), `unit` (Python only).
+
+`sync_exec`, `async_exec` and `e2e_short` are attached to parameters at
+collection time rather than written as decorators, so `-m sync_exec` selects
+cases across every module in the suite.
+
+## Shared options
+
+Registered once in [`test_helpers/pytest_support.py`](test_helpers/pytest_support.py)
+and re-exported by both `conftest.py` files:
+
+| Option | Default | Consumed by |
+|--------|---------|-------------|
+| `--loop N` | 1 (Python) / 50 (C++) | `loop_count` fixture |
+| `--camera-index N` | unset → test skips | `e2e_camera` tests |
+| `--rtsp-url URL` | unset → test skips | `e2e_rtsp` tests |
+| `--stream-duration N` | 10 | camera / RTSP tests |
+
+`--coverage` is C++-suite only (gcovr / lcov report). The autouse
+`wait_for_temperature` fixture waits for the NPU to cool below 70 °C before
+each `e2e` test and is a no-op everywhere else.
+
+## req_test contract surface
+
+[`req_test/`](req_test/) verifies each SDKREQ requirement twice — statically
+(the option or module exists in the source) and at runtime (an example actually
+runs). For the runtime half it **drives these pytest suites directly**, so the
+following are a contract, not an implementation detail. Renaming any of them
+breaks requirement coverage silently:
+
+1. The directory names `tests/cpp_example` and `tests/python_example`, each
+   runnable as `pytest -m <marker>` from inside it.
+2. The marker names, and which tests each marker selects.
+3. The file name `test_e2e_camera_rtsp.py` in both suites, plus the
+   `--camera-index` and `--rtsp-url` option names.
+4. `cpp_example/conftest.py::resolve_bin_dir()` — `req_test/_dxenv.bat`
+   documents itself as kept in sync with it.
+5. The `test_helpers` symbols listed in
+   [`test_helpers/__init__.py`](test_helpers/__init__.py).
+6. `run_tc.sh`'s option surface.
+7. pytest's exit code 5 ("no tests collected"), which `req_test` treats as SKIP
+   rather than as failure.
+
+Which suite covers which requirement:
+
+| SDKREQ | Covered by | How |
+|--------|-----------|-----|
+| 517 / 518 | both example suites | `pytest -m e2e_image`, `-m e2e_stream`, and `test_e2e_camera_rtsp.py -m e2e_camera / -m e2e_rtsp` |
+| 525 / 526 | `python_example/` | `pytest -m e2e_image` (`req_test/test_526.bat`) |
+| 536 / 537 | both example suites | `pytest -m help` |
+| all others | `test_helpers/` | via `req_test/_rt_resolve.py`, which reuses the discovery and launch logic these suites use |
+
+The modules that serve a requirement directly say so in their docstring.
+`req_test/README.md` documents every requirement script in detail.
+
+## Running without an NPU
+
+Collection always works, so the fast review loop needs no hardware:
+
+```bash
+cd tests/python_example && pytest unit           # mocked unit tests
+pytest tests/scripts                             # repo tooling tests
+cd tests/cpp_example && pytest -m contract       # source-level guards
+cd tests/python_example && pytest --collect-only # what would run
+```
+
+On a machine without an NPU, `req_test/run_all.sh` reports the static checks as
+PASS and the runtime checks as SKIP; the same run on real hardware turns those
+SKIPs into PASSes.
+
+## Adding a test
+
+1. Put it in the suite that matches its prerequisites — mocked logic goes in
+   `python_example/unit/`, anything needing hardware goes in an example suite
+   under an `e2e*` marker.
+2. Reuse an existing marker. If you truly need a new one, register it in
+   **both** `pytest.ini` files and add it to the dictionary above, or
+   `--strict-markers` will fail the run.
+3. Share discovery, path, or option logic through `test_helpers/` rather than
+   copying it into the second suite — that duplication is what this layout
+   exists to prevent.
+4. Before renaming a module, marker, or option, check the contract surface
+   above.

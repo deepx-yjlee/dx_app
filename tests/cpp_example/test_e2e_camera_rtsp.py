@@ -9,7 +9,7 @@ receives SIGINT; success = exit 0 + frames > 0 + FPS > 0.
 Usage via run_tc.sh::
 
     ./run_tc.sh --cpp --camera --camera-index 0
-    ./run_tc.sh --cpp --rtsp --rtsp-url rtsp://192.168.30.100:8554/stream1
+    ./run_tc.sh --cpp --rtsp --rtsp-url rtsp://<server-addr>:8554/stream1
     ./run_tc.sh --cpp --camera --rtsp --camera-index 0 --rtsp-url rtsp://...
 
 Direct pytest::
@@ -17,7 +17,8 @@ Direct pytest::
     pytest tests/cpp_example/test_e2e_camera_rtsp.py -m e2e_camera \\
            --camera-index 0 --stream-duration 10 -v
     pytest tests/cpp_example/test_e2e_camera_rtsp.py -m e2e_rtsp \\
-           --rtsp-url rtsp://192.168.30.100:8554/stream1 -v
+           --rtsp-url rtsp://<server-addr>:8554/stream1 -v
+
 """
 
 import os
@@ -33,7 +34,7 @@ import pytest
 
 from conftest import resolve_bin_dir
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+# conftest.py puts tests/ on sys.path; hence the noqa: E402 imports below.
 from test_helpers.constants import (  # noqa: E402
     E2E_SHORT_MODELS,
     MODELS_DIR,

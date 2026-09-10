@@ -36,7 +36,7 @@ and reports structured results with severity levels.
 
 ## Scope
 
-dx_app contains **15 AI tasks** and **133 models** across two language targets:
+dx_app contains **22 AI tasks** and **353 models** across two language targets:
 
 - Python apps under `src/python_example/<task>/<model>/`
 - C++ apps under `src/cpp_example/<task>/<model>/`
@@ -47,7 +47,7 @@ Each app directory contains:
 - Sync and async entry scripts (up to 4 variants)
 - `__init__.py` — package marker
 
-Framework scope: **40 files** in `.github/` including agents, skills, instructions,
+Framework scope: **40 files** in `.deepx/` including agents, skills, instructions,
 memory, and scripts.
 
 ## Validation Targets
@@ -125,7 +125,7 @@ If findings exist and the user wants to feed them back into the knowledge base:
 ## Context Loading
 
 ```
-1. .github/memory/common_pitfalls.md       (always)
+1. .deepx/memory/common_pitfalls.md       (always)
 2. .github/skills/dx-agent-app-validate/SKILL.md     (validation reference)
 3. .deepx/scripts/validate_app.py         (app validator)
 4. .deepx/scripts/validate_framework.py   (framework validator)

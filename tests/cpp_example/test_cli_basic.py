@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+# conftest.py puts tests/ on sys.path; hence the noqa: E402 imports below.
 from test_helpers.utils import setup_environment  # noqa: E402
 
 from conftest import is_executable, resolve_bin_dir

@@ -14,7 +14,7 @@ from typing import List
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+# conftest.py puts tests/ on sys.path; hence the noqa: E402 imports below.
 from test_helpers.constants import IMAGE_ONLY_TASKS, PROJECT_ROOT  # noqa: E402
 from test_helpers.utils import discover_python_scripts, setup_environment  # noqa: E402
 

@@ -326,7 +326,7 @@ dx_app v3.0.0 Architecture
 ===========================
 
 Layer 3 — Application Layer
-  src/python_example/<task>/<model>/       # 15 task dirs, 133 models
+  src/python_example/<task>/<model>/       # 22 task dirs, 353 models
   src/cpp_example/<task>/<model>/          # C++ counterparts
 
 Layer 2 — Framework Layer
@@ -441,7 +441,7 @@ Gather answers for these decisions before proceeding:
 1. **Language** — Python or C++?
 2. **Execution model** — Sync (default) or Async?
 3. **C++ postprocess** — Use pybind C++ postprocessor? (Python only, default: No)
-4. **AI task** — One of 15 supported tasks in dx_app.
+4. **AI task** — One of 22 supported tasks in dx_app.
 5. **Model** — Specific model name, or let the agent recommend from `config/model_registry.json`.
 6. **Input source** — Image file (default) | Video file | USB camera | RTSP stream | Image directory?
 7. **Output mode** — Display window (default) | Display + save to file | Save only (headless) | Headless (no output)?
@@ -463,7 +463,10 @@ Optional decisions (can use defaults):
 
 **Auto-detect** whether the compiled .dxnn model is a PPU model by checking:
 1. Model file name contains `_ppu` suffix
-2. `config/model_registry.json` entry has `csv_task: "PPU"` or `add_model_task: "ppu"`
+2. `config/model_registry.json` entry has `add_model_task: "ppu"` (primary check —
+   `csv_task` is NOT a reliable signal: only 5/16 ppu models are tagged
+   `csv_task: "PPU"`, the rest carry their underlying task's code, e.g. `OD`,
+   `FD`, `POSE`)
 3. User explicitly mentions "PPU" or the dx-compiler session indicates PPU was enabled
 4. Model was compiled with PPU config in config.json
 
@@ -569,24 +572,32 @@ After confirmation, hand off to the appropriate sub-agent with the gathered cont
    `export DXRT_DYNAMIC_CPU_THREAD=ON` to `run.sh`. See `memory/common_pitfalls.md`
    Pitfall #21 and `memory/performance_patterns.md` for diagnosis method.
 
-## 15 Supported AI Tasks
+## 22 Supported AI Tasks
 
 | Task | Directory | Example Models |
 |---|---|---|
-| object_detection | `src/python_example/object_detection/` | yolov5n, yolov8n, yolov10n, yolov11n, yolo26n |
+| 3d_object_detection | `src/python_example/3d_object_detection/` | sfa3d_608x608 |
+| attribute_recognition | `src/python_example/attribute_recognition/` | deepmar_resnet50, face_attr_resnet_v1_18 |
 | classification | `src/python_example/classification/` | efficientnet_b0, mobilenetv2, resnet50 |
-| pose_estimation | `src/python_example/pose_estimation/` | yolov5s_pose, yolov8n_pose |
-| instance_segmentation | `src/python_example/instance_segmentation/` | yolov5n_seg, yolov8n_seg |
-| semantic_segmentation | `src/python_example/semantic_segmentation/` | bisenetv1, deeplabv3plusmobilenet, segformer_b0 |
-| face_detection | `src/python_example/face_detection/` | scrfd_10g, yolov5s_face, retinaface |
 | depth_estimation | `src/python_example/depth_estimation/` | fastdepth_1 |
+| embedding | `src/python_example/embedding/` | arcface_mobilefacenet |
+| face_alignment | `src/python_example/face_alignment/` | 3ddfa_v2_mobilnet0_5_120x120 |
+| face_detection | `src/python_example/face_detection/` | scrfd_10g, yolov5s_face, retinaface |
+| hand_detection | `src/python_example/hand_detection/` | mediapipe_hand_detector |
+| hand_landmark | `src/python_example/hand_landmark/` | handlandmarklite_1 |
 | image_denoising | `src/python_example/image_denoising/` | dncnn_15, dncnn_25, dncnn_50 |
 | image_enhancement | `src/python_example/image_enhancement/` | zero_dce |
-| super_resolution | `src/python_example/super_resolution/` | espcn_x4 |
-| embedding | `src/python_example/embedding/` | arcface_mobilefacenet |
+| instance_segmentation | `src/python_example/instance_segmentation/` | yolov5n_seg, yolov8n_seg |
+| keypoint_detection | `src/python_example/keypoint_detection/` | superpoint |
 | obb_detection | `src/python_example/obb_detection/` | yolo26n_obb |
-| hand_landmark | `src/python_example/hand_landmark/` | handlandmarklite_1 |
+| object_detection | `src/python_example/object_detection/` | yolov5n, yolov8n, yolov10n, yolov11n, yolo26n |
+| object_pose_estimation | `src/python_example/object_pose_estimation/` | dope_hope_ketchup |
+| panoptic_driving_perception | `src/python_example/panoptic_driving_perception/` | yolopv2 |
+| pose_estimation | `src/python_example/pose_estimation/` | yolov5s_pose, yolov8n_pose |
 | ppu | `src/python_example/ppu/` | yolov5s_ppu, yolov7_ppu |
+| reid | `src/python_example/reid/` | casvit_m, casvit_t |
+| semantic_segmentation | `src/python_example/semantic_segmentation/` | bisenetv1, deeplabv3plusmobilenet, segformer_b0 |
+| super_resolution | `src/python_example/super_resolution/` | espcn_x4 |
 
 ## Error Recovery
 

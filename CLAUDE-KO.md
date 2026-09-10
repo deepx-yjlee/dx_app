@@ -4,7 +4,7 @@
 
 ## 개요
 
-dx_app은 22개 AI 작업에 걸쳐 133개의 컴파일된 `.dxnn` 모델을 제공하며, Python (4개 변형) 및 C++ 예제를 포함합니다.
+dx_app은 22개 AI 작업에 걸쳐 353개의 컴파일된 `.dxnn` 모델을 제공하며, Python (4개 변형) 및 C++ 예제를 포함합니다.
 
 ## 응답 언어
 
@@ -122,9 +122,9 @@ pytest tests/                       # Run unit tests
 | /dx-agent-app-model-management | .dxnn 모델 다운로드, 등록, 설정 |
 | /dx-agent-app-validate | 모든 단계 게이트에서 검증 체크 실행 |
 | /dx-agent-runtime-validate | 전체 피드백 루프: 검증, 수집, 승인, 적용, 확인 |
-| /dx-swe-brainstorm | 브레인스토밍, 2-3가지 접근법 제안, 스펙 자체 검토 후 계획 |
-| /dx-swe-tdd | 검증 주도 개발, 선택적 Red-Green-Refactor 단위 테스트 |
-| /dx-swe-verify | 프로세스: 완료 선언 전 검증 — 주장보다 증거 우선 |
+| /dx-agent-brainstorm | 모델 레지스트리 확인과 서브프로젝트 라우팅을 포함한 DEEPX 빌드 브레인스토밍 |
+| /dx-agent-tdd | DEEPX 빌드 검증 순서 — factory, pipeline, integration 체크 |
+| /dx-agent-verify | DEEPX 빌드 검증 체크리스트 — dx_app, dx_stream, cross-project |
 | /dx-swe-writing-plans | 세분화된 태스크로 구현 계획 작성 |
 | /dx-swe-executing-plans | 리뷰 체크포인트와 함께 계획 실행 |
 | /dx-swe-subagent-dev | 태스크별 신규 서브에이전트로 계획 실행, 2단계 리뷰 |
@@ -225,7 +225,7 @@ SyncRunner/AsyncRunner, Output Isolation)과 충돌할 때, 에이전트는 반�
 13. **PPU 예제 생성은 필수**: 컴파일된 .dxnn 모델이 PPU인 경우 에이전트는 반드시 동작하는 예제를 생성해야 함 — PPU 모델에 대해 예제 생성을 건너뛰지 말 것.
 14. **참조 모델과 교차 검증**: `assets/models/`에 사전 컴파일된 DXNN이 있거나 `src/python_example/`에 기존 검증된 예제가 있을 때, Level 5.5 감별 진단을 실행하여 앱 코드 vs 컴파일 문제를 분리. `dx-validate.md` Level 5.5 참조.
 15. **필수 출력 아티팩트**: 모든 세션은 반드시 13개 아티팩트 모두 생성 (factory, config, 4개 변형, __init__.py, session.json, README.md, setup.sh, run.sh, session.log). 에이전트의 MANDATORY OUTPUT REQUIREMENTS 섹션 참조. 완료 선언 전 자체 검증 체크 실행.
-16. **Skeleton 우선 개발** — 코드 작성 전 `.deepx/skills/dx-agent-app-build-python.md` skeleton
+16. **Skeleton 우선 개발** — 코드 작성 전 `.deepx/skills/dx-agent-app-build-python/SKILL.md` skeleton
     템플릿을 먼저 읽으세요. `src/python_example/<task>/<model>/`에서 가장 유사한 기존 예제를
     복사하고 모델별 부분만 수정(factory, postprocessor). 데모 스크립트를 처음부터 작성하지 마세요.
     프레임워크를 우회하는 독립형 스크립트를 제안하지 마세요 (예: factory/runner 패턴 없이 직접
@@ -240,17 +240,17 @@ SyncRunner/AsyncRunner, Output Isolation)과 충돌할 때, 에이전트는 반�
 
 | 작업에서 언급하는 내용... | 읽어야 할 파일 |
 |---|---|
-| **Python app, detection, classification** | `.deepx/skills/dx-agent-app-build-python.md`, `.deepx/toolsets/common-framework-api.md` |
-| **C++ app, native** | `.deepx/skills/dx-agent-app-build-cpp.md`, `.deepx/toolsets/dx-engine-api.md` |
-| **Async, performance, throughput** | `.deepx/skills/dx-agent-app-build-async.md`, `.deepx/memory/performance_patterns.md` |
-| **Model, download, registry** | `.deepx/skills/dx-agent-app-model-management.md`, `.deepx/toolsets/model-registry.md` |
-| **PaddleOCR OCR app (video/webcam), RapidDoc PDF→Markdown, PaddlePaddle** | `.deepx/toolsets/paddleocr-rapiddoc-app.md` (+ `dx-compiler/.deepx/toolsets/paddlepaddle-deepx.md`) |
-| **Validation, testing** | `.deepx/skills/dx-agent-app-validate.md`, `.deepx/instructions/testing-patterns.md` |
-| **Validation, feedback, fix** | `.deepx/skills/dx-agent-app-validate.md`, parent `dx-runtime/.deepx/skills/dx-agent-runtime-validate.md` |
+| **Python app, detection, classification** | `.deepx/skills/dx-agent-app-build-python/SKILL.md`, `.deepx/toolsets/common-framework-api.md` |
+| **C++ app, native** | `.deepx/skills/dx-agent-app-build-cpp/SKILL.md`, `.deepx/toolsets/dx-engine-api.md` |
+| **Async, performance, throughput** | `.deepx/skills/dx-agent-app-build-async/SKILL.md`, `.deepx/memory/performance_patterns.md` |
+| **Model, download, registry** | `.deepx/skills/dx-agent-app-model-management/SKILL.md`, `.deepx/toolsets/model-registry.md` |
+| **PaddleOCR OCR app (video/webcam), RapidDoc PDF→Markdown, PaddlePaddle** | `.deepx/toolsets/paddleocr-rapiddoc-app.md` (+ `../../dx-compiler/.deepx/toolsets/paddlepaddle-deepx.md`) |
+| **Validation, testing** | `.deepx/skills/dx-agent-app-validate/SKILL.md`, `.deepx/instructions/testing-patterns.md` |
+| **Validation, feedback, fix** | `.deepx/skills/dx-agent-app-validate/SKILL.md`, parent `../.deepx/skills/dx-agent-runtime-validate/SKILL.md` |
 | **항상 읽기 (모든 작업)** | `.deepx/memory/common_pitfalls.md`, `.deepx/instructions/coding-standards.md` |
-| **Brainstorm, plan, design** | `.deepx/skills/dx-swe-brainstorm.md` |
-| **TDD, validation, incremental** | `.deepx/skills/dx-swe-tdd.md` |
-| **Completion, verify, evidence** | `.deepx/skills/dx-swe-verify.md` |
+| **Brainstorm, plan, design** | `.deepx/skills/dx-agent-brainstorm/SKILL.md` |
+| **TDD, validation, incremental** | `.deepx/skills/dx-agent-tdd/SKILL.md` |
+| **Completion, verify, evidence** | `.deepx/skills/dx-agent-verify/SKILL.md` |
 
 ## Python 임포트
 
@@ -512,11 +512,7 @@ Artifact Verification Gate는 각 artifact가 **어떻게** 검증되는지 정�
 
 ## 22개 지원 AI 작업
 
-3d_object_detection, attribute_recognition, classification, depth_estimation,
-embedding, face_alignment, face_detection, hand_detection, hand_landmark,
-image_denoising, image_enhancement, instance_segmentation, keypoint_detection,
-obb_detection, object_detection, object_pose_estimation, panoptic_driving_perception,
-pose_estimation, ppu, reid, semantic_segmentation, super_resolution
+3d_object_detection, attribute_recognition, classification, depth_estimation, embedding, face_alignment, face_detection, hand_detection, hand_landmark, image_denoising, image_enhancement, instance_segmentation, keypoint_detection, obb_detection, object_detection, object_pose_estimation, panoptic_driving_perception, pose_estimation, ppu, reid, semantic_segmentation, super_resolution
 
 ## 하드웨어
 
@@ -766,4 +762,3 @@ Pre-commit hook이 generator output 무결성을 강제합니다: 생성된 파�
 이 게이트는 `.deepx/` 파일이 작업의 *주요 산출물*인 경우(규칙 추가, 플랫폼 sync,
 KO 번역 생성, agents/skills 수정)에 적용됩니다. 기능 구현 중 `.deepx/`에 단순
 한 줄 수정이 발생하는 경우에는 적용되지 않습니다.
-

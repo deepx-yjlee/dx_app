@@ -1,9 +1,12 @@
-"""
-Configuration and fixtures for bin CLI tests
+"""pytest configuration for the C++ example suite (the ``bin/`` executables).
+
+Scope: the CLI/help contract tests and E2E inference tests in this directory,
+plus gcovr/lcov coverage reporting behind ``--coverage``. Option and fixture
+wiring shared with the Python suite lives in
+``tests/test_helpers/pytest_support.py`` -- see ``tests/README.md``.
 """
 import os
 import logging
-import shutil
 import subprocess
 import sys
 from datetime import datetime
@@ -13,18 +16,31 @@ import pytest
 
 from performance_collector import get_collector
 
-for _stream in (sys.__stdout__, sys.__stderr__, sys.stdout, sys.stderr):
-    try:
-        _stream.reconfigure(errors="backslashreplace")
-    except (AttributeError, OSError, ValueError):
-        pass  # None (pythonw), or a capture object without reconfigure()
-
-logger = logging.getLogger(__name__)
-
-# Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 SCRIPTS_DIR = PROJECT_ROOT / "scripts"
 sys.path.insert(0, str(PROJECT_ROOT))
+# Make tests/test_helpers importable here and in every test module of this suite.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from test_helpers.pytest_support import (  # noqa: E402
+    add_loop_option,
+    add_stream_options,
+    configure_stdio_errors,
+)
+# Re-exported fixtures -- importing them here is what makes pytest discover them.
+from test_helpers.pytest_support import (  # noqa: E402,F401
+    camera_index,
+    rtsp_url,
+    stream_duration,
+    wait_for_temperature,
+)
+
+configure_stdio_errors()
+
+logger = logging.getLogger(__name__)
+
+#: Default inference iterations for this suite (the Python suite uses 1).
+DEFAULT_LOOP_COUNT = 50
 
 
 def resolve_bin_dir() -> Path:
@@ -57,61 +73,21 @@ BUILD_DIR = PROJECT_ROOT / "build"
 
 
 def pytest_addoption(parser):
-    """Add custom command line options"""
+    """Register this suite's own options plus those shared with the Python suite."""
     parser.addoption(
         "--coverage",
         action="store_true",
         default=False,
-        help="Generate code coverage report after tests"
+        help="Generate code coverage report after tests",
     )
-    parser.addoption(
-        "--loop",
-        action="store",
-        default="50",
-        help="Number of inference iterations to run in E2E image tests (default: 50)"
-    )
-    parser.addoption(
-        "--camera-index",
-        action="store",
-        default=None,
-        help="Camera device index for e2e_camera tests (e.g. 0)"
-    )
-    parser.addoption(
-        "--rtsp-url",
-        action="store",
-        default=None,
-        help="RTSP stream URL for e2e_rtsp tests"
-    )
-    parser.addoption(
-        "--stream-duration",
-        action="store",
-        default="10",
-        help="Seconds to run each camera/RTSP test (default: 10)"
-    )
+    add_loop_option(parser, default=str(DEFAULT_LOOP_COUNT))
+    add_stream_options(parser)
 
 
 @pytest.fixture
 def bin_dir():
     """Fixture providing path to bin directory"""
     return BIN_DIR
-
-
-@pytest.fixture(autouse=True)
-def wait_for_temperature(request):
-    """Wait for device temperature to drop below threshold before each e2e test."""
-    if request.node.get_closest_marker("e2e"):
-        check_temp_script = SCRIPTS_DIR / "check_temperature.sh"
-        # bash is absent on stock Windows: resolve it instead of assuming PATH,
-        # or every e2e test dies at setup with FileNotFoundError (WinError 2).
-        bash = shutil.which("bash")
-        if bash and check_temp_script.exists():
-            result = subprocess.run(
-                [bash, str(check_temp_script), "--wait_target_temp=70"],
-                check=False, capture_output=True, text=True
-            )
-            if "Waiting" in result.stdout:
-                for line in result.stdout.strip().splitlines():
-                    logger.info(line.strip())
 
 
 @pytest.fixture(scope="session")
@@ -133,34 +109,7 @@ def loop_count(request) -> int:
     try:
         return int(request.config.getoption("--loop"))
     except (TypeError, ValueError):
-        return 50
-
-
-@pytest.fixture(scope="session")
-def camera_index(request):
-    """Camera device index from --camera-index."""
-    val = request.config.getoption("--camera-index")
-    if val is None:
-        pytest.skip("--camera-index not provided")
-    return int(val)
-
-
-@pytest.fixture(scope="session")
-def rtsp_url(request):
-    """RTSP URL from --rtsp-url."""
-    val = request.config.getoption("--rtsp-url")
-    if val is None:
-        pytest.skip("--rtsp-url not provided")
-    return val
-
-
-@pytest.fixture(scope="session")
-def stream_duration(request) -> int:
-    """Seconds to run each camera/RTSP test."""
-    try:
-        return int(request.config.getoption("--stream-duration"))
-    except (TypeError, ValueError):
-        return 10
+        return DEFAULT_LOOP_COUNT
 
 
 def pytest_sessionfinish(session, exitstatus):
