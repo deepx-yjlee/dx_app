@@ -149,9 +149,42 @@ def _spec_from_call(call: ast.Call, local_defs: dict[str, ast.AST] | None = None
 
 
 def extract(path: Path) -> dict:
-    """``{role -> spec}`` for one factory file."""
-    tree = ast.parse(path.read_text(encoding="utf-8", errors="ignore"))
+    """``{role -> spec}`` plus the factory's own class/base for one factory file.
+
+    The base class is READ rather than guessed from the task: a task can mix bases
+    (image_classification holds 110 IClassificationFactory and 2 IEmbeddingFactory)
+    and three tasks subclass ``_FactoryConfigMixin`` instead of an IFactory at all, so
+    a per-task table would silently re-base those families.
+    """
+    src = path.read_text(encoding="utf-8", errors="ignore")
+    tree = ast.parse(src)
     out: dict[str, dict] = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name.endswith("Factory"):
+            out["factory_class"] = node.name
+            out["factory_bases"] = [ast.unparse(b) for b in node.bases]
+            break
+    imports = []
+    for node in tree.body:
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            imports.append(ast.unparse(node))
+    out["imports"] = imports
+
+    # Methods beyond the standard five. Several IFactory bases declare extra abstract
+    # methods -- IFaceFactory and IPoseFactory require get_num_keypoints -- so a family
+    # factory that implements only the five cannot be instantiated at all (40 variants
+    # failed with "Can't instantiate abstract class ... get_num_keypoints"). Their
+    # source is carried over verbatim.
+    STANDARD = set(FACTORY_METHODS) | {"__init__", "get_model_name", "get_task_type"}
+    extra = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name.endswith("Factory"):
+            for m in node.body:
+                if isinstance(m, (ast.FunctionDef, ast.AsyncFunctionDef)) \
+                        and m.name not in STANDARD:
+                    extra.append(ast.get_source_segment(src, m) or ast.unparse(m))
+            break
+    out["extra_methods"] = extra
     for fn in ast.walk(tree):
         if not isinstance(fn, ast.FunctionDef) or fn.name not in FACTORY_METHODS:
             continue
@@ -198,9 +231,17 @@ def main() -> int:
         missing = sorted(set(FACTORY_METHODS.values()) - set(roles))
         if missing:
             no_roles.append((d, missing))
+        # The example directory's config.json is what actually runs -- the factory
+        # reads it. The registry's ``config`` field has drifted from it for 75 of 352
+        # variants (fastsam 0.7 vs 0.4, mediapipe 0.3 vs 0.5), so the on-disk value is
+        # the authoritative one and both are recorded to keep the drift visible.
+        cfg_path = PY_ROOT / table[d] / d / "config.json"
+        dir_config = json.loads(cfg_path.read_text(encoding="utf-8")) \
+            if cfg_path.exists() else {}
         specs[e["variant"]] = dict(
             variant=e["variant"], model_name=e["model_name"], task=e["task"],
-            family=e["family"], source_dir=d, source_task=table[d], **roles)
+            family=e["family"], source_dir=d, source_task=table[d],
+            dir_config=dir_config, registry_config=e.get("config") or {}, **roles)
 
     if a.show:
         key = next((k for k, v in specs.items() if a.show in (k, v["source_dir"],

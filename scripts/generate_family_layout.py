@@ -1,0 +1,344 @@
+#!/usr/bin/env python3
+# Copyright (C) 2018- DEEPX Ltd. All rights reserved.
+"""Generate the dx-modelzoo family/variant layout for src/python_example.
+
+Emits, per ``<task>/<family>/``:
+
+    variants/<dxnn-stem>.json   one per variant -- geometry, processor specs, defaults
+    factory/<family>_factory.py one config-driven factory for the whole family
+    custom_ops.py               ONLY for families config cannot express
+    <family>_{sync,async,sync_cpp_postprocess,async_cpp_postprocess}.py
+
+340 of 352 variants rebuild identically from their variant config (proved by
+scripts/verify_processor_spec_equivalence.py). The other 12, across 8 families, pass
+computed arguments -- ``imagenet_mean``, ``[m * 255.0 for m in mean]``, PPU anchor
+tables -- that cannot be reduced to literals. For those the generator copies the
+variant's ORIGINAL factory module verbatim into ``custom_ops.py`` and has the family
+factory delegate to it, so behaviour is preserved by construction rather than by a
+re-derivation that might drift. That mirrors dx-modelzoo, where a family carries a
+``custom_ops.py`` beside its per-variant configs.
+
+Writes into a staging directory by default so the result can be inspected before any
+existing tree is touched.
+
+Usage:
+    python3 scripts/generate_family_layout.py --out /tmp/stage
+    python3 scripts/generate_family_layout.py --out src/python_example --in-place
+"""
+from __future__ import annotations
+
+import argparse
+import ast
+import collections
+import json
+import shutil
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src" / "python_example"))
+from common.variant_config import spec_is_buildable  # noqa: E402
+
+REGISTRY = ROOT / "config" / "model_registry.json"
+SPECS = ROOT / "tests" / "data" / "processor_specs.json"
+PY_SRC = ROOT / "src" / "python_example"
+ROLES = ("preprocessor", "postprocessor", "visualizer")
+VARIANT_SCRIPTS = ("sync", "async", "sync_cpp_postprocess", "async_cpp_postprocess")
+
+
+def pascal(family: str) -> str:
+    """``yolov5`` -> ``Yolov5``; ``3ddfa_v2`` -> ``N3ddfaV2`` (identifier-safe)."""
+    parts = [p for p in family.split("_") if p]
+    name = "".join(p[:1].upper() + p[1:] for p in parts)
+    return name if name[:1].isalpha() else "N" + name
+
+
+def family_base(members: list[dict], specs: dict) -> tuple[str, list[str]]:
+    """``(base expression, import lines)`` read from the family's own factories.
+
+    Never guessed from the task: a task can mix bases (image_classification holds 110
+    IClassificationFactory and 2 IEmbeddingFactory) and keypoint_detection,
+    object_pose_estimation and panoptic_driving_perception subclass
+    ``_FactoryConfigMixin`` rather than an IFactory, so a per-task table would silently
+    re-base those families. Measured: 0 of 89 families mix bases internally.
+    """
+    for e in members:
+        s_ = specs.get(e["variant"]) or {}
+        bases = s_.get("factory_bases") or []
+        if bases:
+            imports = [i for i in (s_.get("imports") or [])
+                       if any(b.split(".")[0] in i for b in bases)]
+            return ", ".join(bases), imports
+    return "object", []
+
+
+def available_bases() -> set[str]:
+    import common.base as cb
+    return {n for n in dir(cb) if n.startswith("I")}
+
+
+# --------------------------------------------------------------------- generation
+def variant_json(entry: dict, spec: dict) -> dict:
+    return {
+        "variant": entry["variant"],
+        "dxnn_file": entry["dxnn_file"],
+        "task": entry["task"],
+        "family": entry["family"],
+        "input_width": entry["input_width"],
+        "input_height": entry["input_height"],
+        "image_only": entry["image_only"],
+        "zoo_canonical": entry["zoo_canonical"],
+        "legacy_model_name": entry["model_name"],
+        # The on-disk config.json is authoritative: it is what the original factory
+        # read. The registry field disagrees for 75 of 352 variants, and using it would
+        # silently move e.g. FastSAM's score threshold from 0.7 to 0.4.
+        "config": spec.get("dir_config") if spec.get("dir_config") is not None
+        else (entry.get("config") or {}),
+        "registry_config": entry.get("config") or {},
+        "preprocessor": spec.get("preprocessor"),
+        "postprocessor": spec.get("postprocessor"),
+        "visualizer": spec.get("visualizer"),
+    }
+
+
+FACTORY_TEMPLATE = '''"""{display} family factory.
+
+One factory serves every variant of the ``{family}`` family: the per-variant
+differences -- processor classes and their non-default arguments -- live in
+``variants/<dxnn-stem>.json`` rather than in {n} near-identical factory files.
+{custom_note}
+"""
+from pathlib import Path
+
+{base_imports}
+from common.variant_config import (
+    build_processor,
+    default_variant,
+    load_variant_config,
+)
+{custom_import}
+_VARIANTS_DIR = str(Path(__file__).resolve().parent.parent / "variants")
+
+
+class {cls}({base}):
+    """Config-driven factory for the {display} family."""
+
+    def __init__(self, config: dict = None, variant: str = None):
+        self.variant = variant or default_variant(_VARIANTS_DIR)
+        self.spec = load_variant_config(_VARIANTS_DIR, self.variant)
+        # The variant config supplies the defaults; an explicit config overrides them.
+        self.config = {{**(self.spec.get("config") or {{}}), **(config or {{}})}}
+
+    def _build(self, role, input_width, input_height):
+{custom_branch}        return build_processor(
+            self.spec[role],
+            input_width=input_width,
+            input_height=input_height,
+            config=self.config,
+        )
+
+    def create_preprocessor(self, input_width: int, input_height: int):
+        return self._build("preprocessor", input_width, input_height)
+
+    def create_postprocessor(self, input_width: int, input_height: int):
+        return self._build("postprocessor", input_width, input_height)
+
+    def create_visualizer(self):
+        return self._build("visualizer", self.spec["input_width"],
+                           self.spec["input_height"])
+
+    def get_model_name(self) -> str:
+        return self.variant
+
+    def get_task_type(self) -> str:
+        return self.spec["task"]
+{extra_methods}'''
+
+CUSTOM_BRANCH = '''        # Variants whose arguments are computed rather than literal delegate to the
+        # family's custom_ops.py, which holds their original factory verbatim.
+        if self.variant in custom_ops.FACTORIES:
+            delegate = custom_ops.FACTORIES[self.variant](self.config)
+            if role == "visualizer":
+                return delegate.create_visualizer()
+            return getattr(delegate, "create_" + role)(input_width, input_height)
+'''
+
+ENTRY_TEMPLATE = '''#!/usr/bin/env python3
+# Copyright (C) 2018- DEEPX Ltd. All rights reserved.
+"""{display} {kind} inference.
+
+One entry point serves the whole family; ``--variant`` picks the model::
+
+    python {family}_{kind}.py --variant {example}
+"""
+import sys
+from pathlib import Path
+
+_module_dir = Path(__file__).parent
+_v3_dir = _module_dir.parent.parent
+for _path in [str(_v3_dir), str(_module_dir)]:
+    if _path not in sys.path:
+        sys.path.insert(0, _path)
+
+from factory import {cls}
+from common.runner import {runner}, parse_common_args
+
+
+def main():
+    args = parse_common_args("{display} {kind} inference")
+    factory = {cls}(variant=getattr(args, "variant", None))
+    {runner}(factory).run(args)
+
+
+if __name__ == "__main__":
+    main()
+'''
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--out", required=True)
+    ap.add_argument("--in-place", action="store_true",
+                    help="write into src/python_example itself (otherwise a staging dir)")
+    a = ap.parse_args()
+
+    reg = json.loads(REGISTRY.read_text(encoding="utf-8"))
+    specs = json.loads(SPECS.read_text(encoding="utf-8"))
+    bases = available_bases()
+    out = Path(a.out)
+    if not a.in_place:
+        if out.exists():
+            shutil.rmtree(out)
+        out.mkdir(parents=True)
+
+    fams: dict[tuple[str, str], list[dict]] = collections.defaultdict(list)
+    for e in reg:
+        fams[(e["task"], e["family"])].append(e)
+
+    n_var = n_custom = 0
+    n_carried = [0]
+    unknown_base: set[str] = set()
+    custom_fams: dict[str, list[str]] = {}
+
+    for (task, family), members in sorted(fams.items()):
+        fdir = out / task / family
+        (fdir / "variants").mkdir(parents=True, exist_ok=True)
+        (fdir / "factory").mkdir(parents=True, exist_ok=True)
+
+        needs_custom: list[dict] = []
+        for e in members:
+            spec = specs.get(e["variant"], {})
+            (fdir / "variants" / f"{e['variant']}.json").write_text(
+                json.dumps(variant_json(e, spec), indent=2) + "\n", encoding="utf-8")
+            n_var += 1
+            if not all(spec_is_buildable(spec.get(r) or {}) for r in ROLES):
+                needs_custom.append(e)
+
+        # custom_ops.py: the original factory module of each non-expressible variant,
+        # copied verbatim so behaviour is preserved by construction.
+        if needs_custom:
+            n_custom += 1
+            custom_fams[f"{task}/{family}"] = [e["variant"] for e in needs_custom]
+            chunks, mapping = [], []
+            for e in needs_custom:
+                s = specs[e["variant"]]
+                src_dir = PY_SRC / s["source_task"] / s["source_dir"] / "factory"
+                orig = sorted(src_dir.glob("*_factory.py"))[0]
+                body = orig.read_text(encoding="utf-8")
+                cls_name = next(
+                    (n.name for n in ast.walk(ast.parse(body))
+                     if isinstance(n, ast.ClassDef) and n.name.endswith("Factory")), None)
+                chunks.append(f"# ---- carried over verbatim from "
+                              f"{orig.relative_to(ROOT)} ----\n{body}")
+                mapping.append(f'    "{e["variant"]}": {cls_name},')
+            (fdir / "custom_ops.py").write_text(
+                '"""Family-specific processor construction that a variant config cannot express.\n\n'
+                "These variants pass COMPUTED arguments -- an ``imagenet_mean`` constant, a\n"
+                "``[m * 255.0 for m in mean]`` comprehension, a PPU anchor table -- so they cannot be\n"
+                "reduced to literal JSON. Their original factory modules are carried over verbatim\n"
+                "below and the family factory delegates to them, which preserves behaviour by\n"
+                "construction rather than by a re-derivation that could drift.\n"
+                '"""\n\n' + "\n\n".join(chunks) +
+                "\n\n# variant -> the factory class that builds it\nFACTORIES = {\n"
+                + "\n".join(mapping) + "\n}\n", encoding="utf-8")
+
+        # Carry over any non-standard methods the family's base requires (e.g.
+        # get_num_keypoints for IFaceFactory / IPoseFactory).
+        extra_methods = ""
+        for e in members:
+            ex = (specs.get(e["variant"]) or {}).get("extra_methods") or []
+            if ex:
+                extra_methods = "\n" + "\n\n".join(
+                    "\n".join("    " + ln if ln.strip() else ln
+                              for ln in m.splitlines()) for m in ex) + "\n"
+                break
+
+        base, base_imports = family_base(members, specs)
+        for b in base.split(", "):
+            if b not in bases and not b.startswith("_"):
+                unknown_base.add(f"{task}/{family}:{b}")
+        cls = f"{pascal(family)}Factory"
+        (fdir / "factory" / f"{family}_factory.py").write_text(
+            FACTORY_TEMPLATE.format(
+                display=family, family=family, n=len(members), cls=cls,
+                base=base, base_imports="\n".join(base_imports),
+                custom_note=("\nVariants needing computed arguments delegate to "
+                             "``custom_ops.py``." if needs_custom else ""),
+                custom_import=("from . import custom_ops\n" if needs_custom else ""),
+                custom_branch=(CUSTOM_BRANCH if needs_custom else ""),
+                extra_methods=extra_methods,
+            ), encoding="utf-8")
+        (fdir / "factory" / "__init__.py").write_text(
+            f"from .{family}_factory import {cls}\n\n__all__ = [\"{cls}\"]\n",
+            encoding="utf-8")
+        (fdir / "__init__.py").write_text("", encoding="utf-8")
+
+        # Carry over anything the generator does not itself produce -- READMEs, the
+        # *_ort_off.py debug variants, calib_policy.py. Deleting a file the user put
+        # there is not part of regrouping examples.
+        generated_names = {"__init__.py", "config.json",
+                           f"{family}_factory.py"} | {
+            f"{family}_{k}.py" for k in VARIANT_SCRIPTS}
+        for e in members:
+            sp_ = specs.get(e["variant"]) or {}
+            src_dir = PY_SRC / sp_.get("source_task", "") / sp_.get("source_dir", "")
+            if not src_dir.is_dir():
+                continue
+            for f in src_dir.rglob("*"):
+                if not f.is_file() or "__pycache__" in f.parts or f.suffix == ".pyc":
+                    continue
+                name = f.name
+                is_std = (name in generated_names
+                          or name.endswith("_factory.py")
+                          or any(name.endswith(f"_{k}.py") for k in VARIANT_SCRIPTS)
+                          or name in {"__init__.py", "config.json"})
+                if is_std:
+                    continue
+                dest = fdir / name
+                if not dest.exists():
+                    dest.write_bytes(f.read_bytes())
+                    n_carried[0] += 1
+
+        example = sorted(e["variant"] for e in members)[0]
+        for kind in VARIANT_SCRIPTS:
+            runner = "AsyncRunner" if kind.startswith("async") else "SyncRunner"
+            (fdir / f"{family}_{kind}.py").write_text(
+                ENTRY_TEMPLATE.format(display=family, family=family, kind=kind,
+                                      cls=cls, runner=runner, example=example),
+                encoding="utf-8")
+
+    print(f"out={out}")
+    print(f"  families          : {len(fams)}")
+    print(f"  variant configs   : {n_var}")
+    print(f"  custom_ops families: {n_custom}")
+    print(f"  extra files carried : {n_carried[0]}")
+    for k, v in sorted(custom_fams.items()):
+        print(f"      {k}: {v}")
+    if unknown_base:
+        print(f"  UNKNOWN IFactory bases (fell back): {sorted(unknown_base)}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
