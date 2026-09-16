@@ -1,6 +1,7 @@
 /**
  * @file yolov3_factory.hpp
- * @brief YOLOv3 Abstract Factory implementation
+ * @brief YOLOv3_gluon_416 Abstract Factory implementation
+ * 
  */
 
 #ifndef YOLOV3_FACTORY_HPP
@@ -12,11 +13,19 @@
 #include "common/visualizers/detection_visualizer.hpp"
 #include "common/config/model_config.hpp"
 
+#include <string>
+#include <utility>
+
 namespace dxapp {
 
-class YOLOv3Factory : public IDetectionFactory {
+class Yolov3Factory : public IDetectionFactory {
 public:
-    YOLOv3Factory(float obj_threshold = 0.25f,
+    /// The variant (a .dxnn stem) this factory should build for.
+    /// Empty means the family default. Set from main(), which
+    /// is the only place that sees argv.
+    explicit Yolov3Factory(std::string variant) : variant_(std::move(variant)) {}
+
+    Yolov3Factory(float obj_threshold = 0.25f,
                   float score_threshold = 0.25f,
                   float nms_threshold = 0.45f)
         : obj_threshold_(obj_threshold),
@@ -50,10 +59,11 @@ public:
         num_classes_ = config.get<int>("num_classes", num_classes_);
     }
 
-    std::string getModelName() const override { return "YOLOv3"; }
+    std::string getModelName() const override { return "YOLOv3_gluon_416"; }
     std::string getTaskType() const override { return "object_detection"; }
 
 private:
+    std::string variant_;
     float obj_threshold_;
     float score_threshold_;
     float nms_threshold_;

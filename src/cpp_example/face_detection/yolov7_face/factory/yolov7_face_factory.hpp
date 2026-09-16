@@ -12,11 +12,19 @@
 #include "common/visualizers/face_visualizer.hpp"
 #include "common/config/model_config.hpp"
 
+#include <string>
+#include <utility>
+
 namespace dxapp {
 
-class YOLOv7_faceFactory : public IFaceDetectionFactory {
+class Yolov7FaceFactory : public IFaceDetectionFactory {
 public:
-    YOLOv7_faceFactory(float obj_threshold = 0.25f,
+    /// The variant (a .dxnn stem) this factory should build for.
+    /// Empty means the family default. Set from main(), which
+    /// is the only place that sees argv.
+    explicit Yolov7FaceFactory(std::string variant) : variant_(std::move(variant)) {}
+
+    Yolov7FaceFactory(float obj_threshold = 0.25f,
                       float score_threshold = 0.25f,
                       float nms_threshold = 0.45f)
         : obj_threshold_(obj_threshold),
@@ -29,6 +37,13 @@ public:
 
     PostprocessorPtr<FaceDetectionResult> createPostprocessor(
         int input_width, int input_height, bool is_ort_configured = false) override {
+        // Variant dispatch: these variants' ORIGINAL bodies are
+        // spliced verbatim, so no behaviour is re-derived.
+        if (variant_ == "yolov7-lite-t-face_640x640") {
+        return std::make_unique<YOLOv5FacePostprocessor>(
+            input_width, input_height, score_threshold_, nms_threshold_);
+            }
+        // default: yolov7-face_640x640
         return std::make_unique<YOLOv5FacePostprocessor>(
             input_width, input_height,
             obj_threshold_, score_threshold_, nms_threshold_,
@@ -50,6 +65,7 @@ public:
     std::string getTaskType() const override { return "face_detection"; }
 
 private:
+    std::string variant_;
     float obj_threshold_;
     float score_threshold_;
     float nms_threshold_;

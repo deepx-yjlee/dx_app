@@ -1,0 +1,62 @@
+/**
+ * @file yolo11_seg_factory.hpp
+ * @brief Yolo11SegFactory Abstract Factory implementation
+ */
+
+#ifndef YOLO11_SEG_FACTORY_HPP
+#define YOLO11_SEG_FACTORY_HPP
+
+#include "common/base/i_factory.hpp"
+#include "common/processors/letterbox_preprocessor.hpp"
+#include "common/processors/segmentation_postprocessor.hpp"
+#include "common/visualizers/segmentation_visualizer.hpp"
+#include "common/config/model_config.hpp"
+
+#include <string>
+#include <utility>
+
+namespace dxapp {
+
+class Yolo11SegFactory : public IInstanceSegmentationFactory {
+public:
+    /// The variant (a .dxnn stem) this factory should build for.
+    /// Empty means the family default. Set from main(), which
+    /// is the only place that sees argv.
+    explicit Yolo11SegFactory(std::string variant) : variant_(std::move(variant)) {}
+
+    Yolo11SegFactory(float score_threshold = 0.5f, float nms_threshold = 0.65f)
+        : score_threshold_(score_threshold), nms_threshold_(nms_threshold) {}
+
+    PreprocessorPtr createPreprocessor(int input_width, int input_height) override {
+        return std::make_unique<DetectionPreprocessor>(input_width, input_height);
+    }
+
+    PostprocessorPtr<InstanceSegmentationResult> createPostprocessor(
+        int input_width, int input_height, bool is_ort_configured = false) override {
+        return std::make_unique<YOLOv8SegPostprocessor>(
+            input_width, input_height,
+            score_threshold_, nms_threshold_,
+            is_ort_configured);
+    }
+
+    VisualizerPtr<InstanceSegmentationResult> createVisualizer() override {
+        return std::make_unique<InstanceSegmentationVisualizer>();
+    }
+
+    void loadConfig(const dxapp::ModelConfig& config) override {
+        score_threshold_ = config.get<float>("score_threshold", score_threshold_);
+        nms_threshold_ = config.get<float>("nms_threshold", nms_threshold_);
+    }
+
+    std::string getModelName() const override { return "Yolo11L Seg"; }
+    std::string getTaskType() const override { return "instance_segmentation"; }
+
+private:
+    std::string variant_;
+    float score_threshold_;
+    float nms_threshold_;
+};
+
+}  // namespace dxapp
+
+#endif  // YOLO11_SEG_FACTORY_HPP

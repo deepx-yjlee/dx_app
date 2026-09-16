@@ -1,6 +1,6 @@
 /**
  * @file yolopv2_factory.hpp
- * @brief YOLOPv2Factory: panoptic driving perception
+ * @brief Yolopv2Factory: panoptic driving perception
  *        (vehicle detection + drivable area + lane line)
  *
  * Outputs:
@@ -28,6 +28,9 @@
 #include "common/config/model_config.hpp"
 #include "common/processors/letterbox_preprocessor.hpp"
 #include "yolopv2_postprocess.h"
+
+#include <string>
+#include <utility>
 
 namespace dxapp {
 
@@ -186,9 +189,14 @@ class YOLOPv2Visualizer : public IVisualizer<DetectionResult> {
 // ---------------------------------------------------------------------------
 // Factory
 // ---------------------------------------------------------------------------
-class YOLOPv2Factory : public IPanopticDrivingFactory {
+class Yolopv2Factory : public IPanopticDrivingFactory {
    public:
-    YOLOPv2Factory(float conf_threshold = 0.25f, float nms_threshold = 0.45f)
+    /// The variant (a .dxnn stem) this factory should build for.
+    /// Empty means the family default. Set from main(), which
+    /// is the only place that sees argv.
+    explicit Yolopv2Factory(std::string variant) : variant_(std::move(variant)) {}
+
+    Yolopv2Factory(float conf_threshold = 0.25f, float nms_threshold = 0.45f)
         : conf_threshold_(conf_threshold),
           nms_threshold_(nms_threshold),
           state_(std::make_shared<YOLOPv2State>()) {}
@@ -219,6 +227,9 @@ class YOLOPv2Factory : public IPanopticDrivingFactory {
     float conf_threshold_;
     float nms_threshold_;
     std::shared_ptr<YOLOPv2State> state_;
+
+private:
+    std::string variant_;
 };
 
 }  // namespace dxapp

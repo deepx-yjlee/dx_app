@@ -181,28 +181,29 @@ endfunction()
 # =============================================================================
 # Single-model categories (each subdir = one model with {model}_sync.cpp / _async.cpp)
 set(CATEGORIES
-    object_detection
-    classification
-    semantic_segmentation
-    instance_segmentation
-    depth_estimation
-    image_denoising
-    face_detection
-    pose_estimation
-    obb_detection
-    embedding
-    super_resolution
-    image_enhancement
-    ppu
-    face_alignment
-    hand_landmark
-    hand_detection
-    attribute_recognition
-    reid
-    object_pose_estimation
     3d_object_detection
+    depth_estimation
+    face_attribute
+    face_detection
+    face_landmark
+    face_recognition
+    hand_detection
+    hand_landmark
+    image_classification
+    image_denoising
+    instance_segmentation
     keypoint_detection
+    low_light_enhancement
+    object_detection
+    object_pose_estimation
+    oriented_object_detection
     panoptic_driving_perception
+    person_attribute
+    pose_estimation
+    semantic_segmentation
+    super_resolution
+    zero_shot_image_classification
+    zero_shot_instance_segmentation
 )
 
 foreach(CATEGORY ${CATEGORIES})

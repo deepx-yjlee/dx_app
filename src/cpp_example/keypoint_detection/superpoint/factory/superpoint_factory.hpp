@@ -1,6 +1,6 @@
 /**
  * @file superpoint_factory.hpp
- * @brief SuperPointFactory: self-supervised interest point detector and descriptor
+ * @brief SuperpointFactory: self-supervised interest point detector and descriptor
  *
  * Input:  UINT8 [1, 480, 640, 1] — grayscale
  * Outputs:
@@ -20,6 +20,9 @@
 #include "common/config/model_config.hpp"
 #include "superpoint_postprocess.h"
 #include "superpoint_tracker.hpp"
+
+#include <string>
+#include <utility>
 
 namespace dxapp {
 
@@ -151,9 +154,14 @@ private:
     int min_track_length_;
 };
 
-class SuperPointFactory : public IPoseFactory {
+class SuperpointFactory : public IPoseFactory {
 public:
-    SuperPointFactory(float conf_threshold = 0.015f, int top_k = 500,
+    /// The variant (a .dxnn stem) this factory should build for.
+    /// Empty means the family default. Set from main(), which
+    /// is the only place that sees argv.
+    explicit SuperpointFactory(std::string variant) : variant_(std::move(variant)) {}
+
+    SuperpointFactory(float conf_threshold = 0.015f, int top_k = 500,
                       float nn_thresh = 0.7f, int track_max_length = 5,
                       int min_track_length = 2, float max_pixel_dist = 100.f,
                       float ratio_thresh = 0.75f)
@@ -205,6 +213,7 @@ public:
     std::string getTaskType() const override { return "keypoint_detection"; }
 
 private:
+    std::string variant_;
     float conf_threshold_;
     int top_k_;
     float nn_thresh_;

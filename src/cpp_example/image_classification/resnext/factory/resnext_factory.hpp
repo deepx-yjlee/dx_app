@@ -1,0 +1,77 @@
+/**
+ * @file resnext_factory.hpp
+ * @brief ResnextFactory Abstract Factory implementation
+ */
+
+#ifndef RESNEXT_FACTORY_HPP
+#define RESNEXT_FACTORY_HPP
+
+#include "common/base/i_factory.hpp"
+#include "common/processors/simple_resize_preprocessor.hpp"
+#include "common/processors/classification_postprocessor.hpp"
+#include "common/visualizers/classification_visualizer.hpp"
+#include "common/config/model_config.hpp"
+
+// Includes required by bodies spliced in from sibling variants.
+#include "common/processors/letterbox_preprocessor.hpp"
+
+#include <string>
+#include <utility>
+
+namespace dxapp {
+
+class ResnextFactory : public IClassificationFactory {
+public:
+    /// The variant (a .dxnn stem) this factory should build for.
+    /// Empty means the family default. Set from main(), which
+    /// is the only place that sees argv.
+    explicit ResnextFactory(std::string variant) : variant_(std::move(variant)) {}
+
+    ResnextFactory(int num_classes = 1000, int top_k = 5)
+        : num_classes_(num_classes), top_k_(top_k) {}
+
+    PreprocessorPtr createPreprocessor(int input_width, int input_height) override {
+        // Variant dispatch: these variants' ORIGINAL bodies are
+        // spliced verbatim, so no behaviour is re-derived.
+        if (variant_ == "resnext101-64x4d_224x224") {
+        return std::make_unique<DetectionPreprocessor>(input_width, input_height);
+            }
+        if (variant_ == "resnext26-32x4d_224x224") {
+        return std::make_unique<DetectionPreprocessor>(input_width, input_height);
+            }
+        if (variant_ == "resnext50-32x4d_224x224") {
+        return std::make_unique<DetectionPreprocessor>(input_width, input_height);
+            }
+        if (variant_ == "resnext50-32x4d_224x224_imgclsmob") {
+        return std::make_unique<DetectionPreprocessor>(input_width, input_height);
+            }
+        // default: resnext101-32x8d_224x224
+        return std::make_unique<SimpleResizePreprocessor>(input_width, input_height);
+    }
+
+    PostprocessorPtr<ClassificationResult> createPostprocessor(
+        int input_width, int input_height) override {
+        return std::make_unique<EfficientNetPostprocessor>(num_classes_, top_k_);
+    }
+
+    VisualizerPtr<ClassificationResult> createVisualizer() override {
+        return std::make_unique<ClassificationResultVisualizer>();
+    }
+
+    void loadConfig(const dxapp::ModelConfig& config) override {
+        num_classes_ = config.get<int>("num_classes", num_classes_);
+        top_k_ = config.get<int>("top_k", top_k_);
+    }
+
+    std::string getModelName() const override { return "Resnext101 32X8D"; }
+    std::string getTaskType() const override { return "classification"; }
+
+private:
+    std::string variant_;
+    int num_classes_;
+    int top_k_;
+};
+
+}  // namespace dxapp
+
+#endif  // RESNEXT_FACTORY_HPP

@@ -16,10 +16,18 @@
 #include "common/visualizers/face_visualizer.hpp"
 #include "common/config/model_config.hpp"
 
+#include <string>
+#include <utility>
+
 namespace dxapp {
 
 class MediapipeHandDetectorFactory : public IFaceDetectionFactory {
 public:
+    /// The variant (a .dxnn stem) this factory should build for.
+    /// Empty means the family default. Set from main(), which
+    /// is the only place that sees argv.
+    explicit MediapipeHandDetectorFactory(std::string variant) : variant_(std::move(variant)) {}
+
     MediapipeHandDetectorFactory(float score_threshold = 0.5f, float nms_threshold = 0.3f)
         : score_threshold_(score_threshold), nms_threshold_(nms_threshold) {}
 
@@ -48,6 +56,7 @@ public:
     std::string getTaskType() const override { return "hand_detection"; }
 
 private:
+    std::string variant_;
     float score_threshold_;
     float nms_threshold_;
 };
