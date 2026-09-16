@@ -23,7 +23,7 @@ REGISTRY = PROJECT_ROOT / "config" / "model_registry.json"
 SNAPSHOT = PROJECT_ROOT / "tests" / "data" / "modelzoo_cv_tree.json"
 
 NEW_FIELDS = ("variant", "family", "task", "task_legacy", "image_only",
-              "zoo_canonical", "duplicate_of")
+              "zoo_canonical", "alias_of")
 
 # model_name -> (variant, task, family). The ONLY entries allowed to miss the
 # dx-modelzoo snapshot. See the spec's "Documented exceptions" table.
@@ -33,18 +33,35 @@ EXCEPTIONS: dict[str, tuple[str, str, str]] = {
     "yolov5pose_ppu":         ("YOLOV5Pose_PPU",             "pose_estimation",      "yolov5_pose"),
 }
 
-# Entries that duplicate another entry's model rather than naming a distinct one.
+# RETENTION POLICY: a conflicting example is KEPT, never deleted.
+#
+# When two entries land on the same variant, the non-canonical one becomes an
+# *alias*: it keeps its own model_name as the legacy compat key and shares the
+# canonical entry's variant/family/task/dxnn_file. It is NOT slated for removal
+# at any phase -- the alignment renames and regroups examples, it does not
+# delete them.
+#
 # ``deit_base384_distilled`` is byte-identical to ``deitbase384`` apart from
-# model_name and points at the NON-distilled deit-b_384x384.dxnn -- the name is
-# wrong. The real distilled 384 model is the variant deit-b_384x384_distilled,
-# which resolves from the snapshot with no exception needed.
-# Phase 0 marks these; Phase 2 removes them with their example directories.
-DUPLICATES: dict[str, str] = {
+# model_name and points at the NON-distilled deit-b_384x384.dxnn, so its name is
+# misleading; the genuine distilled 384 model is the variant
+# deit-b_384x384_distilled, which resolves from the snapshot with no exception.
+# The misleading name is kept anyway, because dropping it would drop a working
+# example.
+#
+# alias model_name -> canonical model_name it aliases.
+ALIASES: dict[str, str] = {
     "deit_base384_distilled": "deitbase384",
 }
 
 # In the snapshot but intentionally not in dx_app: no example, not on disk.
 SNAPSHOT_GAPS = {"efficientnet-lite0_224x224"}
+
+# Field names the migration wrote in an earlier revision and must no longer emit.
+# The migration rebuilds each entry by dropping the fields it is about to rewrite,
+# so a RENAMED field silently survives from a previous run unless it is stripped
+# explicitly -- that actually happened when duplicate_of became alias_of, leaving
+# all 353 entries carrying both spellings.
+RETIRED_FIELDS = ("duplicate_of",)
 
 
 def _snake(family: str) -> str:
@@ -71,17 +88,38 @@ def test_every_entry_has_the_new_fields(registry):
     assert not missing, f"entries missing dx-modelzoo fields: {missing}"
 
 
-def test_variant_is_unique_among_canonical_entries(registry):
-    """Every non-duplicate entry owns its variant outright.
+def test_no_retired_field_survives_a_rerun(registry):
+    """A renamed field must be gone, not carried over from an earlier migration."""
+    counts = {f: sum(1 for e in registry if f in e) for f in RETIRED_FIELDS}
+    survivors = {f: n for f, n in counts.items() if n}
+    assert not survivors, (
+        f"retired field(s) still present in the registry: {survivors} -- "
+        "add them to RETIRED_FIELDS in scripts/migrate_registry_modelzoo.py"
+    )
 
-    Entries listed in DUPLICATES deliberately share another entry's variant --
-    they are redundant examples awaiting removal in Phase 2 -- so they are
-    excluded here rather than being given a synthetic variant name.
+
+def test_entry_key_set_is_exactly_the_expected_fields(registry):
+    """Pin the full key set so neither a stale nor a stray field goes unnoticed."""
+    expected = {
+        "model_name", "dxnn_file", "original_name", "csv_task", "add_model_task",
+        "postprocessor", "input_width", "input_height", "config", "source", "supported",
+        *NEW_FIELDS,
+    }
+    bad = {e["model_name"]: sorted(set(e) ^ expected) for e in registry if set(e) != expected}
+    assert not bad, f"unexpected key set (symmetric difference shown): {bad}"
+
+
+def test_variant_is_unique_among_canonical_entries(registry):
+    """Every non-alias entry owns its variant outright.
+
+    Entries listed in ALIASES deliberately share another entry's variant. They
+    are retained examples, not pending deletions, so they are excluded here
+    rather than being given a synthetic variant name that no .dxnn backs.
     """
     seen: dict[str, str] = {}
     dupes: list[tuple[str, str, str]] = []
     for e in registry:
-        if e["duplicate_of"] is not None:
+        if e["alias_of"] is not None:
             continue
         v = e["variant"]
         if v in seen:
@@ -90,26 +128,48 @@ def test_variant_is_unique_among_canonical_entries(registry):
     assert not dupes, f"duplicate variant keys among canonical entries: {dupes}"
 
 
-def test_duplicate_entries_are_declared_and_consistent(registry):
-    """A duplicate must point at a real entry and carry that entry's identity."""
+def test_alias_entries_are_declared_and_consistent(registry):
+    """An alias must point at a real entry and carry that entry's identity."""
     by_name = {e["model_name"]: e for e in registry}
-    declared = {e["model_name"]: e["duplicate_of"]
-                for e in registry if e["duplicate_of"] is not None}
-    assert declared == DUPLICATES, (
-        f"duplicate_of markers are {declared}, DUPLICATES declares {DUPLICATES}"
+    declared = {e["model_name"]: e["alias_of"]
+                for e in registry if e["alias_of"] is not None}
+    assert declared == ALIASES, (
+        f"alias_of markers are {declared}, ALIASES declares {ALIASES}"
     )
-    for name, target_name in DUPLICATES.items():
-        dup, target = by_name.get(name), by_name.get(target_name)
-        assert dup is not None, f"DUPLICATES lists {name}, not in the registry"
-        assert target is not None, f"{name} duplicates {target_name}, not in the registry"
-        assert dup["dxnn_file"] == target["dxnn_file"], (
-            f"{name} claims to duplicate {target_name} but the .dxnn differs: "
-            f"{dup['dxnn_file']} vs {target['dxnn_file']}"
+    for name, target_name in ALIASES.items():
+        alias, target = by_name.get(name), by_name.get(target_name)
+        assert alias is not None, f"ALIASES lists {name}, not in the registry"
+        assert target is not None, f"{name} aliases {target_name}, not in the registry"
+        assert target["alias_of"] is None, (
+            f"{name} aliases {target_name}, which is itself an alias -- no alias chains"
+        )
+        assert alias["dxnn_file"] == target["dxnn_file"], (
+            f"{name} claims to alias {target_name} but the .dxnn differs: "
+            f"{alias['dxnn_file']} vs {target['dxnn_file']}"
         )
         for field in ("variant", "family", "task"):
-            assert dup[field] == target[field], (
-                f"{name}.{field}={dup[field]!r} must match {target_name}.{field}={target[field]!r}"
+            assert alias[field] == target[field], (
+                f"{name}.{field}={alias[field]!r} must match {target_name}.{field}={target[field]!r}"
             )
+
+
+def test_alias_entries_are_retained_not_deleted(registry):
+    """Retention must be real, not just a label.
+
+    The alignment regroups and renames examples; it never deletes them. An alias
+    therefore has to still be a *runnable* example today: the registry entry is
+    present and its example directory exists in BOTH trees. If a later phase ever
+    removes one, this test is what catches it.
+    """
+    by_name = {e["model_name"]: e for e in registry}
+    for name in ALIASES:
+        entry = by_name.get(name)
+        assert entry is not None, f"alias {name} was dropped from the registry"
+        legacy_task = entry["task_legacy"]
+        for tree in ("python_example", "cpp_example"):
+            d = PROJECT_ROOT / "src" / tree / legacy_task / name
+            assert d.is_dir(), f"alias {name}: example dir missing -> {d}"
+            assert any(d.iterdir()), f"alias {name}: example dir is empty -> {d}"
 
 
 def test_the_real_distilled_384_model_owns_its_dxnn_stem(registry):
@@ -127,7 +187,7 @@ def test_the_real_distilled_384_model_owns_its_dxnn_stem(registry):
         f"{owner['model_name']} must carry variant 'deit-b_384x384_distilled', "
         f"got {owner['variant']!r}"
     )
-    assert owner["duplicate_of"] is None, "the genuine distilled model is not a duplicate"
+    assert owner["alias_of"] is None, "the genuine distilled model is not an alias"
 
 
 def test_variant_matches_dxnn_stem_except_documented(registry):
@@ -136,7 +196,7 @@ def test_variant_matches_dxnn_stem_except_documented(registry):
         for e in registry
         if e["variant"] != e["dxnn_file"][: -len(".dxnn")]
         and e["model_name"] not in EXCEPTIONS
-        and e["model_name"] not in DUPLICATES
+        and e["model_name"] not in ALIASES
     ]
     assert not bad, f"variant != dxnn stem outside EXCEPTIONS: {bad}"
 

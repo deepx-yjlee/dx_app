@@ -10,11 +10,13 @@ Adds six fields per entry, joining tests/data/modelzoo_cv_tree.json by dxnn stem
     task_legacy    the pre-alignment add_model_task value, preserved verbatim
     image_only     per-variant replacement for the task-keyed _IMAGE_ONLY_TASKS
     zoo_canonical  True iff the variant exists in the dx-modelzoo snapshot
-    duplicate_of   model_name this entry duplicates, else None
+    alias_of       model_name this entry aliases, else None
 
-Phase 0 is additive only: it never drops an entry, because the example trees
-still contain a directory per entry. The single redundant entry is *marked*
-via duplicate_of and actually removed in Phase 2, where the trees restructure.
+RETENTION POLICY: a conflicting example is KEPT, never deleted. When two entries
+land on the same variant, the non-canonical one becomes an *alias*: it keeps its
+own model_name as the legacy compat key and shares the canonical entry's
+variant/family/task/dxnn_file. No phase of this alignment removes it -- the work
+renames and regroups examples, it does not delete them.
 
 Existing fields are left untouched and key order is preserved, so the diff shows
 only additions. Idempotent: re-running overwrites the six fields with the same
@@ -41,13 +43,15 @@ EXCEPTIONS: dict[str, tuple[str, str, str]] = {
     "yolov5pose_ppu":         ("YOLOV5Pose_PPU",             "pose_estimation",      "yolov5_pose"),
 }
 
-# Entries that duplicate another entry's model: same dxnn, no distinct variant.
+# Entries that share another entry's model: same dxnn, no distinct variant.
 # ``deit_base384_distilled`` is byte-identical to ``deitbase384`` apart from
-# model_name and points at the NON-distilled deit-b_384x384.dxnn -- its name is
-# simply wrong. The real distilled 384 model is ``deit-b_384x384_distilled``,
+# model_name and points at the NON-distilled deit-b_384x384.dxnn, so its name is
+# misleading -- the genuine distilled 384 model is ``deit-b_384x384_distilled``,
 # already owned by the entry whose dxnn_file is deit-b_384x384_distilled.dxnn.
-# duplicate -> the model_name it duplicates.
-DUPLICATES: dict[str, str] = {
+# The misleading name is retained regardless: dropping it would drop a working
+# example, and this alignment does not delete examples.
+# alias model_name -> the canonical model_name it aliases.
+ALIASES: dict[str, str] = {
     "deit_base384_distilled": "deitbase384",
 }
 
@@ -59,7 +63,13 @@ IMAGE_ONLY_LEGACY_TASKS = {
 }
 
 NEW_FIELDS = ("variant", "family", "task", "task_legacy", "image_only",
-              "zoo_canonical", "duplicate_of")
+              "zoo_canonical", "alias_of")
+
+# Fields this script wrote in an earlier revision and no longer emits. They must be
+# stripped explicitly: the rebuild below drops only NEW_FIELDS before re-adding them,
+# so a renamed field would otherwise survive from a previous run and the registry
+# would carry both spellings. ``duplicate_of`` was the pre-rev-3 name for ``alias_of``.
+RETIRED_FIELDS = ("duplicate_of",)
 
 
 def _snake(family: str) -> str:
@@ -69,7 +79,7 @@ def _snake(family: str) -> str:
 def migrate(registry: list[dict], snapshot: dict[str, dict]) -> tuple[list[dict], dict]:
     out: list[dict] = []
     stats = {"from_snapshot": 0, "from_exceptions": 0, "image_only": 0,
-             "duplicates": 0, "unresolved": []}
+             "aliases": 0, "unresolved": []}
 
     for entry in registry:
         name = entry["model_name"]
@@ -92,11 +102,13 @@ def migrate(registry: list[dict], snapshot: dict[str, dict]) -> tuple[list[dict]
         image_only = entry["add_model_task"] in IMAGE_ONLY_LEGACY_TASKS
         if image_only:
             stats["image_only"] += 1
-        if name in DUPLICATES:
-            stats["duplicates"] += 1
+        if name in ALIASES:
+            stats["aliases"] += 1
 
-        # Rebuild so the six new fields land after the existing ones in a stable order.
-        merged = {k: v for k, v in entry.items() if k not in NEW_FIELDS}
+        # Rebuild so the new fields land after the existing ones in a stable order,
+        # dropping both the fields we are about to rewrite and any retired spelling.
+        _drop = set(NEW_FIELDS) | set(RETIRED_FIELDS)
+        merged = {k: v for k, v in entry.items() if k not in _drop}
         merged.update(
             variant=variant,
             family=family,
@@ -104,7 +116,7 @@ def migrate(registry: list[dict], snapshot: dict[str, dict]) -> tuple[list[dict]
             task_legacy=entry["add_model_task"],
             image_only=image_only,
             zoo_canonical=canonical,
-            duplicate_of=DUPLICATES.get(name),
+            alias_of=ALIASES.get(name),
         )
         out.append(merged)
 
@@ -130,10 +142,10 @@ def main() -> None:
 
     print(f"entries={len(migrated)} from_snapshot={stats['from_snapshot']} "
           f"from_exceptions={stats['from_exceptions']} image_only={stats['image_only']} "
-          f"duplicates={stats['duplicates']}")
+          f"aliases={stats['aliases']}")
     tasks = {e["task"] for e in migrated}
     families = {(e["task"], e["family"]) for e in migrated}
-    canonical = [e for e in migrated if e["duplicate_of"] is None]
+    canonical = [e for e in migrated if e["alias_of"] is None]
     print(f"tasks={len(tasks)} families={len(families)} "
           f"canonical_variants={len({e['variant'] for e in canonical})}/{len(canonical)}")
 

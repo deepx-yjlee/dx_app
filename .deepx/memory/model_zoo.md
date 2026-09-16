@@ -180,7 +180,7 @@ mapping, joined from a committed snapshot of the dx-modelzoo CV tree.
 | `task_legacy` | Pre-alignment `add_model_task`, preserved for migration. |
 | `image_only` | Per-variant replacement for the task-keyed `_IMAGE_ONLY_TASKS`. 17 variants. |
 | `zoo_canonical` | `false` for the entries absent from DX Model Zoo q-lite `2_4_0`. |
-| `duplicate_of` | Set when an entry duplicates another entry's model instead of naming a distinct one. |
+| `alias_of` | Set when an entry shares another entry's variant. Alias entries are **retained, never deleted**. |
 
 - Snapshot: `tests/data/modelzoo_cv_tree.json` — refresh with
   `python scripts/harvest_modelzoo_tree.py`. Migration: `scripts/migrate_registry_modelzoo.py`.
@@ -189,8 +189,14 @@ mapping, joined from a committed snapshot of the dx-modelzoo CV tree.
   a best-effort heuristic yields 211 families against the authoritative 89.
 - **`variant` follows the `.dxnn`, never the legacy example-dir name.**
   `deit_base_distilled_2` owns variant `deit-b_384x384_distilled`;
-  `deit_base384_distilled` is `duplicate_of: deitbase384` — it is byte-identical
+  `deit_base384_distilled` is `alias_of: deitbase384` — it is byte-identical
   to that entry apart from `model_name` and points at the NON-distilled
-  `deit-b_384x384.dxnn`, so its name is simply wrong.
+  `deit-b_384x384.dxnn`, so its name is misleading.
+- **RETENTION POLICY — conflicting examples are kept, never deleted.** The
+  alignment renames and regroups; it does not remove examples. An alias keeps its
+  own `model_name` as the legacy compat key and shares the canonical entry's
+  `variant`/`family`/`task`/`dxnn_file`. Conflict scope across 353 entries is
+  exactly 1 (`deit-b_384x384.dxnn`). Differing `config` within a family (14 of 89)
+  is NOT a conflict — each variant keeps its own `variants/<stem>.json`.
 - Guarded by `tests/python_example/unit/test_registry_modelzoo_conformance.py`
   and `test_registry_image_only.py`.

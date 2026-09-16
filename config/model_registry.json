@@ -19,7 +19,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "arcface_mobilefacenet",
@@ -39,7 +39,7 @@
     "task_legacy": "embedding",
     "image_only": true,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "bisenetv1",
@@ -59,7 +59,7 @@
     "task_legacy": "semantic_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "bisenetv2",
@@ -79,7 +79,7 @@
     "task_legacy": "semantic_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "damoyolo_tinynasl20_t",
@@ -102,7 +102,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "damoyolo_tinynasl20_m",
@@ -125,7 +125,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "damoyolo_tinynasl25_s",
@@ -148,7 +148,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "damoyolol",
@@ -171,7 +171,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "damoyolom",
@@ -194,7 +194,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "damoyolos",
@@ -217,7 +217,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "damoyolot",
@@ -240,7 +240,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "deeplabv3plusmobilenet",
@@ -260,7 +260,7 @@
     "task_legacy": "semantic_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "densenet121",
@@ -282,7 +282,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "densenet161",
@@ -304,7 +304,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "dncnn_15",
@@ -324,7 +324,7 @@
     "task_legacy": "image_denoising",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "dncnn_25",
@@ -344,7 +344,7 @@
     "task_legacy": "image_denoising",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "dncnn_50",
@@ -364,7 +364,7 @@
     "task_legacy": "image_denoising",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "efficientnet_lite0",
@@ -386,7 +386,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": false,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "efficientnet_lite1",
@@ -408,7 +408,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "efficientnet_lite2",
@@ -430,7 +430,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "efficientnet_lite3",
@@ -452,7 +452,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "efficientnet_lite4",
@@ -474,7 +474,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "efficientnetb2",
@@ -496,7 +496,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "espcn_x4",
@@ -516,7 +516,7 @@
     "task_legacy": "super_resolution",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "fastdepth_1",
@@ -536,7 +536,7 @@
     "task_legacy": "depth_estimation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "handlandmarklite_1",
@@ -558,7 +558,7 @@
     "task_legacy": "hand_landmark",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "hardnet39ds",
@@ -580,7 +580,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "hardnet68",
@@ -602,7 +602,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "inceptionv1",
@@ -624,7 +624,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "mobilenetv1",
@@ -646,7 +646,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "mobilenetv2",
@@ -668,7 +668,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "mobilenetv3large",
@@ -690,7 +690,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "nanodet_repvgg",
@@ -713,7 +713,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "nanodet_repvgga1",
@@ -736,7 +736,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "regnetx400mf",
@@ -758,7 +758,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "regnetx800mf",
@@ -780,7 +780,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "regnety200mf",
@@ -802,7 +802,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "regnety400mf",
@@ -824,7 +824,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "regnety800mf",
@@ -846,7 +846,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "resnet101",
@@ -868,7 +868,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "resnet18",
@@ -890,7 +890,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "resnet34",
@@ -912,7 +912,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "resnet50",
@@ -934,7 +934,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "resnext26_32x4d",
@@ -956,7 +956,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "resnext50_32x4d",
@@ -978,7 +978,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "retinaface_mobilenet0_25_640",
@@ -1001,7 +1001,7 @@
     "task_legacy": "face_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "scrfd10g",
@@ -1024,7 +1024,7 @@
     "task_legacy": "face_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "scrfd2_5g",
@@ -1048,7 +1048,7 @@
     "task_legacy": "face_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "scrfd500m",
@@ -1072,7 +1072,7 @@
     "task_legacy": "face_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "segformer_b0_512x1024",
@@ -1092,7 +1092,7 @@
     "task_legacy": "semantic_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "squeezenet1_0",
@@ -1114,7 +1114,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "squeezenet1_1",
@@ -1136,7 +1136,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "ssdmv1",
@@ -1159,7 +1159,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "ssdmv2lite",
@@ -1182,7 +1182,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "vgg11",
@@ -1204,7 +1204,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "vgg11bn",
@@ -1226,7 +1226,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "vgg13",
@@ -1248,7 +1248,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "vgg13bn",
@@ -1270,7 +1270,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "vgg19bn",
@@ -1292,7 +1292,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "wideresnet101_2",
@@ -1314,7 +1314,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "wideresnet50_2",
@@ -1336,7 +1336,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolact_regnetx_800mf",
@@ -1356,7 +1356,7 @@
     "task_legacy": "instance_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo26l",
@@ -1379,7 +1379,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo26m",
@@ -1402,7 +1402,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo26n",
@@ -1425,7 +1425,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo26n_obb",
@@ -1447,7 +1447,7 @@
     "task_legacy": "obb_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo26s",
@@ -1470,7 +1470,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo26x",
@@ -1493,7 +1493,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov10b",
@@ -1516,7 +1516,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov10l",
@@ -1539,7 +1539,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov10m",
@@ -1562,7 +1562,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov10n",
@@ -1585,7 +1585,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov10s",
@@ -1608,7 +1608,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov10x",
@@ -1631,7 +1631,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov11l",
@@ -1654,7 +1654,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov11m",
@@ -1677,7 +1677,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov11n",
@@ -1700,7 +1700,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov11s",
@@ -1723,7 +1723,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov11x",
@@ -1746,7 +1746,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov3",
@@ -1769,7 +1769,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov5l",
@@ -1792,7 +1792,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov5l_seg",
@@ -1816,7 +1816,7 @@
     "task_legacy": "instance_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov5m",
@@ -1840,7 +1840,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov5m_6_1",
@@ -1864,7 +1864,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov5m_face",
@@ -1888,7 +1888,7 @@
     "task_legacy": "face_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov5m_seg",
@@ -1912,7 +1912,7 @@
     "task_legacy": "instance_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov5n",
@@ -1936,7 +1936,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov5n_seg",
@@ -1960,7 +1960,7 @@
     "task_legacy": "instance_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov5s",
@@ -1984,7 +1984,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov5s_face",
@@ -2008,7 +2008,7 @@
     "task_legacy": "face_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov5s_ppu",
@@ -2031,7 +2031,7 @@
     "task_legacy": "ppu",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov5s_seg",
@@ -2055,7 +2055,7 @@
     "task_legacy": "instance_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov6n_0_1_0",
@@ -2079,7 +2079,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov6n_0_2_1",
@@ -2103,7 +2103,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov7",
@@ -2127,7 +2127,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov7_face",
@@ -2151,7 +2151,7 @@
     "task_legacy": "face_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov7_ppu",
@@ -2174,7 +2174,7 @@
     "task_legacy": "ppu",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov7_w6",
@@ -2198,7 +2198,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov7_w6_face",
@@ -2222,7 +2222,7 @@
     "task_legacy": "face_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov7_w6_tta_face",
@@ -2246,7 +2246,7 @@
     "task_legacy": "face_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov7e6",
@@ -2270,7 +2270,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov7s_face",
@@ -2294,7 +2294,7 @@
     "task_legacy": "face_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov7tiny",
@@ -2318,7 +2318,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov8l",
@@ -2341,7 +2341,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov8m",
@@ -2364,7 +2364,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov8m_pose",
@@ -2388,7 +2388,7 @@
     "task_legacy": "pose_estimation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov8m_seg",
@@ -2412,7 +2412,7 @@
     "task_legacy": "instance_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov8n",
@@ -2435,7 +2435,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov8n_seg",
@@ -2459,7 +2459,7 @@
     "task_legacy": "instance_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov8s",
@@ -2482,7 +2482,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov8s_pose",
@@ -2506,7 +2506,7 @@
     "task_legacy": "pose_estimation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov8x",
@@ -2529,7 +2529,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov8n_ppu",
@@ -2553,7 +2553,7 @@
     "task_legacy": "ppu",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov8s_ppu",
@@ -2577,7 +2577,7 @@
     "task_legacy": "ppu",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov9t_ppu",
@@ -2601,7 +2601,7 @@
     "task_legacy": "ppu",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov10n_ppu",
@@ -2625,7 +2625,7 @@
     "task_legacy": "ppu",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov11n_ppu",
@@ -2649,7 +2649,7 @@
     "task_legacy": "ppu",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov12n_ppu",
@@ -2673,7 +2673,7 @@
     "task_legacy": "ppu",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov7x_ppu",
@@ -2697,7 +2697,7 @@
     "task_legacy": "ppu",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "scrfd500m_ppu",
@@ -2720,7 +2720,7 @@
     "task_legacy": "ppu",
     "image_only": false,
     "zoo_canonical": false,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov5pose_ppu",
@@ -2744,7 +2744,7 @@
     "task_legacy": "ppu",
     "image_only": false,
     "zoo_canonical": false,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov9c",
@@ -2767,7 +2767,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov9s",
@@ -2790,7 +2790,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov9t",
@@ -2813,7 +2813,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolox_l_leaky",
@@ -2837,7 +2837,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolox_s_leaky",
@@ -2861,7 +2861,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolox_s_wide_leaky",
@@ -2885,7 +2885,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yoloxs",
@@ -2909,7 +2909,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yoloxtiny",
@@ -2933,7 +2933,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "zero_dce",
@@ -2953,7 +2953,7 @@
     "task_legacy": "image_enhancement",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "efficientnetv2s",
@@ -2975,7 +2975,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov8s_seg",
@@ -2998,7 +2998,7 @@
     "task_legacy": "instance_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "deepmar_resnet50",
@@ -3018,7 +3018,7 @@
     "task_legacy": "attribute_recognition",
     "image_only": true,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "casvit_t",
@@ -3038,7 +3038,7 @@
     "task_legacy": "reid",
     "image_only": true,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "scdepthv3",
@@ -3058,7 +3058,7 @@
     "task_legacy": "depth_estimation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "3ddfa_v2_mobilnet0_5_120x120",
@@ -3078,7 +3078,7 @@
     "task_legacy": "face_alignment",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "3ddfa_v2_mobilnetv1_120x120",
@@ -3098,7 +3098,7 @@
     "task_legacy": "face_alignment",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "arcface_iresnet100_ms1m",
@@ -3118,7 +3118,7 @@
     "task_legacy": "embedding",
     "image_only": true,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "arcface_iresnet50_ms1m",
@@ -3138,7 +3138,7 @@
     "task_legacy": "embedding",
     "image_only": true,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "arcface_r50",
@@ -3158,7 +3158,7 @@
     "task_legacy": "embedding",
     "image_only": true,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "casvit_m",
@@ -3178,7 +3178,7 @@
     "task_legacy": "reid",
     "image_only": true,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "centerpose_regnetx_1_6gf_fpn",
@@ -3200,7 +3200,7 @@
     "task_legacy": "pose_estimation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "centerpose_regnetx_800mf",
@@ -3222,7 +3222,7 @@
     "task_legacy": "pose_estimation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "centerpose_repvgg_a0",
@@ -3244,7 +3244,7 @@
     "task_legacy": "pose_estimation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "deeplabv3mobilenetv2",
@@ -3264,7 +3264,7 @@
     "task_legacy": "semantic_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "deeplabv3plusmobilenetv2",
@@ -3284,7 +3284,7 @@
     "task_legacy": "semantic_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "deepmar_resnet18_person_attr_resnet_v1_18",
@@ -3304,7 +3304,7 @@
     "task_legacy": "attribute_recognition",
     "image_only": true,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "deitbase384",
@@ -3326,7 +3326,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "deit_base384_distilled",
@@ -3348,7 +3348,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": "deitbase384"
+    "alias_of": "deitbase384"
   },
   {
     "model_name": "densenet169",
@@ -3370,7 +3370,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "densenet201",
@@ -3392,7 +3392,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "dncnn_color_blind",
@@ -3412,7 +3412,7 @@
     "task_legacy": "image_denoising",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "dncnn_gray_blind",
@@ -3432,7 +3432,7 @@
     "task_legacy": "image_denoising",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "efficientdetd1",
@@ -3455,7 +3455,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "efficientdetd2",
@@ -3478,7 +3478,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "efficientdetd4",
@@ -3501,7 +3501,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "efficientformer_l3",
@@ -3523,7 +3523,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "efficientformer_l7",
@@ -3545,7 +3545,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "efficientformerv2_l",
@@ -3567,7 +3567,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "efficientnetb3",
@@ -3589,7 +3589,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "efficientnetb4",
@@ -3611,7 +3611,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "efficientnetb5",
@@ -3633,7 +3633,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "efficientnetb6",
@@ -3655,7 +3655,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "efficientnetv2l",
@@ -3677,7 +3677,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "espcn_x3",
@@ -3697,7 +3697,7 @@
     "task_legacy": "super_resolution",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "face_attr_resnet_v1_18",
@@ -3717,7 +3717,7 @@
     "task_legacy": "attribute_recognition",
     "image_only": true,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "fastsam_s",
@@ -3740,7 +3740,7 @@
     "task_legacy": "instance_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "levit128",
@@ -3762,7 +3762,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "levit192",
@@ -3784,7 +3784,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "levit256",
@@ -3806,7 +3806,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "levit384",
@@ -3828,7 +3828,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "mnasnet0_5",
@@ -3850,7 +3850,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "mnasnet0_75",
@@ -3872,7 +3872,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "mnasnet1_0",
@@ -3894,7 +3894,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "mnasnet1_3",
@@ -3916,7 +3916,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "nanodet_repvgga12",
@@ -3939,7 +3939,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "nanodetplusm",
@@ -3962,7 +3962,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "nanodetplusm_15",
@@ -3985,7 +3985,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "regnetx16gf",
@@ -4007,7 +4007,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "regnetx1_6gf",
@@ -4029,7 +4029,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "regnetx32gf",
@@ -4051,7 +4051,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "regnetx3_2gf",
@@ -4073,7 +4073,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "regnetx8gf",
@@ -4095,7 +4095,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "regnety16gf",
@@ -4117,7 +4117,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "regnety1_6gf",
@@ -4139,7 +4139,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "regnety32gf",
@@ -4161,7 +4161,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "regnety3_2gf",
@@ -4183,7 +4183,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "regnety8gf",
@@ -4205,7 +4205,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "resnet152",
@@ -4227,7 +4227,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "resnext101_64x4d",
@@ -4249,7 +4249,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "shufflenetv1x1_0",
@@ -4271,7 +4271,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "shufflenetv2x0_5",
@@ -4293,7 +4293,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "shufflenetv2x1_0",
@@ -4315,7 +4315,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "shufflenetv2x1_5",
@@ -4337,7 +4337,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "shufflenetv2x2_0",
@@ -4359,7 +4359,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "ssdvgg16",
@@ -4382,7 +4382,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "ulfgfd_rfb_320",
@@ -4405,7 +4405,7 @@
     "task_legacy": "face_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "ulfgfd_rfb_320_without_postprocessing",
@@ -4428,7 +4428,7 @@
     "task_legacy": "face_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "ulfgfd_rfb_640",
@@ -4451,7 +4451,7 @@
     "task_legacy": "face_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "ulfgfd_slim_320",
@@ -4474,7 +4474,7 @@
     "task_legacy": "face_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "ulfgfd_slim_320_without_postprocessing",
@@ -4497,7 +4497,7 @@
     "task_legacy": "face_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "unet_mobilenet_v2",
@@ -4517,7 +4517,7 @@
     "task_legacy": "semantic_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "vgg16",
@@ -4539,7 +4539,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "vgg16bn",
@@ -4561,7 +4561,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "vgg19",
@@ -4583,7 +4583,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "vitb32",
@@ -4605,7 +4605,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "vitl32",
@@ -4627,7 +4627,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolact_regnetx_1_6gf",
@@ -4650,7 +4650,7 @@
     "task_legacy": "instance_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo26l_cls",
@@ -4672,7 +4672,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo26l_obb",
@@ -4694,7 +4694,7 @@
     "task_legacy": "obb_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo26l_pose",
@@ -4717,7 +4717,7 @@
     "task_legacy": "pose_estimation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo26l_seg",
@@ -4740,7 +4740,7 @@
     "task_legacy": "instance_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo26m_cls",
@@ -4762,7 +4762,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo26m_obb",
@@ -4784,7 +4784,7 @@
     "task_legacy": "obb_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo26m_pose",
@@ -4807,7 +4807,7 @@
     "task_legacy": "pose_estimation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo26m_seg",
@@ -4830,7 +4830,7 @@
     "task_legacy": "instance_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo26n_cls",
@@ -4852,7 +4852,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo26n_pose",
@@ -4875,7 +4875,7 @@
     "task_legacy": "pose_estimation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo26n_seg",
@@ -4898,7 +4898,7 @@
     "task_legacy": "instance_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo26s_cls",
@@ -4920,7 +4920,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo26s_obb",
@@ -4942,7 +4942,7 @@
     "task_legacy": "obb_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo26s_pose",
@@ -4965,7 +4965,7 @@
     "task_legacy": "pose_estimation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo26s_seg",
@@ -4988,7 +4988,7 @@
     "task_legacy": "instance_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo26x_cls",
@@ -5010,7 +5010,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo26x_obb",
@@ -5032,7 +5032,7 @@
     "task_legacy": "obb_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo26x_pose",
@@ -5055,7 +5055,7 @@
     "task_legacy": "pose_estimation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo26x_seg",
@@ -5078,7 +5078,7 @@
     "task_legacy": "instance_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov3_2",
@@ -5101,7 +5101,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov3_2_ppu",
@@ -5124,7 +5124,7 @@
     "task_legacy": "ppu",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov3_3_ppu",
@@ -5147,7 +5147,7 @@
     "task_legacy": "ppu",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov3_gluon_416",
@@ -5170,7 +5170,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov3_gluon_608",
@@ -5193,7 +5193,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov3tiny_1",
@@ -5216,7 +5216,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov3tiny_1_ppu",
@@ -5239,7 +5239,7 @@
     "task_legacy": "ppu",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov4_2_ppu",
@@ -5262,7 +5262,7 @@
     "task_legacy": "ppu",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov4_leaky_512_512",
@@ -5285,7 +5285,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov4tiny_1",
@@ -5308,7 +5308,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov5l6",
@@ -5331,7 +5331,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov5m6",
@@ -5354,7 +5354,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov5m_wo_spp_640",
@@ -5377,7 +5377,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov5n6",
@@ -5400,7 +5400,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov5s6",
@@ -5423,7 +5423,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov5s_4",
@@ -5446,7 +5446,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov5s_bbox_decoding_only_640",
@@ -5469,7 +5469,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov5s_c3tr_640",
@@ -5492,7 +5492,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov5s_wo_spp_640",
@@ -5515,7 +5515,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov5x",
@@ -5538,7 +5538,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov5x6",
@@ -5561,7 +5561,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov5xs_wo_spp_512",
@@ -5584,7 +5584,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov6l",
@@ -5607,7 +5607,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov6m",
@@ -5630,7 +5630,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov6n",
@@ -5653,7 +5653,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov6n_0_2_1_nms_core",
@@ -5676,7 +5676,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov7_w6_wo_decoding",
@@ -5699,7 +5699,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov7_wo_decoding",
@@ -5722,7 +5722,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov7d6",
@@ -5745,7 +5745,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov7e6e",
@@ -5768,7 +5768,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov7x",
@@ -5791,7 +5791,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov8s_bbox_decoding_only_640",
@@ -5814,7 +5814,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov9_gelan_c",
@@ -5837,7 +5837,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov9m",
@@ -5860,7 +5860,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolox_s_2_ppu",
@@ -5883,7 +5883,7 @@
     "task_legacy": "ppu",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yoloxl",
@@ -5906,7 +5906,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yoloxm",
@@ -5929,7 +5929,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yoloxx",
@@ -5952,7 +5952,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "beit_large_patch16_1",
@@ -5974,7 +5974,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "deit_base_1",
@@ -5996,7 +5996,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "deit_base_distilled_1",
@@ -6018,7 +6018,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "deit_base_distilled_2",
@@ -6040,7 +6040,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "deit_small_1",
@@ -6062,7 +6062,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "deit_small_distilled_1",
@@ -6084,7 +6084,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "deit_tiny_1",
@@ -6106,7 +6106,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "deit_tiny_distilled_1",
@@ -6128,7 +6128,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "efficientnetb7",
@@ -6150,7 +6150,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "efficientnetv2m",
@@ -6172,7 +6172,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "fastvit_ma36_1",
@@ -6194,7 +6194,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "fastvit_sa24_1",
@@ -6216,7 +6216,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "fastvit_sa36_1",
@@ -6238,7 +6238,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "ghostnet_1",
@@ -6260,7 +6260,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "repghost_2_0x_1",
@@ -6282,7 +6282,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "repvgg_a0_1",
@@ -6304,7 +6304,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "repvgg_a1_1",
@@ -6326,7 +6326,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "repvgg_a2_1",
@@ -6348,7 +6348,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "repvgg_b0_1",
@@ -6370,7 +6370,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "repvgg_b1_1",
@@ -6392,7 +6392,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "resmlp24_1",
@@ -6414,7 +6414,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "resnext101_32x8d_1",
@@ -6436,7 +6436,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "vit_base_bn_1",
@@ -6458,7 +6458,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "vit_base_p16_2",
@@ -6480,7 +6480,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "vit_small_p16_1",
@@ -6502,7 +6502,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "rn50x16_openai_1",
@@ -6522,7 +6522,7 @@
     "task_legacy": "embedding",
     "image_only": true,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "vit_b_32_256_datacomp_s34b_b86k_1",
@@ -6542,7 +6542,7 @@
     "task_legacy": "embedding",
     "image_only": true,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "vit_l_14_datacomp_xl_s13b_b90k_1",
@@ -6562,7 +6562,7 @@
     "task_legacy": "embedding",
     "image_only": true,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "vit_l_14_quickgelu_dfn2b_1",
@@ -6582,7 +6582,7 @@
     "task_legacy": "embedding",
     "image_only": true,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "eigenplaces_resnet18_1",
@@ -6602,7 +6602,7 @@
     "task_legacy": "embedding",
     "image_only": true,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "eigenplaces_resnet50_1",
@@ -6622,7 +6622,7 @@
     "task_legacy": "embedding",
     "image_only": true,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "superpoint_1",
@@ -6642,7 +6642,7 @@
     "task_legacy": "keypoint_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "casvit_t_seg_fpn_resnet50_1",
@@ -6662,7 +6662,7 @@
     "task_legacy": "semantic_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "deeplab_v3_mobilenet_v2_wo_dilation_sim_1",
@@ -6682,7 +6682,7 @@
     "task_legacy": "semantic_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "deeplabv3plus_drn_512x512_q_lite",
@@ -6702,7 +6702,7 @@
     "task_legacy": "semantic_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "deeplabv3plus_resnet101_1",
@@ -6722,7 +6722,7 @@
     "task_legacy": "semantic_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "deeplabv3plus_resnet50_1",
@@ -6742,7 +6742,7 @@
     "task_legacy": "semantic_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "deeplabv3_resnet101_1",
@@ -6762,7 +6762,7 @@
     "task_legacy": "semantic_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "deeplabv3_resnet50_1",
@@ -6782,7 +6782,7 @@
     "task_legacy": "semantic_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "fcn8_resnet50_1",
@@ -6802,7 +6802,7 @@
     "task_legacy": "semantic_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "fcn8_resnet_v1_18_1",
@@ -6822,7 +6822,7 @@
     "task_legacy": "semantic_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "pidnet_s_1",
@@ -6842,7 +6842,7 @@
     "task_legacy": "semantic_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "stdc2_model_maxmiou50_1",
@@ -6862,7 +6862,7 @@
     "task_legacy": "semantic_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "depth_anything_v2_vitb_1",
@@ -6882,7 +6882,7 @@
     "task_legacy": "depth_estimation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "depth_anything_v2_vitl_1",
@@ -6902,7 +6902,7 @@
     "task_legacy": "depth_estimation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "depth_anything_v2_vits_1",
@@ -6922,7 +6922,7 @@
     "task_legacy": "depth_estimation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "retinaface_mobilenet_v1_736x1280_1",
@@ -6945,7 +6945,7 @@
     "task_legacy": "face_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov5n_face_1",
@@ -6969,7 +6969,7 @@
     "task_legacy": "face_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov7_lite_t_face_1",
@@ -6993,7 +6993,7 @@
     "task_legacy": "face_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "mediapipe_hand_detector_1",
@@ -7016,7 +7016,7 @@
     "task_legacy": "hand_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov5_pose",
@@ -7040,7 +7040,7 @@
     "task_legacy": "pose_estimation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "vit_pose_small_bn_1",
@@ -7060,7 +7060,7 @@
     "task_legacy": "pose_estimation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo11m_pose",
@@ -7084,7 +7084,7 @@
     "task_legacy": "pose_estimation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo11n_pose",
@@ -7108,7 +7108,7 @@
     "task_legacy": "pose_estimation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo11s_pose",
@@ -7132,7 +7132,7 @@
     "task_legacy": "pose_estimation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo11x_pose",
@@ -7156,7 +7156,7 @@
     "task_legacy": "pose_estimation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov8l_pose",
@@ -7180,7 +7180,7 @@
     "task_legacy": "pose_estimation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov8n_pose",
@@ -7204,7 +7204,7 @@
     "task_legacy": "pose_estimation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov8x_pose",
@@ -7228,7 +7228,7 @@
     "task_legacy": "pose_estimation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo11l_seg",
@@ -7252,7 +7252,7 @@
     "task_legacy": "instance_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo11m_seg",
@@ -7276,7 +7276,7 @@
     "task_legacy": "instance_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo11n_seg",
@@ -7300,7 +7300,7 @@
     "task_legacy": "instance_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo11s_seg",
@@ -7324,7 +7324,7 @@
     "task_legacy": "instance_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo11x_seg",
@@ -7348,7 +7348,7 @@
     "task_legacy": "instance_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov5x_seg",
@@ -7372,7 +7372,7 @@
     "task_legacy": "instance_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov8l_seg",
@@ -7396,7 +7396,7 @@
     "task_legacy": "instance_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov8x_seg",
@@ -7420,7 +7420,7 @@
     "task_legacy": "instance_segmentation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov6s_1",
@@ -7443,7 +7443,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov6l6_1",
@@ -7466,7 +7466,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolopv2_1",
@@ -7489,7 +7489,7 @@
     "task_legacy": "panoptic_driving_perception",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "dope_hope_ketchup_1",
@@ -7509,7 +7509,7 @@
     "task_legacy": "object_pose_estimation",
     "image_only": true,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "sfa3d_608x608",
@@ -7529,7 +7529,7 @@
     "task_legacy": "3d_object_detection",
     "image_only": true,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "espcn_x2_1",
@@ -7549,7 +7549,7 @@
     "task_legacy": "super_resolution",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "realesrgan_x2",
@@ -7569,7 +7569,7 @@
     "task_legacy": "super_resolution",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "realesrgan_x4",
@@ -7589,7 +7589,7 @@
     "task_legacy": "super_resolution",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "realesrgan_x8",
@@ -7609,7 +7609,7 @@
     "task_legacy": "super_resolution",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "zero_dce_pp_1",
@@ -7629,7 +7629,7 @@
     "task_legacy": "image_enhancement",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "regnetx1_6gf_v2",
@@ -7651,7 +7651,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "resnet18_brecq",
@@ -7673,7 +7673,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "resnext50_32x4d_imgclsmob",
@@ -7695,7 +7695,7 @@
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov5m6_1280",
@@ -7718,7 +7718,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov5n_6_1",
@@ -7741,7 +7741,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolov5s_6_1",
@@ -7764,7 +7764,7 @@
     "task_legacy": "object_detection",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo26_depth_s",
@@ -7784,7 +7784,7 @@
     "task_legacy": "depth_estimation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo26_depth_n",
@@ -7804,7 +7804,7 @@
     "task_legacy": "depth_estimation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo26_depth_m",
@@ -7824,7 +7824,7 @@
     "task_legacy": "depth_estimation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo26_depth_l",
@@ -7844,7 +7844,7 @@
     "task_legacy": "depth_estimation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   },
   {
     "model_name": "yolo26_depth_x",
@@ -7864,6 +7864,6 @@
     "task_legacy": "depth_estimation",
     "image_only": false,
     "zoo_canonical": true,
-    "duplicate_of": null
+    "alias_of": null
   }
 ]
