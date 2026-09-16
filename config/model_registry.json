@@ -12,7 +12,14 @@
       "top_k": 5
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "alexnet_224x224",
+    "family": "alexnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "arcface_mobilefacenet",
@@ -25,7 +32,14 @@
     "input_height": 112,
     "config": {},
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "arcface_mobilefacenet_112x112",
+    "family": "arcface",
+    "task": "face_recognition",
+    "task_legacy": "embedding",
+    "image_only": true,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "bisenetv1",
@@ -38,7 +52,14 @@
     "input_height": 1024,
     "config": {},
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "bisenetv1_1024x2048",
+    "family": "bisenet",
+    "task": "semantic_segmentation",
+    "task_legacy": "semantic_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "bisenetv2",
@@ -51,7 +72,14 @@
     "input_height": 1024,
     "config": {},
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "bisenetv2_1024x2048",
+    "family": "bisenet",
+    "task": "semantic_segmentation",
+    "task_legacy": "semantic_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "damoyolo_tinynasl20_t",
@@ -67,7 +95,14 @@
       "nms_threshold": 0.45
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "damoyolo-tinynas-l20t_640x640",
+    "family": "damoyolo",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "damoyolo_tinynasl20_m",
@@ -83,7 +118,14 @@
       "nms_threshold": 0.45
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "damoyolo-tinynas-l20m_640x640",
+    "family": "damoyolo",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "damoyolo_tinynasl25_s",
@@ -99,7 +141,14 @@
       "nms_threshold": 0.45
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "damoyolo-tinynas-l25s_640x640",
+    "family": "damoyolo",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "damoyolol",
@@ -115,7 +164,14 @@
       "nms_threshold": 0.45
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "damoyolo-l_640x640",
+    "family": "damoyolo",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "damoyolom",
@@ -131,7 +187,14 @@
       "nms_threshold": 0.45
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "damoyolo-m_640x640",
+    "family": "damoyolo",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "damoyolos",
@@ -147,7 +210,14 @@
       "nms_threshold": 0.45
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "damoyolo-s_640x640",
+    "family": "damoyolo",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "damoyolot",
@@ -163,7 +233,14 @@
       "nms_threshold": 0.45
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "damoyolo-t_640x640",
+    "family": "damoyolo",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "deeplabv3plusmobilenet",
@@ -176,7 +253,14 @@
     "input_height": 512,
     "config": {},
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "deeplabv3plus_mobilenetv1_512x512",
+    "family": "deeplabv3",
+    "task": "semantic_segmentation",
+    "task_legacy": "semantic_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "densenet121",
@@ -191,7 +275,14 @@
       "top_k": 5
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "densenet121_224x224",
+    "family": "densenet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "densenet161",
@@ -206,7 +297,14 @@
       "top_k": 5
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "densenet161_224x224",
+    "family": "densenet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "dncnn_15",
@@ -219,7 +317,14 @@
     "input_height": 512,
     "config": {},
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "dncnn-15_512x512",
+    "family": "dncnn",
+    "task": "image_denoising",
+    "task_legacy": "image_denoising",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "dncnn_25",
@@ -232,7 +337,14 @@
     "input_height": 512,
     "config": {},
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "dncnn-25_512x512",
+    "family": "dncnn",
+    "task": "image_denoising",
+    "task_legacy": "image_denoising",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "dncnn_50",
@@ -245,7 +357,14 @@
     "input_height": 512,
     "config": {},
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "dncnn-50_512x512",
+    "family": "dncnn",
+    "task": "image_denoising",
+    "task_legacy": "image_denoising",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "efficientnet_lite0",
@@ -260,7 +379,14 @@
       "top_k": 5
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "efficientnet-lite0_256x256",
+    "family": "efficientnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": false,
+    "duplicate_of": null
   },
   {
     "model_name": "efficientnet_lite1",
@@ -275,7 +401,14 @@
       "top_k": 5
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "efficientnet-lite1_240x240",
+    "family": "efficientnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "efficientnet_lite2",
@@ -290,7 +423,14 @@
       "top_k": 5
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "efficientnet-lite2_260x260",
+    "family": "efficientnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "efficientnet_lite3",
@@ -305,7 +445,14 @@
       "top_k": 5
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "efficientnet-lite3_300x300",
+    "family": "efficientnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "efficientnet_lite4",
@@ -320,7 +467,14 @@
       "top_k": 5
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "efficientnet-lite4_380x380",
+    "family": "efficientnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "efficientnetb2",
@@ -335,7 +489,14 @@
       "top_k": 5
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "efficientnet-b2_288x288",
+    "family": "efficientnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "espcn_x4",
@@ -348,7 +509,14 @@
     "input_height": 17,
     "config": {},
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "espcn-x4_17x17",
+    "family": "espcn",
+    "task": "super_resolution",
+    "task_legacy": "super_resolution",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "fastdepth_1",
@@ -361,7 +529,14 @@
     "input_height": 224,
     "config": {},
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "fastdepth_224x224",
+    "family": "fastdepth",
+    "task": "depth_estimation",
+    "task_legacy": "depth_estimation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "handlandmarklite_1",
@@ -376,7 +551,14 @@
       "confidence_threshold": 0.5
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "mediapipe-hands-lite_224x224",
+    "family": "mediapipe_hands_lite",
+    "task": "hand_landmark",
+    "task_legacy": "hand_landmark",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "hardnet39ds",
@@ -391,7 +573,14 @@
       "top_k": 5
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "hardnet39ds_224x224",
+    "family": "hardnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "hardnet68",
@@ -406,7 +595,14 @@
       "top_k": 5
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "hardnet68_224x224",
+    "family": "hardnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "inceptionv1",
@@ -421,7 +617,14 @@
       "top_k": 5
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "inceptionv1_224x224",
+    "family": "inception",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "mobilenetv1",
@@ -436,7 +639,14 @@
       "top_k": 5
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "mobilenetv1_224x224",
+    "family": "mobilenet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "mobilenetv2",
@@ -451,7 +661,14 @@
       "top_k": 5
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "mobilenetv2_224x224",
+    "family": "mobilenet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "mobilenetv3large",
@@ -466,7 +683,14 @@
       "top_k": 5
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "mobilenetv3-large_224x224",
+    "family": "mobilenet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "nanodet_repvgg",
@@ -482,7 +706,14 @@
       "nms_threshold": 0.45
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "nanodet_224x224",
+    "family": "nanodet",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "nanodet_repvgga1",
@@ -498,7 +729,14 @@
       "nms_threshold": 0.45
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "nanodet-repvgg-a_224x224",
+    "family": "nanodet",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "regnetx400mf",
@@ -513,7 +751,14 @@
       "top_k": 5
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "regnet-x400mf_224x224",
+    "family": "regnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "regnetx800mf",
@@ -528,7 +773,14 @@
       "top_k": 5
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "regnet-x800mf_224x224",
+    "family": "regnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "regnety200mf",
@@ -543,7 +795,14 @@
       "top_k": 5
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "regnet-y200mf_224x224",
+    "family": "regnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "regnety400mf",
@@ -558,7 +817,14 @@
       "top_k": 5
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "regnet-y400mf_224x224",
+    "family": "regnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "regnety800mf",
@@ -573,7 +839,14 @@
       "top_k": 5
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "regnet-y800mf_224x224",
+    "family": "regnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "resnet101",
@@ -588,7 +861,14 @@
       "top_k": 5
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "resnet101_224x224",
+    "family": "resnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "resnet18",
@@ -603,7 +883,14 @@
       "top_k": 5
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "resnet18_224x224",
+    "family": "resnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "resnet34",
@@ -618,7 +905,14 @@
       "top_k": 5
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "resnet34_224x224",
+    "family": "resnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "resnet50",
@@ -633,7 +927,14 @@
       "top_k": 5
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "resnet50_224x224",
+    "family": "resnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "resnext26_32x4d",
@@ -648,7 +949,14 @@
       "top_k": 5
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "resnext26-32x4d_224x224",
+    "family": "resnext",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "resnext50_32x4d",
@@ -663,7 +971,14 @@
       "top_k": 5
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "resnext50-32x4d_224x224",
+    "family": "resnext",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "retinaface_mobilenet0_25_640",
@@ -679,7 +994,14 @@
       "nms_threshold": 0.4
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "retinaface_mobilenet-0.25_640x640",
+    "family": "retinaface",
+    "task": "face_detection",
+    "task_legacy": "face_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "scrfd10g",
@@ -695,7 +1017,14 @@
       "nms_threshold": 0.4
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "scrfd-10g_640x640",
+    "family": "scrfd",
+    "task": "face_detection",
+    "task_legacy": "face_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "scrfd2_5g",
@@ -712,7 +1041,14 @@
       "nms_threshold": 0.4
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "scrfd-2.5g_640x640",
+    "family": "scrfd",
+    "task": "face_detection",
+    "task_legacy": "face_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "scrfd500m",
@@ -729,7 +1065,14 @@
       "nms_threshold": 0.4
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "scrfd-500m_640x640",
+    "family": "scrfd",
+    "task": "face_detection",
+    "task_legacy": "face_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "segformer_b0_512x1024",
@@ -742,7 +1085,14 @@
     "input_height": 512,
     "config": {},
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "segformer_mit-b0_512x1024",
+    "family": "segformer",
+    "task": "semantic_segmentation",
+    "task_legacy": "semantic_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "squeezenet1_0",
@@ -757,7 +1107,14 @@
       "top_k": 5
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "squeezenet-1.0_224x224",
+    "family": "squeezenet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "squeezenet1_1",
@@ -772,7 +1129,14 @@
       "top_k": 5
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "squeezenet-1.1_224x224",
+    "family": "squeezenet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "ssdmv1",
@@ -788,7 +1152,14 @@
       "nms_threshold": 0.45
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "ssd-mobilenetv1_300x300",
+    "family": "ssd",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "ssdmv2lite",
@@ -804,7 +1175,14 @@
       "nms_threshold": 0.45
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "ssd-mobilenetv2-lite_300x300",
+    "family": "ssd",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "vgg11",
@@ -819,7 +1197,14 @@
       "top_k": 5
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "vgg11_224x224",
+    "family": "vgg",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "vgg11bn",
@@ -834,7 +1219,14 @@
       "top_k": 5
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "vgg11-bn_224x224",
+    "family": "vgg",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "vgg13",
@@ -849,7 +1241,14 @@
       "top_k": 5
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "vgg13_224x224",
+    "family": "vgg",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "vgg13bn",
@@ -864,7 +1263,14 @@
       "top_k": 5
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "vgg13-bn_224x224",
+    "family": "vgg",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "vgg19bn",
@@ -879,7 +1285,14 @@
       "top_k": 5
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "vgg19-bn_224x224",
+    "family": "vgg",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "wideresnet101_2",
@@ -894,7 +1307,14 @@
       "top_k": 5
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "wide-resnet101-2_224x224",
+    "family": "wide_resnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "wideresnet50_2",
@@ -909,7 +1329,14 @@
       "top_k": 5
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "wide-resnet50-2_224x224",
+    "family": "wide_resnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolact_regnetx_800mf",
@@ -922,7 +1349,14 @@
     "input_height": 512,
     "config": {},
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "yolact_regnet-x800mf_512x512",
+    "family": "yolact",
+    "task": "instance_segmentation",
+    "task_legacy": "instance_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo26l",
@@ -938,7 +1372,14 @@
       "nms_threshold": 0.45
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "yolo26-l_640x640",
+    "family": "yolo26",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo26m",
@@ -954,7 +1395,14 @@
       "nms_threshold": 0.45
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "yolo26-m_640x640",
+    "family": "yolo26",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo26n",
@@ -970,7 +1418,14 @@
       "nms_threshold": 0.45
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "yolo26-n_640x640",
+    "family": "yolo26",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo26n_obb",
@@ -985,7 +1440,14 @@
       "score_threshold": 0.3
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "yolo26-n-obb_1024x1024",
+    "family": "yolo26_obb",
+    "task": "oriented_object_detection",
+    "task_legacy": "obb_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo26s",
@@ -1001,7 +1463,14 @@
       "nms_threshold": 0.45
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "yolo26-s_640x640",
+    "family": "yolo26",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo26x",
@@ -1017,7 +1486,14 @@
       "nms_threshold": 0.45
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "yolo26-x_640x640",
+    "family": "yolo26",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov10b",
@@ -1033,7 +1509,14 @@
       "nms_threshold": 0.45
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "yolov10-b_640x640",
+    "family": "yolov10",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov10l",
@@ -1049,7 +1532,14 @@
       "nms_threshold": 0.45
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "yolov10-l_640x640",
+    "family": "yolov10",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov10m",
@@ -1065,7 +1555,14 @@
       "nms_threshold": 0.45
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "yolov10-m_640x640",
+    "family": "yolov10",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov10n",
@@ -1081,7 +1578,14 @@
       "nms_threshold": 0.45
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "yolov10-n_640x640",
+    "family": "yolov10",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov10s",
@@ -1097,7 +1601,14 @@
       "nms_threshold": 0.45
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "yolov10-s_640x640",
+    "family": "yolov10",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov10x",
@@ -1113,7 +1624,14 @@
       "nms_threshold": 0.45
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "yolov10-x_640x640",
+    "family": "yolov10",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov11l",
@@ -1129,7 +1647,14 @@
       "nms_threshold": 0.45
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "yolo11-l_640x640",
+    "family": "yolo11",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov11m",
@@ -1145,7 +1670,14 @@
       "nms_threshold": 0.45
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "yolo11-m_640x640",
+    "family": "yolo11",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov11n",
@@ -1161,7 +1693,14 @@
       "nms_threshold": 0.45
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "yolo11-n_640x640",
+    "family": "yolo11",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov11s",
@@ -1177,7 +1716,14 @@
       "nms_threshold": 0.45
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "yolo11-s_640x640",
+    "family": "yolo11",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov11x",
@@ -1193,7 +1739,14 @@
       "nms_threshold": 0.45
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "yolo11-x_640x640",
+    "family": "yolo11",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov3",
@@ -1209,7 +1762,14 @@
       "nms_threshold": 0.45
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "yolov3_640x640",
+    "family": "yolov3",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov5l",
@@ -1225,7 +1785,14 @@
       "nms_threshold": 0.45
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "yolov5-l_640x640",
+    "family": "yolov5",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov5l_seg",
@@ -1242,7 +1809,14 @@
       "nms_threshold": 0.45
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "yolov5-l-seg_640x640",
+    "family": "yolov5_seg",
+    "task": "instance_segmentation",
+    "task_legacy": "instance_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov5m",
@@ -1259,7 +1833,14 @@
       "nms_threshold": 0.45
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "yolov5-m_640x640",
+    "family": "yolov5",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov5m_6_1",
@@ -1276,7 +1857,14 @@
       "nms_threshold": 0.45
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "yolov5-m6_1280x1280_v6.1",
+    "family": "yolov5",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov5m_face",
@@ -1293,7 +1881,14 @@
       "nms_threshold": 0.4
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "yolov5-m-face_640x640",
+    "family": "yolov5_face",
+    "task": "face_detection",
+    "task_legacy": "face_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov5m_seg",
@@ -1310,7 +1905,14 @@
       "nms_threshold": 0.45
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "yolov5-m-seg_640x640",
+    "family": "yolov5_seg",
+    "task": "instance_segmentation",
+    "task_legacy": "instance_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov5n",
@@ -1327,7 +1929,14 @@
       "nms_threshold": 0.45
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "yolov5-n_640x640",
+    "family": "yolov5",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov5n_seg",
@@ -1344,7 +1953,14 @@
       "nms_threshold": 0.45
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "yolov5-n-seg_640x640",
+    "family": "yolov5_seg",
+    "task": "instance_segmentation",
+    "task_legacy": "instance_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov5s",
@@ -1361,7 +1977,14 @@
       "nms_threshold": 0.45
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "yolov5-s_640x640",
+    "family": "yolov5",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov5s_face",
@@ -1378,7 +2001,14 @@
       "nms_threshold": 0.4
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "yolov5-s-face_640x640",
+    "family": "yolov5_face",
+    "task": "face_detection",
+    "task_legacy": "face_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov5s_ppu",
@@ -1394,7 +2024,14 @@
       "score_threshold": 0.25
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "yolov5-s_640x640_ppu",
+    "family": "yolo_ppu",
+    "task": "object_detection",
+    "task_legacy": "ppu",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov5s_seg",
@@ -1411,7 +2048,14 @@
       "nms_threshold": 0.45
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "yolov5-s-seg_640x640",
+    "family": "yolov5_seg",
+    "task": "instance_segmentation",
+    "task_legacy": "instance_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov6n_0_1_0",
@@ -1428,7 +2072,14 @@
       "nms_threshold": 0.45
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "yolov6-n0_640x640_v0.1.0",
+    "family": "yolov6",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov6n_0_2_1",
@@ -1445,7 +2096,14 @@
       "nms_threshold": 0.45
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "yolov6-n0_640x640_v0.2.1",
+    "family": "yolov6",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov7",
@@ -1462,7 +2120,14 @@
       "nms_threshold": 0.45
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "yolov7_640x640",
+    "family": "yolov7",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov7_face",
@@ -1479,7 +2144,14 @@
       "nms_threshold": 0.4
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "yolov7-face_640x640",
+    "family": "yolov7_face",
+    "task": "face_detection",
+    "task_legacy": "face_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov7_ppu",
@@ -1495,7 +2167,14 @@
       "score_threshold": 0.25
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "yolov7_640x640_ppu",
+    "family": "yolo_ppu",
+    "task": "object_detection",
+    "task_legacy": "ppu",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov7_w6",
@@ -1512,7 +2191,14 @@
       "nms_threshold": 0.45
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "yolov7-w6_1280x1280",
+    "family": "yolov7",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov7_w6_face",
@@ -1529,7 +2215,14 @@
       "nms_threshold": 0.4
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "yolov7-w6-face_960x960",
+    "family": "yolov7_face",
+    "task": "face_detection",
+    "task_legacy": "face_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov7_w6_tta_face",
@@ -1546,7 +2239,14 @@
       "nms_threshold": 0.4
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "yolov7-w6-face_1280x1280_tta",
+    "family": "yolov7_face",
+    "task": "face_detection",
+    "task_legacy": "face_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov7e6",
@@ -1563,7 +2263,14 @@
       "nms_threshold": 0.45
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "yolov7-e6_1280x1280",
+    "family": "yolov7",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov7s_face",
@@ -1580,7 +2287,14 @@
       "nms_threshold": 0.4
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "yolov7-s-face_640x640",
+    "family": "yolov7_face",
+    "task": "face_detection",
+    "task_legacy": "face_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov7tiny",
@@ -1597,7 +2311,14 @@
       "nms_threshold": 0.45
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "yolov7-tiny_640x640",
+    "family": "yolov7",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov8l",
@@ -1613,7 +2334,14 @@
       "nms_threshold": 0.45
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "yolov8-l_640x640",
+    "family": "yolov8",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov8m",
@@ -1629,7 +2357,14 @@
       "nms_threshold": 0.45
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "yolov8-m_640x640",
+    "family": "yolov8",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov8m_pose",
@@ -1646,7 +2381,14 @@
       "nms_threshold": 0.45
     },
     "source": "manifest",
-    "supported": true
+    "supported": true,
+    "variant": "yolov8-m-pose_640x640",
+    "family": "yolov8_pose",
+    "task": "pose_estimation",
+    "task_legacy": "pose_estimation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov8m_seg",
@@ -1663,7 +2405,14 @@
       "nms_threshold": 0.45
     },
     "source": "manifest",
-    "supported": true
+    "supported": true,
+    "variant": "yolov8-m-seg_640x640",
+    "family": "yolov8_seg",
+    "task": "instance_segmentation",
+    "task_legacy": "instance_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov8n",
@@ -1679,7 +2428,14 @@
       "nms_threshold": 0.45
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "yolov8-n_640x640",
+    "family": "yolov8",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov8n_seg",
@@ -1696,7 +2452,14 @@
       "nms_threshold": 0.45
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "yolov8-n-seg_640x640",
+    "family": "yolov8_seg",
+    "task": "instance_segmentation",
+    "task_legacy": "instance_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov8s",
@@ -1712,7 +2475,14 @@
       "nms_threshold": 0.45
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "yolov8-s_640x640",
+    "family": "yolov8",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov8s_pose",
@@ -1729,7 +2499,14 @@
       "nms_threshold": 0.45
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "yolov8-s-pose_640x640",
+    "family": "yolov8_pose",
+    "task": "pose_estimation",
+    "task_legacy": "pose_estimation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov8x",
@@ -1745,7 +2522,14 @@
       "nms_threshold": 0.45
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "yolov8-x_640x640",
+    "family": "yolov8",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov8n_ppu",
@@ -1762,7 +2546,14 @@
       "nms_threshold": 0.5
     },
     "source": "manifest",
-    "supported": true
+    "supported": true,
+    "variant": "yolov8-n_640x640_ppu",
+    "family": "yolo_ppu",
+    "task": "object_detection",
+    "task_legacy": "ppu",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov8s_ppu",
@@ -1779,7 +2570,14 @@
       "nms_threshold": 0.5
     },
     "source": "manifest",
-    "supported": true
+    "supported": true,
+    "variant": "yolov8-s_640x640_ppu",
+    "family": "yolo_ppu",
+    "task": "object_detection",
+    "task_legacy": "ppu",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov9t_ppu",
@@ -1796,7 +2594,14 @@
       "nms_threshold": 0.5
     },
     "source": "manifest",
-    "supported": true
+    "supported": true,
+    "variant": "yolov9-t_640x640_ppu",
+    "family": "yolo_ppu",
+    "task": "object_detection",
+    "task_legacy": "ppu",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov10n_ppu",
@@ -1813,7 +2618,14 @@
       "nms_threshold": 0.5
     },
     "source": "manifest",
-    "supported": true
+    "supported": true,
+    "variant": "yolov10-n_640x640_ppu",
+    "family": "yolo_ppu",
+    "task": "object_detection",
+    "task_legacy": "ppu",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov11n_ppu",
@@ -1830,7 +2642,14 @@
       "nms_threshold": 0.5
     },
     "source": "manifest",
-    "supported": true
+    "supported": true,
+    "variant": "yolo11-n_640x640_ppu",
+    "family": "yolo_ppu",
+    "task": "object_detection",
+    "task_legacy": "ppu",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov12n_ppu",
@@ -1847,7 +2666,14 @@
       "nms_threshold": 0.5
     },
     "source": "manifest",
-    "supported": true
+    "supported": true,
+    "variant": "yolov12-n_640x640_ppu",
+    "family": "yolo_ppu",
+    "task": "object_detection",
+    "task_legacy": "ppu",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov7x_ppu",
@@ -1864,7 +2690,14 @@
       "nms_threshold": 0.45
     },
     "source": "manifest",
-    "supported": true
+    "supported": true,
+    "variant": "yolov7-x_640x640_ppu",
+    "family": "yolo_ppu",
+    "task": "object_detection",
+    "task_legacy": "ppu",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "scrfd500m_ppu",
@@ -1880,7 +2713,14 @@
       "nms_threshold": 0.45
     },
     "source": "manifest",
-    "supported": true
+    "supported": true,
+    "variant": "SCRFD500M_PPU",
+    "family": "scrfd",
+    "task": "face_detection",
+    "task_legacy": "ppu",
+    "image_only": false,
+    "zoo_canonical": false,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov5pose_ppu",
@@ -1897,7 +2737,14 @@
       "nms_threshold": 0.45
     },
     "source": "manifest",
-    "supported": true
+    "supported": true,
+    "variant": "YOLOV5Pose_PPU",
+    "family": "yolov5_pose",
+    "task": "pose_estimation",
+    "task_legacy": "ppu",
+    "image_only": false,
+    "zoo_canonical": false,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov9c",
@@ -1913,7 +2760,14 @@
       "nms_threshold": 0.45
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "yolov9-c_640x640",
+    "family": "yolov9",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov9s",
@@ -1929,7 +2783,14 @@
       "nms_threshold": 0.45
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "yolov9-s_640x640",
+    "family": "yolov9",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov9t",
@@ -1945,7 +2806,14 @@
       "nms_threshold": 0.45
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "yolov9-t_640x640",
+    "family": "yolov9",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolox_l_leaky",
@@ -1962,7 +2830,14 @@
       "nms_threshold": 0.45
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "yolox-l-leaky_640x640",
+    "family": "yolox",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolox_s_leaky",
@@ -1979,7 +2854,14 @@
       "nms_threshold": 0.45
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "yolox-s-leaky_640x640",
+    "family": "yolox",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolox_s_wide_leaky",
@@ -1996,7 +2878,14 @@
       "nms_threshold": 0.45
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "yolox-s-wide-leaky_640x640",
+    "family": "yolox",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yoloxs",
@@ -2013,7 +2902,14 @@
       "nms_threshold": 0.45
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "yolox-s_640x640",
+    "family": "yolox",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yoloxtiny",
@@ -2030,7 +2926,14 @@
       "nms_threshold": 0.45
     },
     "source": "inferred",
-    "supported": true
+    "supported": true,
+    "variant": "yolox-t_416x416",
+    "family": "yolox",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "zero_dce",
@@ -2043,7 +2946,14 @@
     "input_height": 400,
     "config": {},
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "zerodce_400x600",
+    "family": "zerodce",
+    "task": "low_light_enhancement",
+    "task_legacy": "image_enhancement",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "efficientnetv2s",
@@ -2058,7 +2968,14 @@
       "top_k": 5
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "efficientnetv2-s_384x384",
+    "family": "efficientnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov8s_seg",
@@ -2074,7 +2991,14 @@
       "nms_threshold": 0.45
     },
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "yolov8-s-seg_640x640",
+    "family": "yolov8_seg",
+    "task": "instance_segmentation",
+    "task_legacy": "instance_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "deepmar_resnet50",
@@ -2087,7 +3011,14 @@
     "input_height": 224,
     "config": {},
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "deepmar_resnet50_224x224",
+    "family": "deepmar",
+    "task": "person_attribute",
+    "task_legacy": "attribute_recognition",
+    "image_only": true,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "casvit_t",
@@ -2100,7 +3031,14 @@
     "input_height": 224,
     "config": {},
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "casvit-t_224x224",
+    "family": "casvit",
+    "task": "image_classification",
+    "task_legacy": "reid",
+    "image_only": true,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "scdepthv3",
@@ -2113,7 +3051,14 @@
     "input_height": 256,
     "config": {},
     "source": "csv",
-    "supported": true
+    "supported": true,
+    "variant": "scdepthv3_256x320",
+    "family": "scdepthv3",
+    "task": "depth_estimation",
+    "task_legacy": "depth_estimation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "3ddfa_v2_mobilnet0_5_120x120",
@@ -2126,7 +3071,14 @@
     "input_height": 120,
     "config": {},
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "3ddfa-v2_mobilenet-0.5_120x120",
+    "family": "3ddfa_v2",
+    "task": "face_landmark",
+    "task_legacy": "face_alignment",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "3ddfa_v2_mobilnetv1_120x120",
@@ -2139,7 +3091,14 @@
     "input_height": 120,
     "config": {},
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "3ddfa-v2_mobilenetv1_120x120",
+    "family": "3ddfa_v2",
+    "task": "face_landmark",
+    "task_legacy": "face_alignment",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "arcface_iresnet100_ms1m",
@@ -2152,7 +3111,14 @@
     "input_height": 112,
     "config": {},
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "arcface_iresnet100_112x112_ms1m",
+    "family": "arcface",
+    "task": "face_recognition",
+    "task_legacy": "embedding",
+    "image_only": true,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "arcface_iresnet50_ms1m",
@@ -2165,7 +3131,14 @@
     "input_height": 112,
     "config": {},
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "arcface_iresnet50_112x112_ms1m",
+    "family": "arcface",
+    "task": "face_recognition",
+    "task_legacy": "embedding",
+    "image_only": true,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "arcface_r50",
@@ -2178,7 +3151,14 @@
     "input_height": 112,
     "config": {},
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "arcface_resnet50_112x112",
+    "family": "arcface",
+    "task": "face_recognition",
+    "task_legacy": "embedding",
+    "image_only": true,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "casvit_m",
@@ -2191,7 +3171,14 @@
     "input_height": 224,
     "config": {},
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "casvit-m_224x224",
+    "family": "casvit",
+    "task": "image_classification",
+    "task_legacy": "reid",
+    "image_only": true,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "centerpose_regnetx_1_6gf_fpn",
@@ -2206,7 +3193,14 @@
       "score_threshold": 0.3
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "centerpose-fpn_regnet-x1.6gf_512x512",
+    "family": "centerpose",
+    "task": "pose_estimation",
+    "task_legacy": "pose_estimation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "centerpose_regnetx_800mf",
@@ -2221,7 +3215,14 @@
       "score_threshold": 0.3
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "centerpose_regnet-x800mf_640x640",
+    "family": "centerpose",
+    "task": "pose_estimation",
+    "task_legacy": "pose_estimation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "centerpose_repvgg_a0",
@@ -2236,7 +3237,14 @@
       "score_threshold": 0.3
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "centerpose_repvgg-a0_416x416",
+    "family": "centerpose",
+    "task": "pose_estimation",
+    "task_legacy": "pose_estimation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "deeplabv3mobilenetv2",
@@ -2249,7 +3257,14 @@
     "input_height": 512,
     "config": {},
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "deeplabv3_mobilenetv2_512x512",
+    "family": "deeplabv3",
+    "task": "semantic_segmentation",
+    "task_legacy": "semantic_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "deeplabv3plusmobilenetv2",
@@ -2262,7 +3277,14 @@
     "input_height": 512,
     "config": {},
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "deeplabv3plus_mobilenetv2_512x512",
+    "family": "deeplabv3",
+    "task": "semantic_segmentation",
+    "task_legacy": "semantic_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "deepmar_resnet18_person_attr_resnet_v1_18",
@@ -2275,7 +3297,14 @@
     "input_height": 224,
     "config": {},
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "deepmar_resnet18_224x224",
+    "family": "deepmar",
+    "task": "person_attribute",
+    "task_legacy": "attribute_recognition",
+    "image_only": true,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "deitbase384",
@@ -2290,7 +3319,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "deit-b_384x384",
+    "family": "deit",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "deit_base384_distilled",
@@ -2305,7 +3341,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "deit-b_384x384",
+    "family": "deit",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": "deitbase384"
   },
   {
     "model_name": "densenet169",
@@ -2320,7 +3363,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "densenet169_224x224",
+    "family": "densenet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "densenet201",
@@ -2335,7 +3385,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "densenet201_224x224",
+    "family": "densenet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "dncnn_color_blind",
@@ -2348,7 +3405,14 @@
     "input_height": 512,
     "config": {},
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "dncnn-color_512x512",
+    "family": "dncnn",
+    "task": "image_denoising",
+    "task_legacy": "image_denoising",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "dncnn_gray_blind",
@@ -2361,7 +3425,14 @@
     "input_height": 512,
     "config": {},
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "dncnn-gray_512x512",
+    "family": "dncnn",
+    "task": "image_denoising",
+    "task_legacy": "image_denoising",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "efficientdetd1",
@@ -2377,7 +3448,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "efficientdet-d1_640x640",
+    "family": "efficientdet",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "efficientdetd2",
@@ -2393,7 +3471,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "efficientdet-d2_768x768",
+    "family": "efficientdet",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "efficientdetd4",
@@ -2409,7 +3494,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "efficientdet-d4_1024x1024",
+    "family": "efficientdet",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "efficientformer_l3",
@@ -2424,7 +3516,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "efficientformer-l3_224x224",
+    "family": "efficientformer",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "efficientformer_l7",
@@ -2439,7 +3538,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "efficientformer-l7_224x224",
+    "family": "efficientformer",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "efficientformerv2_l",
@@ -2454,7 +3560,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "efficientformerv2-l_224x224",
+    "family": "efficientformer",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "efficientnetb3",
@@ -2469,7 +3582,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "efficientnet-b3_300x300",
+    "family": "efficientnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "efficientnetb4",
@@ -2484,7 +3604,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "efficientnet-b4_380x380",
+    "family": "efficientnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "efficientnetb5",
@@ -2499,7 +3626,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "efficientnet-b5_456x456",
+    "family": "efficientnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "efficientnetb6",
@@ -2514,7 +3648,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "efficientnet-b6_528x528",
+    "family": "efficientnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "efficientnetv2l",
@@ -2529,7 +3670,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "efficientnetv2-l_480x480",
+    "family": "efficientnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "espcn_x3",
@@ -2542,7 +3690,14 @@
     "input_height": 17,
     "config": {},
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "espcn-x3_17x17",
+    "family": "espcn",
+    "task": "super_resolution",
+    "task_legacy": "super_resolution",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "face_attr_resnet_v1_18",
@@ -2555,7 +3710,14 @@
     "input_height": 218,
     "config": {},
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "faceattr_resnetv1-18_218x178",
+    "family": "faceattr",
+    "task": "face_attribute",
+    "task_legacy": "attribute_recognition",
+    "image_only": true,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "fastsam_s",
@@ -2571,7 +3733,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "fastsam-s_1024x1024",
+    "family": "fastsam",
+    "task": "zero_shot_instance_segmentation",
+    "task_legacy": "instance_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "levit128",
@@ -2586,7 +3755,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "levit-128_224x224",
+    "family": "levit",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "levit192",
@@ -2601,7 +3777,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "levit-192_224x224",
+    "family": "levit",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "levit256",
@@ -2616,7 +3799,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "levit-256_224x224",
+    "family": "levit",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "levit384",
@@ -2631,7 +3821,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "levit-384_224x224",
+    "family": "levit",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "mnasnet0_5",
@@ -2646,7 +3843,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "mnasnet-0.5_224x224",
+    "family": "mnasnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "mnasnet0_75",
@@ -2661,7 +3865,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "mnasnet-0.75_224x224",
+    "family": "mnasnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "mnasnet1_0",
@@ -2676,7 +3887,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "mnasnet-1.0_224x224",
+    "family": "mnasnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "mnasnet1_3",
@@ -2691,7 +3909,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "mnasnet-1.3_224x224",
+    "family": "mnasnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "nanodet_repvgga12",
@@ -2707,7 +3932,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "nanodet-repvgg-a12_224x224",
+    "family": "nanodet",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "nanodetplusm",
@@ -2723,7 +3955,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "nanodet-plus_416x416",
+    "family": "nanodet",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "nanodetplusm_15",
@@ -2739,7 +3978,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "nanodet-plus-1.5x_224x224",
+    "family": "nanodet",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "regnetx16gf",
@@ -2754,7 +4000,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "regnet-x16gf_224x224",
+    "family": "regnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "regnetx1_6gf",
@@ -2769,7 +4022,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "regnet-x1.6gf_224x224_v1",
+    "family": "regnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "regnetx32gf",
@@ -2784,7 +4044,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "regnet-x32gf_224x224",
+    "family": "regnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "regnetx3_2gf",
@@ -2799,7 +4066,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "regnet-x3.2gf_224x224",
+    "family": "regnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "regnetx8gf",
@@ -2814,7 +4088,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "regnet-x8gf_224x224",
+    "family": "regnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "regnety16gf",
@@ -2829,7 +4110,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "regnet-y16gf_384x384",
+    "family": "regnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "regnety1_6gf",
@@ -2844,7 +4132,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "regnet-y1.6gf_224x224",
+    "family": "regnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "regnety32gf",
@@ -2859,7 +4154,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "regnet-y32gf_384x384",
+    "family": "regnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "regnety3_2gf",
@@ -2874,7 +4176,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "regnet-y3.2gf_224x224",
+    "family": "regnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "regnety8gf",
@@ -2889,7 +4198,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "regnet-y8gf_224x224",
+    "family": "regnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "resnet152",
@@ -2904,7 +4220,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "resnet152_224x224",
+    "family": "resnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "resnext101_64x4d",
@@ -2919,7 +4242,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "resnext101-64x4d_224x224",
+    "family": "resnext",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "shufflenetv1x1_0",
@@ -2934,7 +4264,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "shufflenetv1-x1.0_224x224",
+    "family": "shufflenetv1",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "shufflenetv2x0_5",
@@ -2949,7 +4286,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "shufflenetv2-x0.5_224x224",
+    "family": "shufflenetv2",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "shufflenetv2x1_0",
@@ -2964,7 +4308,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "shufflenetv2-x1.0_224x224",
+    "family": "shufflenetv2",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "shufflenetv2x1_5",
@@ -2979,7 +4330,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "shufflenetv2-x1.5_224x224",
+    "family": "shufflenetv2",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "shufflenetv2x2_0",
@@ -2994,7 +4352,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "shufflenetv2-x2.0_224x224",
+    "family": "shufflenetv2",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "ssdvgg16",
@@ -3010,7 +4375,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "ssd-vgg16_300x300",
+    "family": "ssd",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "ulfgfd_rfb_320",
@@ -3026,7 +4398,14 @@
       "nms_threshold": 0.3
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "ulfgfd-rfb_240x320",
+    "family": "ulfgfd",
+    "task": "face_detection",
+    "task_legacy": "face_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "ulfgfd_rfb_320_without_postprocessing",
@@ -3042,7 +4421,14 @@
       "nms_threshold": 0.3
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "ulfgfd-rfb_240x320_nopp",
+    "family": "ulfgfd",
+    "task": "face_detection",
+    "task_legacy": "face_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "ulfgfd_rfb_640",
@@ -3058,7 +4444,14 @@
       "nms_threshold": 0.3
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "ulfgfd-rfb_480x640",
+    "family": "ulfgfd",
+    "task": "face_detection",
+    "task_legacy": "face_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "ulfgfd_slim_320",
@@ -3074,7 +4467,14 @@
       "nms_threshold": 0.3
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "ulfgfd-slim_240x320",
+    "family": "ulfgfd",
+    "task": "face_detection",
+    "task_legacy": "face_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "ulfgfd_slim_320_without_postprocessing",
@@ -3090,7 +4490,14 @@
       "nms_threshold": 0.3
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "ulfgfd-slim_240x320_nopp",
+    "family": "ulfgfd",
+    "task": "face_detection",
+    "task_legacy": "face_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "unet_mobilenet_v2",
@@ -3103,7 +4510,14 @@
     "input_height": 256,
     "config": {},
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "unet_mobilenetv2_256x256",
+    "family": "unet",
+    "task": "semantic_segmentation",
+    "task_legacy": "semantic_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "vgg16",
@@ -3118,7 +4532,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "vgg16_224x224",
+    "family": "vgg",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "vgg16bn",
@@ -3133,7 +4554,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "vgg16-bn_224x224",
+    "family": "vgg",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "vgg19",
@@ -3148,7 +4576,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "vgg19_224x224",
+    "family": "vgg",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "vitb32",
@@ -3163,7 +4598,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "vit-b-p32_224x224",
+    "family": "vit",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "vitl32",
@@ -3178,7 +4620,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "vit-l-p32_224x224",
+    "family": "vit",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolact_regnetx_1_6gf",
@@ -3194,7 +4643,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolact_regnet-x1.6gf_512x512",
+    "family": "yolact",
+    "task": "instance_segmentation",
+    "task_legacy": "instance_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo26l_cls",
@@ -3209,7 +4665,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolo26-l_224x224",
+    "family": "yolo26_cls",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo26l_obb",
@@ -3224,7 +4687,14 @@
       "score_threshold": 0.3
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolo26-l-obb_1024x1024",
+    "family": "yolo26_obb",
+    "task": "oriented_object_detection",
+    "task_legacy": "obb_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo26l_pose",
@@ -3240,7 +4710,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolo26-l-pose_640x640",
+    "family": "yolo26_pose",
+    "task": "pose_estimation",
+    "task_legacy": "pose_estimation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo26l_seg",
@@ -3256,7 +4733,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolo26-l-seg_640x640",
+    "family": "yolo26_seg",
+    "task": "instance_segmentation",
+    "task_legacy": "instance_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo26m_cls",
@@ -3271,7 +4755,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolo26-m_224x224",
+    "family": "yolo26_cls",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo26m_obb",
@@ -3286,7 +4777,14 @@
       "score_threshold": 0.3
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolo26-m-obb_1024x1024",
+    "family": "yolo26_obb",
+    "task": "oriented_object_detection",
+    "task_legacy": "obb_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo26m_pose",
@@ -3302,7 +4800,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolo26-m-pose_640x640",
+    "family": "yolo26_pose",
+    "task": "pose_estimation",
+    "task_legacy": "pose_estimation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo26m_seg",
@@ -3318,7 +4823,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolo26-m-seg_640x640",
+    "family": "yolo26_seg",
+    "task": "instance_segmentation",
+    "task_legacy": "instance_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo26n_cls",
@@ -3333,7 +4845,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolo26-n_224x224",
+    "family": "yolo26_cls",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo26n_pose",
@@ -3349,7 +4868,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolo26-n-pose_640x640",
+    "family": "yolo26_pose",
+    "task": "pose_estimation",
+    "task_legacy": "pose_estimation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo26n_seg",
@@ -3365,7 +4891,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolo26-n-seg_640x640",
+    "family": "yolo26_seg",
+    "task": "instance_segmentation",
+    "task_legacy": "instance_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo26s_cls",
@@ -3380,7 +4913,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolo26-s_224x224",
+    "family": "yolo26_cls",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo26s_obb",
@@ -3395,7 +4935,14 @@
       "score_threshold": 0.3
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolo26-s-obb_1024x1024",
+    "family": "yolo26_obb",
+    "task": "oriented_object_detection",
+    "task_legacy": "obb_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo26s_pose",
@@ -3411,7 +4958,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolo26-s-pose_640x640",
+    "family": "yolo26_pose",
+    "task": "pose_estimation",
+    "task_legacy": "pose_estimation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo26s_seg",
@@ -3427,7 +4981,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolo26-s-seg_640x640",
+    "family": "yolo26_seg",
+    "task": "instance_segmentation",
+    "task_legacy": "instance_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo26x_cls",
@@ -3442,7 +5003,14 @@
       "top_k": 5
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolo26-x_224x224",
+    "family": "yolo26_cls",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo26x_obb",
@@ -3457,7 +5025,14 @@
       "score_threshold": 0.3
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolo26-x-obb_1024x1024",
+    "family": "yolo26_obb",
+    "task": "oriented_object_detection",
+    "task_legacy": "obb_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo26x_pose",
@@ -3473,7 +5048,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolo26-x-pose_640x640",
+    "family": "yolo26_pose",
+    "task": "pose_estimation",
+    "task_legacy": "pose_estimation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo26x_seg",
@@ -3489,7 +5071,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolo26-x-seg_640x640",
+    "family": "yolo26_seg",
+    "task": "instance_segmentation",
+    "task_legacy": "instance_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov3_2",
@@ -3505,7 +5094,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolov3_416x416",
+    "family": "yolov3",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov3_2_ppu",
@@ -3521,7 +5117,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolov3_416x416_ppu",
+    "family": "yolo_ppu",
+    "task": "object_detection",
+    "task_legacy": "ppu",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov3_3_ppu",
@@ -3537,7 +5140,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolov3_608x608_ppu",
+    "family": "yolo_ppu",
+    "task": "object_detection",
+    "task_legacy": "ppu",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov3_gluon_416",
@@ -3553,7 +5163,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolov3-gluon_416x416",
+    "family": "yolov3",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov3_gluon_608",
@@ -3569,7 +5186,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolov3-gluon_608x608",
+    "family": "yolov3",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov3tiny_1",
@@ -3585,7 +5209,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolov3-tiny_416x416",
+    "family": "yolov3",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov3tiny_1_ppu",
@@ -3601,7 +5232,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolov3-tiny_416x416_ppu",
+    "family": "yolo_ppu",
+    "task": "object_detection",
+    "task_legacy": "ppu",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov4_2_ppu",
@@ -3617,7 +5255,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolov4_512x512_ppu",
+    "family": "yolo_ppu",
+    "task": "object_detection",
+    "task_legacy": "ppu",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov4_leaky_512_512",
@@ -3633,7 +5278,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolov4-leaky_512x512",
+    "family": "yolov4",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov4tiny_1",
@@ -3649,7 +5301,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolov4-t_416x416",
+    "family": "yolov4",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov5l6",
@@ -3665,7 +5324,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolov5-l6_1280x1280",
+    "family": "yolov5",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov5m6",
@@ -3681,7 +5347,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolov5-m6_640x640",
+    "family": "yolov5",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov5m_wo_spp_640",
@@ -3697,7 +5370,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolov5-m_640x640_nospp",
+    "family": "yolov5",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov5n6",
@@ -3713,7 +5393,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolov5-n6_1280x1280",
+    "family": "yolov5",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov5s6",
@@ -3729,7 +5416,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolov5-s6_1280x1280",
+    "family": "yolov5",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov5s_4",
@@ -3745,7 +5439,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolov5-s_320x320",
+    "family": "yolov5",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov5s_bbox_decoding_only_640",
@@ -3761,7 +5462,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolov5-s_640x640_decode",
+    "family": "yolov5",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov5s_c3tr_640",
@@ -3777,7 +5485,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolov5-s_640x640_c3tr",
+    "family": "yolov5",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov5s_wo_spp_640",
@@ -3793,7 +5508,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolov5-s_640x640_nospp",
+    "family": "yolov5",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov5x",
@@ -3809,7 +5531,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolov5-x_640x640",
+    "family": "yolov5",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov5x6",
@@ -3825,7 +5554,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolov5-x6_1280x1280",
+    "family": "yolov5",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov5xs_wo_spp_512",
@@ -3841,7 +5577,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolov5-xs_512x512_nospp",
+    "family": "yolov5",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov6l",
@@ -3857,7 +5600,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolov6-l_640x640",
+    "family": "yolov6",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov6m",
@@ -3873,7 +5623,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolov6-m_640x640",
+    "family": "yolov6",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov6n",
@@ -3889,7 +5646,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolov6-n_640x640",
+    "family": "yolov6",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov6n_0_2_1_nms_core",
@@ -3905,7 +5669,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolov6-n_640x640_nmscore",
+    "family": "yolov6",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov7_w6_wo_decoding",
@@ -3921,7 +5692,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolov7-w6_1280x1280_nodecode",
+    "family": "yolov7",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov7_wo_decoding",
@@ -3937,7 +5715,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolov7_640x640_nodecode",
+    "family": "yolov7",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov7d6",
@@ -3953,7 +5738,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolov7-d6_1280x1280",
+    "family": "yolov7",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov7e6e",
@@ -3969,7 +5761,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolov7-e6e_1280x1280",
+    "family": "yolov7",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov7x",
@@ -3985,7 +5784,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolov7-x_640x640",
+    "family": "yolov7",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov8s_bbox_decoding_only_640",
@@ -4001,7 +5807,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolov8-s_640x640_decode",
+    "family": "yolov8",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov9_gelan_c",
@@ -4017,7 +5830,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolov9-gelan-c_640x640",
+    "family": "yolov9",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov9m",
@@ -4033,7 +5853,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolov9-m_640x640",
+    "family": "yolov9",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolox_s_2_ppu",
@@ -4049,7 +5876,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolox-s_640x640_ppu",
+    "family": "yolo_ppu",
+    "task": "object_detection",
+    "task_legacy": "ppu",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yoloxl",
@@ -4065,7 +5899,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolox-l_640x640",
+    "family": "yolox",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yoloxm",
@@ -4081,7 +5922,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolox-m_640x640",
+    "family": "yolox",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yoloxx",
@@ -4097,7 +5945,14 @@
       "nms_threshold": 0.45
     },
     "source": "auto_classify",
-    "supported": true
+    "supported": true,
+    "variant": "yolox-x_640x640",
+    "family": "yolox",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "beit_large_patch16_1",
@@ -4112,7 +5967,14 @@
       "top_k": 5
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "beit-l-p16_224x224",
+    "family": "beit",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "deit_base_1",
@@ -4127,7 +5989,14 @@
       "top_k": 5
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "deit-b_224x224",
+    "family": "deit",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "deit_base_distilled_1",
@@ -4142,7 +6011,14 @@
       "top_k": 5
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "deit-b_224x224_distilled",
+    "family": "deit",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "deit_base_distilled_2",
@@ -4157,7 +6033,14 @@
       "top_k": 5
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "deit-b_384x384_distilled",
+    "family": "deit",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "deit_small_1",
@@ -4172,7 +6055,14 @@
       "top_k": 5
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "deit-s_224x224",
+    "family": "deit",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "deit_small_distilled_1",
@@ -4187,7 +6077,14 @@
       "top_k": 5
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "deit-s_224x224_distilled",
+    "family": "deit",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "deit_tiny_1",
@@ -4202,7 +6099,14 @@
       "top_k": 5
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "deit-t_224x224",
+    "family": "deit",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "deit_tiny_distilled_1",
@@ -4217,7 +6121,14 @@
       "top_k": 5
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "deit-t_224x224_distilled",
+    "family": "deit",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "efficientnetb7",
@@ -4232,7 +6143,14 @@
       "top_k": 5
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "efficientnet-b7_600x600",
+    "family": "efficientnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "efficientnetv2m",
@@ -4247,7 +6165,14 @@
       "top_k": 5
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "efficientnetv2-m_480x480",
+    "family": "efficientnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "fastvit_ma36_1",
@@ -4262,7 +6187,14 @@
       "top_k": 5
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "fastvit-ma36_256x256",
+    "family": "fastvit",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "fastvit_sa24_1",
@@ -4277,7 +6209,14 @@
       "top_k": 5
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "fastvit-sa24_256x256",
+    "family": "fastvit",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "fastvit_sa36_1",
@@ -4292,7 +6231,14 @@
       "top_k": 5
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "fastvit-sa36_256x256",
+    "family": "fastvit",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "ghostnet_1",
@@ -4307,7 +6253,14 @@
       "top_k": 5
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "ghostnet_224x224",
+    "family": "ghostnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "repghost_2_0x_1",
@@ -4322,7 +6275,14 @@
       "top_k": 5
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "repghost-2.0x_224x224",
+    "family": "repghost",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "repvgg_a0_1",
@@ -4337,7 +6297,14 @@
       "top_k": 5
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "repvgg-a0_320x320",
+    "family": "repvgg",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "repvgg_a1_1",
@@ -4352,7 +6319,14 @@
       "top_k": 5
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "repvgg-a1_320x320",
+    "family": "repvgg",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "repvgg_a2_1",
@@ -4367,7 +6341,14 @@
       "top_k": 5
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "repvgg-a2_320x320",
+    "family": "repvgg",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "repvgg_b0_1",
@@ -4382,7 +6363,14 @@
       "top_k": 5
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "repvgg-b0_320x320",
+    "family": "repvgg",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "repvgg_b1_1",
@@ -4397,7 +6385,14 @@
       "top_k": 5
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "repvgg-b1_320x320",
+    "family": "repvgg",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "resmlp24_1",
@@ -4412,7 +6407,14 @@
       "top_k": 5
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "resmlp24_224x224",
+    "family": "resmlp",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "resnext101_32x8d_1",
@@ -4427,7 +6429,14 @@
       "top_k": 5
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "resnext101-32x8d_224x224",
+    "family": "resnext",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "vit_base_bn_1",
@@ -4442,7 +6451,14 @@
       "top_k": 5
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "vit-b-p16_224x224_bn",
+    "family": "vit",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "vit_base_p16_2",
@@ -4457,7 +6473,14 @@
       "top_k": 5
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "vit-b-p16_224x224",
+    "family": "vit",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "vit_small_p16_1",
@@ -4472,7 +6495,14 @@
       "top_k": 5
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "vit-s-p16_224x224",
+    "family": "vit",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "rn50x16_openai_1",
@@ -4485,7 +6515,14 @@
     "input_height": 384,
     "config": {},
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "clip-img_resnet50x16_384x384_openai-wit",
+    "family": "clip",
+    "task": "zero_shot_image_classification",
+    "task_legacy": "embedding",
+    "image_only": true,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "vit_b_32_256_datacomp_s34b_b86k_1",
@@ -4498,7 +6535,14 @@
     "input_height": 256,
     "config": {},
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "clip-img_vit-b32_256x256_datacomp-s34b-b86k",
+    "family": "clip",
+    "task": "zero_shot_image_classification",
+    "task_legacy": "embedding",
+    "image_only": true,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "vit_l_14_datacomp_xl_s13b_b90k_1",
@@ -4511,7 +6555,14 @@
     "input_height": 224,
     "config": {},
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "clip-img_vit-l14_224x224_datacomp-xl-s13b-b90k",
+    "family": "clip",
+    "task": "zero_shot_image_classification",
+    "task_legacy": "embedding",
+    "image_only": true,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "vit_l_14_quickgelu_dfn2b_1",
@@ -4524,7 +6575,14 @@
     "input_height": 224,
     "config": {},
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "clip-img_vit-l14-quickgelu_224x224_dfn2b",
+    "family": "clip",
+    "task": "zero_shot_image_classification",
+    "task_legacy": "embedding",
+    "image_only": true,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "eigenplaces_resnet18_1",
@@ -4537,7 +6595,14 @@
     "input_height": 512,
     "config": {},
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "eigenplaces-resnet18_512x512",
+    "family": "eigenplaces",
+    "task": "super_resolution",
+    "task_legacy": "embedding",
+    "image_only": true,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "eigenplaces_resnet50_1",
@@ -4550,7 +6615,14 @@
     "input_height": 512,
     "config": {},
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "eigenplaces-resnet50_512x512",
+    "family": "eigenplaces",
+    "task": "super_resolution",
+    "task_legacy": "embedding",
+    "image_only": true,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "superpoint_1",
@@ -4563,7 +6635,14 @@
     "input_height": 480,
     "config": {},
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "superpoint_480x640",
+    "family": "superpoint",
+    "task": "keypoint_detection",
+    "task_legacy": "keypoint_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "casvit_t_seg_fpn_resnet50_1",
@@ -4576,7 +6655,14 @@
     "input_height": 512,
     "config": {},
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "casvit-t-fpn-resnet50_512x512",
+    "family": "casvit",
+    "task": "semantic_segmentation",
+    "task_legacy": "semantic_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "deeplab_v3_mobilenet_v2_wo_dilation_sim_1",
@@ -4589,7 +6675,14 @@
     "input_height": 513,
     "config": {},
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "deeplabv3_mobilenetv2_513x513_nodilation",
+    "family": "deeplabv3",
+    "task": "semantic_segmentation",
+    "task_legacy": "semantic_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "deeplabv3plus_drn_512x512_q_lite",
@@ -4602,7 +6695,14 @@
     "input_height": 512,
     "config": {},
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "deeplabv3plus-drn_512x512",
+    "family": "deeplabv3",
+    "task": "semantic_segmentation",
+    "task_legacy": "semantic_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "deeplabv3plus_resnet101_1",
@@ -4615,7 +6715,14 @@
     "input_height": 512,
     "config": {},
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "deeplabv3plus-resnet101_512x512",
+    "family": "deeplabv3",
+    "task": "semantic_segmentation",
+    "task_legacy": "semantic_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "deeplabv3plus_resnet50_1",
@@ -4628,7 +6735,14 @@
     "input_height": 512,
     "config": {},
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "deeplabv3plus-resnet50_512x512",
+    "family": "deeplabv3",
+    "task": "semantic_segmentation",
+    "task_legacy": "semantic_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "deeplabv3_resnet101_1",
@@ -4641,7 +6755,14 @@
     "input_height": 512,
     "config": {},
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "deeplabv3-resnet101_512x512",
+    "family": "deeplabv3",
+    "task": "semantic_segmentation",
+    "task_legacy": "semantic_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "deeplabv3_resnet50_1",
@@ -4654,7 +6775,14 @@
     "input_height": 512,
     "config": {},
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "deeplabv3-resnet50_512x512",
+    "family": "deeplabv3",
+    "task": "semantic_segmentation",
+    "task_legacy": "semantic_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "fcn8_resnet50_1",
@@ -4667,7 +6795,14 @@
     "input_height": 512,
     "config": {},
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "fcn8_resnet50_512x512",
+    "family": "fcn",
+    "task": "semantic_segmentation",
+    "task_legacy": "semantic_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "fcn8_resnet_v1_18_1",
@@ -4680,7 +6815,14 @@
     "input_height": 1024,
     "config": {},
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "fcn8_resnet18_1024x1920",
+    "family": "fcn",
+    "task": "semantic_segmentation",
+    "task_legacy": "semantic_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "pidnet_s_1",
@@ -4693,7 +6835,14 @@
     "input_height": 1024,
     "config": {},
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "pidnet-s_1024x2048",
+    "family": "pidnet",
+    "task": "semantic_segmentation",
+    "task_legacy": "semantic_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "stdc2_model_maxmiou50_1",
@@ -4706,7 +6855,14 @@
     "input_height": 512,
     "config": {},
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "stdc2-seg50_512x1024",
+    "family": "stdc_seg",
+    "task": "semantic_segmentation",
+    "task_legacy": "semantic_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "depth_anything_v2_vitb_1",
@@ -4719,7 +6875,14 @@
     "input_height": 224,
     "config": {},
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "depthanythingv2-vitb_224x224",
+    "family": "depthanythingv2",
+    "task": "depth_estimation",
+    "task_legacy": "depth_estimation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "depth_anything_v2_vitl_1",
@@ -4732,7 +6895,14 @@
     "input_height": 224,
     "config": {},
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "depthanythingv2-vitl_224x224",
+    "family": "depthanythingv2",
+    "task": "depth_estimation",
+    "task_legacy": "depth_estimation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "depth_anything_v2_vits_1",
@@ -4745,7 +6915,14 @@
     "input_height": 224,
     "config": {},
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "depthanythingv2-vits_224x224",
+    "family": "depthanythingv2",
+    "task": "depth_estimation",
+    "task_legacy": "depth_estimation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "retinaface_mobilenet_v1_736x1280_1",
@@ -4761,7 +6938,14 @@
       "nms_threshold": 0.4
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "retinaface_mobilenetv1_736x1280",
+    "family": "retinaface",
+    "task": "face_detection",
+    "task_legacy": "face_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov5n_face_1",
@@ -4778,7 +6962,14 @@
       "nms_threshold": 0.4
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "yolov5-n-face_640x640",
+    "family": "yolov5_face",
+    "task": "face_detection",
+    "task_legacy": "face_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov7_lite_t_face_1",
@@ -4795,7 +6986,14 @@
       "nms_threshold": 0.4
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "yolov7-lite-t-face_640x640",
+    "family": "yolov7_face",
+    "task": "face_detection",
+    "task_legacy": "face_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "mediapipe_hand_detector_1",
@@ -4811,7 +7009,14 @@
       "nms_threshold": 0.3
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "mediapipe-hand-detector_192x192",
+    "family": "mediapipe_hand_detector",
+    "task": "hand_detection",
+    "task_legacy": "hand_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov5_pose",
@@ -4828,7 +7033,14 @@
       "nms_threshold": 0.45
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "yolov5-s6-pose_640x640",
+    "family": "yolov5_pose",
+    "task": "pose_estimation",
+    "task_legacy": "pose_estimation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "vit_pose_small_bn_1",
@@ -4841,7 +7053,14 @@
     "input_height": 256,
     "config": {},
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "vitpose-s_256x192",
+    "family": "vitpose",
+    "task": "pose_estimation",
+    "task_legacy": "pose_estimation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo11m_pose",
@@ -4858,7 +7077,14 @@
       "nms_threshold": 0.45
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "yolo11-m-pose_640x640",
+    "family": "yolo11_pose",
+    "task": "pose_estimation",
+    "task_legacy": "pose_estimation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo11n_pose",
@@ -4875,7 +7101,14 @@
       "nms_threshold": 0.45
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "yolo11-n-pose_640x640",
+    "family": "yolo11_pose",
+    "task": "pose_estimation",
+    "task_legacy": "pose_estimation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo11s_pose",
@@ -4892,7 +7125,14 @@
       "nms_threshold": 0.45
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "yolo11-s-pose_640x640",
+    "family": "yolo11_pose",
+    "task": "pose_estimation",
+    "task_legacy": "pose_estimation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo11x_pose",
@@ -4909,7 +7149,14 @@
       "nms_threshold": 0.45
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "yolo11-x-pose_640x640",
+    "family": "yolo11_pose",
+    "task": "pose_estimation",
+    "task_legacy": "pose_estimation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov8l_pose",
@@ -4926,7 +7173,14 @@
       "nms_threshold": 0.45
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "yolov8-l-pose_640x640",
+    "family": "yolov8_pose",
+    "task": "pose_estimation",
+    "task_legacy": "pose_estimation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov8n_pose",
@@ -4943,7 +7197,14 @@
       "nms_threshold": 0.45
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "yolov8-n-pose_640x640",
+    "family": "yolov8_pose",
+    "task": "pose_estimation",
+    "task_legacy": "pose_estimation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov8x_pose",
@@ -4960,7 +7221,14 @@
       "nms_threshold": 0.45
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "yolov8-x-pose_640x640",
+    "family": "yolov8_pose",
+    "task": "pose_estimation",
+    "task_legacy": "pose_estimation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo11l_seg",
@@ -4977,7 +7245,14 @@
       "nms_threshold": 0.45
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "yolo11-l-seg_640x640",
+    "family": "yolo11_seg",
+    "task": "instance_segmentation",
+    "task_legacy": "instance_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo11m_seg",
@@ -4994,7 +7269,14 @@
       "nms_threshold": 0.45
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "yolo11-m-seg_640x640",
+    "family": "yolo11_seg",
+    "task": "instance_segmentation",
+    "task_legacy": "instance_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo11n_seg",
@@ -5011,7 +7293,14 @@
       "nms_threshold": 0.45
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "yolo11-n-seg_640x640",
+    "family": "yolo11_seg",
+    "task": "instance_segmentation",
+    "task_legacy": "instance_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo11s_seg",
@@ -5028,7 +7317,14 @@
       "nms_threshold": 0.45
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "yolo11-s-seg_640x640",
+    "family": "yolo11_seg",
+    "task": "instance_segmentation",
+    "task_legacy": "instance_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo11x_seg",
@@ -5045,7 +7341,14 @@
       "nms_threshold": 0.45
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "yolo11-x-seg_640x640",
+    "family": "yolo11_seg",
+    "task": "instance_segmentation",
+    "task_legacy": "instance_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov5x_seg",
@@ -5062,7 +7365,14 @@
       "nms_threshold": 0.45
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "yolov5-x-seg_640x640",
+    "family": "yolov5_seg",
+    "task": "instance_segmentation",
+    "task_legacy": "instance_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov8l_seg",
@@ -5079,7 +7389,14 @@
       "nms_threshold": 0.45
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "yolov8-l-seg_640x640",
+    "family": "yolov8_seg",
+    "task": "instance_segmentation",
+    "task_legacy": "instance_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov8x_seg",
@@ -5096,7 +7413,14 @@
       "nms_threshold": 0.45
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "yolov8-x-seg_640x640",
+    "family": "yolov8_seg",
+    "task": "instance_segmentation",
+    "task_legacy": "instance_segmentation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov6s_1",
@@ -5112,7 +7436,14 @@
       "nms_threshold": 0.45
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "yolov6-s_640x640",
+    "family": "yolov6",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov6l6_1",
@@ -5128,7 +7459,14 @@
       "nms_threshold": 0.45
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "yolov6-l6_1280x1280",
+    "family": "yolov6",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolopv2_1",
@@ -5144,7 +7482,14 @@
       "nms_threshold": 0.45
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "yolopv2_384x640",
+    "family": "yolopv2",
+    "task": "panoptic_driving_perception",
+    "task_legacy": "panoptic_driving_perception",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "dope_hope_ketchup_1",
@@ -5157,7 +7502,14 @@
     "input_height": 480,
     "config": {},
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "dope-hope-ketchup_480x640",
+    "family": "dope",
+    "task": "object_pose_estimation",
+    "task_legacy": "object_pose_estimation",
+    "image_only": true,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "sfa3d_608x608",
@@ -5170,7 +7522,14 @@
     "input_height": 608,
     "config": {},
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "sfa3d_608x608",
+    "family": "sfa3d",
+    "task": "3d_object_detection",
+    "task_legacy": "3d_object_detection",
+    "image_only": true,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "espcn_x2_1",
@@ -5183,7 +7542,14 @@
     "input_height": 17,
     "config": {},
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "espcn-x2_17x17",
+    "family": "espcn",
+    "task": "super_resolution",
+    "task_legacy": "super_resolution",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "realesrgan_x2",
@@ -5196,7 +7562,14 @@
     "input_height": 192,
     "config": {},
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "realesrgan-x2_192x192",
+    "family": "realesrgan",
+    "task": "super_resolution",
+    "task_legacy": "super_resolution",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "realesrgan_x4",
@@ -5209,7 +7582,14 @@
     "input_height": 192,
     "config": {},
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "realesrgan-x4_192x192",
+    "family": "realesrgan",
+    "task": "super_resolution",
+    "task_legacy": "super_resolution",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "realesrgan_x8",
@@ -5222,7 +7602,14 @@
     "input_height": 192,
     "config": {},
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "realesrgan-x8_192x192",
+    "family": "realesrgan",
+    "task": "super_resolution",
+    "task_legacy": "super_resolution",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "zero_dce_pp_1",
@@ -5235,7 +7622,14 @@
     "input_height": 400,
     "config": {},
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "zerodce-pp_400x600",
+    "family": "zerodce",
+    "task": "low_light_enhancement",
+    "task_legacy": "image_enhancement",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "regnetx1_6gf_v2",
@@ -5250,7 +7644,14 @@
       "top_k": 5
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "regnet-x1.6gf_224x224_v2",
+    "family": "regnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "resnet18_brecq",
@@ -5265,7 +7666,14 @@
       "top_k": 5
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "resnet18_224x224_brecq",
+    "family": "resnet",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "resnext50_32x4d_imgclsmob",
@@ -5280,7 +7688,14 @@
       "top_k": 5
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "resnext50-32x4d_224x224_imgclsmob",
+    "family": "resnext",
+    "task": "image_classification",
+    "task_legacy": "classification",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov5m6_1280",
@@ -5296,7 +7711,14 @@
       "nms_threshold": 0.45
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "yolov5-m6_1280x1280",
+    "family": "yolov5",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov5n_6_1",
@@ -5312,7 +7734,14 @@
       "nms_threshold": 0.45
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "yolov5-n6_1280x1280_v6.1",
+    "family": "yolov5",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolov5s_6_1",
@@ -5328,7 +7757,14 @@
       "nms_threshold": 0.45
     },
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "yolov5-s6_1280x1280_v6.1",
+    "family": "yolov5",
+    "task": "object_detection",
+    "task_legacy": "object_detection",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo26_depth_s",
@@ -5341,7 +7777,14 @@
     "input_height": 768,
     "config": {},
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "yolo26-depth-s_768x768",
+    "family": "yolo26_depth",
+    "task": "depth_estimation",
+    "task_legacy": "depth_estimation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo26_depth_n",
@@ -5354,7 +7797,14 @@
     "input_height": 768,
     "config": {},
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "yolo26-depth-n_768x768",
+    "family": "yolo26_depth",
+    "task": "depth_estimation",
+    "task_legacy": "depth_estimation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo26_depth_m",
@@ -5367,7 +7817,14 @@
     "input_height": 768,
     "config": {},
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "yolo26-depth-m_768x768",
+    "family": "yolo26_depth",
+    "task": "depth_estimation",
+    "task_legacy": "depth_estimation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo26_depth_l",
@@ -5380,7 +7837,14 @@
     "input_height": 768,
     "config": {},
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "yolo26-depth-l_768x768",
+    "family": "yolo26_depth",
+    "task": "depth_estimation",
+    "task_legacy": "depth_estimation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   },
   {
     "model_name": "yolo26_depth_x",
@@ -5393,6 +7857,13 @@
     "input_height": 768,
     "config": {},
     "source": "manual",
-    "supported": true
+    "supported": true,
+    "variant": "yolo26-depth-x_768x768",
+    "family": "yolo26_depth",
+    "task": "depth_estimation",
+    "task_legacy": "depth_estimation",
+    "image_only": false,
+    "zoo_canonical": true,
+    "duplicate_of": null
   }
 ]

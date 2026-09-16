@@ -22,7 +22,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 REGISTRY = PROJECT_ROOT / "config" / "model_registry.json"
 SNAPSHOT = PROJECT_ROOT / "tests" / "data" / "modelzoo_cv_tree.json"
 
-NEW_FIELDS = ("variant", "family", "task", "task_legacy", "image_only", "zoo_canonical")
+NEW_FIELDS = ("variant", "family", "task", "task_legacy", "image_only",
+              "zoo_canonical", "duplicate_of")
 
 # model_name -> (variant, task, family). The ONLY entries allowed to miss the
 # dx-modelzoo snapshot. See the spec's "Documented exceptions" table.
@@ -30,7 +31,16 @@ EXCEPTIONS: dict[str, tuple[str, str, str]] = {
     "efficientnet_lite0":     ("efficientnet-lite0_256x256", "image_classification", "efficientnet"),
     "scrfd500m_ppu":          ("SCRFD500M_PPU",              "face_detection",       "scrfd"),
     "yolov5pose_ppu":         ("YOLOV5Pose_PPU",             "pose_estimation",      "yolov5_pose"),
-    "deit_base384_distilled": ("deit-b_384x384_distilled",   "image_classification", "deit"),
+}
+
+# Entries that duplicate another entry's model rather than naming a distinct one.
+# ``deit_base384_distilled`` is byte-identical to ``deitbase384`` apart from
+# model_name and points at the NON-distilled deit-b_384x384.dxnn -- the name is
+# wrong. The real distilled 384 model is the variant deit-b_384x384_distilled,
+# which resolves from the snapshot with no exception needed.
+# Phase 0 marks these; Phase 2 removes them with their example directories.
+DUPLICATES: dict[str, str] = {
+    "deit_base384_distilled": "deitbase384",
 }
 
 # In the snapshot but intentionally not in dx_app: no example, not on disk.
@@ -61,15 +71,63 @@ def test_every_entry_has_the_new_fields(registry):
     assert not missing, f"entries missing dx-modelzoo fields: {missing}"
 
 
-def test_variant_is_unique(registry):
+def test_variant_is_unique_among_canonical_entries(registry):
+    """Every non-duplicate entry owns its variant outright.
+
+    Entries listed in DUPLICATES deliberately share another entry's variant --
+    they are redundant examples awaiting removal in Phase 2 -- so they are
+    excluded here rather than being given a synthetic variant name.
+    """
     seen: dict[str, str] = {}
     dupes: list[tuple[str, str, str]] = []
     for e in registry:
+        if e["duplicate_of"] is not None:
+            continue
         v = e["variant"]
         if v in seen:
             dupes.append((v, seen[v], e["model_name"]))
         seen[v] = e["model_name"]
-    assert not dupes, f"duplicate variant keys: {dupes}"
+    assert not dupes, f"duplicate variant keys among canonical entries: {dupes}"
+
+
+def test_duplicate_entries_are_declared_and_consistent(registry):
+    """A duplicate must point at a real entry and carry that entry's identity."""
+    by_name = {e["model_name"]: e for e in registry}
+    declared = {e["model_name"]: e["duplicate_of"]
+                for e in registry if e["duplicate_of"] is not None}
+    assert declared == DUPLICATES, (
+        f"duplicate_of markers are {declared}, DUPLICATES declares {DUPLICATES}"
+    )
+    for name, target_name in DUPLICATES.items():
+        dup, target = by_name.get(name), by_name.get(target_name)
+        assert dup is not None, f"DUPLICATES lists {name}, not in the registry"
+        assert target is not None, f"{name} duplicates {target_name}, not in the registry"
+        assert dup["dxnn_file"] == target["dxnn_file"], (
+            f"{name} claims to duplicate {target_name} but the .dxnn differs: "
+            f"{dup['dxnn_file']} vs {target['dxnn_file']}"
+        )
+        for field in ("variant", "family", "task"):
+            assert dup[field] == target[field], (
+                f"{name}.{field}={dup[field]!r} must match {target_name}.{field}={target[field]!r}"
+            )
+
+
+def test_the_real_distilled_384_model_owns_its_dxnn_stem(registry):
+    """deit-b_384x384_distilled must belong to the entry holding that .dxnn.
+
+    Guards the mistake this test file was born from: the entry *named*
+    ``deit_base384_distilled`` points at the non-distilled .dxnn, while the
+    genuine distilled model sits behind a legacy squashed name. Under
+    dxnn-canonical naming the variant follows the .dxnn, not the legacy name.
+    """
+    owners = [e for e in registry if e["dxnn_file"] == "deit-b_384x384_distilled.dxnn"]
+    assert len(owners) == 1, f"expected exactly 1 owner, got {[e['model_name'] for e in owners]}"
+    owner = owners[0]
+    assert owner["variant"] == "deit-b_384x384_distilled", (
+        f"{owner['model_name']} must carry variant 'deit-b_384x384_distilled', "
+        f"got {owner['variant']!r}"
+    )
+    assert owner["duplicate_of"] is None, "the genuine distilled model is not a duplicate"
 
 
 def test_variant_matches_dxnn_stem_except_documented(registry):
@@ -78,6 +136,7 @@ def test_variant_matches_dxnn_stem_except_documented(registry):
         for e in registry
         if e["variant"] != e["dxnn_file"][: -len(".dxnn")]
         and e["model_name"] not in EXCEPTIONS
+        and e["model_name"] not in DUPLICATES
     ]
     assert not bad, f"variant != dxnn stem outside EXCEPTIONS: {bad}"
 
