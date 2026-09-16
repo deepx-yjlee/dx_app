@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 # Copyright (C) 2018- DEEPX Ltd. All rights reserved.
-"""
-Yolov7_face Asynchronous Inference Example
+"""yolov7_face async inference.
 
-Usage:
-    python yolov7_face_async.py --model model.dxnn --video input.mp4
-"""
+One entry point serves the whole family; ``--variant`` picks the model::
 
+    python yolov7_face_async.py --variant yolov7-face_640x640
+"""
 import sys
 from pathlib import Path
 
@@ -16,16 +15,40 @@ for _path in [str(_v3_dir), str(_module_dir)]:
     if _path not in sys.path:
         sys.path.insert(0, _path)
 
-from factory import Yolov7_faceFactory
+from factory import Yolov7FaceFactory
 from common.runner import AsyncRunner, parse_common_args
+from common.variant_config import default_variant, load_variant_config
 
-def parse_args():
-    return parse_common_args("YOLOv7-Face Async Inference")
+_VARIANTS_DIR = str(_module_dir / "variants")
+
+
+def _peek_variant(argv):
+    """Read --variant before argparse runs.
+
+    The parser's SHAPE depends on the variant: an image-only variant must not register
+    --video/--camera/--rtsp at all, and some variants add --output or the KITTI
+    companion paths. So the variant has to be known before the parser is built.
+    """
+    for i, a in enumerate(argv):
+        if a == "--variant" and i + 1 < len(argv):
+            return argv[i + 1]
+        if a.startswith("--variant="):
+            return a.split("=", 1)[1]
+    return None
+
+
 def main():
-    args = parse_args()
-    factory = Yolov7_faceFactory()
-    runner = AsyncRunner(factory)
-    runner.run(args)
+    variant = _peek_variant(sys.argv[1:]) or default_variant(_VARIANTS_DIR)
+    cli = load_variant_config(_VARIANTS_DIR, variant).get("cli") or {}
+    args = parse_common_args(
+        "yolov7_face async inference",
+        include_stream_inputs=cli.get("include_stream_inputs", True),
+        include_output=cli.get("include_output", False),
+        include_kitti_paths=cli.get("include_kitti_paths", False),
+    )
+    factory = Yolov7FaceFactory(variant=variant)
+    AsyncRunner(factory).run(args)
+
 
 if __name__ == "__main__":
     main()

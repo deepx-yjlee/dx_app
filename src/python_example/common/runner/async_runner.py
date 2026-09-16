@@ -65,6 +65,45 @@ logger = logging.getLogger(__name__)
 # Sentinel object for queue termination chain
 _SENTINEL = object()
 _ASYNC_QUEUE_MAXSIZE = 4
+
+# How many stale frames offer_latest() will evict in one call before giving up.
+# A small bound keeps the helper O(1)-ish even if another thread is refilling.
+_DISPLAY_DROP_LIMIT = 8
+
+
+def offer_latest(display_q, item, on_drop=None) -> bool:
+    """Publish a frame for display, dropping stale frames instead of blocking.
+
+    The preview window is a *best-effort* consumer. A queued frame that has been
+    superseded is worthless to the viewer, but blocking until the window catches
+    up propagates back-pressure through the render worker into the inference
+    pipeline -- which is what made end-to-end FPS collapse to the GUI's rate as
+    soon as ``--no-display`` was omitted.
+
+    So: try to enqueue; if the queue is full, evict the OLDEST frame and retry.
+    ``_SENTINEL`` is never evicted, because it is the shutdown marker and losing
+    it would hang the display loop.
+
+    Args:
+        display_q: the bounded display queue.
+        item: the rendered frame to publish.
+        on_drop: optional callable invoked once per dropped frame (metrics).
+
+    Returns:
+        True if the frame was published, False if it had to be abandoned.
+    """
+    for _ in range(_DISPLAY_DROP_LIMIT):
+        if display_q.put(item, block=False):
+            return True
+        stale = display_q.try_get()
+        if stale is None:            # drained by the consumer; retry the put
+            continue
+        if stale is _SENTINEL:       # shutdown marker: put it back, drop ours
+            display_q.put(stale, block=False)
+            return False
+        if on_drop is not None:
+            on_drop(stale)
+    return False
 _DEFAULT_DISPLAY_SIZE = (960, 640)
 
 
@@ -571,6 +610,9 @@ class AsyncRunner:
         render_q = queues["render_queue"]
         display_q = queues["display_queue"]
         render_idx = 0
+        # Frames that get persisted must not be dropped; frames that are only
+        # shown on screen must not be allowed to throttle the pipeline.
+        lossy_display = not save_enabled and not image_save_paths
         try:
             while not self._stop_event.is_set():
                 item = self._dequeue(render_q)
@@ -599,7 +641,10 @@ class AsyncRunner:
                     self._metrics["sum_save"] += time.perf_counter() - t_s0
 
                 render_idx += 1
-                if not self._enqueue(display_q, output_img):
+                if lossy_display:
+                    # Display-only: never let the window pace inference.
+                    offer_latest(display_q, output_img, self._count_display_drop)
+                elif not self._enqueue(display_q, output_img):
                     break
         except Exception as exc:
             self._handle_worker_exception("render_worker", exc, queues)
@@ -609,6 +654,17 @@ class AsyncRunner:
     # ------------------------------------------------------------------
     # Display loop (main thread)
     # ------------------------------------------------------------------
+
+    def _count_display_drop(self, _frame) -> None:
+        """Count a preview frame dropped because the window fell behind.
+
+        Dropping here is healthy, not an error -- it is what keeps the display
+        off the inference critical path -- but it is reported so the behaviour
+        stays visible in the performance summary.
+        """
+        with self._metrics_lock:
+            self._metrics["display_dropped"] = \
+                self._metrics.get("display_dropped", 0) + 1
 
     def _run_display_loop(self, queues: dict, display: bool) -> None:
         """Run on main thread. Consumes display_queue."""

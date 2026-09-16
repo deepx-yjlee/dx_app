@@ -39,9 +39,14 @@ to a channel-order bug, which is exactly the sibling of the defect they exist to
 from __future__ import annotations
 
 import importlib
+import importlib.util
+import sys
+from pathlib import Path
 
 import numpy as np
 import pytest
+
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 # open_clip's published constants, in channel order R, G, B. Confirmed per checkpoint
 # from its own open_clip_config.json "preprocess_cfg" -- all three float32 encoders
@@ -81,14 +86,44 @@ def _channel_values(tensor: np.ndarray) -> np.ndarray:
     return tensor[:, 0, 0] if tensor.shape[0] == 3 else tensor[0, 0, :]
 
 
-def _factory_module(model: str):
-    return importlib.import_module(f"embedding.{model}.factory.{model}_factory")
+# CLIP image encoders now live in one family directory and are selected by variant,
+# so the test addresses them by their .dxnn stem rather than by a per-model package.
+# ``model`` here is the legacy example-dir name the parametrisation still uses; it is
+# mapped to its variant through the registry.
+_CLIP_FAMILY = PROJECT_ROOT / "src/python_example/zero_shot_image_classification/clip"
+
+
+def _variant_for(model: str) -> str:
+    from common.variants import resolve_variant
+
+    return resolve_variant(model).variant
+
+
+def _custom_ops():
+    """Load the clip family's custom_ops.py by path."""
+    spec = importlib.util.spec_from_file_location(
+        "clip_custom_ops", _CLIP_FAMILY / "custom_ops.py")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _factory_cls():
+    """Load the family factory by path -- the family dir is not an importable package."""
+    path = next((_CLIP_FAMILY / "factory").glob("*_factory.py"))
+    spec = importlib.util.spec_from_file_location("clip_family_factory", path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return next(o for n, o in vars(module).items()
+                if isinstance(o, type) and n.endswith("Factory") and n != "Factory"
+                and o.__module__ == module.__name__)
 
 
 def _preprocessor(model: str, edge: int, config=None):
-    module = _factory_module(model)
-    factory_cls = getattr(module, f"{model[0].upper()}{model[1:]}Factory")
-    return factory_cls(config or {}).create_preprocessor(edge, edge)
+    return _factory_cls()(config or {}, variant=_variant_for(model)) \
+        .create_preprocessor(edge, edge)
 
 
 def _process(model: str, edge: int, config=None) -> np.ndarray:
@@ -103,7 +138,9 @@ def _process(model: str, edge: int, config=None) -> np.ndarray:
 
 @pytest.mark.parametrize("model,edge", FLOAT32_ENCODERS)
 def test_factory_constants_are_the_open_clip_canonical_values(model, edge):
-    module = _factory_module(model)
+    # The CLIP constants are computed rather than literal, so they stay as code in the
+    # family's custom_ops.py -- the escape hatch a variant config cannot cover.
+    module = _custom_ops()
     np.testing.assert_allclose(
         np.array(module.CLIP_MEAN, dtype=np.float32), OPEN_CLIP_MEAN, rtol=0, atol=1e-7,
     )

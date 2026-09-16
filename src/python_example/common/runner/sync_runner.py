@@ -304,6 +304,27 @@ _DEFAULT_SAMPLE_VIDEO = {
 }
 
 
+def _variant_spec(factory) -> dict:
+    """The factory's variant config, when it is a family factory.
+
+    A family factory serves every variant of its family, so per-variant behaviour --
+    image-only-ness and the default sample media -- comes from the variant config
+    rather than from a table keyed on the task name. The dx-modelzoo task rename
+    invalidates those keys, and two of its moves would otherwise change behaviour
+    outright (reid/casvit -> image_classification, embedding/eigenplaces ->
+    super_resolution). The tables remain the fallback for a hand-written factory.
+    """
+    spec = getattr(factory, "spec", None)
+    return spec if isinstance(spec, dict) else {}
+
+
+def _is_image_only(factory, task_type: Optional[str]) -> bool:
+    spec = _variant_spec(factory)
+    if "image_only" in spec:
+        return bool(spec["image_only"])
+    return task_type in _IMAGE_ONLY_TASKS
+
+
 def _resolve_default_sample_image(task_type: Optional[str],
                                   model_name: Optional[str] = None) -> str:
     """Default sample image for a task, with per-model overrides applied."""
@@ -312,6 +333,13 @@ def _resolve_default_sample_image(task_type: Optional[str],
         if key.startswith(prefix):
             return image
     return _DEFAULT_SAMPLE_IMAGE.get(task_type, _IMG_STREET)
+
+
+def _resolve_default_sample_image_for(factory, task_type: Optional[str]) -> str:
+    spec = _variant_spec(factory)
+    if spec.get("default_image"):
+        return spec["default_image"]
+    return _resolve_default_sample_image(task_type, _factory_model_name(factory))
 
 
 def _factory_model_name(factory=None) -> Optional[str]:
@@ -334,20 +362,19 @@ def _apply_default_input(args, factory=None) -> None:
     task_type = factory.get_task_type() if factory else None
     # Image-only tasks: do not auto-fill an input. Let the dispatcher show a
     # hint so the user explicitly provides an image with --image.
-    if task_type in _IMAGE_ONLY_TASKS:
+    if _is_image_only(factory, task_type):
         return
-    default_image = _resolve_default_sample_image(
-        task_type, _factory_model_name(factory))
+    default_image = _resolve_default_sample_image_for(factory, task_type)
     args.image = default_image
     logger.info(f"No input specified. Using default sample: {default_image}")
 
 
 def _show_image_only_no_input_hint(args, factory=None) -> bool:
     task_type = factory.get_task_type() if factory and hasattr(factory, "get_task_type") else ""
-    if task_type not in _IMAGE_ONLY_TASKS or getattr(args, "image", None):
+    if not _is_image_only(factory, task_type) or getattr(args, "image", None):
         return False
 
-    hint = _resolve_default_sample_image(task_type, _factory_model_name(factory))
+    hint = _resolve_default_sample_image_for(factory, task_type)
     logger.info(
         f"Task '{task_type}' takes image input only.\n"
         f"        -> Provide an image with --image (-i), "
@@ -365,7 +392,7 @@ def _has_stream_input(args) -> bool:
 
 def _reject_image_only_stream_input(args, factory=None) -> None:
     task_type = factory.get_task_type() if factory and hasattr(factory, "get_task_type") else ""
-    if task_type not in _IMAGE_ONLY_TASKS or not _has_stream_input(args):
+    if not _is_image_only(factory, task_type) or not _has_stream_input(args):
         return
 
     logger.error(
@@ -652,7 +679,7 @@ class SyncRunner:
         display = args.display
         task = self.factory.get_task_type() if hasattr(self.factory, "get_task_type") else ""
         _reject_image_only_stream_input(args, self.factory)
-        if task in _IMAGE_ONLY_TASKS and not getattr(args, "image", None):
+        if _is_image_only(self.factory, task) and not getattr(args, "image", None):
             _show_image_only_no_input_hint(args, self.factory)
             return
         if getattr(args, "image", None):

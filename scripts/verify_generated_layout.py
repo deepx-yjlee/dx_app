@@ -31,6 +31,9 @@ ROLES = (("preprocessor", "create_preprocessor"),
          ("visualizer", "create_visualizer"))
 
 
+ORIG_ROOT = ROOT  # replaced in main() when --orig is given
+
+
 def load_class(path: Path, tag: str):
     spec = importlib.util.spec_from_file_location(f"m_{tag}", path)
     mod = importlib.util.module_from_spec(spec)
@@ -53,8 +56,13 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--stage", required=True, help="generated tree root")
+    ap.add_argument("--orig", default=None,
+                    help="root holding the ORIGINAL src/python_example. Needed once the "
+                         "restructure has replaced the working tree -- restore it with "
+                         "`git archive <pre-restructure-sha> src/python_example | tar -x -C DIR`.")
     a = ap.parse_args()
     stage = Path(a.stage)
+    orig_root = Path(a.orig) if a.orig else ROOT
 
     specs = json.loads((ROOT / "tests" / "data" / "processor_specs.json").read_text())
     ok = fail = 0
@@ -65,7 +73,7 @@ def main() -> int:
         w, h = 640, 640
 
         # ---- original ----
-        odir = ROOT / "src" / "python_example" / s["source_task"] / s["source_dir"]
+        odir = orig_root / "src" / "python_example" / s["source_task"] / s["source_dir"]
         ocands = sorted((odir / "factory").glob("*_factory.py"))
         OC = load_class(ocands[0], f"o_{abs(hash(variant))}") if ocands else None
         if OC is None:
@@ -78,7 +86,10 @@ def main() -> int:
             ofac = OC()
 
         # ---- generated ----
-        gpath = stage / task / family / "factory" / f"{family}_factory.py"
+        # Glob: a digit-leading family's module carries an n_ prefix so the module
+        # name stays a valid identifier (n_3ddfa_v2_factory.py).
+        gcands = sorted((stage / task / family / "factory").glob("*_factory.py"))
+        gpath = gcands[0] if gcands else stage / task / family / "factory" / "missing.py"
         if not gpath.is_file():
             fail += 1; reasons["no generated factory"].append(variant); continue
         # custom_ops uses a relative import, so give the family dir a package identity.

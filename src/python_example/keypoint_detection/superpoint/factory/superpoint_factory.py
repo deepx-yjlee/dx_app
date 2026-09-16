@@ -1,43 +1,66 @@
+"""superpoint family factory.
+
+One factory serves every variant of the ``superpoint`` family: the per-variant
+differences -- processor classes and their non-default arguments -- live in
+``variants/<dxnn-stem>.json`` rather than in 1 near-identical factory files.
+
+Variants needing computed arguments delegate to ``custom_ops.py``.
 """
-SuperPoint Keypoint Detection Factory
-"""
-# Copyright (C) 2018- DEEPX Ltd. All rights reserved.
+from pathlib import Path
 
 from common.base.i_factory import _FactoryConfigMixin
-from common.processors import GrayscaleResizePreprocessor, SuperPointPostprocessor
-from common.visualizers import SuperPointVisualizer
+from common.variant_config import (
+    build_processor,
+    default_variant,
+    load_variant_config,
+)
+import importlib.util as _ilu
+
+_CUSTOM_OPS_PATH = Path(__file__).resolve().parent.parent / "custom_ops.py"
+_co_spec = _ilu.spec_from_file_location(
+    __name__.rsplit(".", 1)[0] + "_custom_ops", _CUSTOM_OPS_PATH)
+custom_ops = _ilu.module_from_spec(_co_spec)
+_co_spec.loader.exec_module(custom_ops)
+
+_VARIANTS_DIR = str(Path(__file__).resolve().parent.parent / "variants")
 
 
 class SuperpointFactory(_FactoryConfigMixin):
-    """Factory for creating SuperPoint keypoint detection components."""
+    """Config-driven factory for the superpoint family."""
 
-    def __init__(self, config: dict = None):
-        self.config = config or {}
+    def __init__(self, config: dict = None, variant: str = None):
+        self.variant = variant or default_variant(_VARIANTS_DIR)
+        self.spec = load_variant_config(_VARIANTS_DIR, self.variant)
+        # The variant config supplies the defaults; an explicit config overrides them.
+        self.config = {**(self.spec.get("config") or {}), **(config or {})}
 
-    def create_preprocessor(self, input_width: int, input_height: int):
-        return GrayscaleResizePreprocessor(input_width, input_height)
-
-    def create_postprocessor(self, input_width: int, input_height: int):
-        return SuperPointPostprocessor(input_width, input_height, self.config)
-
-    def create_visualizer(self):
-        # Pass the config through: these knobs used to be unreachable because
-        # the visualizer was constructed with no arguments, so nn_thresh,
-        # track_max_length, min_track_length, max_pixel_dist and ratio_thresh
-        # in config.json were silently ignored.
-        cfg = self.config
-        return SuperPointVisualizer(
-            conf_threshold=float(cfg.get("conf_threshold", 0.015)),
-            max_keypoints=int(cfg.get("top_k", 500)),
-            nn_thresh=float(cfg.get("nn_thresh", 0.7)),
-            track_max_length=int(cfg.get("track_max_length", 5)),
-            min_track_length=int(cfg.get("min_track_length", 2)),
-            max_pixel_dist=float(cfg.get("max_pixel_dist", 100.0)),
-            ratio_thresh=float(cfg.get("ratio_thresh", 0.75)),
+    def _build(self, role, input_width, input_height):
+        # Variants whose arguments are computed rather than literal delegate to the
+        # family's custom_ops.py, which holds their original factory verbatim.
+        if self.variant in custom_ops.FACTORIES:
+            delegate = custom_ops.FACTORIES[self.variant](self.config)
+            if role == "visualizer":
+                return delegate.create_visualizer()
+            return getattr(delegate, "create_" + role)(input_width, input_height)
+        return build_processor(
+            self.spec[role],
+            input_width=input_width,
+            input_height=input_height,
+            config=self.config,
         )
 
+    def create_preprocessor(self, input_width: int, input_height: int):
+        return self._build("preprocessor", input_width, input_height)
+
+    def create_postprocessor(self, input_width: int, input_height: int):
+        return self._build("postprocessor", input_width, input_height)
+
+    def create_visualizer(self):
+        return self._build("visualizer", self.spec["input_width"],
+                           self.spec["input_height"])
+
     def get_model_name(self) -> str:
-        return "superpoint"
+        return self.variant
 
     def get_task_type(self) -> str:
-        return "keypoint_detection"
+        return self.spec["task"]

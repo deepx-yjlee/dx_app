@@ -1,33 +1,54 @@
+"""yolov5_pose family factory.
+
+One factory serves every variant of the ``yolov5_pose`` family: the per-variant
+differences -- processor classes and their non-default arguments -- live in
+``variants/<dxnn-stem>.json`` rather than in 2 near-identical factory files.
+
 """
-Yolov5_pose Factory
-"""
-# Copyright (C) 2018- DEEPX Ltd. All rights reserved.
+from pathlib import Path
 
 from common.base import IPoseFactory
-from common.processors import LetterboxPreprocessor, YOLOv5PosePostprocessor
-from common.visualizers import PoseVisualizer
+from common.variant_config import (
+    build_processor,
+    default_variant,
+    load_variant_config,
+)
+_VARIANTS_DIR = str(Path(__file__).resolve().parent.parent / "variants")
 
 
-class Yolov5_poseFactory(IPoseFactory):
-    """Factory for creating Yolov5_pose components."""
+class Yolov5PoseFactory(IPoseFactory):
+    """Config-driven factory for the yolov5_pose family."""
 
-    def __init__(self, config: dict = None):
-        self.config = config or {}
+    def __init__(self, config: dict = None, variant: str = None):
+        self.variant = variant or default_variant(_VARIANTS_DIR)
+        self.spec = load_variant_config(_VARIANTS_DIR, self.variant)
+        # The variant config supplies the defaults; an explicit config overrides them.
+        self.config = {**(self.spec.get("config") or {}), **(config or {})}
+
+    def _build(self, role, input_width, input_height):
+        return build_processor(
+            self.spec[role],
+            input_width=input_width,
+            input_height=input_height,
+            config=self.config,
+        )
 
     def create_preprocessor(self, input_width: int, input_height: int):
-        return LetterboxPreprocessor(input_width, input_height)
+        return self._build("preprocessor", input_width, input_height)
 
     def create_postprocessor(self, input_width: int, input_height: int):
-        return YOLOv5PosePostprocessor(input_width, input_height, self.config)
+        return self._build("postprocessor", input_width, input_height)
 
     def create_visualizer(self):
-        return PoseVisualizer()
+        return self._build("visualizer", self.spec["input_width"],
+                           self.spec["input_height"])
 
     def get_model_name(self) -> str:
-        return "yolov5_pose"
+        return self.variant
 
     def get_task_type(self) -> str:
-        return "pose_estimation"
+        return self.spec["task"]
 
     def get_num_keypoints(self) -> int:
-        return 17
+            """YOLOv5Pose uses 17 COCO keypoints."""
+            return 17

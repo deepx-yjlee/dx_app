@@ -169,20 +169,25 @@ def test_alias_entries_are_declared_and_consistent(registry):
 def test_alias_entries_are_retained_not_deleted(registry):
     """Retention must be real, not just a label.
 
-    The alignment regroups and renames examples; it never deletes them. An alias
-    therefore has to still be a *runnable* example today: the registry entry is
-    present and its example directory exists in BOTH trees. If a later phase ever
-    removes one, this test is what catches it.
+    The alignment regroups examples -- 353 per-variant directories became 89
+    ``<task>/<family>/`` directories -- but it never deletes one. Post-restructure an
+    alias is retained when its family directory exists in BOTH trees, its variant
+    config is present, and the registry entry still resolves. Checking for the old
+    per-variant directory would now fail for all 353 entries, not just aliases, so the
+    test follows the variant rather than the legacy path.
     """
     by_name = {e["model_name"]: e for e in registry}
-    for name in ALIASES:
+    for name, target_name in ALIASES.items():
         entry = by_name.get(name)
         assert entry is not None, f"alias {name} was dropped from the registry"
-        legacy_task = entry["task_legacy"]
         for tree in ("python_example", "cpp_example"):
-            d = PROJECT_ROOT / "src" / tree / legacy_task / name
-            assert d.is_dir(), f"alias {name}: example dir missing -> {d}"
-            assert any(d.iterdir()), f"alias {name}: example dir is empty -> {d}"
+            fam = PROJECT_ROOT / "src" / tree / entry["task"] / entry["family"]
+            assert fam.is_dir(), f"alias {name}: family dir missing -> {fam}"
+            cfg = fam / "variants" / f"{entry['variant']}.json"
+            assert cfg.is_file(), f"alias {name}: variant config missing -> {cfg}"
+        # The alias shares its canonical entry's variant, so the config it points at is
+        # the canonical one -- that sharing is the whole point of an alias.
+        assert entry["variant"] == by_name[target_name]["variant"]
 
 
 def test_the_real_distilled_384_model_owns_its_dxnn_stem(registry):

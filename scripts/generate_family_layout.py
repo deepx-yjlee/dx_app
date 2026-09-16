@@ -38,6 +38,17 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src" / "python_example"))
 from common.variant_config import spec_is_buildable  # noqa: E402
+# The legacy task-keyed tables are the behavioural oracle for default media and
+# image-only-ness. They are read here and BAKED per variant, because the dx-modelzoo
+# task rename breaks every one of their keys and two moves would change behaviour
+# outright: reid/casvit_* -> image_classification (person_pair -> sample_dog) and
+# embedding/eigenplaces-* -> super_resolution.
+from common.runner.sync_runner import (  # noqa: E402
+    _DEFAULT_SAMPLE_IMAGE as LEGACY_IMAGE,
+    _DEFAULT_SAMPLE_VIDEO as LEGACY_VIDEO,
+    _IMAGE_ONLY_TASKS as LEGACY_IMAGE_ONLY,
+    _MODEL_SAMPLE_IMAGE_OVERRIDE as LEGACY_IMAGE_OVERRIDE,
+)
 
 REGISTRY = ROOT / "config" / "model_registry.json"
 SPECS = ROOT / "tests" / "data" / "processor_specs.json"
@@ -78,7 +89,29 @@ def available_bases() -> set[str]:
 
 
 # --------------------------------------------------------------------- generation
+def legacy_media(entry: dict, spec: dict) -> tuple[str | None, str | None, bool]:
+    """``(default_image, default_video, image_only)`` as the legacy runner resolved it.
+
+    ``task_legacy`` is the key, never the new task name: the runner's tables predate
+    the rename. The per-model image override is matched as a lowercase-alphanumeric
+    prefix, exactly as ``_resolve_default_sample_image`` does.
+    """
+    lt = entry["task_legacy"]
+    # The runner calls the 3D task "3d_detection" internally.
+    lt_runner = "3d_detection" if lt == "3d_object_detection" else lt
+    image = LEGACY_IMAGE.get(lt_runner) or LEGACY_IMAGE.get(lt)
+    norm = "".join(c for c in (spec.get("source_dir") or "").lower() if c.isalnum())
+    for prefix, override in LEGACY_IMAGE_OVERRIDE.items():
+        if norm.startswith("".join(c for c in prefix.lower() if c.isalnum())):
+            image = override
+            break
+    video = LEGACY_VIDEO.get(lt_runner, LEGACY_VIDEO.get(lt))
+    image_only = lt_runner in LEGACY_IMAGE_ONLY or lt in LEGACY_IMAGE_ONLY
+    return image, video, image_only
+
+
 def variant_json(entry: dict, spec: dict) -> dict:
+    default_image, default_video, legacy_image_only = legacy_media(entry, spec)
     return {
         "variant": entry["variant"],
         "dxnn_file": entry["dxnn_file"],
@@ -86,7 +119,13 @@ def variant_json(entry: dict, spec: dict) -> dict:
         "family": entry["family"],
         "input_width": entry["input_width"],
         "input_height": entry["input_height"],
-        "image_only": entry["image_only"],
+        # Taken from the legacy runner tables, not from the registry field: the
+        # registry marks 17 variants image_only while the runner treats 12 of those as
+        # image-only for CLI purposes and the rest only at runtime.
+        "image_only": legacy_image_only,
+        "registry_image_only": entry["image_only"],
+        "default_image": default_image,
+        "default_video": default_video,
         "zoo_canonical": entry["zoo_canonical"],
         "legacy_model_name": entry["model_name"],
         # The on-disk config.json is authoritative: it is what the original factory
@@ -95,6 +134,9 @@ def variant_json(entry: dict, spec: dict) -> dict:
         "config": spec.get("dir_config") if spec.get("dir_config") is not None
         else (entry.get("config") or {}),
         "registry_config": entry.get("config") or {},
+        "cli": spec.get("cli") or {"include_stream_inputs": True,
+                                   "include_output": False,
+                                   "include_kitti_paths": False},
         "preprocessor": spec.get("preprocessor"),
         "postprocessor": spec.get("postprocessor"),
         "visualizer": spec.get("visualizer"),
@@ -116,8 +158,7 @@ from common.variant_config import (
     default_variant,
     load_variant_config,
 )
-{custom_import}
-_VARIANTS_DIR = str(Path(__file__).resolve().parent.parent / "variants")
+{custom_import}_VARIANTS_DIR = str(Path(__file__).resolve().parent.parent / "variants")
 
 
 class {cls}({base}):
@@ -154,6 +195,19 @@ class {cls}({base}):
         return self.spec["task"]
 {extra_methods}'''
 
+# custom_ops.py sits at the FAMILY level, mirroring dx-modelzoo, while this factory
+# lives one level down in factory/. A relative import would therefore resolve to
+# factory.custom_ops and fail, so it is loaded by path.
+CUSTOM_IMPORT = '''import importlib.util as _ilu
+
+_CUSTOM_OPS_PATH = Path(__file__).resolve().parent.parent / "custom_ops.py"
+_co_spec = _ilu.spec_from_file_location(
+    __name__.rsplit(".", 1)[0] + "_custom_ops", _CUSTOM_OPS_PATH)
+custom_ops = _ilu.module_from_spec(_co_spec)
+_co_spec.loader.exec_module(custom_ops)
+
+'''
+
 CUSTOM_BRANCH = '''        # Variants whose arguments are computed rather than literal delegate to the
         # family's custom_ops.py, which holds their original factory verbatim.
         if self.variant in custom_ops.FACTORIES:
@@ -182,11 +236,36 @@ for _path in [str(_v3_dir), str(_module_dir)]:
 
 from factory import {cls}
 from common.runner import {runner}, parse_common_args
+from common.variant_config import default_variant, load_variant_config
+
+_VARIANTS_DIR = str(_module_dir / "variants")
+
+
+def _peek_variant(argv):
+    """Read --variant before argparse runs.
+
+    The parser's SHAPE depends on the variant: an image-only variant must not register
+    --video/--camera/--rtsp at all, and some variants add --output or the KITTI
+    companion paths. So the variant has to be known before the parser is built.
+    """
+    for i, a in enumerate(argv):
+        if a == "--variant" and i + 1 < len(argv):
+            return argv[i + 1]
+        if a.startswith("--variant="):
+            return a.split("=", 1)[1]
+    return None
 
 
 def main():
-    args = parse_common_args("{display} {kind} inference")
-    factory = {cls}(variant=getattr(args, "variant", None))
+    variant = _peek_variant(sys.argv[1:]) or default_variant(_VARIANTS_DIR)
+    cli = load_variant_config(_VARIANTS_DIR, variant).get("cli") or {{}}
+    args = parse_common_args(
+        "{display} {kind} inference",
+        include_stream_inputs=cli.get("include_stream_inputs", True),
+        include_output=cli.get("include_output", False),
+        include_kitti_paths=cli.get("include_kitti_paths", False),
+    )
+    factory = {cls}(variant=variant)
     {runner}(factory).run(args)
 
 
@@ -199,9 +278,16 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--orig", default=None,
+                    help="root holding the ORIGINAL src/python_example, needed once the "
+                         "restructure has replaced the working tree. Restore it with "
+                         "`git archive <sha> src/python_example | tar -x -C DIR`.")
     ap.add_argument("--in-place", action="store_true",
                     help="write into src/python_example itself (otherwise a staging dir)")
     a = ap.parse_args()
+    global PY_SRC
+    if a.orig:
+        PY_SRC = Path(a.orig) / "src" / "python_example"
 
     reg = json.loads(REGISTRY.read_text(encoding="utf-8"))
     specs = json.loads(SPECS.read_text(encoding="utf-8"))
@@ -250,7 +336,7 @@ def main() -> int:
                     (n.name for n in ast.walk(ast.parse(body))
                      if isinstance(n, ast.ClassDef) and n.name.endswith("Factory")), None)
                 chunks.append(f"# ---- carried over verbatim from "
-                              f"{orig.relative_to(ROOT)} ----\n{body}")
+                              f"{orig.relative_to(PY_SRC.parent.parent)} ----\n{body}")
                 mapping.append(f'    "{e["variant"]}": {cls_name},')
             (fdir / "custom_ops.py").write_text(
                 '"""Family-specific processor construction that a variant config cannot express.\n\n'
@@ -279,26 +365,30 @@ def main() -> int:
             if b not in bases and not b.startswith("_"):
                 unknown_base.add(f"{task}/{family}:{b}")
         cls = f"{pascal(family)}Factory"
-        (fdir / "factory" / f"{family}_factory.py").write_text(
+        # A module name may not start with a digit, so a digit-leading family gets an
+        # n_ prefix on the FILE while the directory keeps the dx-modelzoo name. The
+        # original tree used the same device (n_3ddfa_v2_..._factory.py).
+        mod = f"{family}_factory" if family[:1].isalpha() else f"n_{family}_factory"
+        (fdir / "factory" / f"{mod}.py").write_text(
             FACTORY_TEMPLATE.format(
                 display=family, family=family, n=len(members), cls=cls,
                 base=base, base_imports="\n".join(base_imports),
                 custom_note=("\nVariants needing computed arguments delegate to "
                              "``custom_ops.py``." if needs_custom else ""),
-                custom_import=("from . import custom_ops\n" if needs_custom else ""),
+                custom_import=(CUSTOM_IMPORT if needs_custom else ""),
                 custom_branch=(CUSTOM_BRANCH if needs_custom else ""),
                 extra_methods=extra_methods,
             ), encoding="utf-8")
         (fdir / "factory" / "__init__.py").write_text(
-            f"from .{family}_factory import {cls}\n\n__all__ = [\"{cls}\"]\n",
+            f"from .{mod} import {cls}\n\n__all__ = [\"{cls}\"]\n",
             encoding="utf-8")
         (fdir / "__init__.py").write_text("", encoding="utf-8")
 
         # Carry over anything the generator does not itself produce -- READMEs, the
         # *_ort_off.py debug variants, calib_policy.py. Deleting a file the user put
         # there is not part of regrouping examples.
-        generated_names = {"__init__.py", "config.json",
-                           f"{family}_factory.py"} | {
+        generated_names = {"__init__.py", "config.json", f"{mod}.py",
+                           "custom_ops.py"} | {
             f"{family}_{k}.py" for k in VARIANT_SCRIPTS}
         for e in members:
             sp_ = specs.get(e["variant"]) or {}

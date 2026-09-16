@@ -1,30 +1,50 @@
+"""yolopv2 family factory.
+
+One factory serves every variant of the ``yolopv2`` family: the per-variant
+differences -- processor classes and their non-default arguments -- live in
+``variants/<dxnn-stem>.json`` rather than in 1 near-identical factory files.
+
 """
-YOLOPv2 Panoptic Driving Perception Factory
-"""
-# Copyright (C) 2018- DEEPX Ltd. All rights reserved.
+from pathlib import Path
 
 from common.base.i_factory import _FactoryConfigMixin
-from common.processors import LetterboxPreprocessor, YOLOPv2Postprocessor
-from common.visualizers import YOLOPv2Visualizer
+from common.variant_config import (
+    build_processor,
+    default_variant,
+    load_variant_config,
+)
+_VARIANTS_DIR = str(Path(__file__).resolve().parent.parent / "variants")
 
 
 class Yolopv2Factory(_FactoryConfigMixin):
-    """Factory for creating YOLOPv2 panoptic driving perception components."""
+    """Config-driven factory for the yolopv2 family."""
 
-    def __init__(self, config: dict = None):
-        self.config = config or {}
+    def __init__(self, config: dict = None, variant: str = None):
+        self.variant = variant or default_variant(_VARIANTS_DIR)
+        self.spec = load_variant_config(_VARIANTS_DIR, self.variant)
+        # The variant config supplies the defaults; an explicit config overrides them.
+        self.config = {**(self.spec.get("config") or {}), **(config or {})}
+
+    def _build(self, role, input_width, input_height):
+        return build_processor(
+            self.spec[role],
+            input_width=input_width,
+            input_height=input_height,
+            config=self.config,
+        )
 
     def create_preprocessor(self, input_width: int, input_height: int):
-        return LetterboxPreprocessor(input_width, input_height)
+        return self._build("preprocessor", input_width, input_height)
 
     def create_postprocessor(self, input_width: int, input_height: int):
-        return YOLOPv2Postprocessor(input_width, input_height, self.config)
+        return self._build("postprocessor", input_width, input_height)
 
     def create_visualizer(self):
-        return YOLOPv2Visualizer()
+        return self._build("visualizer", self.spec["input_width"],
+                           self.spec["input_height"])
 
     def get_model_name(self) -> str:
-        return "yolopv2"
+        return self.variant
 
     def get_task_type(self) -> str:
-        return "panoptic_driving_perception"
+        return self.spec["task"]

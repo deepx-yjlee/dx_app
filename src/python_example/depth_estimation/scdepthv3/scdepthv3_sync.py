@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
-"""
-Scdepthv3 Synchronous Inference Example
-"""
+# Copyright (C) 2018- DEEPX Ltd. All rights reserved.
+"""scdepthv3 sync inference.
 
+One entry point serves the whole family; ``--variant`` picks the model::
+
+    python scdepthv3_sync.py --variant scdepthv3_256x320
+"""
 import sys
 from pathlib import Path
 
@@ -14,14 +17,38 @@ for _path in [str(_v3_dir), str(_module_dir)]:
 
 from factory import Scdepthv3Factory
 from common.runner import SyncRunner, parse_common_args
+from common.variant_config import default_variant, load_variant_config
 
-def parse_args():
-    return parse_common_args("FastDepth Sync Inference", include_output=True)
+_VARIANTS_DIR = str(_module_dir / "variants")
+
+
+def _peek_variant(argv):
+    """Read --variant before argparse runs.
+
+    The parser's SHAPE depends on the variant: an image-only variant must not register
+    --video/--camera/--rtsp at all, and some variants add --output or the KITTI
+    companion paths. So the variant has to be known before the parser is built.
+    """
+    for i, a in enumerate(argv):
+        if a == "--variant" and i + 1 < len(argv):
+            return argv[i + 1]
+        if a.startswith("--variant="):
+            return a.split("=", 1)[1]
+    return None
+
+
 def main():
-    args = parse_args()
-    factory = Scdepthv3Factory()
-    runner = SyncRunner(factory)
-    runner.run(args)
+    variant = _peek_variant(sys.argv[1:]) or default_variant(_VARIANTS_DIR)
+    cli = load_variant_config(_VARIANTS_DIR, variant).get("cli") or {}
+    args = parse_common_args(
+        "scdepthv3 sync inference",
+        include_stream_inputs=cli.get("include_stream_inputs", True),
+        include_output=cli.get("include_output", False),
+        include_kitti_paths=cli.get("include_kitti_paths", False),
+    )
+    factory = Scdepthv3Factory(variant=variant)
+    SyncRunner(factory).run(args)
+
 
 if __name__ == "__main__":
     main()

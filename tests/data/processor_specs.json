@@ -1,5 +1,10 @@
 {
  "3ddfa-v2_mobilenet-0.5_120x120": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -55,6 +60,11 @@
   }
  },
  "3ddfa-v2_mobilenetv1_120x120": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -110,6 +120,11 @@
   }
  },
  "SCRFD500M_PPU": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.5
@@ -173,6 +188,11 @@
   }
  },
  "YOLOV5Pose_PPU": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.5,
@@ -238,6 +258,11 @@
   }
  },
  "alexnet_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -297,6 +322,11 @@
   }
  },
  "arcface_iresnet100_112x112_ms1m": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": false
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -352,6 +382,11 @@
   }
  },
  "arcface_iresnet50_112x112_ms1m": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": false
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -407,6 +442,11 @@
   }
  },
  "arcface_mobilefacenet_112x112": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": false
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -462,6 +502,11 @@
   }
  },
  "arcface_resnet50_112x112": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": false
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -517,6 +562,11 @@
   }
  },
  "beit-l-p16_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -576,6 +626,11 @@
   }
  },
  "bisenetv1_1024x2048": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -631,6 +686,11 @@
   }
  },
  "bisenetv2_1024x2048": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -686,6 +746,11 @@
   }
  },
  "casvit-m_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": false
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -741,6 +806,11 @@
   }
  },
  "casvit-t-fpn-resnet50_512x512": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -796,6 +866,11 @@
   }
  },
  "casvit-t_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": false
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -851,6 +926,11 @@
   }
  },
  "centerpose-fpn_regnet-x1.6gf_512x512": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "score_threshold": 0.3
   },
@@ -912,6 +992,11 @@
   }
  },
  "centerpose_regnet-x800mf_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "score_threshold": 0.3
   },
@@ -973,6 +1058,11 @@
   }
  },
  "centerpose_repvgg-a0_416x416": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "score_threshold": 0.3
   },
@@ -1034,6 +1124,11 @@
   }
  },
  "clip-img_resnet50x16_384x384_openai-wit": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": false
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -1089,6 +1184,11 @@
   }
  },
  "clip-img_vit-b32_256x256_datacomp-s34b-b86k": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": false
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -1147,6 +1247,11 @@
   }
  },
  "clip-img_vit-l14-quickgelu_224x224_dfn2b": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": false
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -1205,6 +1310,11 @@
   }
  },
  "clip-img_vit-l14_224x224_datacomp-xl-s13b-b90k": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": false
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -1263,6 +1373,11 @@
   }
  },
  "damoyolo-l_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": true,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.3
@@ -1324,6 +1439,11 @@
   }
  },
  "damoyolo-m_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": true,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.3
@@ -1385,6 +1505,11 @@
   }
  },
  "damoyolo-s_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": true,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.3
@@ -1446,6 +1571,11 @@
   }
  },
  "damoyolo-t_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": true,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.3
@@ -1507,6 +1637,11 @@
   }
  },
  "damoyolo-tinynas-l20m_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": true,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.3
@@ -1568,6 +1703,11 @@
   }
  },
  "damoyolo-tinynas-l20t_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": true,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.3
@@ -1629,6 +1769,11 @@
   }
  },
  "damoyolo-tinynas-l25s_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": true,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.3
@@ -1690,6 +1835,11 @@
   }
  },
  "deeplabv3-resnet101_512x512": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -1745,6 +1895,11 @@
   }
  },
  "deeplabv3-resnet50_512x512": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -1800,6 +1955,11 @@
   }
  },
  "deeplabv3_mobilenetv2_512x512": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -1855,6 +2015,11 @@
   }
  },
  "deeplabv3_mobilenetv2_513x513_nodilation": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -1910,6 +2075,11 @@
   }
  },
  "deeplabv3plus-drn_512x512": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -1965,6 +2135,11 @@
   }
  },
  "deeplabv3plus-resnet101_512x512": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -2020,6 +2195,11 @@
   }
  },
  "deeplabv3plus-resnet50_512x512": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -2075,6 +2255,11 @@
   }
  },
  "deeplabv3plus_mobilenetv1_512x512": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -2130,6 +2315,11 @@
   }
  },
  "deeplabv3plus_mobilenetv2_512x512": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -2185,6 +2375,11 @@
   }
  },
  "deepmar_resnet18_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -2240,6 +2435,11 @@
   }
  },
  "deepmar_resnet50_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -2295,6 +2495,11 @@
   }
  },
  "deit-b_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -2356,6 +2561,11 @@
   }
  },
  "deit-b_224x224_distilled": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -2417,6 +2627,11 @@
   }
  },
  "deit-b_384x384": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -2478,6 +2693,11 @@
   }
  },
  "deit-b_384x384_distilled": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -2539,6 +2759,11 @@
   }
  },
  "deit-s_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -2600,6 +2825,11 @@
   }
  },
  "deit-s_224x224_distilled": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -2661,6 +2891,11 @@
   }
  },
  "deit-t_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -2722,6 +2957,11 @@
   }
  },
  "deit-t_224x224_distilled": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -2783,6 +3023,11 @@
   }
  },
  "densenet121_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -2842,6 +3087,11 @@
   }
  },
  "densenet161_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -2901,6 +3151,11 @@
   }
  },
  "densenet169_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -2960,6 +3215,11 @@
   }
  },
  "densenet201_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -3019,6 +3279,11 @@
   }
  },
  "depthanythingv2-vitb_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -3077,6 +3342,11 @@
   }
  },
  "depthanythingv2-vitl_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -3135,6 +3405,11 @@
   }
  },
  "depthanythingv2-vits_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -3193,6 +3468,11 @@
   }
  },
  "dncnn-15_512x512": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": true,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -3248,6 +3528,11 @@
   }
  },
  "dncnn-25_512x512": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": true,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -3303,6 +3588,11 @@
   }
  },
  "dncnn-50_512x512": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": true,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -3358,6 +3648,11 @@
   }
  },
  "dncnn-color_512x512": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": true,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -3415,6 +3710,11 @@
   }
  },
  "dncnn-gray_512x512": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": true,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -3470,6 +3770,11 @@
   }
  },
  "dope-hope-ketchup_480x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "conf_threshold": 0.0,
    "focal_length": null,
@@ -3538,6 +3843,11 @@
   }
  },
  "efficientdet-d1_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -3599,6 +3909,11 @@
   }
  },
  "efficientdet-d2_768x768": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -3660,6 +3975,11 @@
   }
  },
  "efficientdet-d4_1024x1024": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -3721,6 +4041,11 @@
   }
  },
  "efficientformer-l3_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -3780,6 +4105,11 @@
   }
  },
  "efficientformer-l7_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -3839,6 +4169,11 @@
   }
  },
  "efficientformerv2-l_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -3898,6 +4233,11 @@
   }
  },
  "efficientnet-b2_288x288": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -3957,6 +4297,11 @@
   }
  },
  "efficientnet-b3_300x300": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -4016,6 +4361,11 @@
   }
  },
  "efficientnet-b4_380x380": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -4075,6 +4425,11 @@
   }
  },
  "efficientnet-b5_456x456": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -4134,6 +4489,11 @@
   }
  },
  "efficientnet-b6_528x528": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -4193,6 +4553,11 @@
   }
  },
  "efficientnet-b7_600x600": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -4252,6 +4617,11 @@
   }
  },
  "efficientnet-lite0_256x256": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -4311,6 +4681,11 @@
   }
  },
  "efficientnet-lite1_240x240": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -4370,6 +4745,11 @@
   }
  },
  "efficientnet-lite2_260x260": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -4429,6 +4809,11 @@
   }
  },
  "efficientnet-lite3_300x300": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -4488,6 +4873,11 @@
   }
  },
  "efficientnet-lite4_380x380": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -4547,6 +4937,11 @@
   }
  },
  "efficientnetv2-l_480x480": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -4606,6 +5001,11 @@
   }
  },
  "efficientnetv2-m_480x480": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -4665,6 +5065,11 @@
   }
  },
  "efficientnetv2-s_384x384": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -4724,6 +5129,11 @@
   }
  },
  "eigenplaces-resnet18_512x512": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": false
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -4779,6 +5189,11 @@
   }
  },
  "eigenplaces-resnet50_512x512": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": false
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -4834,6 +5249,11 @@
   }
  },
  "espcn-x2_17x17": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "sr_tile_halo": 4
   },
@@ -4894,6 +5314,11 @@
   }
  },
  "espcn-x3_17x17": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": true,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "sr_tile_halo": 4
   },
@@ -4954,6 +5379,11 @@
   }
  },
  "espcn-x4_17x17": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": true,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "sr_tile_halo": 4
   },
@@ -5014,6 +5444,11 @@
   }
  },
  "faceattr_resnetv1-18_218x178": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -5072,6 +5507,11 @@
   }
  },
  "fastdepth_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": true,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -5127,6 +5567,11 @@
   }
  },
  "fastsam-s_1024x1024": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.7
@@ -5197,6 +5642,11 @@
   }
  },
  "fastvit-ma36_256x256": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -5256,6 +5706,11 @@
   }
  },
  "fastvit-sa24_256x256": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -5315,6 +5770,11 @@
   }
  },
  "fastvit-sa36_256x256": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -5374,6 +5834,11 @@
   }
  },
  "fcn8_resnet18_1024x1920": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -5429,6 +5894,11 @@
   }
  },
  "fcn8_resnet50_512x512": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -5484,6 +5954,11 @@
   }
  },
  "ghostnet_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -5543,6 +6018,11 @@
   }
  },
  "hardnet39ds_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -5602,6 +6082,11 @@
   }
  },
  "hardnet68_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -5661,6 +6146,11 @@
   }
  },
  "inceptionv1_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -5720,6 +6210,11 @@
   }
  },
  "levit-128_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -5779,6 +6274,11 @@
   }
  },
  "levit-192_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -5838,6 +6338,11 @@
   }
  },
  "levit-256_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -5897,6 +6402,11 @@
   }
  },
  "levit-384_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -5956,6 +6466,11 @@
   }
  },
  "mediapipe-hand-detector_192x192": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [
    "def get_num_keypoints(self) -> int:\n        return 7"
@@ -6018,6 +6533,11 @@
   }
  },
  "mediapipe-hands-lite_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "confidence_threshold": 0.3
   },
@@ -6077,6 +6597,11 @@
   }
  },
  "mnasnet-0.5_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -6136,6 +6661,11 @@
   }
  },
  "mnasnet-0.75_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -6195,6 +6725,11 @@
   }
  },
  "mnasnet-1.0_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -6254,6 +6789,11 @@
   }
  },
  "mnasnet-1.3_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -6313,6 +6853,11 @@
   }
  },
  "mobilenetv1_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -6372,6 +6917,11 @@
   }
  },
  "mobilenetv2_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -6431,6 +6981,11 @@
   }
  },
  "mobilenetv3-large_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -6490,6 +7045,11 @@
   }
  },
  "nanodet-plus-1.5x_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": true,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "reg_max": 7,
@@ -6554,6 +7114,11 @@
   }
  },
  "nanodet-plus_416x416": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": true,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "reg_max": 7,
@@ -6618,6 +7183,11 @@
   }
  },
  "nanodet-repvgg-a12_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": true,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -6679,6 +7249,11 @@
   }
  },
  "nanodet-repvgg-a_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": true,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "reg_max": 7,
@@ -6741,6 +7316,11 @@
   }
  },
  "nanodet_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": true,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.6,
    "reg_max": 7,
@@ -6803,6 +7383,11 @@
   }
  },
  "pidnet-s_1024x2048": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -6858,6 +7443,11 @@
   }
  },
  "realesrgan-x2_192x192": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -6913,6 +7503,11 @@
   }
  },
  "realesrgan-x4_192x192": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -6968,6 +7563,11 @@
   }
  },
  "realesrgan-x8_192x192": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -7023,6 +7623,11 @@
   }
  },
  "regnet-x1.6gf_224x224_v1": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -7082,6 +7687,11 @@
   }
  },
  "regnet-x1.6gf_224x224_v2": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -7141,6 +7751,11 @@
   }
  },
  "regnet-x16gf_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -7200,6 +7815,11 @@
   }
  },
  "regnet-x3.2gf_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -7259,6 +7879,11 @@
   }
  },
  "regnet-x32gf_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -7318,6 +7943,11 @@
   }
  },
  "regnet-x400mf_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -7377,6 +8007,11 @@
   }
  },
  "regnet-x800mf_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -7436,6 +8071,11 @@
   }
  },
  "regnet-x8gf_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -7495,6 +8135,11 @@
   }
  },
  "regnet-y1.6gf_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -7554,6 +8199,11 @@
   }
  },
  "regnet-y16gf_384x384": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -7613,6 +8263,11 @@
   }
  },
  "regnet-y200mf_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -7672,6 +8327,11 @@
   }
  },
  "regnet-y3.2gf_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -7731,6 +8391,11 @@
   }
  },
  "regnet-y32gf_384x384": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -7790,6 +8455,11 @@
   }
  },
  "regnet-y400mf_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -7849,6 +8519,11 @@
   }
  },
  "regnet-y800mf_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -7908,6 +8583,11 @@
   }
  },
  "regnet-y8gf_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -7967,6 +8647,11 @@
   }
  },
  "repghost-2.0x_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -8026,6 +8711,11 @@
   }
  },
  "repvgg-a0_320x320": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -8085,6 +8775,11 @@
   }
  },
  "repvgg-a1_320x320": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -8144,6 +8839,11 @@
   }
  },
  "repvgg-a2_320x320": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -8203,6 +8903,11 @@
   }
  },
  "repvgg-b0_320x320": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -8262,6 +8967,11 @@
   }
  },
  "repvgg-b1_320x320": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -8321,6 +9031,11 @@
   }
  },
  "resmlp24_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -8382,6 +9097,11 @@
   }
  },
  "resnet101_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -8441,6 +9161,11 @@
   }
  },
  "resnet152_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -8500,6 +9225,11 @@
   }
  },
  "resnet18_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -8559,6 +9289,11 @@
   }
  },
  "resnet18_224x224_brecq": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -8618,6 +9353,11 @@
   }
  },
  "resnet34_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -8677,6 +9417,11 @@
   }
  },
  "resnet50_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -8736,6 +9481,11 @@
   }
  },
  "resnext101-32x8d_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -8795,6 +9545,11 @@
   }
  },
  "resnext101-64x4d_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -8854,6 +9609,11 @@
   }
  },
  "resnext26-32x4d_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -8913,6 +9673,11 @@
   }
  },
  "resnext50-32x4d_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -8972,6 +9737,11 @@
   }
  },
  "resnext50-32x4d_224x224_imgclsmob": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -9031,6 +9801,11 @@
   }
  },
  "retinaface_mobilenet-0.25_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.4,
    "score_threshold": 0.3
@@ -9094,6 +9869,11 @@
   }
  },
  "retinaface_mobilenetv1_736x1280": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [
    "def get_num_keypoints(self) -> int:\n        return 5"
@@ -9162,6 +9942,11 @@
   }
  },
  "scdepthv3_256x320": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": true,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -9217,6 +10002,11 @@
   }
  },
  "scrfd-10g_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.4,
    "score_threshold": 0.3
@@ -9280,6 +10070,11 @@
   }
  },
  "scrfd-2.5g_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.4,
    "score_threshold": 0.3
@@ -9344,6 +10139,11 @@
   }
  },
  "scrfd-500m_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.4,
    "score_threshold": 0.3
@@ -9408,6 +10208,11 @@
   }
  },
  "segformer_mit-b0_512x1024": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -9463,6 +10268,11 @@
   }
  },
  "sfa3d_608x608": {
+  "cli": {
+   "include_kitti_paths": true,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "max_detections": 100,
    "nms_threshold": 0.2,
@@ -9523,6 +10333,11 @@
   }
  },
  "shufflenetv1-x1.0_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -9582,6 +10397,11 @@
   }
  },
  "shufflenetv2-x0.5_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -9641,6 +10461,11 @@
   }
  },
  "shufflenetv2-x1.0_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -9700,6 +10525,11 @@
   }
  },
  "shufflenetv2-x1.5_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -9759,6 +10589,11 @@
   }
  },
  "shufflenetv2-x2.0_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -9818,6 +10653,11 @@
   }
  },
  "squeezenet-1.0_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -9877,6 +10717,11 @@
   }
  },
  "squeezenet-1.1_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -9936,6 +10781,11 @@
   }
  },
  "ssd-mobilenetv1_300x300": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": true,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "has_background": true,
    "nms_threshold": 0.45,
@@ -10001,6 +10851,11 @@
   }
  },
  "ssd-mobilenetv2-lite_300x300": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": true,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "has_background": true,
    "nms_threshold": 0.45,
@@ -10066,6 +10921,11 @@
   }
  },
  "ssd-vgg16_300x300": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": true,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "has_background": true,
    "nms_threshold": 0.45,
@@ -10131,6 +10991,11 @@
   }
  },
  "stdc2-seg50_512x1024": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -10186,6 +11051,11 @@
   }
  },
  "superpoint_480x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "conf_threshold": 0.015,
    "top_k": 500
@@ -10252,6 +11122,11 @@
   }
  },
  "ulfgfd-rfb_240x320": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.3,
    "score_threshold": 0.5
@@ -10315,6 +11190,11 @@
   }
  },
  "ulfgfd-rfb_240x320_nopp": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.3,
    "score_threshold": 0.5
@@ -10378,6 +11258,11 @@
   }
  },
  "ulfgfd-rfb_480x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.3,
    "score_threshold": 0.5
@@ -10441,6 +11326,11 @@
   }
  },
  "ulfgfd-slim_240x320": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.3,
    "score_threshold": 0.5
@@ -10504,6 +11394,11 @@
   }
  },
  "ulfgfd-slim_240x320_nopp": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.3,
    "score_threshold": 0.5
@@ -10567,6 +11462,11 @@
   }
  },
  "unet_mobilenetv2_256x256": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -10630,6 +11530,11 @@
   }
  },
  "vgg11-bn_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -10689,6 +11594,11 @@
   }
  },
  "vgg11_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -10748,6 +11658,11 @@
   }
  },
  "vgg13-bn_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -10807,6 +11722,11 @@
   }
  },
  "vgg13_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -10866,6 +11786,11 @@
   }
  },
  "vgg16-bn_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -10925,6 +11850,11 @@
   }
  },
  "vgg16_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -10984,6 +11914,11 @@
   }
  },
  "vgg19-bn_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -11043,6 +11978,11 @@
   }
  },
  "vgg19_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -11102,6 +12042,11 @@
   }
  },
  "vit-b-p16_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -11163,6 +12108,11 @@
   }
  },
  "vit-b-p16_224x224_bn": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -11224,6 +12174,11 @@
   }
  },
  "vit-b-p32_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -11283,6 +12238,11 @@
   }
  },
  "vit-l-p32_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -11342,6 +12302,11 @@
   }
  },
  "vit-s-p16_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -11403,6 +12368,11 @@
   }
  },
  "vitpose-s_256x192": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [
    "def get_num_keypoints(self) -> int:\n        return 17"
@@ -11462,6 +12432,11 @@
   }
  },
  "wide-resnet101-2_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -11521,6 +12496,11 @@
   }
  },
  "wide-resnet50-2_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -11580,6 +12560,11 @@
   }
  },
  "yolact_regnet-x1.6gf_512x512": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "num_classes": 81,
@@ -11644,6 +12629,11 @@
   }
  },
  "yolact_regnet-x800mf_512x512": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.5,
    "num_classes": 81,
@@ -11705,6 +12695,11 @@
   }
  },
  "yolo11-l-seg_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -11764,6 +12759,11 @@
   }
  },
  "yolo11-l_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.25
@@ -11825,6 +12825,11 @@
   }
  },
  "yolo11-m-pose_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [
    "def get_num_keypoints(self) -> int:\n        return 17"
@@ -11886,6 +12891,11 @@
   }
  },
  "yolo11-m-seg_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -11945,6 +12955,11 @@
   }
  },
  "yolo11-m_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.25
@@ -12006,6 +13021,11 @@
   }
  },
  "yolo11-n-pose_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [
    "def get_num_keypoints(self) -> int:\n        return 17"
@@ -12067,6 +13087,11 @@
   }
  },
  "yolo11-n-seg_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -12126,6 +13151,11 @@
   }
  },
  "yolo11-n_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.25
@@ -12187,6 +13217,11 @@
   }
  },
  "yolo11-n_640x640_ppu": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.5,
    "score_threshold": 0.4
@@ -12249,6 +13284,11 @@
   }
  },
  "yolo11-s-pose_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [
    "def get_num_keypoints(self) -> int:\n        return 17"
@@ -12310,6 +13350,11 @@
   }
  },
  "yolo11-s-seg_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -12369,6 +13414,11 @@
   }
  },
  "yolo11-s_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.25
@@ -12430,6 +13480,11 @@
   }
  },
  "yolo11-x-pose_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [
    "def get_num_keypoints(self) -> int:\n        return 17"
@@ -12491,6 +13546,11 @@
   }
  },
  "yolo11-x-seg_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -12550,6 +13610,11 @@
   }
  },
  "yolo11-x_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.25
@@ -12611,6 +13676,11 @@
   }
  },
  "yolo26-depth-l_768x768": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -12666,6 +13736,11 @@
   }
  },
  "yolo26-depth-m_768x768": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -12721,6 +13796,11 @@
   }
  },
  "yolo26-depth-n_768x768": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -12776,6 +13856,11 @@
   }
  },
  "yolo26-depth-s_768x768": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -12831,6 +13916,11 @@
   }
  },
  "yolo26-depth-x_768x768": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -12886,6 +13976,11 @@
   }
  },
  "yolo26-l-obb_1024x1024": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "score_threshold": 0.3
   },
@@ -12945,6 +14040,11 @@
   }
  },
  "yolo26-l-pose_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -13008,6 +14108,11 @@
   }
  },
  "yolo26-l-seg_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -13069,6 +14174,11 @@
   }
  },
  "yolo26-l_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -13128,6 +14238,11 @@
   }
  },
  "yolo26-l_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.25
@@ -13189,6 +14304,11 @@
   }
  },
  "yolo26-m-obb_1024x1024": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "score_threshold": 0.3
   },
@@ -13248,6 +14368,11 @@
   }
  },
  "yolo26-m-pose_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -13311,6 +14436,11 @@
   }
  },
  "yolo26-m-seg_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -13372,6 +14502,11 @@
   }
  },
  "yolo26-m_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -13431,6 +14566,11 @@
   }
  },
  "yolo26-m_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.25
@@ -13492,6 +14632,11 @@
   }
  },
  "yolo26-n-obb_1024x1024": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "score_threshold": 0.3
   },
@@ -13551,6 +14696,11 @@
   }
  },
  "yolo26-n-pose_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -13614,6 +14764,11 @@
   }
  },
  "yolo26-n-seg_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -13675,6 +14830,11 @@
   }
  },
  "yolo26-n_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -13734,6 +14894,11 @@
   }
  },
  "yolo26-n_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.25
@@ -13795,6 +14960,11 @@
   }
  },
  "yolo26-s-obb_1024x1024": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "score_threshold": 0.3
   },
@@ -13854,6 +15024,11 @@
   }
  },
  "yolo26-s-pose_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -13917,6 +15092,11 @@
   }
  },
  "yolo26-s-seg_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -13978,6 +15158,11 @@
   }
  },
  "yolo26-s_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -14037,6 +15222,11 @@
   }
  },
  "yolo26-s_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.25
@@ -14098,6 +15288,11 @@
   }
  },
  "yolo26-x-obb_1024x1024": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "score_threshold": 0.3
   },
@@ -14157,6 +15352,11 @@
   }
  },
  "yolo26-x-pose_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -14220,6 +15420,11 @@
   }
  },
  "yolo26-x-seg_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -14281,6 +15486,11 @@
   }
  },
  "yolo26-x_224x224": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "top_k": 5
   },
@@ -14340,6 +15550,11 @@
   }
  },
  "yolo26-x_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.25
@@ -14401,6 +15616,11 @@
   }
  },
  "yolopv2_384x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "conf_threshold": 0.25,
    "nms_threshold": 0.45
@@ -14462,6 +15682,11 @@
   }
  },
  "yolov10-b_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.25
@@ -14523,6 +15748,11 @@
   }
  },
  "yolov10-l_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.25
@@ -14584,6 +15814,11 @@
   }
  },
  "yolov10-m_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.25
@@ -14645,6 +15880,11 @@
   }
  },
  "yolov10-n_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.25
@@ -14706,6 +15946,11 @@
   }
  },
  "yolov10-n_640x640_ppu": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.5,
    "score_threshold": 0.4
@@ -14768,6 +16013,11 @@
   }
  },
  "yolov10-s_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.25
@@ -14829,6 +16079,11 @@
   }
  },
  "yolov10-x_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.25
@@ -14890,6 +16145,11 @@
   }
  },
  "yolov12-n_640x640_ppu": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.5,
    "score_threshold": 0.4
@@ -14952,6 +16212,11 @@
   }
  },
  "yolov3-gluon_416x416": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -15013,6 +16278,11 @@
   }
  },
  "yolov3-gluon_608x608": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -15074,6 +16344,11 @@
   }
  },
  "yolov3-tiny_416x416": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -15135,6 +16410,11 @@
   }
  },
  "yolov3-tiny_416x416_ppu": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -15203,6 +16483,11 @@
   }
  },
  "yolov3_416x416": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -15264,6 +16549,11 @@
   }
  },
  "yolov3_416x416_ppu": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -15326,6 +16616,11 @@
   }
  },
  "yolov3_608x608_ppu": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -15388,6 +16683,11 @@
   }
  },
  "yolov3_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -15450,6 +16750,11 @@
   }
  },
  "yolov4-leaky_512x512": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -15511,6 +16816,11 @@
   }
  },
  "yolov4-t_416x416": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -15572,6 +16882,11 @@
   }
  },
  "yolov4_512x512_ppu": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -15634,6 +16949,11 @@
   }
  },
  "yolov5-l-seg_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -15697,6 +17017,11 @@
   }
  },
  "yolov5-l6_1280x1280": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -15758,6 +17083,11 @@
   }
  },
  "yolov5-l_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -15820,6 +17150,11 @@
   }
  },
  "yolov5-m-face_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.4,
    "obj_threshold": 0.3,
@@ -15885,6 +17220,11 @@
   }
  },
  "yolov5-m-seg_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -15948,6 +17288,11 @@
   }
  },
  "yolov5-m6_1280x1280": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -16009,6 +17354,11 @@
   }
  },
  "yolov5-m6_1280x1280_v6.1": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -16072,6 +17422,11 @@
   }
  },
  "yolov5-m6_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -16133,6 +17488,11 @@
   }
  },
  "yolov5-m_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -16196,6 +17556,11 @@
   }
  },
  "yolov5-m_640x640_nospp": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -16257,6 +17622,11 @@
   }
  },
  "yolov5-n-face_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [
    "def get_num_keypoints(self) -> int:\n        return 5"
@@ -16318,6 +17688,11 @@
   }
  },
  "yolov5-n-seg_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -16381,6 +17756,11 @@
   }
  },
  "yolov5-n6_1280x1280": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -16442,6 +17822,11 @@
   }
  },
  "yolov5-n6_1280x1280_v6.1": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -16504,6 +17889,11 @@
   }
  },
  "yolov5-n_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -16567,6 +17957,11 @@
   }
  },
  "yolov5-s-face_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -16632,6 +18027,11 @@
   }
  },
  "yolov5-s-seg_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -16695,6 +18095,11 @@
   }
  },
  "yolov5-s6-pose_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [
    "def get_num_keypoints(self) -> int:\n        return 17"
@@ -16756,6 +18161,11 @@
   }
  },
  "yolov5-s6_1280x1280": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -16817,6 +18227,11 @@
   }
  },
  "yolov5-s6_1280x1280_v6.1": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -16879,6 +18294,11 @@
   }
  },
  "yolov5-s_320x320": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -16940,6 +18360,11 @@
   }
  },
  "yolov5-s_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -17003,6 +18428,11 @@
   }
  },
  "yolov5-s_640x640_c3tr": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -17064,6 +18494,11 @@
   }
  },
  "yolov5-s_640x640_decode": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -17125,6 +18560,11 @@
   }
  },
  "yolov5-s_640x640_nospp": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "max_nms_candidates": 300,
    "nms_threshold": 0.45,
@@ -17187,6 +18627,11 @@
   }
  },
  "yolov5-s_640x640_ppu": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -17249,6 +18694,11 @@
   }
  },
  "yolov5-x-seg_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -17308,6 +18758,11 @@
   }
  },
  "yolov5-x6_1280x1280": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -17369,6 +18824,11 @@
   }
  },
  "yolov5-x_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -17430,6 +18890,11 @@
   }
  },
  "yolov5-xs_512x512_nospp": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -17491,6 +18956,11 @@
   }
  },
  "yolov6-l6_1280x1280": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -17549,6 +19019,11 @@
   }
  },
  "yolov6-l_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -17610,6 +19085,11 @@
   }
  },
  "yolov6-m_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -17671,6 +19151,11 @@
   }
  },
  "yolov6-n0_640x640_v0.1.0": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -17734,6 +19219,11 @@
   }
  },
  "yolov6-n0_640x640_v0.2.1": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -17797,6 +19287,11 @@
   }
  },
  "yolov6-n_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -17858,6 +19353,11 @@
   }
  },
  "yolov6-n_640x640_nmscore": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -17919,6 +19419,11 @@
   }
  },
  "yolov6-s_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -17977,6 +19482,11 @@
   }
  },
  "yolov7-d6_1280x1280": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -18039,6 +19549,11 @@
   }
  },
  "yolov7-e6_1280x1280": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -18102,6 +19617,11 @@
   }
  },
  "yolov7-e6e_1280x1280": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -18164,6 +19684,11 @@
   }
  },
  "yolov7-face_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.4,
    "obj_threshold": 0.3,
@@ -18229,6 +19754,11 @@
   }
  },
  "yolov7-lite-t-face_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [
    "def get_num_keypoints(self) -> int:\n        return 5"
@@ -18290,6 +19820,11 @@
   }
  },
  "yolov7-s-face_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.4,
    "obj_threshold": 0.3,
@@ -18355,6 +19890,11 @@
   }
  },
  "yolov7-tiny_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -18418,6 +19958,11 @@
   }
  },
  "yolov7-w6-face_1280x1280_tta": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.4,
    "obj_threshold": 0.3,
@@ -18483,6 +20028,11 @@
   }
  },
  "yolov7-w6-face_960x960": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.4,
    "obj_threshold": 0.3,
@@ -18548,6 +20098,11 @@
   }
  },
  "yolov7-w6_1280x1280": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -18611,6 +20166,11 @@
   }
  },
  "yolov7-w6_1280x1280_nodecode": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -18675,6 +20235,11 @@
   }
  },
  "yolov7-x_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -18737,6 +20302,11 @@
   }
  },
  "yolov7-x_640x640_ppu": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -18800,6 +20370,11 @@
   }
  },
  "yolov7_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -18863,6 +20438,11 @@
   }
  },
  "yolov7_640x640_nodecode": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -18925,6 +20505,11 @@
   }
  },
  "yolov7_640x640_ppu": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -18987,6 +20572,11 @@
   }
  },
  "yolov8-l-pose_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [
    "def get_num_keypoints(self) -> int:\n        return 17"
@@ -19048,6 +20638,11 @@
   }
  },
  "yolov8-l-seg_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -19107,6 +20702,11 @@
   }
  },
  "yolov8-l_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.25
@@ -19168,6 +20768,11 @@
   }
  },
  "yolov8-m-pose_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.25
@@ -19232,6 +20837,11 @@
   }
  },
  "yolov8-m-seg_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.25
@@ -19294,6 +20904,11 @@
   }
  },
  "yolov8-m_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.25
@@ -19355,6 +20970,11 @@
   }
  },
  "yolov8-n-pose_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [
    "def get_num_keypoints(self) -> int:\n        return 17"
@@ -19416,6 +21036,11 @@
   }
  },
  "yolov8-n-seg_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.3
@@ -19478,6 +21103,11 @@
   }
  },
  "yolov8-n_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.25
@@ -19539,6 +21169,11 @@
   }
  },
  "yolov8-n_640x640_ppu": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.5,
    "score_threshold": 0.4
@@ -19601,6 +21236,11 @@
   }
  },
  "yolov8-s-pose_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.3
@@ -19665,6 +21305,11 @@
   }
  },
  "yolov8-s-seg_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.25
@@ -19726,6 +21371,11 @@
   }
  },
  "yolov8-s_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.25
@@ -19787,6 +21437,11 @@
   }
  },
  "yolov8-s_640x640_decode": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -19848,6 +21503,11 @@
   }
  },
  "yolov8-s_640x640_ppu": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.5,
    "score_threshold": 0.4
@@ -19910,6 +21570,11 @@
   }
  },
  "yolov8-x-pose_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [
    "def get_num_keypoints(self) -> int:\n        return 17"
@@ -19971,6 +21636,11 @@
   }
  },
  "yolov8-x-seg_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -20030,6 +21700,11 @@
   }
  },
  "yolov8-x_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.25
@@ -20091,6 +21766,11 @@
   }
  },
  "yolov9-c_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.25
@@ -20152,6 +21832,11 @@
   }
  },
  "yolov9-gelan-c_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -20213,6 +21898,11 @@
   }
  },
  "yolov9-m_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -20274,6 +21964,11 @@
   }
  },
  "yolov9-s_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.25
@@ -20335,6 +22030,11 @@
   }
  },
  "yolov9-t_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.25
@@ -20396,6 +22096,11 @@
   }
  },
  "yolov9-t_640x640_ppu": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.5,
    "score_threshold": 0.4
@@ -20458,6 +22163,11 @@
   }
  },
  "yolox-l-leaky_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -20521,6 +22231,11 @@
   }
  },
  "yolox-l_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -20582,6 +22297,11 @@
   }
  },
  "yolox-m_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -20643,6 +22363,11 @@
   }
  },
  "yolox-s-leaky_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -20706,6 +22431,11 @@
   }
  },
  "yolox-s-wide-leaky_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -20769,6 +22499,11 @@
   }
  },
  "yolox-s_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -20832,6 +22567,11 @@
   }
  },
  "yolox-s_640x640_ppu": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -20895,6 +22635,11 @@
   }
  },
  "yolox-t_416x416": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "obj_threshold": 0.25,
@@ -20958,6 +22703,11 @@
   }
  },
  "yolox-x_640x640": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {
    "nms_threshold": 0.45,
    "score_threshold": 0.4
@@ -21019,6 +22769,11 @@
   }
  },
  "zerodce-pp_400x600": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [
@@ -21078,6 +22833,11 @@
   }
  },
  "zerodce_400x600": {
+  "cli": {
+   "include_kitti_paths": false,
+   "include_output": false,
+   "include_stream_inputs": true
+  },
   "dir_config": {},
   "extra_methods": [],
   "factory_bases": [

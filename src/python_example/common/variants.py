@@ -14,6 +14,7 @@ keys so scripts written against the old per-variant layout keep working.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -83,7 +84,15 @@ def _index() -> dict[str, Variant]:
     entries = json.loads(_REGISTRY.read_text(encoding="utf-8"))
     index: dict[str, Variant] = {}
     for e in entries:
-        index[e["model_name"]] = _to_variant(e)
+        v = _to_variant(e)
+        index[e["model_name"]] = v
+        # 53 registry names carry a re-publish or quantisation suffix while their old
+        # example directory did not (rn50x16_openai_1 -> rn50x16_openai,
+        # deeplabv3plus_drn_512x512_q_lite -> deeplabv3plus_drn_512x512). Scripts and
+        # tests refer to the DIRECTORY name, so accept that spelling as well.
+        stripped = re.sub(r"_q_lite$", "", re.sub(r"_\d+$", "", e["model_name"]))
+        if stripped != e["model_name"]:
+            index.setdefault(stripped, v)
     for e in entries:
         if e["alias_of"] is None:
             index[e["variant"]] = _to_variant(e)

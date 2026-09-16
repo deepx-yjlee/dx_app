@@ -4,6 +4,7 @@ import re
 import subprocess
 import sys
 from types import SimpleNamespace
+import json
 from pathlib import Path
 
 import pytest
@@ -54,16 +55,20 @@ def test_cpp_async_sr_stream_path_warns_for_large_tile_count():
 def test_python_image_only_wrappers_mark_stream_inputs_unsupported():
     """Embedding/ReID Python wrappers should mark stream inputs unsupported for runtime rejection."""
     for root in [
-        ROOT / "src/python_example/embedding",
-        ROOT / "src/python_example/reid",
+        ROOT / "src/python_example/face_recognition",
+        ROOT / "src/python_example/image_classification/casvit",
     ]:
-        for path in root.glob("*/*.py"):
-            if path.name.startswith("__"):
-                continue
-            source = path.read_text(encoding="utf-8")
-            if "parse_common_args(" not in source:
-                continue
-            assert "include_stream_inputs=False" in source, str(path.relative_to(ROOT))
+        # The guarantee moved from a source literal to the variant config: one family
+        # entry script serves every variant, so it reads include_stream_inputs from
+        # variants/<stem>.json instead of hard-coding False. Assert the DATA now.
+        # root may be a task dir (holding families) or a family dir itself.
+        configs = sorted(root.glob("*/variants/*.json")) or \
+            sorted(root.glob("variants/*.json"))
+        assert configs, f"no variant configs under {root}"
+        for cfg_path in configs:
+            cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
+            assert cfg["cli"]["include_stream_inputs"] is False, \
+                f"{cfg_path.relative_to(ROOT)} must not register stream inputs"
 
 
 def test_python_image_only_help_hides_stream_options():
@@ -74,8 +79,8 @@ def test_python_image_only_help_hides_stream_options():
     absent from ``--help`` and ``--image`` remains available.
     """
     scripts = [
-        "src/python_example/embedding/arcface_mobilefacenet/arcface_mobilefacenet_sync.py",
-        "src/python_example/reid/casvit_t/casvit_t_sync.py",
+        "src/python_example/face_recognition/arcface/arcface_sync.py",
+        "src/python_example/image_classification/casvit/casvit_sync.py",
     ]
     for relpath in scripts:
         result = subprocess.run(
@@ -102,7 +107,7 @@ def test_python_image_only_stream_input_rejected_by_argparse():
     result = subprocess.run(
         [
             sys.executable,
-            str(ROOT / "src/python_example/embedding/arcface_mobilefacenet/arcface_mobilefacenet_sync.py"),
+            str(ROOT / "src/python_example/face_recognition/arcface/arcface_sync.py"),
             "-m",
             "assets/models/arcface_mobilefacenet_112x112.dxnn",
             "--video",
@@ -167,7 +172,7 @@ def test_python_image_only_no_input_prints_hint_before_engine_init():
     result = subprocess.run(
         [
             sys.executable,
-            str(ROOT / "src/python_example/embedding/arcface_mobilefacenet/arcface_mobilefacenet_sync.py"),
+            str(ROOT / "src/python_example/face_recognition/arcface/arcface_sync.py"),
             "-m",
             "assets/models/arcface_mobilefacenet_112x112.dxnn",
         ],

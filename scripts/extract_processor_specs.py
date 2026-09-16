@@ -206,7 +206,14 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--print", dest="show", default=None, help="print one dir's spec")
+    ap.add_argument("--orig", default=None,
+                    help="root holding the ORIGINAL src/python_example, needed once the "
+                         "restructure has replaced the working tree. Restore it with "
+                         "`git archive <sha> src/python_example | tar -x -C DIR`.")
     a = ap.parse_args()
+    global PY_ROOT
+    if a.orig:
+        PY_ROOT = Path(a.orig) / "src" / "python_example"
 
     reg = json.loads(REGISTRY.read_text(encoding="utf-8"))
     table = existing_dirs()
@@ -235,13 +242,32 @@ def main() -> int:
         # reads it. The registry's ``config`` field has drifted from it for 75 of 352
         # variants (fastsam 0.7 vs 0.4, mediapipe 0.3 vs 0.5), so the on-disk value is
         # the authoritative one and both are recorded to keep the drift visible.
+        # The original entry scripts vary parse_common_args() three ways, and none of
+        # the three can be derived: include_stream_inputs=False is used by only 12 of
+        # the 17 image_only variants (the other 5 rely on the runner's runtime
+        # rejection instead of hiding the flags), and include_output=True splits 2/3
+        # WITHIN the espcn family. Recorded per variant so the generated family entry
+        # script reproduces each variant's CLI exactly.
+        cli = {"include_stream_inputs": True, "include_output": False,
+               "include_kitti_paths": False}
+        entry = [f for f in (PY_ROOT / table[d] / d).glob("*_sync.py")
+                 if "cpp_postprocess" not in f.name and "ort_off" not in f.name]
+        if entry:
+            txt = entry[0].read_text(encoding="utf-8", errors="ignore")
+            m = re.search(r"parse_common_args\((.*?)\)", txt, re.S)
+            kw = m.group(1) if m else ""
+            cli["include_stream_inputs"] = "include_stream_inputs=False" not in kw
+            cli["include_output"] = "include_output=True" in kw
+            cli["include_kitti_paths"] = "include_kitti_paths=True" in kw
+
         cfg_path = PY_ROOT / table[d] / d / "config.json"
         dir_config = json.loads(cfg_path.read_text(encoding="utf-8")) \
             if cfg_path.exists() else {}
         specs[e["variant"]] = dict(
             variant=e["variant"], model_name=e["model_name"], task=e["task"],
             family=e["family"], source_dir=d, source_task=table[d],
-            dir_config=dir_config, registry_config=e.get("config") or {}, **roles)
+            dir_config=dir_config, registry_config=e.get("config") or {}, cli=cli,
+            **roles)
 
     if a.show:
         key = next((k for k, v in specs.items() if a.show in (k, v["source_dir"],

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # Copyright (C) 2018- DEEPX Ltd. All rights reserved.
-"""MediaPipe Hand Detector Asynchronous Inference Example (C++ Postprocess)
+"""mediapipe_hand_detector async_cpp_postprocess inference.
 
-Usage:
-    python mediapipe_hand_detector_async_cpp_postprocess.py --model model.dxnn --image input.jpg
+One entry point serves the whole family; ``--variant`` picks the model::
+
+    python mediapipe_hand_detector_async_cpp_postprocess.py --variant mediapipe-hand-detector_192x192
 """
-
 import sys
 from pathlib import Path
 
@@ -15,32 +15,39 @@ for _path in [str(_v3_dir), str(_module_dir)]:
     if _path not in sys.path:
         sys.path.insert(0, _path)
 
-import os
-if os.name == 'nt':
-    _dxrt_dir = os.environ.get('DEEPX_SDK_DIR')
-    if _dxrt_dir:
-        os.add_dll_directory(os.path.join(_dxrt_dir, 'bin'))
-
-from dx_postprocess import MediaPipeHandPostProcess
-from common.utility import convert_cpp_mediapipe_hand
-from factory import Mediapipe_hand_detectorFactory
+from factory import MediapipeHandDetectorFactory
 from common.runner import AsyncRunner, parse_common_args
+from common.variant_config import default_variant, load_variant_config
+
+_VARIANTS_DIR = str(_module_dir / "variants")
 
 
-def parse_args():
-    return parse_common_args("MediaPipe Hand Detector Async Inference")
+def _peek_variant(argv):
+    """Read --variant before argparse runs.
+
+    The parser's SHAPE depends on the variant: an image-only variant must not register
+    --video/--camera/--rtsp at all, and some variants add --output or the KITTI
+    companion paths. So the variant has to be known before the parser is built.
+    """
+    for i, a in enumerate(argv):
+        if a == "--variant" and i + 1 < len(argv):
+            return argv[i + 1]
+        if a.startswith("--variant="):
+            return a.split("=", 1)[1]
+    return None
 
 
 def main():
-    args = parse_args()
-    factory = Mediapipe_hand_detectorFactory()
-
-    def on_engine_init(runner):
-        runner._cpp_postprocessor = MediaPipeHandPostProcess(runner.input_width)
-        runner._cpp_convert_fn = convert_cpp_mediapipe_hand
-
-    runner = AsyncRunner(factory, on_engine_init=on_engine_init)
-    runner.run(args)
+    variant = _peek_variant(sys.argv[1:]) or default_variant(_VARIANTS_DIR)
+    cli = load_variant_config(_VARIANTS_DIR, variant).get("cli") or {}
+    args = parse_common_args(
+        "mediapipe_hand_detector async_cpp_postprocess inference",
+        include_stream_inputs=cli.get("include_stream_inputs", True),
+        include_output=cli.get("include_output", False),
+        include_kitti_paths=cli.get("include_kitti_paths", False),
+    )
+    factory = MediapipeHandDetectorFactory(variant=variant)
+    AsyncRunner(factory).run(args)
 
 
 if __name__ == "__main__":
