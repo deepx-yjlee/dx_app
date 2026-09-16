@@ -35,7 +35,8 @@ OUT = PROJECT_ROOT / "tests" / "data" / "processor_specs.json"
 
 SUFFIX_RULES = (r"_q_lite$", r"_\d+$")
 # Positional arguments every processor takes; they come from the runner, not the variant.
-POSITIONAL_PASSTHROUGH = {"input_width", "input_height", "self.config", "config", "cfg"}
+POSITIONAL_PASSTHROUGH = {"input_width", "input_height", "self.config", "config", "cfg",
+                          "width", "height", "w", "h"}
 FACTORY_METHODS = {
     "create_preprocessor": "preprocessor",
     "create_postprocessor": "postprocessor",
@@ -76,25 +77,75 @@ def _literal(node: ast.AST):
         return f"<expr:{ast.unparse(node)}>"
 
 
-def _spec_from_call(call: ast.Call) -> dict:
+def _locals_in(fn: ast.FunctionDef) -> dict[str, ast.AST]:
+    """``{local name -> assigned expression}`` for simple single-target assignments.
+
+    Several factories assemble the config into a local first::
+
+        cfg = {**self.config, "num_iterations": 4}
+        return ZeroDCEPostprocessor(input_width, input_height, cfg)
+
+    Treating ``cfg`` as a plain passthrough token loses the override entirely, which
+    silently dropped num_iterations=4 (ZeroDCE++), FastSAM's score/nms thresholds and
+    two PPU anchor sets. The call's positionals are therefore resolved through this map
+    before being classified.
+    """
+    out: dict[str, ast.AST] = {}
+    for node in fn.body:
+        if isinstance(node, ast.Assign) and len(node.targets) == 1 \
+                and isinstance(node.targets[0], ast.Name):
+            out[node.targets[0].id] = node.value
+    return out
+
+
+def _spec_from_call(call: ast.Call, local_defs: dict[str, ast.AST] | None = None) -> dict:
+    """Record the call SHAPE symbolically, not a guess at the signature.
+
+    ``args`` keeps each positional in order as either a runner-supplied token
+    (``"input_width"``, ``"input_height"``, ``"config"``) or a literal value, so a
+    builder replays the exact original call instead of introspecting the signature and
+    hoping. That guesswork is what produced spurious CTOR_FAILs for the SuperPoint and
+    DOPE visualisers, whose first positional is not a width.
+    """
     cls = getattr(call.func, "id", None) or getattr(call.func, "attr", "")
+    local_defs = local_defs or {}
+    args: list = []
     kwargs: dict = {}
     injected: dict = {}
+
+    def _harvest_dict(d: ast.Dict) -> None:
+        for k, v in zip(d.keys, d.values):
+            if isinstance(k, ast.Constant):
+                injected[k.value] = _literal(v)
+
+    for arg in call.args:
+        # Resolve a local alias to the expression it was assigned, so a config built
+        # one line earlier is not mistaken for a bare passthrough.
+        if isinstance(arg, ast.Name) and arg.id in local_defs:
+            resolved = local_defs[arg.id]
+            if isinstance(resolved, ast.Dict):
+                _harvest_dict(resolved)
+                args.append({"token": "config"})
+                continue
+            arg = resolved
+        if isinstance(arg, ast.Name) and arg.id in POSITIONAL_PASSTHROUGH:
+            args.append({"token": arg.id})
+        elif isinstance(arg, ast.Attribute) and ast.unparse(arg) in POSITIONAL_PASSTHROUGH:
+            args.append({"token": "config"})
+        elif isinstance(arg, ast.Dict):         # {**self.config, "num_iterations": 4}
+            _harvest_dict(arg)
+            args.append({"token": "config"})
+        else:
+            args.append({"value": _literal(arg)})
     for kw in call.keywords:
         if kw.arg is None:                      # **something
             kwargs["**"] = ast.unparse(kw.value)
             continue
-        if kw.arg in POSITIONAL_PASSTHROUGH:
-            continue
-        kwargs[kw.arg] = _literal(kw.value)
-    for arg in call.args:
-        if isinstance(arg, ast.Dict):           # {**self.config, "num_iterations": 4}
-            for k, v in zip(arg.keys, arg.values):
-                if isinstance(k, ast.Constant):
-                    injected[k.value] = _literal(v)
-        elif isinstance(arg, ast.Constant):
-            kwargs.setdefault("_positional", []).append(arg.value)
-    return {"class": cls, "kwargs": kwargs, "config_overrides": injected}
+        val = kw.value
+        if isinstance(val, ast.Name) and val.id in local_defs:
+            val = local_defs[val.id]
+        kwargs[kw.arg] = _literal(val)
+    return {"class": cls, "args": args, "kwargs": kwargs, "config_overrides": injected}
 
 
 def extract(path: Path) -> dict:
@@ -105,15 +156,16 @@ def extract(path: Path) -> dict:
         if not isinstance(fn, ast.FunctionDef) or fn.name not in FACTORY_METHODS:
             continue
         role = FACTORY_METHODS[fn.name]
+        local_defs = _locals_in(fn)
         # The returned call is the processor; helper calls inside are ignored.
         for node in ast.walk(fn):
             if isinstance(node, ast.Return) and isinstance(node.value, ast.Call):
-                out[role] = _spec_from_call(node.value)
+                out[role] = _spec_from_call(node.value, local_defs)
                 break
         else:
             calls = [n for n in ast.walk(fn) if isinstance(n, ast.Call)]
             if calls:
-                out[role] = _spec_from_call(calls[-1])
+                out[role] = _spec_from_call(calls[-1], local_defs)
     return out
 
 
@@ -162,6 +214,14 @@ def main() -> int:
     with_kwargs = [v for v in specs.values()
                    if any((v.get(r) or {}).get("kwargs") or (v.get(r) or {}).get("config_overrides")
                           for r in FACTORY_METHODS.values())]
+    nonliteral = [
+        v["variant"] for v in specs.values()
+        for r in FACTORY_METHODS.values()
+        if any(str(x).startswith("<expr:") for x in
+               list((v.get(r) or {}).get("kwargs", {}).values())
+               + [a.get("value") for a in (v.get(r) or {}).get("args", []) if "value" in a]
+               + list((v.get(r) or {}).get("config_overrides", {}).values()))
+    ]
     classes = collections.Counter(
         (v.get(r) or {}).get("class") for v in specs.values() for r in FACTORY_METHODS.values())
     print(f"wrote {OUT.relative_to(PROJECT_ROOT)}")
@@ -170,6 +230,9 @@ def main() -> int:
     print(f"  factories missing a role  : {len(no_roles)} {no_roles[:5]}")
     print(f"  variants with non-default args: {len(with_kwargs)}")
     print(f"  distinct processor classes: {len([c for c in classes if c])}")
+    print(f"  variants with a NON-LITERAL arg (need family code): {len(set(nonliteral))}")
+    if nonliteral:
+        print(f"    {sorted(set(nonliteral))}")
     return 0
 
 
