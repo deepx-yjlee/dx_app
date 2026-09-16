@@ -64,9 +64,22 @@ SNAPSHOT_GAPS = {"efficientnet-lite0_224x224"}
 RETIRED_FIELDS = ("duplicate_of",)
 
 
+# dx-modelzoo family renames. CMake target names are global, so two families sharing a
+# name across tasks collide as ``<family>_sync``. Exactly one collision exists, and
+# dx-modelzoo's own convention (yolo26-seg, yolov5-face, yolov5-pose) is to suffix the
+# sibling by task -- it just did not apply that to casvit.
+FAMILY_OVERRIDES: dict[tuple[str, str], str] = {
+    ("semantic_segmentation", "casvit"): "casvit_seg",
+}
+
+
 def _snake(family: str) -> str:
     """dx-modelzoo family -> dx_app family directory (import-safe)."""
     return family.replace("-", "_").replace(".", "_")
+
+
+def _family_for(task: str, family: str) -> str:
+    return FAMILY_OVERRIDES.get((task, family), _snake(family))
 
 
 @pytest.fixture(scope="module")
@@ -201,6 +214,25 @@ def test_variant_matches_dxnn_stem_except_documented(registry):
     assert not bad, f"variant != dxnn stem outside EXCEPTIONS: {bad}"
 
 
+def test_family_names_are_unique_across_tasks(registry):
+    """CMake target names are global, so <family>_sync must be unambiguous.
+
+    Two families sharing a name in different tasks would produce duplicate CMake
+    targets. FAMILY_OVERRIDES exists to break exactly that; this test proves it is
+    sufficient and stays sufficient as families are added.
+    """
+    import collections
+    fams = {(e["task"], e["family"]) for e in registry}
+    counts = collections.Counter(f for _, f in fams)
+    clashes = {
+        f: sorted(t for t, ff in fams if ff == f) for f, n in counts.items() if n > 1
+    }
+    assert not clashes, (
+        f"family name(s) used in more than one task: {clashes} -- "
+        "add an entry to FAMILY_OVERRIDES in scripts/migrate_registry_modelzoo.py"
+    )
+
+
 def test_task_and_family_match_the_snapshot(registry, snapshot):
     bad = []
     for e in registry:
@@ -210,7 +242,7 @@ def test_task_and_family_match_the_snapshot(registry, snapshot):
         if upstream is None:
             bad.append((e["model_name"], e["variant"], "not in snapshot"))
             continue
-        want = (upstream["task"], _snake(upstream["family"]))
+        want = (upstream["task"], _family_for(upstream["task"], upstream["family"]))
         got = (e["task"], e["family"])
         if got != want:
             bad.append((e["model_name"], got, want))

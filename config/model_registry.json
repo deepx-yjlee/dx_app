@@ -6657,7 +6657,7 @@
     "source": "manual",
     "supported": true,
     "variant": "casvit-t-fpn-resnet50_512x512",
-    "family": "casvit",
+    "family": "casvit_seg",
     "task": "semantic_segmentation",
     "task_legacy": "semantic_segmentation",
     "image_only": false,

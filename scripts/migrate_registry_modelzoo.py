@@ -62,6 +62,16 @@ IMAGE_ONLY_LEGACY_TASKS = {
     "object_pose_estimation", "3d_object_detection",
 }
 
+# dx-modelzoo family renames. CMake target names are GLOBAL, so two families sharing a
+# name in different tasks would collide as ``<family>_sync``. Exactly one collision
+# exists: ``casvit`` sits in both image_classification and semantic_segmentation.
+# dx-modelzoo's own convention is to suffix sibling families by task (yolo26-seg,
+# yolo26-pose, yolov5-face, yolov5-pose); it simply did not apply that to casvit. We do.
+# (task, modelzoo family) -> dx_app family
+FAMILY_OVERRIDES: dict[tuple[str, str], str] = {
+    ("semantic_segmentation", "casvit"): "casvit_seg",
+}
+
 NEW_FIELDS = ("variant", "family", "task", "task_legacy", "image_only",
               "zoo_canonical", "alias_of")
 
@@ -92,7 +102,9 @@ def migrate(registry: list[dict], snapshot: dict[str, dict]) -> tuple[list[dict]
         elif stem in snapshot:
             variant = stem
             task = snapshot[stem]["task"]
-            family = _snake(snapshot[stem]["family"])
+            family = FAMILY_OVERRIDES.get(
+                (task, snapshot[stem]["family"]), _snake(snapshot[stem]["family"])
+            )
             canonical = True
             stats["from_snapshot"] += 1
         else:
