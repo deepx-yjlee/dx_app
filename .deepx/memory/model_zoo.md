@@ -166,3 +166,31 @@ query `config/model_registry.json` for the current list.
 
 7. **Hardcoding model lists** — the registry is the live source. This document
    intentionally does not list every model to avoid going stale.
+
+## dx-modelzoo Alignment (Phase 0, 2026-09-16)
+
+`config/model_registry.json` carries the authoritative (task, family, variant)
+mapping, joined from a committed snapshot of the dx-modelzoo CV tree.
+
+| Field | Meaning |
+|---|---|
+| `variant` | Identity for `--variant` and `assets/models/<variant>.dxnn`. Equals the dxnn stem except for the 3 documented exceptions. |
+| `family` | dx-modelzoo family, snake_cased (`wide-resnet` → `wide_resnet`). 89 families. |
+| `task` | dx-modelzoo task name. 23 values. |
+| `task_legacy` | Pre-alignment `add_model_task`, preserved for migration. |
+| `image_only` | Per-variant replacement for the task-keyed `_IMAGE_ONLY_TASKS`. 17 variants. |
+| `zoo_canonical` | `false` for the entries absent from DX Model Zoo q-lite `2_4_0`. |
+| `duplicate_of` | Set when an entry duplicates another entry's model instead of naming a distinct one. |
+
+- Snapshot: `tests/data/modelzoo_cv_tree.json` — refresh with
+  `python scripts/harvest_modelzoo_tree.py`. Migration: `scripts/migrate_registry_modelzoo.py`.
+- Family assignment is **data, not an algorithm**: dx-modelzoo folds depth/width
+  into the family (`resnet50` → `resnet`, `vgg16-bn` → `vgg`). Never derive it —
+  a best-effort heuristic yields 211 families against the authoritative 89.
+- **`variant` follows the `.dxnn`, never the legacy example-dir name.**
+  `deit_base_distilled_2` owns variant `deit-b_384x384_distilled`;
+  `deit_base384_distilled` is `duplicate_of: deitbase384` — it is byte-identical
+  to that entry apart from `model_name` and points at the NON-distilled
+  `deit-b_384x384.dxnn`, so its name is simply wrong.
+- Guarded by `tests/python_example/unit/test_registry_modelzoo_conformance.py`
+  and `test_registry_image_only.py`.
