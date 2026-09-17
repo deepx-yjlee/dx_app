@@ -21,6 +21,7 @@
 
 #include "common/base/i_factory.hpp"
 #include "common/utility/common_util.hpp"
+#include "common/utility/display_pump.hpp"
 #include "common/utility/run_dir.hpp"
 #include "common/utility/verify_serialize.hpp"
 #include "sync_detection_runner.hpp"
@@ -469,13 +470,18 @@ private:
             // The caller's DXAPP_SAVE_IMAGE path is honoured independently of the
             // run-dir save: --save must not swallow the path the caller asked for.
             dxapp::saveDebugImage(result_frame);
-            if (!no_display) {
-                auto display_start = std::chrono::high_resolution_clock::now();
-                dxapp::showOutput(result_frame);
-                if (dxapp::windowShouldClose("Output")) quit_requested = true;
-                auto display_end = std::chrono::high_resolution_clock::now();
-                t_display = std::chrono::duration<double, std::milli>(display_end - display_start).count();
-            }
+if (!no_display) {
+    // 10 fps, not the 60 fps default: that default assumes the display sits
+    // OFF the critical path, which holds for the async runner. The sync
+    // pipeline is serial, so every imshow is charged to frame time.
+    constexpr double SYNC_PREVIEW_FPS = 10.0;
+    static DisplayPump pump{"Output", SYNC_PREVIEW_FPS};
+    auto display_start = std::chrono::high_resolution_clock::now();
+    pump.offer(result_frame);
+    if (!pump.pump()) quit_requested = true;
+    auto display_end = std::chrono::high_resolution_clock::now();
+    t_display = std::chrono::duration<double, std::milli>(display_end - display_start).count();
+}
         }
 
         metrics.sum_read += t_read;
@@ -515,7 +521,7 @@ private:
             if (!processSingleFrame(img, display_image, ctx, t_read,
                                     i, frameDumpPath, false, saveImagePath)) break;
             processCount++;
-            if (!ctx.no_display) {
+            if (!ctx.no_display && dxapp::hasDisplay()) {
                 while (!dxapp::windowShouldClose("Output")) {
                     std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 }

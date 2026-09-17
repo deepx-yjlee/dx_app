@@ -25,6 +25,14 @@
 #include "common/utility/verify_serialize.hpp"
 #include "sync_detection_runner.hpp"
 
+// NOTE: DisplayPump is deliberately NOT used here. The embedding runners are
+// image-pair viewers -- they collect the rendered frames and show them one after the
+// other -- and a depth-1 lossy sink drops all but the newest by design, which would
+// discard the first image of the pair. Embedding tasks (face_recognition,
+// zero_shot_image_classification) are image_only and have no video path, so the
+// display-pacing ceiling that DisplayPump removes cannot arise here. Only the
+// headless wait-loop guard below is needed.
+
 namespace dxapp {
 
 template <typename FactoryT>
@@ -318,7 +326,7 @@ private:
                 t_display = std::chrono::duration<double, std::milli>(display_end - display_start).count();
                 if (is_image_mode) {
                     // Wait for user to close window — outside timing.
-                    while (!dxapp::windowShouldClose("Output")) {
+                    while (dxapp::hasDisplay() && !dxapp::windowShouldClose("Output")) {
                         std::this_thread::sleep_for(std::chrono::milliseconds(10));
                     }
                 }

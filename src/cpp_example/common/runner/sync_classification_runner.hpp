@@ -21,6 +21,7 @@
 
 #include "common/base/i_factory.hpp"
 #include "common/utility/common_util.hpp"
+#include "common/utility/display_pump.hpp"
 #include "sync_detection_runner.hpp"
 #include "common/utility/run_dir.hpp"
 #include "common/utility/verify_serialize.hpp"
@@ -503,7 +504,7 @@ private:
                                     currentImagePath, i, frameDumpPath, false, savePath,
                                     is_float_input, is_nhwc)) break;
             processCount++;
-            if (!no_display) {
+            if (!no_display && dxapp::hasDisplay()) {
                 while (!dxapp::windowShouldClose("Output")) {
                     std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 }

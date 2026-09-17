@@ -25,6 +25,7 @@
 
 #include "common/base/i_factory.hpp"
 #include "common/utility/common_util.hpp"
+#include "common/utility/display_pump.hpp"
 #include "common/utility/frame_reorder.hpp"
 #include "common/utility/run_dir.hpp"
 #include "common/utility/verify_serialize.hpp"
@@ -302,7 +303,7 @@ public:
             waitThread.join();
         }
         // For images: keep display alive until user closes window
-        if (is_image && !args.no_display) {
+        if (is_image && !args.no_display && display_pump_.guiAvailable()) {
             // Drain remaining rendered frames
             while (running_) {
                 if (!pollDisplay()) break;
@@ -343,7 +344,7 @@ public:
         }
         running_ = false;
         display_queue_.shutdown();
-        rendered_queue_.shutdown();
+        display_pump_.stop();
         displayThr.join();
         cv::destroyAllWindows();
 
@@ -371,10 +372,14 @@ private:
     std::unique_ptr<FactoryT> factory_;
     std::string model_path_;
     std::atomic<bool> running_{true};
-    bool window_shown_ = false;
-    bool window_prop_supported_ = true;  // false if backend always returns -1
     SafeQueue<AsyncFaceDisplayArgs> display_queue_;
-    SafeQueue<cv::Mat> rendered_queue_;  // Rendered frames for main-thread display
+    // Lossy, rate-limited display sink. It replaced a bounded BLOCKING
+    // SafeQueue<cv::Mat> fed with result_frame.clone(): once the GUI fell behind,
+    // push() blocked the render thread, the display queue filled behind it and the
+    // back-pressure reached the DXRT completion callback, so reported FPS measured
+    // HighGUI rather than the NPU. offer() cannot block -- it replaces the single
+    // pending frame with a refcount bump and no pixel copy.
+    DisplayPump display_pump_{"Output", DISPLAY_PUMP_DEFAULT_FPS};
     AsyncProfilingMetrics metrics_;
 
     /** Handle async inference completion: postprocess, log, update metrics, enqueue display. */
@@ -610,7 +615,7 @@ private:
             }
             // Push rendered frame for main-thread display (imshow must run on main thread for Qt)
             if (!no_display && !result_frame.empty()) {
-                rendered_queue_.push(result_frame.clone());
+                display_pump_.offer(result_frame);
             }
         };
 
@@ -626,50 +631,27 @@ private:
         reorder.drain(renderArgs);
     }
 
-    /** Poll rendered_queue_ and display on main thread. Returns false if user requested quit. */
+    /** Service the display once on the main thread. Returns false if the user quit.
+     *
+     * All HighGUI work happens in DisplayPump::pump(): at most one frame per tick
+     * subject to the rate cap, exactly one waitKey, and window creation / close
+     * detection inside the pump.
+     */
     bool pollDisplay() {
-        cv::Mat frame;
-        if (rendered_queue_.try_pop(frame, std::chrono::milliseconds(1))) {
-            auto display_start = std::chrono::high_resolution_clock::now();
-            dxapp::showOutput(frame);
-            auto display_end = std::chrono::high_resolution_clock::now();
-            {
-                std::lock_guard<std::mutex> lock(metrics_.metrics_mutex);
-                metrics_.sum_display += std::chrono::duration<double, std::milli>(display_end - display_start).count();
-                metrics_.display_completed++;
-            }
-            if (!window_shown_) {
-                window_shown_ = true;
-                // Probe backend: some backends (e.g. GTK2) always return -1
-                // for WND_PROP_VISIBLE. Detect this on the first frame so we
-                // never falsely interpret -1 as "window closed by user".
-                cv::waitKey(1);
-                double probe = cv::getWindowProperty("Output", cv::WND_PROP_VISIBLE);
-                if (probe < -0.5) {
-                    window_prop_supported_ = false;
-                }
-                return true;
-            }
+        const auto t0 = std::chrono::high_resolution_clock::now();
+        const bool keep_going = display_pump_.pump();
+        const auto t1 = std::chrono::high_resolution_clock::now();
+        if (display_pump_.guiAvailable()) {
+            std::lock_guard<std::mutex> lock(metrics_.metrics_mutex);
+            metrics_.sum_display += std::chrono::duration<double, std::milli>(t1 - t0).count();
+            metrics_.display_completed++;
         }
-        if (!window_shown_) return true;  // window not created yet, skip checks
-        // Pump events and detect user quit / window close
-        char key = cv::waitKey(1);
-        if (key == 'q' || key == 27) {
+        if (!keep_going) {
             running_ = false;
             display_queue_.shutdown();
-            rendered_queue_.shutdown();
-            return false;
+            display_pump_.stop();
         }
-        if (window_prop_supported_) {
-            double vis = cv::getWindowProperty("Output", cv::WND_PROP_VISIBLE);
-            if (vis <= 0.0) {
-                running_ = false;
-                display_queue_.shutdown();
-                rendered_queue_.shutdown();
-                return false;
-            }
-        }
-        return true;
+        return keep_going;
     }
 
     void printPerformanceSummary(int total_frames, double total_time_sec, bool /*display_on*/, bool save_on = false) {

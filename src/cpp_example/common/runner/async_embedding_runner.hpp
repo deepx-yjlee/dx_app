@@ -30,6 +30,14 @@
 #include "common/utility/verify_serialize.hpp"
 #include "async_detection_runner.hpp"
 
+// NOTE: DisplayPump is deliberately NOT used here. The embedding runners are
+// image-pair viewers -- they collect the rendered frames and show them one after the
+// other -- and a depth-1 lossy sink drops all but the newest by design, which would
+// discard the first image of the pair. Embedding tasks (face_recognition,
+// zero_shot_image_classification) are image_only and have no video path, so the
+// display-pacing ceiling that DisplayPump removes cannot arise here. Only the
+// headless wait-loop guard below is needed.
+
 namespace dxapp {
 
 struct AsyncEmbeddingDisplayArgs {
@@ -282,7 +290,12 @@ public:
                 if (!rendered_frames.empty()) break;
             }
             bool wp_supported = true;
-            for (size_t fi = 0; fi < rendered_frames.size() && running_; ++fi) {
+            // Headless: nothing can be shown and no key can be pressed, so the
+            // frame-by-frame viewer must not run at all -- it would otherwise wait for
+            // a window close that can never happen. Guarding the loop condition rather
+            // than returning keeps the rest of this int-returning function intact.
+            for (size_t fi = 0; dxapp::hasDisplay()
+                 && fi < rendered_frames.size() && running_; ++fi) {
                 dxapp::showOutput(rendered_frames[fi]);
                 if (fi == 0) {
                     cv::waitKey(1);
