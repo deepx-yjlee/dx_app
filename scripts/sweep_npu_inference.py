@@ -50,6 +50,21 @@ def resolve_input(cfg: dict) -> tuple[str, str] | None:
     return None
 
 
+def _completed_count(out: str) -> int | None:
+    """``Infer Completed : N`` from an async run's summary, or None if absent.
+
+    The async runners submit and collect through a callback, so a printed latency line
+    alone does not prove a frame came back. This is the number that does.
+    """
+    for line in out.splitlines():
+        if "Infer Completed" in line and ":" in line:
+            try:
+                return int(line.split(":")[-1].strip())
+            except ValueError:
+                return None
+    return None
+
+
 def run_one(entry: Path, variant: str, cfg: dict, dxnn: Path, timeout: int) -> dict:
     started = time.time()
     # C++ takes no --variant: it derives the variant from the model path, which is
@@ -78,6 +93,11 @@ def run_one(entry: Path, variant: str, cfg: dict, dxnn: Path, timeout: int) -> d
         # latency line, which only appears after a real engine call.
         ran = ("Infer:" in out) or ("Inference " in out and "ms" in out) \
             or ("Inference:" in out)
+        # An async entry must additionally show a completed callback: the summary can
+        # print while zero frames came back.
+        completed = _completed_count(out)
+        if "_async" in entry.name and completed is not None and completed < 1:
+            ran = False
         if pr.returncode != 0:
             status = "FAIL"
         elif not ran:
@@ -92,6 +112,7 @@ def run_one(entry: Path, variant: str, cfg: dict, dxnn: Path, timeout: int) -> d
                 pass
         return dict(variant=variant, status=status, rc=pr.returncode,
                     secs=round(time.time() - started, 1), infer_ms=infer_ms,
+                    completed=completed,
                     entry=(str(entry.relative_to(ROOT))
                            if ROOT in entry.parents else str(entry)),
                     input=inp[1] if inp else None,
@@ -113,7 +134,10 @@ def main() -> int:
     ap.add_argument("--bindir", default=None,
                     help="directory holding the built C++ executables "
                          "(default: bin/, then src/cpp_example/build/)")
-    ap.add_argument("--kind", default="sync", choices=["sync", "async"])
+    ap.add_argument("--kind", default="sync",
+                    choices=["sync", "async",
+                             "sync_cpp_postprocess", "async_cpp_postprocess"],
+                    help="python has all four variants; cpp has sync and async")
     ap.add_argument("--variant", default=None, help="run a single variant")
     ap.add_argument("--jobs", type=int, default=1,
                     help="parallel workers. Default 1: one NPU, and concurrent engines "
@@ -193,12 +217,16 @@ def main() -> int:
               for s in ("PASS", "FAIL", "TIMEOUT", "NO_INFERENCE")}
     print(f"\n==== {a.tree} / {a.kind} ====")
     ms = [r["infer_ms"] for r in results if r.get("infer_ms")]
+    comp = [r["completed"] for r in results if r.get("completed") is not None]
     print(f"  PASS={counts['PASS']}  FAIL={counts['FAIL']}  TIMEOUT={counts['TIMEOUT']}"
           f"  NO_INFERENCE={counts['NO_INFERENCE']}  SKIP={len(skipped)}"
           f"  of {len(jobs)} run in {round(time.time()-t0)}s")
     if ms:
         print(f"  NPU infer latency: n={len(ms)} min={min(ms):.1f}ms "
               f"median={sorted(ms)[len(ms)//2]:.1f}ms max={max(ms):.1f}ms")
+    if comp:
+        print(f"  async callbacks completed: n={len(comp)} min={min(comp)} "
+              f"all>=1={all(c >= 1 for c in comp)}")
     print(f"  report: {report.relative_to(ROOT)}")
     bad = [r for r in results if r["status"] != "PASS"]
     for r in bad[:25]:
