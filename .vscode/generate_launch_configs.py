@@ -57,9 +57,11 @@ for _e in sorted(_REG, key=lambda x: (x["task"], x["family"], x["variant"])):
 # (name, binary, model, video, image, rtsp_stream) -- the shape create_config expects.
 examples = list(_seen.values())
 
-# Multi-model example configurations: (name, binary, model1, model2, video, image, rtsp_stream)
+# Multi-model example configurations: (name, binary, model1, model2, video, image, rtsp)
+# Empty: the yolov7_x_deeplabv3 entry that used to live here names a binary that exists
+# in neither example tree (CMake's *_x_* multi-model glob matches nothing), and its two
+# .dxnn names are from the pre-rename era. It generated 12 dead launch configs.
 multi_model_examples = [
-    ("YOLOv7 x DeepLabV3", "yolov7_x_deeplabv3", "YoloV7.dxnn", "DeepLabV3PlusMobileNetV2_2.dxnn", "blackbox-city-road2.mov", "sample/img/sample_parking.jpg", "stream6"),
 ]
 
 def create_config(name, binary, mode, input_type, model, video, image, rtsp_stream):
