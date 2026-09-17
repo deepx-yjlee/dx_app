@@ -13,29 +13,49 @@ Usage:
 import json
 
 # Example configurations: (name, binary, model, video, image, rtsp_stream)
-examples = [
-    ("YOLOv5", "yolov5", "YOLOV5S_3.dxnn", "boat.mp4", "sample/img/sample_kitchen.jpg", "stream6"),
-    ("YOLOv7", "yolov7", "YoloV7.dxnn", "snowboard.mp4", "sample/img/sample_kitchen.jpg", "stream6"),
-    ("YOLOv8", "yolov8", "YoloV8N.dxnn", "boat.mp4", "sample/img/sample_kitchen.jpg", "stream6"),
-    ("YOLOv9", "yolov9", "YOLOV9S.dxnn", "carrierbag.mp4", "sample/img/sample_kitchen.jpg", "stream6"),
-    ("YOLOv10", "yolov10", "YOLOV10N-1.dxnn", "boat.mp4", "sample/img/sample_kitchen.jpg", "stream6"),
-    ("YOLOv11", "yolov11", "YOLOV11N.dxnn", "boat.mp4", "sample/img/sample_kitchen.jpg", "stream6"),
-    ("YOLOv12", "yolov12", "YOLOV12N-1.dxnn", "boat.mp4", "sample/img/sample_kitchen.jpg", "stream6"),
-    ("YOLOv26", "yolov26", "yolo26s-1.dxnn", "boat.mp4", "sample/img/sample_kitchen.jpg", "stream6"),
-    ("YOLOv26 Pose", "yolov26pose", "yolo26s-pose.dxnn", "dance-solo.mov", "sample/img/sample_people.jpg", "stream9"),
-    ("YOLOv26 Segmentation", "yolov26seg", "yolo26s-seg.dxnn", "boat.mp4", "sample/img/sample_kitchen.jpg", "stream6"),
-    ("YOLOv26 OBB", "yolov26obb", "yolo26s-obb.dxnn", "obb.mp4", "sample/dota8_test/P0284.png", "stream6"),
-    ("YOLOv26 Classification", "yolov26cls", "yolo26s-cls.dxnn", "boat.mp4", "sample/img/sample_kitchen.jpg", "stream6"),
-    ("YOLOX", "yolox", "YOLOX-S_1.dxnn", "boat.mp4", "sample/img/sample_kitchen.jpg", "stream6"),
-    ("YOLOv5 Pose", "yolov5pose", "YOLOV5Pose640_1.dxnn", "dance-solo.mov", "sample/img/sample_people.jpg", "stream9"),
-    ("YOLOv8 Segmentation", "yolov8seg", "YOLOV8N_SEG-1.dxnn", "boat.mp4", "sample/img/sample_kitchen.jpg", "stream6"),
-    ("EfficientNet", "efficientnet", "EfficientNetB0_4.dxnn", "boat.mp4", "sample/img/sample_kitchen.jpg", "stream6"),
-    ("DeepLabV3", "deeplabv3", "DeepLabV3PlusMobileNetV2_2.dxnn", "blackbox-city-road.mp4", "sample/img/sample_parking.jpg", "stream6"),
-    ("SCRFD PPU", "scrfd_ppu", "SCRFD500M_PPU.dxnn", "dance-group.mov", "sample/img/sample_face.jpg", "stream9"),
-    ("YOLOv5 PPU", "yolov5_ppu", "YOLOV5S_PPU.dxnn", "boat.mp4", "sample/img/sample_kitchen.jpg", "stream6"),
-    ("YOLOv7 PPU", "yolov7_ppu", "YoloV7_PPU.dxnn", "snowboard.mp4", "sample/img/sample_kitchen.jpg", "stream6"),
-    ("YOLOv5 Pose PPU", "yolov5pose_ppu", "YOLOV5Pose_PPU.dxnn", "dance-solo.mov", "sample/img/sample_people.jpg", "stream9"),
-]
+# Example configurations are DERIVED from config/model_registry.json rather than
+# hard-coded. The hard-coded list had drifted badly: 252 of its 276 .dxnn references
+# named files from an older naming era that are no longer on disk. Under the
+# dx-modelzoo family layout the C++ executable basename IS the family, and the sample
+# media comes from each variant's own config, so all of it is derivable.
+#
+# One representative variant per family keeps the config count manageable; every other
+# variant is reachable from the same binary by swapping -m, because both entry points
+# derive the variant from the model path.
+import json as _json
+from pathlib import Path as _Path
+
+_ROOT = _Path(__file__).resolve().parents[1]
+_REG = _json.loads((_ROOT / "config" / "model_registry.json").read_text(encoding="utf-8"))
+
+
+def _display(family):
+    return family.replace("_", " ").title()
+
+
+def _variant_media(entry):
+    cfg_path = (_ROOT / "src" / "python_example" / entry["task"] / entry["family"]
+                / "variants" / f"{entry['variant']}.json")
+    if not cfg_path.is_file():
+        return None, None
+    cfg = _json.loads(cfg_path.read_text(encoding="utf-8"))
+    img = cfg.get("default_image") or "sample/img/sample_street.jpg"
+    vid = cfg.get("default_video") or "assets/videos/snowboard.mp4"
+    return img, _Path(vid).name
+
+
+_seen = {}
+for _e in sorted(_REG, key=lambda x: (x["task"], x["family"], x["variant"])):
+    if _e["family"] in _seen or _e["alias_of"] is not None:
+        continue
+    _img, _vid = _variant_media(_e)
+    if _img is None:
+        continue
+    _seen[_e["family"]] = (
+        _display(_e["family"]), _e["family"], _e["dxnn_file"], _vid, _img, "stream6")
+
+# (name, binary, model, video, image, rtsp_stream) -- the shape create_config expects.
+examples = list(_seen.values())
 
 # Multi-model example configurations: (name, binary, model1, model2, video, image, rtsp_stream)
 multi_model_examples = [

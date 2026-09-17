@@ -73,57 +73,81 @@ DEMO_GROUPS=(
 )
 
 DEMO_CPP_BASE=(
-    yolov7 yolov11n scrfd500m yolo26n_obb
-    yolov8s_pose handlandmarklite_1 3ddfa_v2_mobilnetv1_120x120
-    yolov8n_seg deeplabv3plusmobilenet
-    resnet50
-    yolo26_depth_s
-    dncnn_50 espcn_x4 zero_dce
-    arcface_mobilefacenet deepmar_resnet50 casvit_t
-    yolov7_ppu
-    superpoint dope_hope_ketchup
-    yolopv2 sfa3d_608x608
-    mediapipe_hand_detector
+    "yolov7"
+    "yolo11"
+    "scrfd"
+    "yolo26_obb"
+    "yolov8_pose"
+    "mediapipe_hands_lite"
+    "3ddfa_v2"
+    "yolov8_seg"
+    "deeplabv3"
+    "resnet"
+    "yolo26_depth"
+    "dncnn"
+    "espcn"
+    "zerodce"
+    "arcface"
+    "deepmar"
+    "casvit"
+    "yolo_ppu"
+    "superpoint"
+    "dope"
+    "yolopv2"
+    "sfa3d"
+    "mediapipe_hand_detector"
 )
 
 DEMO_PY_DIR=(
     "object_detection/yolov7"
-    "object_detection/yolov11n"
-    "face_detection/scrfd500m"
-    "obb_detection/yolo26n_obb"
-    "pose_estimation/yolov8s_pose"
-    "hand_landmark/handlandmarklite_1"
-    "face_alignment/3ddfa_v2_mobilnetv1_120x120"
-    "instance_segmentation/yolov8n_seg"
-    "semantic_segmentation/deeplabv3plusmobilenet"
-    "classification/resnet50"
-    "depth_estimation/yolo26_depth_s"
-    "image_denoising/dncnn_50"
-    "super_resolution/espcn_x4"
-    "image_enhancement/zero_dce"
-    "embedding/arcface_mobilefacenet"
-    "attribute_recognition/deepmar_resnet50"
-    "reid/casvit_t"
-    "ppu/yolov7_ppu"
+    "object_detection/yolo11"
+    "face_detection/scrfd"
+    "oriented_object_detection/yolo26_obb"
+    "pose_estimation/yolov8_pose"
+    "hand_landmark/mediapipe_hands_lite"
+    "face_landmark/3ddfa_v2"
+    "instance_segmentation/yolov8_seg"
+    "semantic_segmentation/deeplabv3"
+    "image_classification/resnet"
+    "depth_estimation/yolo26_depth"
+    "image_denoising/dncnn"
+    "super_resolution/espcn"
+    "low_light_enhancement/zerodce"
+    "face_recognition/arcface"
+    "person_attribute/deepmar"
+    "image_classification/casvit"
+    "object_detection/yolo_ppu"
     "keypoint_detection/superpoint"
-    "object_pose_estimation/dope_hope_ketchup"
+    "object_pose_estimation/dope"
     "panoptic_driving_perception/yolopv2"
-    "3d_object_detection/sfa3d_608x608"
+    "3d_object_detection/sfa3d"
     "hand_detection/mediapipe_hand_detector"
 )
 
 DEMO_PY_BASE=(
-    yolov7 yolov11n scrfd500m yolo26n_obb
-    yolov8s_pose handlandmarklite_1 3ddfa_v2_mobilnetv1_120x120
-    yolov8n_seg deeplabv3plusmobilenet
-    resnet50
-    yolo26_depth_s
-    dncnn_50 espcn_x4 zero_dce
-    arcface_mobilefacenet deepmar_resnet50 casvit_t
-    yolov7_ppu
-    superpoint dope_hope_ketchup
-    yolopv2 sfa3d_608x608
-    mediapipe_hand_detector
+    "yolov7"
+    "yolo11"
+    "scrfd"
+    "yolo26_obb"
+    "yolov8_pose"
+    "mediapipe_hands_lite"
+    "3ddfa_v2"
+    "yolov8_seg"
+    "deeplabv3"
+    "resnet"
+    "yolo26_depth"
+    "dncnn"
+    "espcn"
+    "zerodce"
+    "arcface"
+    "deepmar"
+    "casvit"
+    "yolo_ppu"
+    "superpoint"
+    "dope"
+    "yolopv2"
+    "sfa3d"
+    "mediapipe_hand_detector"
 )
 
 DEMO_MODEL=(

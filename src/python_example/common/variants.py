@@ -125,6 +125,27 @@ def resolve_variant(key: str) -> Variant:
         ) from None
 
 
+def variant_from_model_path(path: str) -> str | None:
+    """The variant key a ``.dxnn`` path denotes, or None when it is not a known one.
+
+    A variant key IS the ``.dxnn`` stem, so a caller that only passes ``--model`` has
+    already named the variant. Honouring that keeps every pre-existing ``-m``-based
+    caller -- run_examples.sh, bench_models.sh, the .vscode launch configs -- correct
+    under the family layout without changing any of them, and makes the python entry
+    behave like the C++ one, which derives the variant the same way.
+
+    A path outside assets/models, or a locally compiled .dxnn, simply returns None and
+    the family default applies.
+    """
+    if not path:
+        return None
+    stem = Path(path).name
+    if stem.endswith(".dxnn"):
+        stem = stem[: -len(".dxnn")]
+    v = _index().get(stem)
+    return v.variant if v is not None else None
+
+
 def list_variants(
     *, task: str | None = None, family: str | None = None
 ) -> Iterator[Variant]:

@@ -242,18 +242,29 @@ _VARIANTS_DIR = str(_module_dir / "variants")
 
 
 def _peek_variant(argv):
-    """Read --variant before argparse runs.
+    """Resolve the variant before argparse runs.
 
     The parser's SHAPE depends on the variant: an image-only variant must not register
     --video/--camera/--rtsp at all, and some variants add --output or the KITTI
     companion paths. So the variant has to be known before the parser is built.
+
+    --variant wins; otherwise the variant is derived from --model, because a variant
+    key IS the .dxnn stem. That keeps every existing ``-m``-only caller correct and
+    matches the C++ entry, which derives it the same way.
     """
+    from common.variants import variant_from_model_path
+
+    model = None
     for i, a in enumerate(argv):
         if a == "--variant" and i + 1 < len(argv):
             return argv[i + 1]
         if a.startswith("--variant="):
             return a.split("=", 1)[1]
-    return None
+        if a in ("--model", "-m") and i + 1 < len(argv):
+            model = argv[i + 1]
+        elif a.startswith("--model="):
+            model = a.split("=", 1)[1]
+    return variant_from_model_path(model) if model else None
 
 
 def main():
