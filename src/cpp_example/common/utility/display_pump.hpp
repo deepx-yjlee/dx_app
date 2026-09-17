@@ -156,6 +156,26 @@ public:
     /** False when no display server exists; the pump is then inert. */
     bool guiAvailable() const { return gui_available_; }
 
+    /**
+     * @brief Would the next offered frame actually be shown?
+     *
+     * Lets a producer skip work it is about to throw away. The render thread otherwise
+     * draws the overlay for EVERY frame and the pump discards most of them -- measured
+     * 294 of 367 dropped for yolo26-n-pose, i.e. ~80% of a 2.94 ms overlay drawn for
+     * nothing, enough to saturate a core and cost 13% throughput. Rendering is still
+     * required whenever the frame is also being SAVED, so the caller must check that
+     * separately; this only answers the display question.
+     *
+     * Advisory: the answer can change between the query and the offer. Acting on a
+     * stale "no" costs one skipped preview frame, never correctness.
+     */
+    bool wouldShow() const {
+        if (!gui_available_ || stopped_.load(std::memory_order_acquire)) return false;
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (!window_created_ || min_interval_.count() <= 0.0) return true;
+        return (std::chrono::steady_clock::now() - last_show_) >= min_interval_;
+    }
+
     /** Frames actually shown. */
     int shown() const { return shown_.load(std::memory_order_relaxed); }
 
@@ -257,7 +277,7 @@ private:
     std::chrono::duration<double> min_interval_;
     bool gui_available_;
 
-    std::mutex mutex_;
+    mutable std::mutex mutex_;
     cv::Mat pending_;
     bool has_pending_ = false;
     std::chrono::steady_clock::time_point last_show_{};

@@ -266,131 +266,145 @@ public:
         AsyncFrameParams frame_params{display_image, *preprocessor, input_buffers,
             buffer_index, ie, last_job_id, processCount, is_float_input, is_nhwc};
 
-        if (is_image) {
-            // Prepare run directory for image-mode saves
-            if (args.saveMode) {
-                std::string run_kind = fs::is_directory(args.imageFilePath) ? "image-dir" : "image";
-                std::string run_name = fs::path(args.imageFilePath).filename().string();
-                std::string input_src = buildInputSourceString(
-                    args.imageFilePath, args.videoFile, args.cameraIndex, args.rtspUrl);
-                run_dir = makeRunDir(args.saveDir, factory_->getModelName() + "_async",
-                                     run_kind, run_name);
-                fs::create_directories(run_dir);
-                writeRunInfo(run_dir, argv[0], args.modelPath, input_src);
-            }
+        // The pipeline runs on a WORKER thread; the main thread only services the
+        // window. Qt requires imshow/waitKey on the process main thread, so the
+        // pipeline is what moves: with pollDisplay() on the submit loop, GUI time was
+        // charged to frame submission and re-capped throughput on a real display even
+        // after DisplayPump removed the blocking back-pressure.
+        auto pipeline = [&]() {
+            if (is_image) {
+                // Prepare run directory for image-mode saves
+                if (args.saveMode) {
+                    std::string run_kind = fs::is_directory(args.imageFilePath) ? "image-dir" : "image";
+                    std::string run_name = fs::path(args.imageFilePath).filename().string();
+                    std::string input_src = buildInputSourceString(
+                        args.imageFilePath, args.videoFile, args.cameraIndex, args.rtspUrl);
+                    run_dir = makeRunDir(args.saveDir, factory_->getModelName() + "_async",
+                                         run_kind, run_name);
+                    fs::create_directories(run_dir);
+                    writeRunInfo(run_dir, argv[0], args.modelPath, input_src);
+                }
 
-            for (int i = 0; i < loopTest && running_ && !g_interrupted(); ++i) {
-                auto t_read_start = std::chrono::high_resolution_clock::now();
-                cv::Mat img = cv::imread(imageFiles[i % imageFiles.size()]);
-                auto t_read_end = std::chrono::high_resolution_clock::now();
-                if (img.empty()) continue;
-                {
-                    std::lock_guard<std::mutex> lock(metrics_.metrics_mutex);
-                    metrics_.sum_read += std::chrono::duration<double, std::milli>(t_read_end - t_read_start).count();
-                }
-                const std::string& cur_img_path = imageFiles[i % imageFiles.size()];
-                if (is_sr_) {
-                    std::string sr_save_path;
-                    if (!run_dir.empty()) {
-                        sr_save_path = dxapp::buildPerImageSavePath(run_dir, factory_->getModelName() + "_async", cur_img_path, i);
-                    }
-                    processFrameSR(img, frame_params.ie, frame_params.processCount, sr_save_path);
-                } else {
-                    std::string save_path;
-                    if (!run_dir.empty()) {
-                        save_path = dxapp::buildPerImageSavePath(run_dir, factory_->getModelName() + "_async", cur_img_path, i);
-                    }
-                    submitDenoisingFrame(img, display_image, frame_params, std::move(save_path));
-                }
-                if (!args.no_display && !pollDisplay()) break;
-            }
-        } else {
-            for (int loop_idx = 0; loop_idx < loopTest && running_ && !g_interrupted(); ++loop_idx) {
-                if (loopTest > 1) {
-                    if (args.verbose) {
-                        std::cout << "\n" << std::string(50, '=') << std::endl;
-                        std::cout << "[DXAPP] [INFO] Loop " << (loop_idx + 1) << "/" << loopTest << std::endl;
-                        std::cout << std::string(50, '=') << std::endl;
-                    }
-                }
-                auto readFrame = [&video](cv::Mat& f) { video >> f; return !f.empty(); };
-                cv::Mat frame;
-                while (running_ && !g_interrupted()) {
+                for (int i = 0; i < loopTest && running_ && !g_interrupted(); ++i) {
                     auto t_read_start = std::chrono::high_resolution_clock::now();
-                    if (!readFrame(frame)) break;
+                    cv::Mat img = cv::imread(imageFiles[i % imageFiles.size()]);
                     auto t_read_end = std::chrono::high_resolution_clock::now();
+                    if (img.empty()) continue;
                     {
                         std::lock_guard<std::mutex> lock(metrics_.metrics_mutex);
                         metrics_.sum_read += std::chrono::duration<double, std::milli>(t_read_end - t_read_start).count();
                     }
-                    processFrameAsync(frame, frame_params);
-                    if (!args.no_display && !pollDisplay()) break;
+                    const std::string& cur_img_path = imageFiles[i % imageFiles.size()];
+                    if (is_sr_) {
+                        std::string sr_save_path;
+                        if (!run_dir.empty()) {
+                            sr_save_path = dxapp::buildPerImageSavePath(run_dir, factory_->getModelName() + "_async", cur_img_path, i);
+                        }
+                        processFrameSR(img, frame_params.ie, frame_params.processCount, sr_save_path);
+                    } else {
+                        std::string save_path;
+                        if (!run_dir.empty()) {
+                            save_path = dxapp::buildPerImageSavePath(run_dir, factory_->getModelName() + "_async", cur_img_path, i);
+                        }
+                        submitDenoisingFrame(img, display_image, frame_params, std::move(save_path));
+                    }
+                    // display is pumped by the main thread (runPipelineWithDisplay)
+                    if (!running_) break;
                 }
-                // Reopen video for next loop
-                if (loop_idx + 1 >= loopTest || args.videoFile.empty()) continue;
-                video.release();
-                video.open(args.videoFile);
-                if (!video.isOpened()) {
-                    std::cerr << "[DXAPP] [ERROR] Failed to reopen video for loop " << (loop_idx + 2) << std::endl;
-                    break;
+            } else {
+                for (int loop_idx = 0; loop_idx < loopTest && running_ && !g_interrupted(); ++loop_idx) {
+                    if (loopTest > 1) {
+                        if (args.verbose) {
+                            std::cout << "\n" << std::string(50, '=') << std::endl;
+                            std::cout << "[DXAPP] [INFO] Loop " << (loop_idx + 1) << "/" << loopTest << std::endl;
+                            std::cout << std::string(50, '=') << std::endl;
+                        }
+                    }
+                    auto readFrame = [&video](cv::Mat& f) { video >> f; return !f.empty(); };
+                    cv::Mat frame;
+                    while (running_ && !g_interrupted()) {
+                        auto t_read_start = std::chrono::high_resolution_clock::now();
+                        if (!readFrame(frame)) break;
+                        auto t_read_end = std::chrono::high_resolution_clock::now();
+                        {
+                            std::lock_guard<std::mutex> lock(metrics_.metrics_mutex);
+                            metrics_.sum_read += std::chrono::duration<double, std::milli>(t_read_end - t_read_start).count();
+                        }
+                        processFrameAsync(frame, frame_params);
+                        // display is pumped by the main thread (runPipelineWithDisplay)
+                        if (!running_) break;
+                    }
+                    // Reopen video for next loop
+                    if (loop_idx + 1 >= loopTest || args.videoFile.empty()) continue;
+                    video.release();
+                    video.open(args.videoFile);
+                    if (!video.isOpened()) {
+                        std::cerr << "[DXAPP] [ERROR] Failed to reopen video for loop " << (loop_idx + 2) << std::endl;
+                        break;
+                    }
                 }
             }
-        }
 
-        // Wait for inference completion while keeping display responsive
-        if (last_job_id >= 0) {
-            if (!running_) display_queue_.shutdown();
-            std::atomic<bool> inference_done{false};
-            std::thread waitThread([&ie, last_job_id, &inference_done]() {
-                ie.Wait(last_job_id);
-                inference_done.store(true, std::memory_order_release);
-            });
-            while (!inference_done.load(std::memory_order_acquire) && running_) {
-                if (!args.no_display && !pollDisplay()) break;
-                else std::this_thread::sleep_for(std::chrono::milliseconds(10));
-            }
-            waitThread.join();
-        }
-        // For images: keep display alive until user closes window
-        if (is_image && !args.no_display && display_pump_.guiAvailable()) {
-            // Drain remaining rendered frames
-            while (running_) {
-                if (!pollDisplay()) break;
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
-            }
-        }
-        // Frames can still be in flight when the reader hits EOF: a completion
-        // callback may not have queued its frame yet, and the display thread may
-        // hold buffered ones. Wait until every submitted frame has been rendered
-        // (and therefore written) before stopping the consumer — otherwise the
-        // tail of a --save video is silently lost. The live-display path never
-        // showed this because frames are rendered as they arrive. Bail out if no
-        // progress is made for 5 s, so a dropped frame cannot hang shutdown.
-        {
-            auto last_progress = std::chrono::steady_clock::now();
-            int last_rendered = -1;
-            while (running_ && !g_interrupted()) {
-                int rendered;
-                {
-                    std::lock_guard<std::mutex> lock(metrics_.metrics_mutex);
-                    rendered = metrics_.render_completed;
+            // Wait for inference completion while keeping display responsive
+            if (last_job_id >= 0) {
+                if (!running_) display_queue_.shutdown();
+                std::atomic<bool> inference_done{false};
+                std::thread waitThread([&ie, last_job_id, &inference_done]() {
+                    ie.Wait(last_job_id);
+                    inference_done.store(true, std::memory_order_release);
+                });
+                while (!inference_done.load(std::memory_order_acquire) && running_) {
+                    // display is pumped by the main thread (runPipelineWithDisplay)
+                    if (!running_) break;
+                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 }
-                const bool pending = !display_queue_.empty() ||
-                                     (args.saveMode && rendered < processCount);
-                if (!pending) break;
-                if (rendered != last_rendered) {
-                    last_rendered = rendered;
-                    last_progress = std::chrono::steady_clock::now();
-                } else if (std::chrono::steady_clock::now() - last_progress >
-                           std::chrono::seconds(5)) {
-                    std::cerr << "[DXAPP] [WARN] Output frames stopped draining; "
-                                 "saved video may be truncated." << std::endl;
-                    break;
-                }
-                if (!args.no_display) pollDisplay();
-                else std::this_thread::sleep_for(std::chrono::milliseconds(2));
+                waitThread.join();
             }
-        }
+            // For images: keep display alive until user closes window
+            if (is_image && !args.no_display && display_pump_.guiAvailable()) {
+                // Drain remaining rendered frames
+                while (running_) {
+                    if (!running_) break;
+                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                }
+            }
+            // Frames can still be in flight when the reader hits EOF: a completion
+            // callback may not have queued its frame yet, and the display thread may
+            // hold buffered ones. Wait until every submitted frame has been rendered
+            // (and therefore written) before stopping the consumer — otherwise the
+            // tail of a --save video is silently lost. The live-display path never
+            // showed this because frames are rendered as they arrive. Bail out if no
+            // progress is made for 5 s, so a dropped frame cannot hang shutdown.
+            {
+                auto last_progress = std::chrono::steady_clock::now();
+                int last_rendered = -1;
+                while (running_ && !g_interrupted()) {
+                    int rendered;
+                    {
+                        std::lock_guard<std::mutex> lock(metrics_.metrics_mutex);
+                        rendered = metrics_.render_completed;
+                    }
+                    const bool pending = !display_queue_.empty() ||
+                                         (args.saveMode && rendered < processCount);
+                    if (!pending) break;
+                    if (rendered != last_rendered) {
+                        last_rendered = rendered;
+                        last_progress = std::chrono::steady_clock::now();
+                    } else if (std::chrono::steady_clock::now() - last_progress >
+                               std::chrono::seconds(5)) {
+                        std::cerr << "[DXAPP] [WARN] Output frames stopped draining; "
+                                     "saved video may be truncated." << std::endl;
+                        break;
+                    }
+                    std::this_thread::sleep_for(std::chrono::milliseconds(2));
+                }
+            }
+        };
+        runPipelineWithDisplay(pipeline, display_pump_, args.no_display,
+                               [&]() {
+                                   running_ = false;
+                                   display_queue_.shutdown();
+                               });
         running_ = false;
         display_queue_.shutdown();
         display_pump_.stop();
@@ -972,9 +986,15 @@ private:
             double avg_save = metrics_.sum_save / metrics_.infer_completed;
             printRow("Save", avg_save, avg_save > 0 ? 1000.0/avg_save : 0.0);
         }
-        if (metrics_.display_completed > 0 && metrics_.sum_display > 0) {
-            double avg_display = metrics_.sum_display / metrics_.display_completed;
+        // Display cost comes from the pump now: the pipeline no longer calls
+        // pollDisplay(), so metrics_.sum_display stays empty and the row would vanish.
+        // The drop count ships with it -- discarding stale frames is HOW the display
+        // stays off the critical path, so it must be visible, not look like lost work.
+        if (display_pump_.shown() > 0) {
+            const double avg_display = display_pump_.avgShowMs();
             printRow("Display", avg_display, avg_display > 0 ? 1000.0/avg_display : 0.0);
+            std::cout << " Display shown    : " << std::setw(6) << display_pump_.shown()
+                      << "   dropped (stale): " << display_pump_.dropped() << std::endl;
         }
         std::cout << "--------------------------------------------------" << std::endl;
         std::cout << " * Async: turnaround latency (submit to callback)" << std::endl;
