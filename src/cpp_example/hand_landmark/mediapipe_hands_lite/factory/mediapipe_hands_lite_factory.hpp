@@ -19,10 +19,10 @@ namespace dxapp {
 
 class MediapipeHandsLiteFactory : public IHandLandmarkFactory {
 public:
-    /// The variant (a .dxnn stem) this factory should build for.
-    /// Empty means the family default. Set from main(), which
-    /// is the only place that sees argv.
-    explicit MediapipeHandsLiteFactory(std::string variant) : variant_(std::move(variant)) {}
+    /// Select the variant (a .dxnn stem) this factory builds for.
+    /// Empty means the family default. Called from main(), the
+    /// only place that sees argv.
+    void setVariant(std::string variant) { variant_ = std::move(variant); }
 
     MediapipeHandsLiteFactory(float confidence_threshold = 0.5f)
         : confidence_threshold_(confidence_threshold) {}

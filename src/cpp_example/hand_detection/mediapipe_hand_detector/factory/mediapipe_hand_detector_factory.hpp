@@ -23,10 +23,10 @@ namespace dxapp {
 
 class MediapipeHandDetectorFactory : public IFaceDetectionFactory {
 public:
-    /// The variant (a .dxnn stem) this factory should build for.
-    /// Empty means the family default. Set from main(), which
-    /// is the only place that sees argv.
-    explicit MediapipeHandDetectorFactory(std::string variant) : variant_(std::move(variant)) {}
+    /// Select the variant (a .dxnn stem) this factory builds for.
+    /// Empty means the family default. Called from main(), the
+    /// only place that sees argv.
+    void setVariant(std::string variant) { variant_ = std::move(variant); }
 
     MediapipeHandDetectorFactory(float score_threshold = 0.5f, float nms_threshold = 0.3f)
         : score_threshold_(score_threshold), nms_threshold_(nms_threshold) {}

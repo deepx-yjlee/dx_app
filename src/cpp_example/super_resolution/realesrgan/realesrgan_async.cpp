@@ -11,8 +11,10 @@
 #include "common/runner/async_restoration_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto variant = dxapp::variantFromArgs(argc, argv);
-    auto factory = std::make_unique<dxapp::RealesrganFactory>(variant);
+    // Default-construct so the factory's own member initialisation runs, THEN select
+    // the variant. Passing the variant to a constructor would bypass that.
+    auto factory = std::make_unique<dxapp::RealesrganFactory>();
+    factory->setVariant(dxapp::variantFromArgs(argc, argv));
     dxapp::AsyncRestorationRunner<dxapp::RealesrganFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

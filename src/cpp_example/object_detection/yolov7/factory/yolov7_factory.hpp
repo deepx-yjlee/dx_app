@@ -19,10 +19,10 @@ namespace dxapp {
 
 class Yolov7Factory : public IDetectionFactory {
 public:
-    /// The variant (a .dxnn stem) this factory should build for.
-    /// Empty means the family default. Set from main(), which
-    /// is the only place that sees argv.
-    explicit Yolov7Factory(std::string variant) : variant_(std::move(variant)) {}
+    /// Select the variant (a .dxnn stem) this factory builds for.
+    /// Empty means the family default. Called from main(), the
+    /// only place that sees argv.
+    void setVariant(std::string variant) { variant_ = std::move(variant); }
 
     Yolov7Factory(float obj_threshold = 0.25f,
                   float score_threshold = 0.25f,

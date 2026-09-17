@@ -11,8 +11,10 @@
 #include "common/runner/async_classification_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto variant = dxapp::variantFromArgs(argc, argv);
-    auto factory = std::make_unique<dxapp::EfficientformerFactory>(variant);
+    // Default-construct so the factory's own member initialisation runs, THEN select
+    // the variant. Passing the variant to a constructor would bypass that.
+    auto factory = std::make_unique<dxapp::EfficientformerFactory>();
+    factory->setVariant(dxapp::variantFromArgs(argc, argv));
     dxapp::AsyncClassificationRunner<dxapp::EfficientformerFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

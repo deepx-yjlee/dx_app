@@ -259,12 +259,20 @@ def main() -> int:
         # constructor inside that helper.
         _cls_at = body.index(f"class {cls_new}")
         _pub = body.index("public:", _cls_at) + len("public:")
+        # A SETTER, never an extra constructor. The donor initialises its members in
+        # its OWN constructor's member-init list with default arguments
+        # (``Factory(float obj_threshold = 0.25f) : obj_threshold_(obj_threshold)``).
+        # Adding a second constructor that main() calls instead means that list never
+        # runs, leaving every member without an in-class initialiser UNINITIALISED --
+        # garbage thresholds, and a reproducible SIGSEGV for yolopv2 and
+        # shufflenetv2-x2.0. main() default-constructs and then calls this, so the
+        # donor's own initialisation is untouched.
         body = (body[:_pub]
-                + "\n    /// The variant (a .dxnn stem) this factory should build for."
-                  "\n    /// Empty means the family default. Set from main(), which"
-                  "\n    /// is the only place that sees argv.\n"
-                  f"    explicit {cls_new}(std::string variant)"
-                  f" : variant_(std::move(variant)) {{}}\n"
+                + "\n    /// Select the variant (a .dxnn stem) this factory builds for."
+                  "\n    /// Empty means the family default. Called from main(), the"
+                  "\n    /// only place that sees argv.\n"
+                  "    void setVariant(std::string variant)"
+                  " { variant_ = std::move(variant); }\n"
                 + body[_pub:])
         # Union every variant's private members so a spliced body always finds the
         # members its original class declared.
@@ -342,8 +350,10 @@ def main() -> int:
 #include "{runner_inc}"
 
 int main(int argc, char* argv[]) {{
-    auto variant = dxapp::variantFromArgs(argc, argv);
-    auto factory = std::make_unique<dxapp::{cls_new}>(variant);
+    // Default-construct so the factory's own member initialisation runs, THEN select
+    // the variant. Passing the variant to a constructor would bypass that.
+    auto factory = std::make_unique<dxapp::{cls_new}>();
+    factory->setVariant(dxapp::variantFromArgs(argc, argv));
     dxapp::{runner_name}<dxapp::{cls_new}> runner(std::move(factory));
     return runner.run(argc, argv);
 }}

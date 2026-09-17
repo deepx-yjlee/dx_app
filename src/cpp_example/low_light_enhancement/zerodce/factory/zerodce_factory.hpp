@@ -21,10 +21,10 @@ namespace dxapp {
 
 class ZerodceFactory : public IRestorationFactory {
 public:
-    /// The variant (a .dxnn stem) this factory should build for.
-    /// Empty means the family default. Set from main(), which
-    /// is the only place that sees argv.
-    explicit ZerodceFactory(std::string variant) : variant_(std::move(variant)) {}
+    /// Select the variant (a .dxnn stem) this factory builds for.
+    /// Empty means the family default. Called from main(), the
+    /// only place that sees argv.
+    void setVariant(std::string variant) { variant_ = std::move(variant); }
 
     ZerodceFactory() = default;
 

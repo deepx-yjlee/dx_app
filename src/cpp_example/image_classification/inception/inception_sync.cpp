@@ -11,8 +11,10 @@
 #include "common/runner/sync_classification_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto variant = dxapp::variantFromArgs(argc, argv);
-    auto factory = std::make_unique<dxapp::InceptionFactory>(variant);
+    // Default-construct so the factory's own member initialisation runs, THEN select
+    // the variant. Passing the variant to a constructor would bypass that.
+    auto factory = std::make_unique<dxapp::InceptionFactory>();
+    factory->setVariant(dxapp::variantFromArgs(argc, argv));
     dxapp::SyncClassificationRunner<dxapp::InceptionFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

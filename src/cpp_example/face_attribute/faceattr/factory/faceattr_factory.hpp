@@ -19,10 +19,10 @@ namespace dxapp {
 
 class FaceattrFactory : public IClassificationFactory {
 public:
-    /// The variant (a .dxnn stem) this factory should build for.
-    /// Empty means the family default. Set from main(), which
-    /// is the only place that sees argv.
-    explicit FaceattrFactory(std::string variant) : variant_(std::move(variant)) {}
+    /// Select the variant (a .dxnn stem) this factory builds for.
+    /// Empty means the family default. Called from main(), the
+    /// only place that sees argv.
+    void setVariant(std::string variant) { variant_ = std::move(variant); }
 
     FaceattrFactory(float threshold = 0.5f)
         : threshold_(threshold) {}

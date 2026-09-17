@@ -21,10 +21,10 @@ namespace dxapp {
 
 class Yolo26ObbFactory : public IOBBFactory {
 public:
-    /// The variant (a .dxnn stem) this factory should build for.
-    /// Empty means the family default. Set from main(), which
-    /// is the only place that sees argv.
-    explicit Yolo26ObbFactory(std::string variant) : variant_(std::move(variant)) {}
+    /// Select the variant (a .dxnn stem) this factory builds for.
+    /// Empty means the family default. Called from main(), the
+    /// only place that sees argv.
+    void setVariant(std::string variant) { variant_ = std::move(variant); }
 
     explicit Yolo26ObbFactory(float score_threshold = 0.3f)
         : score_threshold_(score_threshold) {}
