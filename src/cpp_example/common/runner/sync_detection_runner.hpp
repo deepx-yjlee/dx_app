@@ -26,6 +26,7 @@
 #include "common/base/i_factory.hpp"
 #include "common/config/model_config.hpp"
 #include "common/utility/common_util.hpp"
+#include "common/utility/display_pump.hpp"
 #include "common/utility/run_dir.hpp"
 #include "common/utility/verify_serialize.hpp"
 
@@ -144,9 +145,24 @@ inline std::tuple<double, double, double, bool> renderSaveDisplay(
     }
     dxapp::saveDebugImage(result_frame);
     if (!no_display) {
+        // The sync pipeline is serial, so display cost lands in the loop by
+        // construction; the lever is the RATE LIMIT. DisplayPump shows at most
+        // DISPLAY_PUMP_DEFAULT_FPS frames per second and pumps events once per tick,
+        // so a pipeline running well above that stops paying HighGUI per frame. It
+        // also no-ops when there is no DISPLAY, instead of letting Qt's missing xcb
+        // plugin qFatal() the process.
+        // 10 fps, not DISPLAY_PUMP_DEFAULT_FPS (60). That default assumes the display
+        // sits OFF the critical path, which holds for the async runner where a
+        // separate thread renders and the pump only shows the newest frame. The sync
+        // pipeline is serial, so every imshow is charged to frame time, and these
+        // models run at 25-54 FPS -- entirely below a 60 fps cap, so the cap never
+        // engaged and display cost was paid on every single frame (-19% to -23%).
+        // A preview does not need to exceed 10 fps to be useful.
+        constexpr double SYNC_PREVIEW_FPS = 10.0;
+        static DisplayPump pump{"Output", SYNC_PREVIEW_FPS};
         auto display_start = std::chrono::high_resolution_clock::now();
-        dxapp::showOutput(result_frame);
-        if (dxapp::windowShouldClose("Output")) {
+        pump.offer(result_frame);
+        if (!pump.pump()) {
             quit_requested = true;
         }
         auto display_end = std::chrono::high_resolution_clock::now();
@@ -753,9 +769,13 @@ private:
                     return;
                 }
                 processCount++;
-                // In image mode, block after showing the frame until user closes
-                // the window or presses q/ESC — matches Python behavior.
-                if (!no_display) {
+                // In image mode, block after showing the frame until the user closes
+                // the window or presses q/ESC -- matches Python behavior. Only when a
+                // GUI actually exists: on a headless box windowShouldClose() can never
+                // become true, so this waited forever for a user who cannot press
+                // anything. Previously the process aborted before reaching here (Qt's
+                // missing xcb plugin calls qFatal), which hid the hang.
+                if (!no_display && dxapp::hasDisplay()) {
                     while (!dxapp::windowShouldClose("Output")) {
                         std::this_thread::sleep_for(std::chrono::milliseconds(10));
                     }
