@@ -14,7 +14,6 @@ from .constants import (
     BIN_DIR,
     LIB_DIR,
     MODELS_DIR,
-    MODEL_DXNN_ALIAS,
     MULTI_MODEL_EXECUTABLES,
     PROJECT_ROOT,
     REGISTRY_PATH,
@@ -28,17 +27,38 @@ from .constants import (
 # Normalisation helpers
 # ======================================================================
 
-def normalize_model_name(stem: str) -> str:
-    """Normalise a model filename stem to its expected executable prefix.
+# ======================================================================
+# Module constants
+# ======================================================================
+_DXNN_GLOB = "*.dxnn"
+_DEFAULT_IMAGE = "sample/img/sample_kitchen.jpg"
+_SKIP_DIRS = frozenset({"common", "__pycache__"})
 
-    ``YoloV5M_6.1`` → ``yolov5m_6_1``
+def family_dxnn_map() -> dict:
+    """``{family -> [Path, ...]}`` -- every model a family's example can run.
+
+    Under the dx-modelzoo family/variant layout an executable basename IS the family,
+    and a family serves N variants, so this is a direct registry lookup. It replaces
+    the normalise/prefix/strip/alias cascade below, which existed only because example
+    and executable names did not match their ``.dxnn``; they do now, and a heuristic
+    that silently resolves a typo to a neighbouring model is worse than no match.
     """
-    return stem.lower().replace(".", "_").replace("-", "_")
+    out: dict = {}
+    for e in load_registry():
+        p = MODELS_DIR / e["dxnn_file"]
+        out.setdefault(e["family"], [])
+        if p not in out[e["family"]]:
+            out[e["family"]].append(p)
+    return out
 
 
-# ======================================================================
-# Environment setup
-# ======================================================================
+def dxnn_for_exe(base_name: str) -> Optional[Path]:
+    """A representative existing ``.dxnn`` for an executable basename (the family)."""
+    for p in family_dxnn_map().get(base_name, []):
+        if p.exists():
+            return p
+    return None
+
 
 def setup_environment(*, extra_lib_dirs: Optional[List[Path]] = None) -> dict:
     """Return an ``os.environ`` copy with ``LD_LIBRARY_PATH`` set.
@@ -125,130 +145,6 @@ def load_registry() -> list:
 
 
 @lru_cache(maxsize=1)
-def registry_dxnn_map() -> dict:
-    """Authoritative ``{example base-name → .dxnn Path}`` from ``model_registry.json``.
-
-    Consulted BEFORE the filename-normalisation heuristics below so that models
-    whose registry ``dxnn_file`` differs from the example directory / executable
-    name by more than a size/variant suffix still resolve — cases the
-    normalise/prefix/strip passes miss because the difference is a *mid-name*
-    token, e.g.::
-
-        arcface_r50               → arcface_resnet50_112x112.dxnn   (r50 ↔ resnet50)
-        beit_large_patch16        → beit-l-p16_224x224.dxnn         (fully renamed)
-        arcface_iresnet100_ms1m   → arcface_iresnet100_112x112_ms1m.dxnn (size inserted)
-        casvit_t_seg_fpn_resnet50 → casvit-t-fpn-resnet50_512x512.dxnn   (seg ↔ fpn)
-
-    This is the same ``model_name → dxnn_file`` resolution ``_rt_resolve.py``
-    already uses. A version-suffix-stripped alias (``beit_large_patch16_1`` →
-    ``beit_large_patch16``) is added so example dir names without the re-publish
-    suffix still hit. The returned dict is cached; callers must not mutate it.
-    """
-    out: dict = {}
-    for e in load_registry():
-        name, dxnn = e.get("model_name"), e.get("dxnn_file")
-        if name and dxnn:
-            out[name] = MODELS_DIR / dxnn
-    for name in list(out):
-        base = re.sub(r"_\d+$", "", name)
-        if base != name and base not in out:
-            out[base] = out[name]
-    return out
-
-
-# ======================================================================
-# Constants
-# ======================================================================
-
-_DXNN_GLOB = "*.dxnn"
-_DEFAULT_IMAGE = "sample/img/sample_kitchen.jpg"
-_SKIP_DIRS = frozenset({"common", "__pycache__"})
-
-# Trailing tokens that some re-published .dxnn files carry but the model
-# directory / executable names do not: a version suffix (``-1`` / ``-2`` →
-# normalised to ``_1`` / ``_2``) or a quantisation suffix (``_q-lite`` →
-# ``_q_lite``). e.g. ``DeiTBase-1.dxnn`` for model ``deit_base``,
-# ``deeplabv3plus-drn_512x512_q-lite.dxnn`` for ``deeplabv3plus_drn_512x512``.
-_VARIANT_SUFFIX_RE = re.compile(r"(?:_q_lite|_\d+)$")
-
-
-def _strip_variant_suffix(norm_stem: str) -> str:
-    """Remove ONE trailing version/quantisation token from a *normalised* stem.
-
-    ``deitbase_1`` → ``deitbase``; ``..._512x512_q_lite`` → ``..._512x512``.
-    Stripped exactly once (not repeatedly) so a legitimate trailing number that
-    is part of the real name is preserved: ``fcn8_resnet_v1_18_1`` → only the
-    ``_1`` version suffix goes, leaving ``fcn8_resnet_v1_18`` (the ``_18`` is
-    kept). Only a trailing ``_<digits>`` or ``_q_lite`` is removed, so names
-    whose digits are not preceded by ``_`` (``resnet50``, ``512x512``) are
-    untouched.
-    """
-    return _VARIANT_SUFFIX_RE.sub("", norm_stem, count=1)
-
-
-def find_dxnn_ignoring_variant(models_dir: Path, normalized_name: str) -> Optional[Path]:
-    """Last-resort .dxnn match: compare with underscores stripped *and* trailing
-    version/quantisation suffixes removed from the filename side only.
-
-    Handles files re-published with a ``-1`` / ``-2`` version suffix or a
-    ``_q-lite`` quantisation suffix, which the exact / prefix / plain-stripped
-    passes miss (e.g. ``DeiTBase-1.dxnn`` ↔ model dir ``deit_base``). The
-    suffix is stripped only from the filename, never from *normalized_name*,
-    so version-numbered directory names (``deit_base_distilled_1``) keep
-    matching their own file and do not collide with siblings.
-
-    An explicit ``MODEL_DXNN_ALIAS`` entry (for arbitrary renames that no rule
-    can derive) takes priority when the aliased file is present.
-    """
-    alias = MODEL_DXNN_ALIAS.get(normalized_name)
-    if alias:
-        aliased = models_dir / alias
-        if aliased.exists():
-            return aliased
-
-    target = normalized_name.replace("_", "")
-    for m in sorted(models_dir.glob(_DXNN_GLOB)):
-        mn = _strip_variant_suffix(normalize_model_name(m.stem)).replace("_", "")
-        if mn == target:
-            return m
-    return None
-
-# ======================================================================
-# C++ discovery
-# ======================================================================
-
-def _find_dxnn_for_name(base_name: str) -> Optional[Path]:
-    """Find a .dxnn model matching *base_name* (exact, then prefix, then
-    underscore-insensitive).
-
-    Prefix match is skipped when a more specific binary exists for that model.
-    e.g. yolov7_w6_face.dxnn won't match yolov7_w6 if yolov7_w6_face binary exists.
-    """
-    # Authoritative registry lookup first (model_name → dxnn_file). Bridges names
-    # the normalisation heuristics below cannot (e.g. arcface_r50 → arcface_resnet50).
-    reg = registry_dxnn_map().get(base_name)
-    if reg is not None and reg.exists():
-        return reg
-    for m in sorted(MODELS_DIR.glob(_DXNN_GLOB)):
-        if normalize_model_name(m.stem) == base_name:
-            return m
-    for m in sorted(MODELS_DIR.glob(_DXNN_GLOB)):
-        mn = normalize_model_name(m.stem)
-        if mn.startswith(base_name + "_") or mn.startswith(base_name + "-"):
-            # Skip if a dedicated binary exists for this model
-            if (BIN_DIR / f"{mn}_sync").exists() or (BIN_DIR / f"{mn}_async").exists():
-                continue
-            return m
-    # Fallback: compare with underscores stripped (e.g. YoloV7W6 ↔ yolov7_w6)
-    stripped = base_name.replace("_", "")
-    for m in sorted(MODELS_DIR.glob(_DXNN_GLOB)):
-        mn = normalize_model_name(m.stem).replace("_", "")
-        if mn == stripped:
-            return m
-    # Final fallback: ignore trailing -1/-2/_q-lite variant suffixes on files.
-    return find_dxnn_ignoring_variant(MODELS_DIR, base_name)
-
-
 def _build_multi_model_args(base_name: str) -> Optional[list]:
     """Return CLI args list for a multi-model executable, or None."""
     if base_name not in MULTI_MODEL_EXECUTABLES:
@@ -428,29 +324,13 @@ def discover_python_scripts(
 
 
 def _find_model_for_name(model_name: str) -> Optional[Path]:
-    """Find the best matching .dxnn file for a Python model directory name."""
-    # Authoritative registry lookup first (model_name → dxnn_file). Bridges names
-    # the normalisation heuristics below cannot (e.g. arcface_r50 → arcface_resnet50).
-    reg = registry_dxnn_map().get(model_name)
-    if reg is not None and reg.exists():
-        return reg
+    """A representative ``.dxnn`` for a python example directory name.
 
-    norm = normalize_model_name(model_name)
+    The directory name is the FAMILY under the dx-modelzoo layout, so the registry
+    answers this directly. It replaces a four-pass cascade (registry, normalise,
+    dot-swap, underscore-strip, variant-suffix-strip) that existed only because
+    directory names did not match their ``.dxnn``.
+    """
+    return dxnn_for_exe(model_name)
 
-    for m in sorted(MODELS_DIR.glob(_DXNN_GLOB)):
-        if normalize_model_name(m.stem) == norm:
-            return m
 
-    for m in sorted(MODELS_DIR.glob(_DXNN_GLOB)):
-        if m.stem.lower().replace(".", "_") == norm:
-            return m
-
-    # Fallback: compare with underscores stripped (e.g. YoloV7W6 ↔ yolov7_w6)
-    stripped = norm.replace("_", "")
-    for m in sorted(MODELS_DIR.glob(_DXNN_GLOB)):
-        mn = normalize_model_name(m.stem).replace("_", "")
-        if mn == stripped:
-            return m
-
-    # Final fallback: ignore trailing -1/-2/_q-lite variant suffixes on files.
-    return find_dxnn_ignoring_variant(MODELS_DIR, norm)

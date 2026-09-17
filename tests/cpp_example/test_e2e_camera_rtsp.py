@@ -42,8 +42,7 @@ from test_helpers.constants import (  # noqa: E402
     PROJECT_ROOT,
 )
 from test_helpers.utils import (  # noqa: E402
-    find_dxnn_ignoring_variant,
-    normalize_model_name as _normalize,
+    dxnn_for_exe,
     setup_environment,
 )
 
@@ -73,17 +72,14 @@ def _resolve_multi_model_paths(exe_name: str) -> Optional[List[Path]]:
 
 
 def _find_dxnn(base_name: str) -> Optional[Path]:
-    for m in sorted(MODELS_DIR.glob("*.dxnn")):
-        if _normalize(m.stem) == base_name:
-            return m
-    for m in sorted(MODELS_DIR.glob("*.dxnn")):
-        mn = _normalize(m.stem)
-        if mn.startswith(base_name + "_") or mn.startswith(base_name + "-"):
-            if (BIN_DIR / f"{mn}_sync").exists() or (BIN_DIR / f"{mn}_async").exists():
-                continue
-            return m
-    # Fallback: underscores stripped, ignoring trailing -1/-2/_q-lite suffixes.
-    return find_dxnn_ignoring_variant(MODELS_DIR, base_name)
+    """A representative ``.dxnn`` for an executable basename, via the registry.
+
+    An executable basename IS the family under the dx-modelzoo layout, and the registry
+    lists every variant of it, so this is a lookup rather than the normalise / prefix /
+    underscore-strip / alias cascade this replaced. That cascade could resolve a typo to
+    a neighbouring model, which is a worse failure than no match.
+    """
+    return dxnn_for_exe(base_name)
 
 
 def _discover() -> list:

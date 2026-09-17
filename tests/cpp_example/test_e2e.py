@@ -32,9 +32,7 @@ from test_helpers.constants import (  # noqa: E402
     e2e_effective_loop,
 )
 from test_helpers.utils import (  # noqa: E402
-    find_dxnn_ignoring_variant,
-    normalize_model_name as _normalize_model_to_exe,
-    registry_dxnn_map,
+    dxnn_for_exe,
     resolve_cpp_exe_input,
     setup_environment,
 )
@@ -69,36 +67,14 @@ def _resolve_multi_model_paths(exe_name: str) -> Optional[List[Path]]:
 
 
 def _find_dxnn_for_exe(base_name: str) -> Optional[Path]:
-    """Find .dxnn whose normalised stem matches *base_name* (exact, then prefix).
+    """A representative ``.dxnn`` for an executable basename, via the registry.
 
-    Prefix match is skipped when a more specific binary exists for that model.
-    e.g. yolov7_w6_face.dxnn won't match yolov7_w6_sync if yolov7_w6_face_sync exists.
-    Fallback: compare with underscores stripped (e.g. YoloV7W6 ↔ yolov7_w6).
+    An executable basename IS the family under the dx-modelzoo layout, and the registry
+    lists every variant of it, so this is a lookup rather than the normalise / prefix /
+    underscore-strip / alias cascade this replaced. That cascade could resolve a typo to
+    a neighbouring model, which is a worse failure than no match.
     """
-    # Authoritative registry lookup first (model_name → dxnn_file). Bridges names
-    # the normalisation heuristics below cannot (e.g. arcface_r50 → arcface_resnet50,
-    # beit_large_patch16 → beit-l-p16), which otherwise SKIP as "model not found".
-    reg = registry_dxnn_map().get(base_name)
-    if reg is not None and reg.exists():
-        return reg
-    for m in sorted(MODELS_DIR.glob("*.dxnn")):
-        if _normalize_model_to_exe(m.stem) == base_name:
-            return m
-    for m in sorted(MODELS_DIR.glob("*.dxnn")):
-        mn = _normalize_model_to_exe(m.stem)
-        if mn.startswith(base_name + "_") or mn.startswith(base_name + "-"):
-            # Skip if a dedicated binary exists for this model
-            if (BIN_DIR / f"{mn}_sync").exists() or (BIN_DIR / f"{mn}_async").exists():
-                continue
-            return m
-    # Fallback: compare with underscores stripped (e.g. YoloV7W6 ↔ yolov7_w6)
-    stripped = base_name.replace("_", "")
-    for m in sorted(MODELS_DIR.glob("*.dxnn")):
-        mn = _normalize_model_to_exe(m.stem).replace("_", "")
-        if mn == stripped:
-            return m
-    # Final fallback: ignore trailing -1/-2/_q-lite variant suffixes on files.
-    return find_dxnn_ignoring_variant(MODELS_DIR, base_name)
+    return dxnn_for_exe(base_name)
 
 
 def discover_test_cases() -> List[tuple]:

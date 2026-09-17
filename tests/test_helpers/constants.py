@@ -101,16 +101,6 @@ MODEL_IMAGE_OVERRIDE: dict[str, str] = {
     "realesrgan_x8":              _SAMPLE_LOWRES_165x90,
 }
 
-# ======================================================================
-# Explicit model-dir → .dxnn filename aliases.
-# Last-resort mapping for the rare cases where the example directory name
-# cannot be derived from the .dxnn filename by normalisation / suffix rules
-# (an arbitrary rename). Key: normalised model-dir name. Value: exact .dxnn
-# filename under assets/models/.
-# ======================================================================
-MODEL_DXNN_ALIAS: dict[str, str] = {
-    "deitbase384": "deit-b_384x384.dxnn",
-}
 
 # ======================================================================
 # Multi-model executables  (base_name → [(flag, dxnn_filename), ...])
