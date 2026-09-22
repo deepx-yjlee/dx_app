@@ -160,6 +160,8 @@ def main() -> int:
     reg = json.loads(REGISTRY.read_text(encoding="utf-8"))
     jobs = []
     skipped = []
+    pending: list[str] = []            # declared, not published yet -- expected
+    missing_published: list[str] = []  # published but absent -- a real problem
     for e in reg:
         if a.variant and e["variant"] != a.variant:
             continue
@@ -169,7 +171,18 @@ def main() -> int:
             continue
         dxnn = MODELS / e["dxnn_file"]
         if not dxnn.is_file():
-            skipped.append((e["variant"], "dxnn missing"))
+            # Two very different situations, and collapsing them hides the one that
+            # matters. 143 of the 499 variants are declared but not published yet
+            # (every download URL 403s), so their absence is expected and permanent
+            # until DX Model Zoo publishes them. A PUBLISHED model whose file is
+            # missing is a real problem -- a failed download, a wrong filename -- and
+            # it must not disappear into the same bucket.
+            if e.get("published", True):
+                missing_published.append(e["variant"])
+                skipped.append((e["variant"], "dxnn missing (model IS published -- "
+                                              "run scripts/download_models.py)"))
+            else:
+                pending.append(e["variant"])
             continue
         if a.tree == "cpp_example":
             entry = bindir / f"{e['family']}_{a.kind}"
@@ -181,7 +194,8 @@ def main() -> int:
             continue
         jobs.append((entry, e["variant"], cfg, dxnn))
 
-    print(f"variants to run : {len(jobs)}   skipped: {len(skipped)}")
+    print(f"variants to run : {len(jobs)}   "
+          f"pending (unpublished): {len(pending)}   skipped: {len(skipped)}")
     for v, why in skipped[:10]:
         print(f"  SKIP {v}: {why}")
 
@@ -210,6 +224,8 @@ def main() -> int:
     report = out / f"sweep-{a.tree}-{a.kind}-{stamp}.json"
     report.write_text(json.dumps(
         dict(tree=a.tree, kind=a.kind, total=len(jobs), skipped=skipped,
+             pending_unpublished=sorted(pending),
+             missing_published=sorted(missing_published),
              wall_secs=round(time.time() - t0, 1), results=results), indent=1) + "\n",
         encoding="utf-8")
 
@@ -219,8 +235,17 @@ def main() -> int:
     ms = [r["infer_ms"] for r in results if r.get("infer_ms")]
     comp = [r["completed"] for r in results if r.get("completed") is not None]
     print(f"  PASS={counts['PASS']}  FAIL={counts['FAIL']}  TIMEOUT={counts['TIMEOUT']}"
-          f"  NO_INFERENCE={counts['NO_INFERENCE']}  SKIP={len(skipped)}"
+          f"  NO_INFERENCE={counts['NO_INFERENCE']}"
+          f"  PENDING_UNPUBLISHED={len(pending)}  SKIP={len(skipped)}"
           f"  of {len(jobs)} run in {round(time.time()-t0)}s")
+    if pending:
+        print(f"  PENDING_UNPUBLISHED: {len(pending)} variants have no .dxnn because "
+              "DX Model Zoo has not published them. They were NOT run, and they are "
+              "NOT counted as passing.")
+    if missing_published:
+        print(f"  [ERROR] {len(missing_published)} PUBLISHED variant(s) have no .dxnn "
+              f"on disk: {sorted(missing_published)[:5]}"
+              f"{' ...' if len(missing_published) > 5 else ''}")
     if ms:
         print(f"  NPU infer latency: n={len(ms)} min={min(ms):.1f}ms "
               f"median={sorted(ms)[len(ms)//2]:.1f}ms max={max(ms):.1f}ms")
@@ -233,7 +258,10 @@ def main() -> int:
         print(f"  {r['status']:7s} {r['variant']}  rc={r['rc']}")
         for ln in r["tail"].splitlines()[-3:]:
             print(f"          | {ln}")
-    return 1 if bad else 0
+    # A published model with no file on disk fails the sweep: it means the model set
+    # is incomplete, which is exactly what this sweep is meant to notice. An
+    # unpublished one does not -- there is nothing to run and nothing to fix.
+    return 1 if (bad or missing_published) else 0
 
 
 if __name__ == "__main__":

@@ -205,7 +205,19 @@ def _sizeof_fmt(num: float) -> str:
     return f"{num:.1f} TB"
 
 
-def download_file(url: str, dest: Path, session, force: bool = False) -> dict:
+# Models declared for a release DX Model Zoo has not published yet. 286 of the manifest
+# URLs point at this directory (143 models x dxnn+json) and every one returns 403 until
+# publication, so their failure is expected and must not read as 286 errors -- while a
+# 403 on a PUBLISHED model still has to be loud.
+PENDING_URL_MARKER = "/2_5_0/"
+
+
+def is_pending(url: str) -> bool:
+    return PENDING_URL_MARKER in (url or "")
+
+
+def download_file(url: str, dest: Path, session, force: bool = False,
+                  pending: bool = False) -> dict:
     """Download a single file. Skips if already exists, unless force=True."""
     filename = dest.name
     if dest.exists() and not force:
@@ -215,6 +227,9 @@ def download_file(url: str, dest: Path, session, force: bool = False) -> dict:
     try:
         with session.get(url, stream=True, timeout=60) as r:
             if r.status_code != 200:
+                if pending and r.status_code in (403, 404):
+                    return {"status": "pending", "file": filename,
+                            "code": r.status_code, "url": url}
                 return {"status": "error", "file": filename, "code": r.status_code, "url": url}
             downloaded = 0
             with open(dest, "wb") as f:
@@ -237,6 +252,10 @@ def _handle_download_result(res: dict, name: str, kind: str, bar: str, pct: int,
     if status == "skip":
         counters["skip"] += 1
         print(f"  [{bar}] {pct:3d}%  {_Y}–{_RST} {name} ({kind}) — already exists (skip)")
+        return
+    if status == "pending":
+        # Counted, not printed: one summary line beats 286 identical 403s.
+        counters["pending"] += 1
         return
     # error
     counters["err"] += 1
@@ -271,12 +290,14 @@ def download_all(models: list[dict], output_dir: Path, session,
     head(f"  Starting download: {total} files → {output_dir}")
     head(f"{'─'*60}")
 
-    counters = {"ok": 0, "skip": 0, "err": 0, "err_403": 0, "first_err_url": None}
+    counters = {"ok": 0, "skip": 0, "err": 0, "err_403": 0, "pending": 0,
+                "first_err_url": None}
     t0 = time.time()
 
     with ThreadPoolExecutor(max_workers=workers) as pool:
         futures = {
-            pool.submit(download_file, url, dest, session, force): (kind, name)
+            pool.submit(download_file, url, dest, session, force,
+                        is_pending(url)): (kind, name)
             for kind, name, url, dest in tasks
         }
         done = 0
@@ -291,6 +312,10 @@ def download_all(models: list[dict], output_dir: Path, session,
     elapsed = time.time() - t0
     head(f"\n{'─'*60}")
     head(f"  Done: {counters['ok']} downloaded, {counters['skip']} skipped, {counters['err']} errors  ({elapsed:.1f}s)")
+    if counters["pending"]:
+        head(f"  Pending: {counters['pending']} file(s) are not published yet (2_5_0) "
+             "and were skipped. Their examples are already in the tree; they will "
+             "download once DX Model Zoo publishes them. No action needed.")
     head(f"  Saved to: {output_dir.resolve()}")
     if counters["err_403"]:
         warn(f"{counters['err_403']} file(s) returned HTTP 403 (Forbidden).")
@@ -345,7 +370,8 @@ def copy_all(models: list[dict], output_dir: Path, internal_path: Path,
     head(f"  To  : {output_dir}")
     head(f"{'─'*60}")
 
-    counters = {"ok": 0, "skip": 0, "err": 0, "err_403": 0, "first_err_url": None}
+    counters = {"ok": 0, "skip": 0, "err": 0, "err_403": 0, "pending": 0,
+                "first_err_url": None}
     t0 = time.time()
 
     with ThreadPoolExecutor(max_workers=workers) as pool:

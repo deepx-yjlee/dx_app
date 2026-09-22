@@ -142,6 +142,13 @@ struct SegmentationResult {
     int height{0};
     std::vector<int> class_ids;
     std::vector<std::string> class_names;
+    // Soft alpha matte in [0,1], for models whose output is a continuous foreground
+    // opacity rather than a class map (PP-Matting). `mask` still carries the
+    // thresholded 0/1 class map so SemanticSegmentationVisualizer -- which reads
+    // `mask` as class IDs -- renders it unchanged, while a consumer that wants the
+    // real matte has it here instead of having to recover it from a binary image.
+    // Empty for every class-map model.
+    cv::Mat alpha;
 
     SegmentationResult() = default;
 };
