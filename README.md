@@ -78,11 +78,20 @@ This section guides you through the environment setup and the initial build proc
 
 ## Repository Layout
 
+> **On the two counts below.** The trees carry **499 variants** across 24 AI tasks, of
+> which **356 have a published `.dxnn`** to download. The other 143 are declared --
+> registry entry, example code, variant config, build target -- for models DX Model Zoo
+> has announced but not published yet; `scripts/download_models.py` reports them as
+> *Pending* rather than as errors, and `scripts/sweep_npu_inference.py` reports them as
+> `PENDING_UNPUBLISHED` rather than as passing. They start working the day they are
+> published, with no code change.
+
+
 The project is structured to separate core logic from language-specific implementations.  
 ```text
 dx_app/
 ├── src/
-│   ├── cpp_example/            # C++ end-to-end examples (347 models across 22 tasks)
+│   ├── cpp_example/            # C++ end-to-end examples (499 variants / 24 tasks, 356 published)
 │   │   └── common/             # ← Shared C++ runtime layer
 │   │       ├── base/           #   Abstract interfaces (IFactory, IProcessor, ...)
 │   │       ├── processors/     #   40 shared post-processors
@@ -91,7 +100,7 @@ dx_app/
 │   │       ├── visualizers/    #   12 task-specific visualizers
 │   │       ├── config/         #   ModelConfig loader
 │   │       └── utility/        #   Labels, preprocessing, profiling, run_dir, signal_handler, verify_serialize
-│   ├── python_example/         # Python end-to-end examples (347 models across 22 tasks)
+│   ├── python_example/         # Python end-to-end examples (499 variants / 24 tasks, 356 published)
 │   │   └── common/             # ← Shared Python runtime layer
 │   │       ├── base/           #   Abstract interfaces (IFactory, IProcessor, ...)
 │   │       ├── processors/     #   35 shared post-processors
