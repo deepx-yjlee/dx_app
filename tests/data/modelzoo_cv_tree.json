@@ -1,7 +1,7 @@
 {
   "source": "https://github.com/DEEPX-AI/dx-modelzoo/tree/main/src/dx_modelzoo/models/cv/",
   "ref": "main",
-  "harvested_at": "2026-09-16",
+  "harvested_at": "2026-09-22",
   "variant_count": 350,
   "variants": {
     "3ddfa-v2_mobilenet-0.5_120x120": {

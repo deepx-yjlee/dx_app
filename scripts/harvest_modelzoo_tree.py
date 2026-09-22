@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 import urllib.request
 from datetime import datetime
 from pathlib import Path
@@ -67,6 +68,30 @@ def build_snapshot(tree: list[dict], ref: str) -> dict:
     }
 
 
+def carry_provisional(old: dict, new: dict) -> list[str]:
+    """Preserve the 'provisional' block and report guesses upstream contradicts.
+
+    The block holds OUR (task, family) for variants dx-modelzoo has not filed -- the
+    147 DX Model Zoo 2_5_0 additions. A plain re-harvest would silently drop it, and
+    silently dropping it would take with it the only record that those names were
+    assigned rather than derived. Worse, once upstream DOES file one of those stems,
+    its authoritative assignment may differ from ours; that is the moment the tree
+    has to be migrated, so it is reported here as an error rather than a note.
+    """
+    provisional = old.get("provisional")
+    if not provisional:
+        return []
+    complaints = []
+    for stem, ours in provisional["variants"].items():
+        theirs = new["variants"].get(stem)
+        if theirs and theirs != ours:
+            complaints.append(
+                f"{stem}: we assigned {ours['task']}/{ours['family']}, "
+                f"upstream now says {theirs['task']}/{theirs['family']}")
+    new["provisional"] = provisional
+    return complaints
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--ref", default="main", help="git ref to harvest (default: main)")
@@ -76,13 +101,37 @@ def main() -> None:
 
     snapshot = build_snapshot(fetch_tree(args.ref), args.ref)
     out = PROJECT_ROOT / args.out
+    complaints: list[str] = []
+    if out.is_file():
+        complaints = carry_provisional(
+            json.loads(out.read_text(encoding="utf-8")), snapshot)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(snapshot, indent=2, sort_keys=False) + "\n", encoding="utf-8")
 
     tasks = {v["task"] for v in snapshot["variants"].values()}
     families = {(v["task"], v["family"]) for v in snapshot["variants"].values()}
-    print(f"wrote {out.relative_to(PROJECT_ROOT)}")
+    try:
+        where = out.relative_to(PROJECT_ROOT)
+    except ValueError:
+        where = out
+    print(f"wrote {where}")
     print(f"  variants={snapshot['variant_count']} tasks={len(tasks)} families={len(families)}")
+    provisional = snapshot.get("provisional")
+    if provisional:
+        published = [s for s in provisional["variants"] if s in snapshot["variants"]]
+        print(f"  provisional={provisional['variant_count']} "
+              f"(now published upstream: {len(published)})")
+        if published:
+            print("[DXAPP] [WARN] these stems must move from 'provisional' into "
+                  f"'variants': {sorted(published)}")
+    for line in complaints:
+        print(f"[DXAPP] [WARN] provisional mismatch -- {line}")
+    if complaints:
+        print(f"[DXAPP] [ERROR] {len(complaints)} provisional assignment(s) disagree "
+              "with dx-modelzoo. Update scripts/data/modelzoo_2_5_0.py to upstream's "
+              "names, re-run scripts/add_modelzoo_2_5_0_models.py, then regenerate "
+              "both example trees.", file=sys.stderr)
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":
