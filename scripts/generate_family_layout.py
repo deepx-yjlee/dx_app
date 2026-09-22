@@ -127,6 +127,11 @@ def variant_json(entry: dict, spec: dict) -> dict:
         "default_image": default_image,
         "default_video": default_video,
         "zoo_canonical": entry["zoo_canonical"],
+        # Whether a .dxnn exists to download. 143 of the 499 variants are declared in
+        # the registry but not published yet, and default_variant() needs to know:
+        # picking the alphabetically first config would otherwise make a bare run of
+        # clip / yolo11_pose / stdc_seg fail on a missing model where it used to work.
+        "published": entry.get("published", True),
         "legacy_model_name": entry["model_name"],
         # The on-disk config.json is authoritative: it is what the original factory
         # read. The registry field disagrees for 75 of 352 variants, and using it would
@@ -421,7 +426,13 @@ def main() -> int:
                     dest.write_bytes(f.read_bytes())
                     n_carried[0] += 1
 
-        example = sorted(e["variant"] for e in members)[0]
+        # The same choice default_variant() makes, for the same reason: a docstring
+        # that tells the reader to run --variant <something unpublished> is an
+        # instruction that cannot work. Falls back to the first when a family has no
+        # published variant at all (the 23 entirely new ones).
+        ordered = sorted(members, key=lambda e: e["variant"])
+        example = next((e["variant"] for e in ordered
+                        if e.get("published", True)), ordered[0]["variant"])
         for kind in VARIANT_SCRIPTS:
             runner = "AsyncRunner" if kind.startswith("async") else "SyncRunner"
             (fdir / f"{family}_{kind}.py").write_text(

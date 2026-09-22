@@ -40,6 +40,11 @@ from .rtdetr_postprocessor import (
     MaskRTDETRPostprocessor,
     RTDETRPostprocessor,
 )
+# The base the arcface/clip wrappers already subclass. Exported so a variant
+# whose embedding is neither a face nor a CLIP image -- PP-ShiTu retrieval,
+# RepVGG person ReID -- can report its own model_type/model_name instead of
+# borrowing ArcFacePostprocessor's hardcoded "face_embedding"/"arcface".
+from .embedding_postprocessor import GenericEmbeddingPostprocessor
 from .matting_postprocessor import PPMattingPostprocessor
 from .anomaly_postprocessor import AnomalyFeaturePostprocessor
 from .damoyolo_postprocessor import DamoYoloPostprocessor
@@ -95,6 +100,7 @@ __all__ = [
     "RTDETRPostprocessor",
     "MaskRTDETRPostprocessor",
     # PaddleSeg matting: a continuous alpha matte, not a class map.
+    "GenericEmbeddingPostprocessor",
     "PPMattingPostprocessor",
     # Anomaly detection: a feature response, not a published anomaly score.
     "AnomalyFeaturePostprocessor",

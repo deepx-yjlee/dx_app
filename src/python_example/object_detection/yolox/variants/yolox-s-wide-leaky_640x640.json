@@ -10,6 +10,7 @@
   "default_image": "sample/img/sample_street.jpg",
   "default_video": "assets/videos/snowboard.mp4",
   "zoo_canonical": true,
+  "published": true,
   "legacy_model_name": "yolox_s_wide_leaky",
   "config": {
     "nms_threshold": 0.45,

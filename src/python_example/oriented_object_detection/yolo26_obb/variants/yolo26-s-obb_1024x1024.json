@@ -10,6 +10,7 @@
   "default_image": "sample/img/sample_airport_satellite_view.png",
   "default_video": "assets/videos/obb.mp4",
   "zoo_canonical": true,
+  "published": true,
   "legacy_model_name": "yolo26s_obb",
   "config": {
     "score_threshold": 0.3

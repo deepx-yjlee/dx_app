@@ -10,6 +10,7 @@
   "default_image": "sample/img/sample_parking.jpg",
   "default_video": "assets/videos/blackbox-city-road.mp4",
   "zoo_canonical": true,
+  "published": true,
   "legacy_model_name": "fcn8_resnet50_1",
   "config": {},
   "registry_config": {},

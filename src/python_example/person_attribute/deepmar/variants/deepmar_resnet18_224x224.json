@@ -10,6 +10,7 @@
   "default_image": "sample/img/sample_person_a1.jpg",
   "default_video": null,
   "zoo_canonical": true,
+  "published": true,
   "legacy_model_name": "deepmar_resnet18_person_attr_resnet_v1_18",
   "config": {},
   "registry_config": {},

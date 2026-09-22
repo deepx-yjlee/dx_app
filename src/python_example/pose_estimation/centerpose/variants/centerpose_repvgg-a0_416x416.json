@@ -10,6 +10,7 @@
   "default_image": "sample/img/sample_people.jpg",
   "default_video": "assets/videos/dance-solo.mov",
   "zoo_canonical": true,
+  "published": true,
   "legacy_model_name": "centerpose_repvgg_a0",
   "config": {
     "score_threshold": 0.3

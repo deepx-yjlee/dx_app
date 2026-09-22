@@ -10,6 +10,7 @@
   "default_image": "sample/img/face_pair",
   "default_video": null,
   "zoo_canonical": true,
+  "published": true,
   "legacy_model_name": "vit_l_14_datacomp_xl_s13b_b90k_1",
   "config": {},
   "registry_config": {},

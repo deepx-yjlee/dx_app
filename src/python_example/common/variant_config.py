@@ -55,15 +55,32 @@ def load_variant_config(variants_dir: str, variant: str) -> dict:
 
 
 def default_variant(variants_dir: str) -> str:
-    """The family's default variant: the alphabetically first config.
+    """The family's default variant: the alphabetically first PUBLISHED config.
 
     Families are selected by ``--variant``; this exists so a bare invocation still
     runs something sensible rather than erroring on a missing flag.
+
+    "Published" matters because 143 of the 499 declared variants have no .dxnn yet.
+    Ordering alone would have moved three existing families onto an unpublished
+    default the moment the 2_5_0 additions landed -- clip from
+    clip-img_resnet50x16_384x384_openai-wit to clip-img_resnet50_224x224_openai,
+    yolo11_pose from -m-pose to -l-pose, stdc_seg from stdc2-seg50 to stdc1-seg50 --
+    so a bare run would have started failing on a missing model file.
+
+    A family with no published variant at all (the 23 entirely new ones) falls back to
+    the first config: there is nothing better to pick, and the runner's own
+    missing-model error names the file.
     """
-    names = sorted(p.stem for p in Path(variants_dir).glob("*.json"))
-    if not names:
+    paths = sorted(Path(variants_dir).glob("*.json"), key=lambda p: p.stem)
+    if not paths:
         raise VariantConfigError(f"no variant configs in {variants_dir}")
-    return names[0]
+    for path in paths:
+        try:
+            if json.loads(path.read_text(encoding="utf-8")).get("published", True):
+                return path.stem
+        except (OSError, json.JSONDecodeError):
+            continue
+    return paths[0].stem
 
 
 def _resolve_class(name: str):

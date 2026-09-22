@@ -68,6 +68,7 @@ def main() -> int:
     ok = fail = 0
     reasons: dict[str, list[str]] = collections.defaultdict(list)
 
+    no_original: list[str] = []
     for variant, s in sorted(specs.items()):
         task, family = s["task"], s["family"]
         w, h = 640, 640
@@ -77,7 +78,12 @@ def main() -> int:
         ocands = sorted((odir / "factory").glob("*_factory.py"))
         OC = load_class(ocands[0], f"o_{abs(hash(variant))}") if ocands else None
         if OC is None:
-            fail += 1; reasons["no original factory"].append(variant); continue
+            # Not a difference -- an absence. A variant introduced AFTER the
+            # restructure (the 147 DX Model Zoo 2_5_0 additions) has no
+            # pre-restructure factory to be equivalent to, and counting that as a
+            # failure would drown the one signal this gate exists to give: that a
+            # variant which DID have an original still builds the same processors.
+            no_original.append(variant); continue
         ocfg_p = odir / "config.json"
         ocfg = json.loads(ocfg_p.read_text()) if ocfg_p.exists() else {}
         try:
@@ -150,14 +156,23 @@ def main() -> int:
         else:
             ok += 1
 
-    print(f"variants                : {len(specs)}")
-    print(f"  generated == original : {ok}")
-    print(f"  DIFFERENT             : {fail}")
+    print(f"variants                  : {len(specs)}")
+    print(f"  comparable              : {ok + fail}")
+    print(f"    generated == original : {ok}")
+    print(f"    DIFFERENT             : {fail}")
+    print(f"  no original (new since  : {len(no_original)}")
+    print(f"   the restructure)")
     print()
     for kind, items in sorted(reasons.items(), key=lambda x: -len(x[1])):
         print(f"  {len(items):4d}  {kind}")
         for it in items[:3]:
             print(f"          {it}")
+    if no_original:
+        print(f"  {len(no_original):4d}  no original factory -- new variants, nothing "
+              "to compare against")
+        for it in sorted(no_original)[:3]:
+            print(f"          {it}")
+    # Only a real divergence fails: an absent original is information, not a defect.
     return 1 if fail else 0
 
 

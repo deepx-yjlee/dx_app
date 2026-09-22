@@ -182,6 +182,7 @@ endfunction()
 # Single-model categories (each subdir = one model with {model}_sync.cpp / _async.cpp)
 set(CATEGORIES
     3d_object_detection
+    anomaly_detection
     depth_estimation
     face_attribute
     face_detection

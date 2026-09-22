@@ -8698,7 +8698,10 @@
           "token": "config"
         }
       ],
-      "kwargs": {},
+      "kwargs": {
+        "model_type": "retrieval_embedding",
+        "model_name": "pp_shituv2_rec"
+      },
       "config_overrides": {}
     },
     "preprocessor": {
@@ -11054,7 +11057,10 @@
           "token": "config"
         }
       ],
-      "kwargs": {},
+      "kwargs": {
+        "model_type": "person_reid_embedding",
+        "model_name": "repvgg_a0_reid"
+      },
       "config_overrides": {}
     },
     "preprocessor": {

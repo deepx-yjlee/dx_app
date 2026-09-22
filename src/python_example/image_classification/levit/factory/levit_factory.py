@@ -2,7 +2,7 @@
 
 One factory serves every variant of the ``levit`` family: the per-variant
 differences -- processor classes and their non-default arguments -- live in
-``variants/<dxnn-stem>.json`` rather than in 4 near-identical factory files.
+``variants/<dxnn-stem>.json`` rather than in 5 near-identical factory files.
 
 """
 from pathlib import Path

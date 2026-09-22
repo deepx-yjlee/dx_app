@@ -10,6 +10,7 @@
   "default_image": "sample/img/face_pair",
   "default_video": null,
   "zoo_canonical": true,
+  "published": true,
   "legacy_model_name": "vit_l_14_quickgelu_dfn2b_1",
   "config": {},
   "registry_config": {},
