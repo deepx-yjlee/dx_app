@@ -134,6 +134,17 @@ REF_VIT = "https://github.com/google-research/vision_transformer"
 REF_TORCHVISION = "https://github.com/pytorch/vision"
 REF_HRNET = "https://github.com/HRNet/HigherHRNet-Human-Pose-Estimation"
 
+
+# C++ has no ast module, so the C++ generator never re-derives a factory -- it carries
+# the donor variant's own factory over verbatim and rewrites only the class name,
+# include guard and getModelName(). A variant introduced AFTER the restructure has no
+# such original, so each group names the EXISTING C++ family whose factory is
+# behaviourally right for it (``cpp_donor``): yolov12/yolov13 detection take yolov8's,
+# the PaddleClas classifiers take resnet's, PP-ShiTu's mainbody detector takes
+# nanodet's (both PicoDet/NanoDet-Plus GFL heads). ``None`` means no existing C++
+# postprocessor fits and the family's factory is hand-written -- yolo_preopt*, rtdetr,
+# mask_rtdetr, ppmatting, efficientad, patchcore.
+
 _SIZES = ("n", "s", "m", "l", "x")
 
 
@@ -156,6 +167,7 @@ GROUPS: list[dict] = [
     # ============================ pre-optimized (63) ============================
     dict(
         task="object_detection", task_legacy="object_detection", family="yolo_preopt",
+        cpp_donor=None,
         variants=(_preopt("yolo11", _SIZES) + _preopt("yolo26", _SIZES)
                   + _preopt("yolov8", _SIZES) + _preopt("yolov12", _SIZES)
                   + _preopt("yolov13", ("n", "s", "l", "x"))
@@ -168,6 +180,7 @@ GROUPS: list[dict] = [
     ),
     dict(
         task="pose_estimation", task_legacy="pose_estimation", family="yolo_preopt_pose",
+        cpp_donor=None,
         variants=(_preopt("yolo11", _SIZES, "-pose") + _preopt("yolo26", _SIZES, "-pose")
                   + _preopt("yolov8", _SIZES, "-pose")),
         preprocessor=LETTERBOX,
@@ -180,6 +193,7 @@ GROUPS: list[dict] = [
     dict(
         task="instance_segmentation", task_legacy="instance_segmentation",
         family="yolo_preopt_seg",
+        cpp_donor=None,
         variants=(_preopt("yolo11", _SIZES, "-seg") + _preopt("yolov8", _SIZES, "-seg")
                   + [f"yolov12-seg-{s}_640x640_pre-optimized" for s in _SIZES]
                   + [f"yolov9-seg-{s}_640x640_pre-optimized"
@@ -195,6 +209,7 @@ GROUPS: list[dict] = [
     # ============================ plain YOLO (25) ===============================
     dict(
         task="object_detection", task_legacy="object_detection", family="yolov12",
+        cpp_donor="object_detection/yolov8",
         variants=_plain("yolov12", _SIZES),
         preprocessor=LETTERBOX,
         postprocessor=_proc("YOLOv8Postprocessor", WHC),
@@ -204,6 +219,7 @@ GROUPS: list[dict] = [
     ),
     dict(
         task="object_detection", task_legacy="object_detection", family="yolov13",
+        cpp_donor="object_detection/yolov8",
         variants=_plain("yolov13", ("n", "s", "l", "x")),
         preprocessor=LETTERBOX,
         postprocessor=_proc("YOLOv8Postprocessor", WHC),
@@ -213,6 +229,7 @@ GROUPS: list[dict] = [
     ),
     dict(
         task="object_detection", task_legacy="object_detection", family="yolov9",
+        cpp_donor="object_detection/yolov9",
         variants=["yolov9-e_640x640"],
         preprocessor=LETTERBOX,
         postprocessor=_proc("YOLOv8Postprocessor", WHC),
@@ -222,6 +239,7 @@ GROUPS: list[dict] = [
     ),
     dict(
         task="object_detection", task_legacy="object_detection", family="yolov6",
+        cpp_donor="object_detection/yolov6",
         variants=["yolov6-m6_1280x1280"],
         preprocessor=LETTERBOX,
         postprocessor=_proc("YOLOv8Postprocessor", WHC),
@@ -232,6 +250,7 @@ GROUPS: list[dict] = [
     dict(
         task="instance_segmentation", task_legacy="instance_segmentation",
         family="yolov12_seg",
+        cpp_donor="instance_segmentation/yolov8_seg",
         variants=[f"yolov12-seg-{s}_640x640" for s in _SIZES],
         preprocessor=LETTERBOX,
         postprocessor=_proc("YOLOv8InstanceSegPostprocessor", WHC),
@@ -242,6 +261,7 @@ GROUPS: list[dict] = [
     dict(
         task="instance_segmentation", task_legacy="instance_segmentation",
         family="yolov9_seg",
+        cpp_donor="instance_segmentation/yolov8_seg",
         variants=[f"yolov9-seg-{s}_640x640" for s in ("c", "e", "gelan-c")],
         preprocessor=LETTERBOX,
         postprocessor=_proc("YOLOv8InstanceSegPostprocessor", WHC),
@@ -251,6 +271,7 @@ GROUPS: list[dict] = [
     ),
     dict(
         task="image_classification", task_legacy="classification", family="yolov12_cls",
+        cpp_donor="image_classification/yolo26_cls",
         variants=[f"yolov12-cls-{s}_224x224" for s in _SIZES],
         preprocessor=SIMPLE,
         postprocessor=_proc("ClassificationPostprocessor", WHC),
@@ -261,6 +282,7 @@ GROUPS: list[dict] = [
     dict(
         # Gap fill: dx-modelzoo's yolo11-pose holds n/s/m/x but not l.
         task="pose_estimation", task_legacy="pose_estimation", family="yolo11_pose",
+        cpp_donor="pose_estimation/yolo11_pose",
         variants=["yolo11-l-pose_640x640"],
         preprocessor=LETTERBOX,
         postprocessor=_proc("YOLOv8PosePostprocessor", WHC),
@@ -272,6 +294,7 @@ GROUPS: list[dict] = [
     # ============================ RT-DETR (20) ==================================
     dict(
         task="object_detection", task_legacy="object_detection", family="rtdetr",
+        cpp_donor=None,
         variants=["rtdetr-hgnetv2-h-6x_640x640", "rtdetr-hgnetv2-l-6x_640x640",
                   "rtdetr-hgnetv2-x-6x_640x640", "rtdetr-r101vd-6x_640x640",
                   "rtdetr-r18vd-6x_640x640", "rtdetr-r34vd-6x_640x640",
@@ -291,6 +314,7 @@ GROUPS: list[dict] = [
     dict(
         task="instance_segmentation", task_legacy="instance_segmentation",
         family="mask_rtdetr",
+        cpp_donor=None,
         variants=[f"mask-rtdetr-hgnetv2-{s}-6x_640x640"
                   for s in ("s", "m", "l", "x", "h")],
         preprocessor=SIMPLE,
@@ -303,6 +327,7 @@ GROUPS: list[dict] = [
     # ============================ classification (17) ===========================
     dict(
         task="image_classification", task_legacy="classification", family="pphgnet",
+        cpp_donor="image_classification/resnet",
         variants=[f"pphgnet-{s}_224x224" for s in ("tiny", "small", "base")],
         preprocessor=SIMPLE,
         postprocessor=_proc("ClassificationPostprocessor", WHC),
@@ -312,6 +337,7 @@ GROUPS: list[dict] = [
     ),
     dict(
         task="image_classification", task_legacy="classification", family="pphgnetv2",
+        cpp_donor="image_classification/resnet",
         variants=[f"pphgnetv2-b{i}_224x224" for i in range(7)],
         preprocessor=SIMPLE,
         postprocessor=_proc("ClassificationPostprocessor", WHC),
@@ -321,6 +347,7 @@ GROUPS: list[dict] = [
     ),
     dict(
         task="image_classification", task_legacy="classification", family="pplcnetv2",
+        cpp_donor="image_classification/resnet",
         variants=[f"pplcnetv2-{s}_224x224" for s in ("small", "base", "large")],
         preprocessor=SIMPLE,
         postprocessor=_proc("ClassificationPostprocessor", WHC),
@@ -330,6 +357,7 @@ GROUPS: list[dict] = [
     ),
     dict(
         task="image_classification", task_legacy="classification", family="swin",
+        cpp_donor="image_classification/vit",
         variants=["swin-b_224x224"],
         preprocessor=SIMPLE,
         postprocessor=_proc("ClassificationPostprocessor", WHC),
@@ -340,6 +368,7 @@ GROUPS: list[dict] = [
     dict(
         # Joins the existing dx-modelzoo 'vit' family (5 published variants).
         task="image_classification", task_legacy="classification", family="vit",
+        cpp_donor="image_classification/vit",
         variants=["vit-l-p16_512x512_swag", "vit-b-p16_384x384", "vit-t-p16_224x224"],
         preprocessor=SIMPLE,
         postprocessor=_proc("ClassificationPostprocessor", WHC),
@@ -349,6 +378,7 @@ GROUPS: list[dict] = [
     ),
     dict(
         task="image_classification", task_legacy="classification", family="beit",
+        cpp_donor="image_classification/beit",
         variants=["beit-l-p16_384x384"],
         preprocessor=SIMPLE,
         postprocessor=_proc("ClassificationPostprocessor", WHC),
@@ -358,6 +388,7 @@ GROUPS: list[dict] = [
     ),
     dict(
         task="image_classification", task_legacy="classification", family="levit",
+        cpp_donor="image_classification/levit",
         variants=["levit-128s_224x224"],
         preprocessor=SIMPLE,
         postprocessor=_proc("ClassificationPostprocessor", WHC),
@@ -370,6 +401,7 @@ GROUPS: list[dict] = [
     dict(
         task="semantic_segmentation", task_legacy="semantic_segmentation",
         family="ddrnet",
+        cpp_donor="semantic_segmentation/bisenet",
         variants=["ddrnet23_1024x2048", "ddrnet23-slim_1024x2048"],
         preprocessor=SIMPLE,
         postprocessor=_proc("SemanticSegmentationPostprocessor", WHC),
@@ -381,6 +413,7 @@ GROUPS: list[dict] = [
         # Joins the existing dx-modelzoo 'stdc-seg' family (stdc2-seg50_512x1024).
         task="semantic_segmentation", task_legacy="semantic_segmentation",
         family="stdc_seg",
+        cpp_donor="semantic_segmentation/stdc_seg",
         variants=["stdc1-seg50_512x1024", "stdc1-seg75_768x1536",
                   "stdc2-seg75_768x1536"],
         preprocessor=SIMPLE,
@@ -392,6 +425,7 @@ GROUPS: list[dict] = [
     dict(
         task="semantic_segmentation", task_legacy="semantic_segmentation",
         family="pp_liteseg",
+        cpp_donor="semantic_segmentation/bisenet",
         variants=["pp-liteseg-stdc1-camvid-10k_960x720"],
         preprocessor=SIMPLE,
         postprocessor=_proc("SemanticSegmentationPostprocessor", WHC),
@@ -402,6 +436,7 @@ GROUPS: list[dict] = [
     dict(
         task="semantic_segmentation", task_legacy="semantic_segmentation",
         family="ppmatting",
+        cpp_donor=None,
         variants=["ppmatting-hrnet-w48-composition_512x512",
                   "ppmatting-hrnet-w48-distinctions_512x512"],
         preprocessor=SIMPLE,
@@ -415,6 +450,7 @@ GROUPS: list[dict] = [
     dict(
         task="anomaly_detection", task_legacy="anomaly_detection",
         family="efficientad",
+        cpp_donor=None,
         variants=[f"efficientad-m-{p}_256x256"
                   for p in ("teacher", "student", "autoencoder")],
         preprocessor=SIMPLE,
@@ -425,6 +461,7 @@ GROUPS: list[dict] = [
     ),
     dict(
         task="anomaly_detection", task_legacy="anomaly_detection", family="patchcore",
+        cpp_donor=None,
         variants=["patchcore_224x224"],
         preprocessor=SIMPLE,
         postprocessor=_proc("AnomalyFeaturePostprocessor", WHC),
@@ -436,6 +473,7 @@ GROUPS: list[dict] = [
     # ============================ CLIP / embedding (6) ==========================
     dict(
         task="zero_shot_image_classification", task_legacy="embedding", family="clip",
+        cpp_donor="zero_shot_image_classification/clip",
         variants=["clip-img_resnet50_224x224_openai"],
         preprocessor=CLIP_SIMPLE,
         postprocessor=_proc("CLIPImagePostprocessor", WHC),
@@ -444,6 +482,7 @@ GROUPS: list[dict] = [
     ),
     dict(
         task="zero_shot_image_classification", task_legacy="embedding", family="clip",
+        cpp_donor="zero_shot_image_classification/clip",
         variants=["clip-img_vit-b16-quickgelu_224x224_metaclip-fullcc"],
         preprocessor=CLIP_SIMPLE,
         postprocessor=_proc("CLIPImagePostprocessor", WHC),
@@ -454,6 +493,7 @@ GROUPS: list[dict] = [
         # Text encoder: the .dxnn takes [1, 77, 512] token embeddings, not an image.
         # See the family README for the open_clip snippet that produces them.
         task="zero_shot_image_classification", task_legacy="embedding", family="clip",
+        cpp_donor="zero_shot_image_classification/clip",
         variants=["clip-text_resnet50_77x512_openai"],
         preprocessor=SIMPLE,
         postprocessor=_proc("CLIPTextPostprocessor", WHC),
@@ -462,6 +502,7 @@ GROUPS: list[dict] = [
     ),
     dict(
         task="super_resolution", task_legacy="embedding", family="pp_shitu_rec",
+        cpp_donor="super_resolution/eigenplaces",
         variants=["pp-shituv2-feature-extraction_224x224"],
         preprocessor=SIMPLE,
         postprocessor=_proc("GenericEmbeddingPostprocessor", WHC,
@@ -472,6 +513,7 @@ GROUPS: list[dict] = [
     ),
     dict(
         task="image_classification", task_legacy="reid", family="repvgg_reid",
+        cpp_donor="image_classification/casvit",
         variants=["repvgg-a0-reid_256x128"],
         preprocessor=SIMPLE,
         postprocessor=_proc("GenericEmbeddingPostprocessor", WHC,
@@ -487,6 +529,7 @@ GROUPS: list[dict] = [
         # share the GFL/DFL head, and NanoDetPostprocessor auto-detects reg_max and the
         # anchor grid from the tensor shape, so it covers this without a new class.
         task="object_detection", task_legacy="object_detection", family="pp_shitu",
+        cpp_donor="object_detection/nanodet",
         variants=["pp-shituv1-mainbody-detection_640x640",
                   "pp-shituv2-mainbody-detection_640x640"],
         preprocessor=LETTERBOX,
@@ -504,6 +547,7 @@ GROUPS: list[dict] = [
         # than DarkPose's distribution-aware refinement, so keypoints land a fraction of
         # a heatmap cell less precisely than the published DarkPose metric.
         task="pose_estimation", task_legacy="pose_estimation", family="dark_hrnet",
+        cpp_donor="pose_estimation/vitpose",
         variants=["dark-hrnet-w32_256x192"],
         preprocessor=SIMPLE,
         postprocessor=_proc("VitPosePostprocessor", WHC),
@@ -558,6 +602,7 @@ def expand() -> list[dict]:
                     f"{group['postprocessor']['class']}",
                     f"from common.visualizers import {group['visualizer']['class']}",
                 ],
+                "cpp_donor": group["cpp_donor"],
                 "legacy_model_name": _legacy_model_name(variant),
                 "manifest_category": MANIFEST_CATEGORY[group["task_legacy"]],
                 "published": variant in Q_MASTER_ONLY,

@@ -10,6 +10,7 @@
   "default_image": "sample/img/face_pair",
   "default_video": null,
   "zoo_canonical": true,
+  "published": true,
   "legacy_model_name": "arcface_iresnet100_ms1m",
   "config": {},
   "registry_config": {},

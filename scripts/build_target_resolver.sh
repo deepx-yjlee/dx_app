@@ -32,6 +32,11 @@ dxapp_resolve_minimal_targets() {
         in_array && /^\)/ { in_array=0; next }
         in_array {
             gsub(/#.*/, "")
+            # run_demo.sh quotes every entry ("yolov7"), and leaving the quotes in
+            # produced target names like "yolov7"_sync that CMake has never heard of --
+            # so a bare ./build.sh, which defaults to --minimal, resolved no targets at
+            # all and stopped before compiling anything.
+            gsub(/["\047]/, "")
             for (i = 1; i <= NF; i++) {
                 if ($i != "") {
                     print $i "_sync"

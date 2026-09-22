@@ -10,6 +10,7 @@
   "default_image": "sample/img/person_pair",
   "default_video": null,
   "zoo_canonical": true,
+  "published": true,
   "legacy_model_name": "casvit_t",
   "config": {},
   "registry_config": {},

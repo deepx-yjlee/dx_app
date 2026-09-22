@@ -47,6 +47,29 @@ SUFFIX_RULES = (r"_q_lite$", r"_\d+$")
 
 ROLES = ("createPreprocessor", "createPostprocessor", "createVisualizer")
 
+sys.path.insert(0, str(ROOT / "scripts"))
+
+
+def declared_donors() -> dict[str, str | None]:
+    """``family -> "<task>/<family>"`` of the C++ family whose factory to carry over.
+
+    A variant introduced after the restructure has no pre-restructure directory of its
+    own, so there is nothing to carry over from. The 2_5_0 data table names, per
+    family, the EXISTING C++ family whose factory is behaviourally right -- yolov12 and
+    yolov13 detection take yolov8's, the PaddleClas classifiers take resnet's, PP-ShiTu's
+    mainbody detector takes nanodet's. ``None`` means no existing postprocessor fits
+    and the factory is hand-written in the tree; this generator then leaves it alone.
+
+    Extending the donor from "the variant's own original" to "a declared analogous
+    family" keeps the rule that nothing is re-derived: the carried text is still a real,
+    compiling factory that someone wrote, not a template guess.
+    """
+    try:
+        from data.modelzoo_2_5_0 import expand
+    except ImportError:
+        return {}
+    return {row["family"]: row["cpp_donor"] for row in expand()}
+
 
 def pascal(family: str) -> str:
     parts = [p for p in family.split("_") if p]
@@ -140,6 +163,15 @@ def main() -> int:
     src_root = (Path(a.orig) / "src" / "cpp_example") if a.orig else CPP_SRC
     py_root = Path(a.py_stage) if a.py_stage else (ROOT / "src" / "python_example")
     out = Path(a.out)
+    # Refuse to wipe a real source tree. This script rmtree's its output, and unlike
+    # generate_family_layout.py it has no --in-place mode, so pointing --out at
+    # src/cpp_example would delete common/ and CMakeLists.txt -- neither of which it
+    # regenerates. Stage, then copy.
+    if (out / "common").is_dir() or (out / "CMakeLists.txt").is_file():
+        print(f"ABORT: {out} looks like a source tree (it has common/ or "
+              "CMakeLists.txt), and this generator would delete it. Generate into a "
+              "staging directory and copy the result across.")
+        return 2
     if out.exists():
         shutil.rmtree(out)
     out.mkdir(parents=True)
@@ -148,21 +180,29 @@ def main() -> int:
     specs = json.loads(SPECS.read_text(encoding="utf-8"))
     table = existing_dirs(src_root)
 
+    donors = declared_donors()
+
     fams: dict[tuple[str, str], list[dict]] = collections.defaultdict(list)
     unresolved = []
     for e in reg:
         d = resolve_dir(e["model_name"], table)
         if d is None:
-            unresolved.append(e["model_name"])
+            # No pre-restructure directory: a variant added after it. Kept as a member
+            # with no original, so its variant config is still emitted and the family
+            # resolves its factory through the declared donor below.
+            unresolved.append(e["variant"])
+            fams[(e["task"], e["family"])].append({**e, "_dir": None, "_task_dir": None})
             continue
         fams[(e["task"], e["family"])].append({**e, "_dir": d, "_task_dir": table[d]})
     if unresolved:
-        print(f"ABORT: unresolved cpp dirs for {unresolved}")
-        return 1
+        print(f"  variants with no pre-restructure dir: {len(unresolved)} "
+              "(resolved through their family's declared C++ donor)")
 
-    n_var = n_dispatch = 0
+    n_var = n_dispatch = n_analogy = 0
     n_carried = [0]
     dispatched: dict[str, list[str]] = {}
+    analogy: dict[str, str] = {}
+    hand_written: list[str] = []
 
     for (task, family), members in sorted(fams.items()):
         fdir = out / task / family
@@ -184,6 +224,8 @@ def main() -> int:
         priv_members: dict[str, str] = {}   # member name -> decl, first wins
         extra_includes: set[str] = set()
         for e in sorted(members, key=lambda x: x["variant"]):
+            if e["_dir"] is None:
+                continue
             hp = sorted((src_root / e["_task_dir"] / e["_dir"] / "factory")
                         .glob("*_factory.hpp"))
             if not hp:
@@ -200,8 +242,29 @@ def main() -> int:
             for inc in re.findall(r'#include\s+(["<][^">]+[">])', txt):
                 extra_includes.add(inc)
         if donor is None:
-            print(f"ABORT: no cpp factory for {task}/{family}")
-            return 1
+            # Nothing in this family predates the restructure. Fall back to the
+            # declared analogous family's CURRENT factory.
+            declared = donors.get(family)
+            if declared:
+                dfam = declared.split("/")[-1]
+                dfile = CPP_SRC / declared / "factory" / f"{dfam}_factory.hpp"
+                if not dfile.is_file():
+                    print(f"ABORT: declared C++ donor {declared} for {task}/{family} "
+                          f"has no factory at {dfile}")
+                    return 1
+                donor = ({**members[0], "_donor_family": declared}, dfile,
+                         dfile.read_text(encoding="utf-8", errors="ignore"))
+                for r in ROLES:
+                    blk = role_block(donor[2], r)
+                    if blk:
+                        bodies[r][members[0]["variant"]] = blk[2]
+                n_analogy += 1
+                analogy[f"{task}/{family}"] = declared
+            else:
+                # Hand-written territory: no existing postprocessor fits. Emit the
+                # variant configs and leave whatever is in the tree untouched.
+                hand_written.append(f"{task}/{family}")
+                continue
         de, dpath, dtxt = donor
 
         # The FACTORY class, not merely the first class: superpoint_factory.hpp
@@ -222,6 +285,22 @@ def main() -> int:
         body = re.sub(r"#endif\s*//\s*\w+_FACTORY_HPP", f"#endif  // {guard_new}", body)
         body = re.sub(rf"\b{re.escape(cls_old)}\b", cls_new, body)
         body = re.sub(r"@file\s+\S+", f"@file {family}_factory.hpp", body)
+        if de.get("_donor_family"):
+            # An analogy donor also carries its own identity. Left alone,
+            # PphgnetFactory::getModelName() answers "ResNet101" and the factory lies
+            # about which model it builds -- in logs, and in anything that keys off it.
+            body = re.sub(r'(getModelName\(\) const override \{ return ")[^"]*(")',
+                          rf"\g<1>{pascal(family)}\g<2>", body)
+            body = re.sub(r'(getTaskType\(\) const override \{ return ")[^"]*(")',
+                          rf"\g<1>{task}\g<2>", body)
+            body = re.sub(r"@brief\s+\S+", f"@brief {pascal(family)}", body, count=1)
+            body = body.replace(
+                "namespace dxapp {",
+                f"// Carried over from {de['_donor_family']}: this family was added\n"
+                f"// after the restructure, so it has no original factory of its own,\n"
+                f"// and that family's postprocessing is what {family} needs. Only the\n"
+                f"// class name, include guard and identity differ.\n\n"
+                "namespace dxapp {", 1)
 
         # Splice a variant dispatch wherever the family's bodies disagree.
         fam_dispatch = []
@@ -257,6 +336,12 @@ def main() -> int:
         # FACTORY class, not at the first public:/private: in the file -- superpoint's
         # header defines a tracker helper first, and anchoring on the file put the
         # constructor inside that helper.
+        # Both insertions below are idempotent. A donor reached through the declared
+        # analogy is an ALREADY GENERATED family factory, so it carries setVariant and
+        # variant_ already; adding them again is a redeclaration and every one of the
+        # 15 analogy families failed to compile on exactly that.
+        _has_set_variant = "void setVariant(" in body
+        _has_variant_member = re.search(r"^\s*std::string variant_;", body, re.M) is not None
         _cls_at = body.index(f"class {cls_new}")
         _pub = body.index("public:", _cls_at) + len("public:")
         # A SETTER, never an extra constructor. The donor initialises its members in
@@ -267,23 +352,26 @@ def main() -> int:
         # garbage thresholds, and a reproducible SIGSEGV for yolopv2 and
         # shufflenetv2-x2.0. main() default-constructs and then calls this, so the
         # donor's own initialisation is untouched.
-        body = (body[:_pub]
-                + "\n    /// Select the variant (a .dxnn stem) this factory builds for."
-                  "\n    /// Empty means the family default. Called from main(), the"
-                  "\n    /// only place that sees argv.\n"
-                  "    void setVariant(std::string variant)"
-                  " { variant_ = std::move(variant); }\n"
-                + body[_pub:])
+        if not _has_set_variant:
+            body = (body[:_pub]
+                    + "\n    /// Select the variant (a .dxnn stem) this factory builds for."
+                      "\n    /// Empty means the family default. Called from main(), the"
+                      "\n    /// only place that sees argv.\n"
+                      "    void setVariant(std::string variant)"
+                      " { variant_ = std::move(variant); }\n"
+                    + body[_pub:])
         # Union every variant's private members so a spliced body always finds the
         # members its original class declared.
         donor_members = {member_name(d) for d in private_members(dtxt)}
-        merged = ["    std::string variant_;"]
+        merged = [] if _has_variant_member else ["    std::string variant_;"]
         merged += [f"    {decl}  // from a sibling variant in this family"
                    for name, decl in sorted(priv_members.items())
                    if name not in donor_members]
         _cls_at2 = body.index(f"class {cls_new}")
         _priv = body.find("\nprivate:", _cls_at2)
-        if _priv != -1:
+        if not merged:
+            pass
+        elif _priv != -1:
             _end = _priv + len("\nprivate:")
             body = body[:_end] + "\n" + "\n".join(merged) + body[_end:]
         else:
@@ -311,6 +399,8 @@ def main() -> int:
         # superpoint_tracker.hpp, which superpoint_factory.hpp includes as a sibling --
         # and omitting it broke that target's compile.
         for e in members:
+            if e["_dir"] is None:
+                continue
             sdir = src_root / e["_task_dir"] / e["_dir"]
             if not sdir.is_dir():
                 continue
@@ -329,7 +419,12 @@ def main() -> int:
 
         # Entry points: derive the variant from the model path in main().
         for kind in ("sync", "async"):
-            dentry = src_root / de["_task_dir"] / de["_dir"] / f"{de['_dir']}_{kind}.cpp"
+            if de.get("_donor_family"):
+                dfam = de["_donor_family"].split("/")[-1]
+                dentry = CPP_SRC / de["_donor_family"] / f"{dfam}_{kind}.cpp"
+            else:
+                dentry = (src_root / de["_task_dir"] / de["_dir"]
+                          / f"{de['_dir']}_{kind}.cpp")
             if not dentry.is_file():
                 continue
             etxt = dentry.read_text(encoding="utf-8", errors="ignore")
@@ -366,6 +461,12 @@ int main(int argc, char* argv[]) {{
     print(f"  families with a variant dispatch: {n_dispatch}")
     for k, v in sorted(dispatched.items()):
         print(f"      {k}: {v}")
+    print(f"  families via a declared C++ donor: {n_analogy}")
+    for k, v in sorted(analogy.items()):
+        print(f"      {k}  <-  {v}")
+    print(f"  families needing a hand-written factory: {len(hand_written)}")
+    for k in sorted(hand_written):
+        print(f"      {k}")
     return 0
 
 
