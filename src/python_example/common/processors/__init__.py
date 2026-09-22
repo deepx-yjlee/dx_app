@@ -36,6 +36,12 @@ from .preopt_postprocessor import (
     PreoptPosePostprocessor,
     PreoptSegPostprocessor,
 )
+from .rtdetr_postprocessor import (
+    MaskRTDETRPostprocessor,
+    RTDETRPostprocessor,
+)
+from .matting_postprocessor import PPMattingPostprocessor
+from .anomaly_postprocessor import AnomalyFeaturePostprocessor
 from .damoyolo_postprocessor import DamoYoloPostprocessor
 from .ssd_postprocessor import SSDPostprocessor
 from .tflite_det_postprocessor import TFLiteDetectionPostprocessor
@@ -85,6 +91,13 @@ __all__ = [
     "PreoptDetectionPostprocessor",
     "PreoptPosePostprocessor",
     "PreoptSegPostprocessor",
+    # RT-DETR family: NMS-free query decoding.
+    "RTDETRPostprocessor",
+    "MaskRTDETRPostprocessor",
+    # PaddleSeg matting: a continuous alpha matte, not a class map.
+    "PPMattingPostprocessor",
+    # Anomaly detection: a feature response, not a published anomaly score.
+    "AnomalyFeaturePostprocessor",
     # Preprocessors
     'LetterboxPreprocessor',
     'SimpleResizePreprocessor',

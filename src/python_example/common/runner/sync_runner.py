@@ -262,6 +262,10 @@ _DEFAULT_SAMPLE_IMAGE = {
     "panoptic_driving_perception": _IMG_PARKING,
     "3d_object_detection":    _IMG_PARKING,
     "3d_detection":           "sample/kitti/velodyne/000049.bin",
+    # No industrial-defect sample ships with dx_app, and these models produce a
+    # feature response for any input, so a structured scene is the honest default
+    # rather than a stand-in that implies a defect dataset is bundled.
+    "anomaly_detection":      _IMG_PARKING,
 }
 
 # Per-model sample image overrides, applied ahead of the task default.
@@ -301,6 +305,7 @@ _DEFAULT_SAMPLE_VIDEO = {
     "panoptic_driving_perception": _VID_BLACKBOX,
     "3d_object_detection":    _VID_BLACKBOX,
     "3d_detection":           None,   # LiDAR .bin input only; video unsupported
+    "anomaly_detection":      _VID_BLACKBOX,
 }
 
 

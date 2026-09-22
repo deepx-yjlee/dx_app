@@ -123,6 +123,28 @@ class SegmentationResult:
     height: int = 0
     class_ids: List[int] = field(default_factory=list)
     class_names: List[str] = field(default_factory=list)
+    # Soft alpha matte in [0,1], for models whose output is a continuous
+    # foreground opacity rather than a class map (PP-Matting). `mask` still
+    # carries the thresholded 0/1 class map so SemanticSegmentationVisualizer --
+    # which reads `mask` as class IDs -- renders it unchanged, while a consumer
+    # that wants the real matte (compositing, trimap refinement) has it here
+    # instead of having to recover it from a binary image.
+    alpha: Optional[np.ndarray] = None
+
+
+@dataclass
+class AnomalyResult:
+    """Anomaly-detection feature response.
+
+    Deliberately a feature response, not an anomaly score. EfficientAD needs its
+    teacher, student and autoencoder together to form a score, and PatchCore needs
+    a memory bank of training features; each .dxnn here is one model. `score` is
+    therefore a relative severity (the heatmap's 99th percentile), useful for
+    ranking frames and NOT comparable to a published EfficientAD/PatchCore metric.
+    """
+    heatmap: np.ndarray = field(default_factory=lambda: np.array([]))  # H*W float [0,1]
+    score: float = 0.0
+    channels: int = 0
 
 
 @dataclass

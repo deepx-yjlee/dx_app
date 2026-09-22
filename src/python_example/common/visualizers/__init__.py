@@ -6,6 +6,7 @@ DX-APP
 from .detection_visualizer import DetectionVisualizer
 from .classification_visualizer import ClassificationVisualizer
 from .segmentation_visualizer import SemanticSegmentationVisualizer
+from .anomaly_visualizer import AnomalyVisualizer
 from .face_visualizer import FaceVisualizer
 from .pose_visualizer import PoseVisualizer
 from .obb_visualizer import OBBVisualizer
@@ -25,6 +26,7 @@ from .yolopv2_visualizer import YOLOPv2Visualizer
 from .sfa3d_visualizer import SFA3DVisualizer
 
 __all__ = [
+    "AnomalyVisualizer",
     'DetectionVisualizer',
     'ClassificationVisualizer',
     'SemanticSegmentationVisualizer',

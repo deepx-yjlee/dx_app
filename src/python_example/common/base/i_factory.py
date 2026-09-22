@@ -169,6 +169,37 @@ class ISegmentationFactory(_FactoryConfigMixin, ABC):
         pass
 
 
+class IAnomalyDetectionFactory(_FactoryConfigMixin, ABC):
+    """Abstract Factory interface for anomaly-detection models.
+
+    Its own interface rather than a reuse of ISegmentationFactory: the output is a
+    continuous per-pixel anomaly response with a frame-level severity, not a class
+    map, and the runner dispatches nothing on the factory type anyway -- it calls
+    visualizer.visualize(image, results) -- so the interface exists to say what the
+    family is, not to unlock behaviour.
+    """
+
+    @abstractmethod
+    def create_preprocessor(self, input_width: int, input_height: int) -> IPreprocessor:
+        pass
+
+    @abstractmethod
+    def create_postprocessor(self, input_width: int, input_height: int) -> IPostprocessor:
+        pass
+
+    @abstractmethod
+    def create_visualizer(self) -> IVisualizer:
+        pass
+
+    @abstractmethod
+    def get_model_name(self) -> str:
+        pass
+
+    @abstractmethod
+    def get_task_type(self) -> str:
+        pass
+
+
 class IClassificationFactory(_FactoryConfigMixin, ABC):
     """Abstract Factory interface for classification models."""
     
