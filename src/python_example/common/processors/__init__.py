@@ -31,6 +31,11 @@ from .instance_seg_postprocessor import (
     YOLOv5InstanceSegPostprocessor,
 )
 from .fast_instance_seg_postprocessor import FastInstanceSegPostprocessor
+from .preopt_postprocessor import (
+    PreoptDetectionPostprocessor,
+    PreoptPosePostprocessor,
+    PreoptSegPostprocessor,
+)
 from .damoyolo_postprocessor import DamoYoloPostprocessor
 from .ssd_postprocessor import SSDPostprocessor
 from .tflite_det_postprocessor import TFLiteDetectionPostprocessor
@@ -76,6 +81,10 @@ from .sfa3d_postprocessor import SFA3DPostprocessor, Detection3DResult, SFA3D_CL
 from .sfa3d_bev_preprocessor import SFA3DBEVPreprocessor, load_kitti_pointcloud, pointcloud_to_bev
 
 __all__ = [
+    # Pre-optimized YOLO models: the top-k row table is produced inside the model.
+    "PreoptDetectionPostprocessor",
+    "PreoptPosePostprocessor",
+    "PreoptSegPostprocessor",
     # Preprocessors
     'LetterboxPreprocessor',
     'SimpleResizePreprocessor',
