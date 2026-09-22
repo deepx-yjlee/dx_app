@@ -46,9 +46,24 @@ def test_image_only_matches_legacy_task_membership(registry):
 
 
 def test_image_only_count_is_pinned(registry):
+    """17 at the Phase 0 migration, 22 after the 2_5_0 additions.
+
+    The five new ones all land in a legacy task the runner already treats as
+    image-only, so the count moves without the RULE moving -- which is exactly what
+    test_image_only_matches_legacy_task_membership above checks:
+
+        clip-img_resnet50_224x224_openai                    legacy embedding
+        clip-img_vit-b16-quickgelu_224x224_metaclip-fullcc  legacy embedding
+        clip-text_resnet50_77x512_openai                    legacy embedding
+        pp-shituv2-feature-extraction_224x224               legacy embedding
+        repvgg-a0-reid_256x128                              legacy reid
+
+    The pin stays because it is the tripwire for a flag being set by accident: a
+    variant silently becoming image-only loses video input with no error.
+    """
     flagged = [e["variant"] for e in registry if e["image_only"]]
-    assert len(flagged) == 17, (
-        f"expected 17 image-only variants, got {len(flagged)}: {sorted(flagged)}"
+    assert len(flagged) == 22, (
+        f"expected 22 image-only variants, got {len(flagged)}: {sorted(flagged)}"
     )
 
 

@@ -25,6 +25,11 @@ SNAPSHOT = PROJECT_ROOT / "tests" / "data" / "modelzoo_cv_tree.json"
 NEW_FIELDS = ("variant", "family", "task", "task_legacy", "image_only",
               "zoo_canonical", "alias_of")
 
+# Added with the 2_5_0 additions: 143 of the 499 variants have no published .dxnn, so
+# "is there a file for this" has to be a declared fact rather than an inference from
+# whatever happens to be in assets/models on one machine.
+PUBLICATION_FIELDS = ("published",)
+
 # model_name -> (variant, task, family). The ONLY entries allowed to miss the
 # dx-modelzoo snapshot. See the spec's "Documented exceptions" table.
 EXCEPTIONS: dict[str, tuple[str, str, str]] = {
@@ -92,6 +97,18 @@ def snapshot() -> dict[str, dict]:
     return json.loads(SNAPSHOT.read_text(encoding="utf-8"))["variants"]
 
 
+@pytest.fixture(scope="module")
+def provisional() -> dict[str, dict]:
+    """Our own (task, family) assignments for variants upstream has not filed.
+
+    dx-modelzoo carries none of the 147 DX Model Zoo 2_5_0 additions (harvested
+    2026-09-22: 350 variants, zero overlap), so for those the snapshot cannot be the
+    oracle. The provisional table is, and unlike ``variants`` it already holds the
+    dx_app-resolved family, so no FAMILY_OVERRIDES pass is applied to it.
+    """
+    return json.loads(SNAPSHOT.read_text(encoding="utf-8"))["provisional"]["variants"]
+
+
 def test_every_entry_has_the_new_fields(registry):
     missing = {
         e["model_name"]: [f for f in NEW_FIELDS if f not in e]
@@ -116,7 +133,7 @@ def test_entry_key_set_is_exactly_the_expected_fields(registry):
     expected = {
         "model_name", "dxnn_file", "original_name", "csv_task", "add_model_task",
         "postprocessor", "input_width", "input_height", "config", "source", "supported",
-        *NEW_FIELDS,
+        *NEW_FIELDS, *PUBLICATION_FIELDS,
     }
     bad = {e["model_name"]: sorted(set(e) ^ expected) for e in registry if set(e) != expected}
     assert not bad, f"unexpected key set (symmetric difference shown): {bad}"
@@ -238,20 +255,31 @@ def test_family_names_are_unique_across_tasks(registry):
     )
 
 
-def test_task_and_family_match_the_snapshot(registry, snapshot):
+def test_task_and_family_match_the_snapshot(registry, snapshot, provisional):
+    """Every entry's (task, family) must come from a declared table, never from nowhere.
+
+    Upstream-published variants are checked against the harvested snapshot through
+    FAMILY_OVERRIDES; the 2_5_0 additions are checked against the provisional table
+    verbatim. An entry in neither table is the real failure this guards against.
+    """
     bad = []
     for e in registry:
         if e["model_name"] in EXCEPTIONS:
             continue
         upstream = snapshot.get(e["variant"])
-        if upstream is None:
-            bad.append((e["model_name"], e["variant"], "not in snapshot"))
+        if upstream is not None:
+            want = (upstream["task"], _family_for(upstream["task"], upstream["family"]))
+        elif e["variant"] in provisional:
+            ours = provisional[e["variant"]]
+            want = (ours["task"], ours["family"])
+        else:
+            bad.append((e["model_name"], e["variant"],
+                        "in neither the snapshot nor the provisional table"))
             continue
-        want = (upstream["task"], _family_for(upstream["task"], upstream["family"]))
         got = (e["task"], e["family"])
         if got != want:
             bad.append((e["model_name"], got, want))
-    assert not bad, f"task/family disagree with dx-modelzoo: {bad}"
+    assert not bad, f"task/family disagree with their declared table: {bad}"
 
 
 def test_exceptions_carry_their_declared_values(registry):
