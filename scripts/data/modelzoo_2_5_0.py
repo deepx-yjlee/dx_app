@@ -89,6 +89,17 @@ def _proc(cls: str, args: list, **kwargs) -> dict:
     return {"class": cls, "args": args, "kwargs": kwargs, "config_overrides": {}}
 
 
+# IPoseFactory declares get_num_keypoints abstract. A generated pose factory without it
+# raises TypeError at construction, which is how every pose variant failed the first
+# full sweep -- the pre-existing pose families carry the same method through
+# extra_methods, extracted from their originals.
+COCO_17_KEYPOINTS = [
+    'def get_num_keypoints(self) -> int:\n'
+    '        """COCO 17-point body keypoints."""\n'
+    '        return 17'
+]
+
+
 LETTERBOX = _proc("LetterboxPreprocessor", WH)
 SIMPLE = _proc("SimpleResizePreprocessor", WH)
 
@@ -684,6 +695,9 @@ def expand() -> list[dict]:
                 "postprocessor": group["postprocessor"],
                 "visualizer": group["visualizer"],
                 "factory_bases": [group["base"]],
+                # A pose factory must carry get_num_keypoints or it cannot be built.
+                "extra_methods": (COCO_17_KEYPOINTS
+                                  if group["base"] == "IPoseFactory" else []),
                 "imports": [
                     f"from common.base import {group['base']}",
                     f"from common.processors import {group['preprocessor']['class']}, "

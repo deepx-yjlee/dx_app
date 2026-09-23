@@ -2109,7 +2109,9 @@
     "dir_config": {
       "num_keypoints": 17
     },
-    "extra_methods": [],
+    "extra_methods": [
+      "def get_num_keypoints(self) -> int:\n        \"\"\"COCO 17-point body keypoints.\"\"\"\n        return 17"
+    ],
     "factory_bases": [
       "IPoseFactory"
     ],
@@ -16520,7 +16522,9 @@
       "score_threshold": 0.4,
       "nms_threshold": 0.5
     },
-    "extra_methods": [],
+    "extra_methods": [
+      "def get_num_keypoints(self) -> int:\n        \"\"\"COCO 17-point body keypoints.\"\"\"\n        return 17"
+    ],
     "factory_bases": [
       "IPoseFactory"
     ],
@@ -16586,7 +16590,9 @@
       "score_threshold": 0.4,
       "nms_threshold": 0.5
     },
-    "extra_methods": [],
+    "extra_methods": [
+      "def get_num_keypoints(self) -> int:\n        \"\"\"COCO 17-point body keypoints.\"\"\"\n        return 17"
+    ],
     "factory_bases": [
       "IPoseFactory"
     ],
@@ -16980,7 +16986,9 @@
       "score_threshold": 0.4,
       "nms_threshold": 0.5
     },
-    "extra_methods": [],
+    "extra_methods": [
+      "def get_num_keypoints(self) -> int:\n        \"\"\"COCO 17-point body keypoints.\"\"\"\n        return 17"
+    ],
     "factory_bases": [
       "IPoseFactory"
     ],
@@ -17374,7 +17382,9 @@
       "score_threshold": 0.4,
       "nms_threshold": 0.5
     },
-    "extra_methods": [],
+    "extra_methods": [
+      "def get_num_keypoints(self) -> int:\n        \"\"\"COCO 17-point body keypoints.\"\"\"\n        return 17"
+    ],
     "factory_bases": [
       "IPoseFactory"
     ],
@@ -17835,7 +17845,9 @@
       "score_threshold": 0.4,
       "nms_threshold": 0.5
     },
-    "extra_methods": [],
+    "extra_methods": [
+      "def get_num_keypoints(self) -> int:\n        \"\"\"COCO 17-point body keypoints.\"\"\"\n        return 17"
+    ],
     "factory_bases": [
       "IPoseFactory"
     ],
@@ -18229,7 +18241,9 @@
       "score_threshold": 0.4,
       "nms_threshold": 0.5
     },
-    "extra_methods": [],
+    "extra_methods": [
+      "def get_num_keypoints(self) -> int:\n        \"\"\"COCO 17-point body keypoints.\"\"\"\n        return 17"
+    ],
     "factory_bases": [
       "IPoseFactory"
     ],
@@ -18991,7 +19005,9 @@
       "top_k": 300,
       "num_keypoints": 17
     },
-    "extra_methods": [],
+    "extra_methods": [
+      "def get_num_keypoints(self) -> int:\n        \"\"\"COCO 17-point body keypoints.\"\"\"\n        return 17"
+    ],
     "factory_bases": [
       "IPoseFactory"
     ],
@@ -19457,7 +19473,9 @@
       "top_k": 300,
       "num_keypoints": 17
     },
-    "extra_methods": [],
+    "extra_methods": [
+      "def get_num_keypoints(self) -> int:\n        \"\"\"COCO 17-point body keypoints.\"\"\"\n        return 17"
+    ],
     "factory_bases": [
       "IPoseFactory"
     ],
@@ -19923,7 +19941,9 @@
       "top_k": 300,
       "num_keypoints": 17
     },
-    "extra_methods": [],
+    "extra_methods": [
+      "def get_num_keypoints(self) -> int:\n        \"\"\"COCO 17-point body keypoints.\"\"\"\n        return 17"
+    ],
     "factory_bases": [
       "IPoseFactory"
     ],
@@ -20389,7 +20409,9 @@
       "top_k": 300,
       "num_keypoints": 17
     },
-    "extra_methods": [],
+    "extra_methods": [
+      "def get_num_keypoints(self) -> int:\n        \"\"\"COCO 17-point body keypoints.\"\"\"\n        return 17"
+    ],
     "factory_bases": [
       "IPoseFactory"
     ],
@@ -20855,7 +20877,9 @@
       "top_k": 300,
       "num_keypoints": 17
     },
-    "extra_methods": [],
+    "extra_methods": [
+      "def get_num_keypoints(self) -> int:\n        \"\"\"COCO 17-point body keypoints.\"\"\"\n        return 17"
+    ],
     "factory_bases": [
       "IPoseFactory"
     ],
@@ -28443,7 +28467,9 @@
       "score_threshold": 0.4,
       "nms_threshold": 0.5
     },
-    "extra_methods": [],
+    "extra_methods": [
+      "def get_num_keypoints(self) -> int:\n        \"\"\"COCO 17-point body keypoints.\"\"\"\n        return 17"
+    ],
     "factory_bases": [
       "IPoseFactory"
     ],
@@ -28840,7 +28866,9 @@
       "score_threshold": 0.4,
       "nms_threshold": 0.5
     },
-    "extra_methods": [],
+    "extra_methods": [
+      "def get_num_keypoints(self) -> int:\n        \"\"\"COCO 17-point body keypoints.\"\"\"\n        return 17"
+    ],
     "factory_bases": [
       "IPoseFactory"
     ],
@@ -29237,7 +29265,9 @@
       "score_threshold": 0.4,
       "nms_threshold": 0.5
     },
-    "extra_methods": [],
+    "extra_methods": [
+      "def get_num_keypoints(self) -> int:\n        \"\"\"COCO 17-point body keypoints.\"\"\"\n        return 17"
+    ],
     "factory_bases": [
       "IPoseFactory"
     ],
@@ -29704,7 +29734,9 @@
       "score_threshold": 0.4,
       "nms_threshold": 0.5
     },
-    "extra_methods": [],
+    "extra_methods": [
+      "def get_num_keypoints(self) -> int:\n        \"\"\"COCO 17-point body keypoints.\"\"\"\n        return 17"
+    ],
     "factory_bases": [
       "IPoseFactory"
     ],
@@ -30233,7 +30265,9 @@
       "score_threshold": 0.4,
       "nms_threshold": 0.5
     },
-    "extra_methods": [],
+    "extra_methods": [
+      "def get_num_keypoints(self) -> int:\n        \"\"\"COCO 17-point body keypoints.\"\"\"\n        return 17"
+    ],
     "factory_bases": [
       "IPoseFactory"
     ],

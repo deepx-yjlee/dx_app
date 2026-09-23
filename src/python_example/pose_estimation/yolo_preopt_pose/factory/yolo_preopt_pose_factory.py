@@ -48,3 +48,7 @@ class YoloPreoptPoseFactory(IPoseFactory):
 
     def get_task_type(self) -> str:
         return self.spec["task"]
+
+    def get_num_keypoints(self) -> int:
+            """COCO 17-point body keypoints."""
+            return 17

@@ -127,7 +127,11 @@ def spec_entry(row: dict) -> dict:
             "include_stream_inputs": row["task_legacy"] not in IMAGE_ONLY_LEGACY_TASKS,
         },
         "dir_config": row["config"],
-        "extra_methods": [],
+        # IPoseFactory declares get_num_keypoints abstract, so a pose family that
+        # does not carry it cannot be instantiated at all -- which is how all six
+        # pose variants failed the first full sweep. The generator emits whatever is
+        # here verbatim, exactly as it does for the pre-existing pose families.
+        "extra_methods": row["extra_methods"],
         "factory_bases": row["factory_bases"],
         "factory_class": f"{pascal}Factory",
         "family": family,
