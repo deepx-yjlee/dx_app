@@ -209,6 +209,16 @@ def build_specs(rows: list[dict]) -> str:
 
 def build_snapshot(rows: list[dict]) -> str:
     snap = json.loads(SNAPSHOT.read_text(encoding="utf-8"))
+    variants = {r["variant"]: {"task": r["task"], "family": r["family"]}
+                for r in sorted(rows, key=lambda r: r["variant"])}
+    # Keep the original date while the assignments themselves are unchanged. Stamping
+    # today unconditionally made --check fail every day after the first, for a file
+    # whose content had not moved -- and an idempotence check that cries wolf daily
+    # stops being read.
+    previous = snap.get("provisional") or {}
+    assigned_at = (previous.get("assigned_at")
+                   if previous.get("variants") == variants
+                   else datetime.now().strftime("%Y-%m-%d"))
     snap["provisional"] = {
         "note": (
             "Unpublished in dx-modelzoo as of assigned_at. The (task, family) values "
@@ -219,12 +229,9 @@ def build_snapshot(rows: list[dict]) -> str:
             "and harvest_modelzoo_tree.py reports any stem upstream assigns "
             "differently."
         ),
-        "assigned_at": datetime.now().strftime("%Y-%m-%d"),
+        "assigned_at": assigned_at or datetime.now().strftime("%Y-%m-%d"),
         "variant_count": len(rows),
-        "variants": {
-            r["variant"]: {"task": r["task"], "family": r["family"]}
-            for r in sorted(rows, key=lambda r: r["variant"])
-        },
+        "variants": variants,
     }
     return _dump(snap)
 

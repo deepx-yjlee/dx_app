@@ -82,9 +82,14 @@ This section guides you through the environment setup and the initial build proc
 > which **356 have a published `.dxnn`** to download. The other 143 are declared --
 > registry entry, example code, variant config, build target -- for models DX Model Zoo
 > has announced but not published yet; `scripts/download_models.py` reports them as
-> *Pending* rather than as errors, and `scripts/sweep_npu_inference.py` reports them as
-> `PENDING_UNPUBLISHED` rather than as passing. They start working the day they are
-> published, with no code change.
+> *Pending* rather than as errors.
+>
+> **Those 143 also need a newer DXRT.** Their `.dxnn` files are container **format
+> version 9**, and DX-RT v3.4.2 parses 6-8 (`Model file format version 9 is not
+> supported`). So even with the files in `assets/models/` they cannot be loaded here:
+> `scripts/sweep_npu_inference.py` reads the 8-byte header up front and reports them as
+> `UNSUPPORTED_FORMAT`, never as passing and never as a failure of the example code.
+> The 356 published models are version 8 (two are version 6) and run normally.
 
 
 The project is structured to separate core logic from language-specific implementations.  

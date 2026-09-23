@@ -24,10 +24,12 @@ import argparse
 import concurrent.futures as cf
 import json
 import os
+import struct
 import subprocess
 import sys
 import time
 from pathlib import Path
+from typing import Optional
 
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "config" / "model_registry.json"
@@ -63,6 +65,30 @@ def _completed_count(out: str) -> int | None:
             except ValueError:
                 return None
     return None
+
+
+# DXRT v3.4.2 parses .dxnn container versions 6-8 ("Please use model file version
+# between 6 and 8"). The DX Model Zoo 2_5_0 models are version 9, so they cannot be
+# loaded by any runtime available here -- which is a property of the environment, not
+# of the example code, and it deserves its own status rather than 143 identical
+# RuntimeErrors that read like 143 separate bugs.
+DXRT_MAX_CONTAINER_VERSION = 8
+
+
+def dxnn_container_version(path: Path) -> Optional[int]:
+    """The .dxnn container format version: the 'DXNN' magic then a LE uint32.
+
+    Read from the header rather than by attempting a load: it costs one 8-byte read
+    instead of mapping a model that can be 1.7 GB, and it works with no NPU at all.
+    """
+    try:
+        with path.open("rb") as handle:
+            head = handle.read(8)
+    except OSError:
+        return None
+    if len(head) < 8 or head[:4] != b"DXNN":
+        return None
+    return struct.unpack("<I", head[4:])[0]
 
 
 def run_one(entry: Path, variant: str, cfg: dict, dxnn: Path, timeout: int) -> dict:
@@ -162,6 +188,7 @@ def main() -> int:
     skipped = []
     pending: list[str] = []            # declared, not published yet -- expected
     missing_published: list[str] = []  # published but absent -- a real problem
+    unsupported: list[tuple] = []      # present, but newer than this runtime can parse
     for e in reg:
         if a.variant and e["variant"] != a.variant:
             continue
@@ -184,6 +211,10 @@ def main() -> int:
             else:
                 pending.append(e["variant"])
             continue
+        container = dxnn_container_version(dxnn)
+        if container is not None and container > DXRT_MAX_CONTAINER_VERSION:
+            unsupported.append((e["variant"], container))
+            continue
         if a.tree == "cpp_example":
             entry = bindir / f"{e['family']}_{a.kind}"
         else:
@@ -195,7 +226,8 @@ def main() -> int:
         jobs.append((entry, e["variant"], cfg, dxnn))
 
     print(f"variants to run : {len(jobs)}   "
-          f"pending (unpublished): {len(pending)}   skipped: {len(skipped)}")
+          f"pending (unpublished): {len(pending)}   "
+          f"unsupported container: {len(unsupported)}   skipped: {len(skipped)}")
     for v, why in skipped[:10]:
         print(f"  SKIP {v}: {why}")
 
@@ -226,6 +258,7 @@ def main() -> int:
         dict(tree=a.tree, kind=a.kind, total=len(jobs), skipped=skipped,
              pending_unpublished=sorted(pending),
              missing_published=sorted(missing_published),
+             unsupported_container=sorted(unsupported),
              wall_secs=round(time.time() - t0, 1), results=results), indent=1) + "\n",
         encoding="utf-8")
 
@@ -236,12 +269,20 @@ def main() -> int:
     comp = [r["completed"] for r in results if r.get("completed") is not None]
     print(f"  PASS={counts['PASS']}  FAIL={counts['FAIL']}  TIMEOUT={counts['TIMEOUT']}"
           f"  NO_INFERENCE={counts['NO_INFERENCE']}"
-          f"  PENDING_UNPUBLISHED={len(pending)}  SKIP={len(skipped)}"
+          f"  PENDING_UNPUBLISHED={len(pending)}"
+          f"  UNSUPPORTED_FORMAT={len(unsupported)}  SKIP={len(skipped)}"
           f"  of {len(jobs)} run in {round(time.time()-t0)}s")
     if pending:
         print(f"  PENDING_UNPUBLISHED: {len(pending)} variants have no .dxnn because "
               "DX Model Zoo has not published them. They were NOT run, and they are "
               "NOT counted as passing.")
+    if unsupported:
+        versions = sorted({v for _, v in unsupported})
+        print(f"  UNSUPPORTED_FORMAT: {len(unsupported)} model(s) are .dxnn container "
+              f"version {versions}, and this DXRT parses up to "
+              f"{DXRT_MAX_CONTAINER_VERSION}. They were NOT run and are NOT counted as "
+              "passing. This is a runtime version gap, not a defect in the examples -- "
+              "a newer DXRT is needed.")
     if missing_published:
         print(f"  [ERROR] {len(missing_published)} PUBLISHED variant(s) have no .dxnn "
               f"on disk: {sorted(missing_published)[:5]}"

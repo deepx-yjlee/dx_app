@@ -131,18 +131,34 @@ def test_registry_covers_every_provisional_variant():
     assert len(registry) == EXPECTED_REGISTRY_ENTRIES
 
 
-def test_published_flag_matches_on_disk_reality():
-    """published: false must mean absent from assets/models -- and nothing else.
+def test_published_means_the_url_serves_it_not_that_a_file_is_absent():
+    """`published` is a fact about DX Model Zoo, not about this machine's disk.
 
-    The flag is what the sweep and the downloader branch on, so a variant marked
-    unpublished while its .dxnn sits on disk would be silently skipped forever.
+    The first version of this test asserted `published is False` implies "no file in
+    assets/models", and that premise turned out to be wrong: the 143 unpublished
+    models were obtained out of band (new_modelzoo.tar.gz) and extracted, while their
+    URLs still return 403 -- the 2_5_0 directory does not exist at all, not even for a
+    model that IS published at 2_4_0.
+
+    Conflating the two would break both consumers in opposite directions. Flipping the
+    flag on extraction would make download_models.py treat the still-failing 403 as a
+    hard error; keeping the old assertion would fail the suite for a tree that is
+    simply more complete than the zoo.
+
+    So the flag pins the URL version and nothing else -- on-disk presence is what the
+    sweep checks, independently, when it decides whether it can run something.
     """
     registry = json.loads(REGISTRY.read_text(encoding="utf-8"))
-    models_dir = PROJECT_ROOT / "assets" / "models"
-    present = {p.name for p in models_dir.glob("*.dxnn")} if models_dir.is_dir() else set()
-    wrong = [e["variant"] for e in registry
-             if e["published"] is False and e["dxnn_file"] in present]
-    assert wrong == [], f"marked unpublished but present on disk: {wrong}"
+    manifest = {e["name"]: e for e in json.loads(MANIFEST.read_text(encoding="utf-8"))}
+    wrong = []
+    for entry in registry:
+        row = manifest.get(entry["model_name"])
+        if row is None or not row.get("dxnn_url"):
+            continue
+        at_2_5_0 = "/2_5_0/" in row["dxnn_url"]
+        if at_2_5_0 != (entry["published"] is False):
+            wrong.append((entry["variant"], entry["published"], row["dxnn_url"]))
+    assert wrong == [], f"published disagrees with the manifest URL version: {wrong}"
 
 
 def test_the_four_q_master_models_are_marked_published():
