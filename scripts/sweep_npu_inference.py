@@ -24,6 +24,7 @@ import argparse
 import concurrent.futures as cf
 import json
 import os
+import re
 import struct
 import subprocess
 import sys
@@ -91,6 +92,33 @@ def dxnn_container_version(path: Path) -> Optional[int]:
     return struct.unpack("<I", head[4:])[0]
 
 
+# Two output shapes carry the NPU latency, and reading only the first left four of the
+# six combinations with no latency at all -- the sweep still judged them correctly (the
+# PASS rule looks for the LINE, not the number), but its latency statistics silently
+# covered python/sync alone.
+#
+#   python sync, per frame   " Infer: 6.56 ms"
+#   summary table            " Inference           3.89 ms      257.2 FPS"
+#                            (python async, and both C++ runners)
+_INFER_LINE = re.compile(r"^\s*Inference\s+([0-9]+\.?[0-9]*)\s*ms", re.M)
+
+
+def _infer_ms(out: str) -> Optional[float]:
+    """The reported NPU inference latency in ms, from either output shape."""
+    for token in out.split("Infer:")[1:2]:
+        try:
+            return float(token.strip().split("ms")[0])
+        except (ValueError, IndexError):
+            pass
+    match = _INFER_LINE.search(out)
+    if match:
+        try:
+            return float(match.group(1))
+        except ValueError:
+            return None
+    return None
+
+
 def run_one(entry: Path, variant: str, cfg: dict, dxnn: Path, timeout: int) -> dict:
     started = time.time()
     # C++ takes no --variant: it derives the variant from the model path, which is
@@ -130,12 +158,7 @@ def run_one(entry: Path, variant: str, cfg: dict, dxnn: Path, timeout: int) -> d
             status = "NO_INFERENCE"
         else:
             status = "PASS"
-        infer_ms = None
-        for tok in out.split("Infer:")[1:2]:
-            try:
-                infer_ms = float(tok.strip().split("ms")[0])
-            except (ValueError, IndexError):
-                pass
+        infer_ms = _infer_ms(out)
         return dict(variant=variant, status=status, rc=pr.returncode,
                     secs=round(time.time() - started, 1), infer_ms=infer_ms,
                     completed=completed,
