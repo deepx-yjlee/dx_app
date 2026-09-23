@@ -68,12 +68,33 @@ def _completed_count(out: str) -> int | None:
     return None
 
 
-# DXRT v3.4.2 parses .dxnn container versions 6-8 ("Please use model file version
-# between 6 and 8"). The DX Model Zoo 2_5_0 models are version 9, so they cannot be
-# loaded by any runtime available here -- which is a property of the environment, not
-# of the example code, and it deserves its own status rather than 143 identical
-# RuntimeErrors that read like 143 separate bugs.
-DXRT_MAX_CONTAINER_VERSION = 8
+# Which .dxnn container versions this runtime can parse is a property of the RUNTIME,
+# and it changes: DX-RT 3.4.2 parsed 6-8 and refused the version-9 models, DX-RT 3.5.0
+# added a V9 parser and runs them. A hardcoded ceiling here was wrong within a day --
+# it kept reporting 143 models as UNSUPPORTED_FORMAT after the very update that made
+# them work, which is worse than the 143 RuntimeErrors it was written to avoid: a
+# stale skip is silent.
+#
+# So it is probed, once per distinct container version actually present, by loading the
+# SMALLEST model of that version. A few loads cost far less than a wrong answer.
+_CONTAINER_SUPPORT: dict[int, bool] = {}
+
+
+def runtime_supports_container(version: int, sample: Path) -> bool:
+    """Can this runtime load a container of *version*? Probed once, then cached."""
+    if version in _CONTAINER_SUPPORT:
+        return _CONTAINER_SUPPORT[version]
+    try:
+        from dx_engine import InferenceEngine
+        InferenceEngine(str(sample))
+        supported = True
+    except Exception as exc:                      # noqa: BLE001 - any load failure
+        # Only a version complaint proves the CONTAINER is unsupported. Anything else
+        # (a corrupt file, no device) is this model's problem and must not condemn
+        # every model that shares its version.
+        supported = "file format version" not in str(exc).lower()
+    _CONTAINER_SUPPORT[version] = supported
+    return supported
 
 
 def dxnn_container_version(path: Path) -> Optional[int]:
@@ -235,7 +256,7 @@ def main() -> int:
                 pending.append(e["variant"])
             continue
         container = dxnn_container_version(dxnn)
-        if container is not None and container > DXRT_MAX_CONTAINER_VERSION:
+        if container is not None and not runtime_supports_container(container, dxnn):
             unsupported.append((e["variant"], container))
             continue
         if a.tree == "cpp_example":
@@ -303,11 +324,12 @@ def main() -> int:
               "NOT counted as passing.")
     if unsupported:
         versions = sorted({v for _, v in unsupported})
+        ok_versions = sorted(v for v, ok in _CONTAINER_SUPPORT.items() if ok)
         print(f"  UNSUPPORTED_FORMAT: {len(unsupported)} model(s) are .dxnn container "
-              f"version {versions}, and this DXRT parses up to "
-              f"{DXRT_MAX_CONTAINER_VERSION}. They were NOT run and are NOT counted as "
-              "passing. This is a runtime version gap, not a defect in the examples -- "
-              "a newer DXRT is needed.")
+              f"version {versions}, which this runtime refused to load; it does load "
+              f"{ok_versions}. They were NOT run and are NOT counted as passing. This "
+              "is a runtime version gap, not a defect in the examples -- a newer DXRT "
+              "is needed.")
     if missing_published:
         print(f"  [ERROR] {len(missing_published)} PUBLISHED variant(s) have no .dxnn "
               f"on disk: {sorted(missing_published)[:5]}"

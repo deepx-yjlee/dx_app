@@ -8617,12 +8617,12 @@
     "family": "pp_shitu",
     "imports": [
       "from common.base import IDetectionFactory",
-      "from common.processors import LetterboxPreprocessor, NanoDetPostprocessor",
+      "from common.processors import LetterboxPreprocessor, PicoDetPostprocessor",
       "from common.visualizers import DetectionVisualizer"
     ],
     "model_name": "pp_shituv1_mainbody_detection_640x640",
     "postprocessor": {
-      "class": "NanoDetPostprocessor",
+      "class": "PicoDetPostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -8748,12 +8748,12 @@
     "family": "pp_shitu",
     "imports": [
       "from common.base import IDetectionFactory",
-      "from common.processors import LetterboxPreprocessor, NanoDetPostprocessor",
+      "from common.processors import LetterboxPreprocessor, PicoDetPostprocessor",
       "from common.visualizers import DetectionVisualizer"
     ],
     "model_name": "pp_shituv2_mainbody_detection_640x640",
     "postprocessor": {
-      "class": "NanoDetPostprocessor",
+      "class": "PicoDetPostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -16583,25 +16583,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_keypoints": 17
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IPoseFactory"
     ],
-    "factory_class": "YoloPreoptPoseFactory",
-    "family": "yolo_preopt_pose",
+    "factory_class": "Yolo11PoseFactory",
+    "family": "yolo11_pose",
     "imports": [
       "from common.base import IPoseFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptPosePostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8PosePostprocessor",
       "from common.visualizers import PoseVisualizer"
     ],
     "model_name": "yolo11_l_pose_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptPosePostprocessor",
+      "class": "YOLOv8PosePostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -16630,12 +16628,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_keypoints": 17
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt_pose",
+    "source_dir": "yolo11_pose",
     "source_task": "pose_estimation",
     "task": "pose_estimation",
     "variant": "yolo11-l-pose_640x640_pre-optimized",
@@ -16717,25 +16713,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IInstanceSegFactory"
     ],
-    "factory_class": "YoloPreoptSegFactory",
-    "family": "yolo_preopt_seg",
+    "factory_class": "Yolo11SegFactory",
+    "family": "yolo11_seg",
     "imports": [
       "from common.base import IInstanceSegFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptSegPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8InstanceSegPostprocessor",
       "from common.visualizers import InstanceSegVisualizer"
     ],
     "model_name": "yolo11_l_seg_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptSegPostprocessor",
+      "class": "YOLOv8InstanceSegPostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -16764,12 +16758,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt_seg",
+    "source_dir": "yolo11_seg",
     "source_task": "instance_segmentation",
     "task": "instance_segmentation",
     "variant": "yolo11-l-seg_640x640_pre-optimized",
@@ -16853,24 +16845,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IDetectionFactory"
     ],
-    "factory_class": "YoloPreoptFactory",
-    "family": "yolo_preopt",
+    "factory_class": "Yolo11Factory",
+    "family": "yolo11",
     "imports": [
       "from common.base import IDetectionFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptDetectionPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8Postprocessor",
       "from common.visualizers import DetectionVisualizer"
     ],
     "model_name": "yolo11_l_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptDetectionPostprocessor",
+      "class": "YOLOv8Postprocessor",
       "args": [
         {
           "token": "input_width"
@@ -16899,11 +16890,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt",
+    "source_dir": "yolo11",
     "source_task": "object_detection",
     "task": "object_detection",
     "variant": "yolo11-l_640x640_pre-optimized",
@@ -16987,25 +16977,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_keypoints": 17
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IPoseFactory"
     ],
-    "factory_class": "YoloPreoptPoseFactory",
-    "family": "yolo_preopt_pose",
+    "factory_class": "Yolo11PoseFactory",
+    "family": "yolo11_pose",
     "imports": [
       "from common.base import IPoseFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptPosePostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8PosePostprocessor",
       "from common.visualizers import PoseVisualizer"
     ],
     "model_name": "yolo11_m_pose_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptPosePostprocessor",
+      "class": "YOLOv8PosePostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -17034,12 +17022,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_keypoints": 17
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt_pose",
+    "source_dir": "yolo11_pose",
     "source_task": "pose_estimation",
     "task": "pose_estimation",
     "variant": "yolo11-m-pose_640x640_pre-optimized",
@@ -17121,25 +17107,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IInstanceSegFactory"
     ],
-    "factory_class": "YoloPreoptSegFactory",
-    "family": "yolo_preopt_seg",
+    "factory_class": "Yolo11SegFactory",
+    "family": "yolo11_seg",
     "imports": [
       "from common.base import IInstanceSegFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptSegPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8InstanceSegPostprocessor",
       "from common.visualizers import InstanceSegVisualizer"
     ],
     "model_name": "yolo11_m_seg_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptSegPostprocessor",
+      "class": "YOLOv8InstanceSegPostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -17168,12 +17152,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt_seg",
+    "source_dir": "yolo11_seg",
     "source_task": "instance_segmentation",
     "task": "instance_segmentation",
     "variant": "yolo11-m-seg_640x640_pre-optimized",
@@ -17257,24 +17239,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IDetectionFactory"
     ],
-    "factory_class": "YoloPreoptFactory",
-    "family": "yolo_preopt",
+    "factory_class": "Yolo11Factory",
+    "family": "yolo11",
     "imports": [
       "from common.base import IDetectionFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptDetectionPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8Postprocessor",
       "from common.visualizers import DetectionVisualizer"
     ],
     "model_name": "yolo11_m_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptDetectionPostprocessor",
+      "class": "YOLOv8Postprocessor",
       "args": [
         {
           "token": "input_width"
@@ -17303,11 +17284,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt",
+    "source_dir": "yolo11",
     "source_task": "object_detection",
     "task": "object_detection",
     "variant": "yolo11-m_640x640_pre-optimized",
@@ -17391,25 +17371,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_keypoints": 17
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IPoseFactory"
     ],
-    "factory_class": "YoloPreoptPoseFactory",
-    "family": "yolo_preopt_pose",
+    "factory_class": "Yolo11PoseFactory",
+    "family": "yolo11_pose",
     "imports": [
       "from common.base import IPoseFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptPosePostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8PosePostprocessor",
       "from common.visualizers import PoseVisualizer"
     ],
     "model_name": "yolo11_n_pose_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptPosePostprocessor",
+      "class": "YOLOv8PosePostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -17438,12 +17416,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_keypoints": 17
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt_pose",
+    "source_dir": "yolo11_pose",
     "source_task": "pose_estimation",
     "task": "pose_estimation",
     "variant": "yolo11-n-pose_640x640_pre-optimized",
@@ -17525,25 +17501,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IInstanceSegFactory"
     ],
-    "factory_class": "YoloPreoptSegFactory",
-    "family": "yolo_preopt_seg",
+    "factory_class": "Yolo11SegFactory",
+    "family": "yolo11_seg",
     "imports": [
       "from common.base import IInstanceSegFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptSegPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8InstanceSegPostprocessor",
       "from common.visualizers import InstanceSegVisualizer"
     ],
     "model_name": "yolo11_n_seg_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptSegPostprocessor",
+      "class": "YOLOv8InstanceSegPostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -17572,12 +17546,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt_seg",
+    "source_dir": "yolo11_seg",
     "source_task": "instance_segmentation",
     "task": "instance_segmentation",
     "variant": "yolo11-n-seg_640x640_pre-optimized",
@@ -17728,24 +17700,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IDetectionFactory"
     ],
-    "factory_class": "YoloPreoptFactory",
-    "family": "yolo_preopt",
+    "factory_class": "Yolo11Factory",
+    "family": "yolo11",
     "imports": [
       "from common.base import IDetectionFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptDetectionPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8Postprocessor",
       "from common.visualizers import DetectionVisualizer"
     ],
     "model_name": "yolo11_n_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptDetectionPostprocessor",
+      "class": "YOLOv8Postprocessor",
       "args": [
         {
           "token": "input_width"
@@ -17774,11 +17745,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt",
+    "source_dir": "yolo11",
     "source_task": "object_detection",
     "task": "object_detection",
     "variant": "yolo11-n_640x640_pre-optimized",
@@ -17862,25 +17832,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_keypoints": 17
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IPoseFactory"
     ],
-    "factory_class": "YoloPreoptPoseFactory",
-    "family": "yolo_preopt_pose",
+    "factory_class": "Yolo11PoseFactory",
+    "family": "yolo11_pose",
     "imports": [
       "from common.base import IPoseFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptPosePostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8PosePostprocessor",
       "from common.visualizers import PoseVisualizer"
     ],
     "model_name": "yolo11_s_pose_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptPosePostprocessor",
+      "class": "YOLOv8PosePostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -17909,12 +17877,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_keypoints": 17
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt_pose",
+    "source_dir": "yolo11_pose",
     "source_task": "pose_estimation",
     "task": "pose_estimation",
     "variant": "yolo11-s-pose_640x640_pre-optimized",
@@ -17996,25 +17962,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IInstanceSegFactory"
     ],
-    "factory_class": "YoloPreoptSegFactory",
-    "family": "yolo_preopt_seg",
+    "factory_class": "Yolo11SegFactory",
+    "family": "yolo11_seg",
     "imports": [
       "from common.base import IInstanceSegFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptSegPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8InstanceSegPostprocessor",
       "from common.visualizers import InstanceSegVisualizer"
     ],
     "model_name": "yolo11_s_seg_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptSegPostprocessor",
+      "class": "YOLOv8InstanceSegPostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -18043,12 +18007,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt_seg",
+    "source_dir": "yolo11_seg",
     "source_task": "instance_segmentation",
     "task": "instance_segmentation",
     "variant": "yolo11-s-seg_640x640_pre-optimized",
@@ -18132,24 +18094,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IDetectionFactory"
     ],
-    "factory_class": "YoloPreoptFactory",
-    "family": "yolo_preopt",
+    "factory_class": "Yolo11Factory",
+    "family": "yolo11",
     "imports": [
       "from common.base import IDetectionFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptDetectionPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8Postprocessor",
       "from common.visualizers import DetectionVisualizer"
     ],
     "model_name": "yolo11_s_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptDetectionPostprocessor",
+      "class": "YOLOv8Postprocessor",
       "args": [
         {
           "token": "input_width"
@@ -18178,11 +18139,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt",
+    "source_dir": "yolo11",
     "source_task": "object_detection",
     "task": "object_detection",
     "variant": "yolo11-s_640x640_pre-optimized",
@@ -18266,25 +18226,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_keypoints": 17
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IPoseFactory"
     ],
-    "factory_class": "YoloPreoptPoseFactory",
-    "family": "yolo_preopt_pose",
+    "factory_class": "Yolo11PoseFactory",
+    "family": "yolo11_pose",
     "imports": [
       "from common.base import IPoseFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptPosePostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8PosePostprocessor",
       "from common.visualizers import PoseVisualizer"
     ],
     "model_name": "yolo11_x_pose_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptPosePostprocessor",
+      "class": "YOLOv8PosePostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -18313,12 +18271,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_keypoints": 17
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt_pose",
+    "source_dir": "yolo11_pose",
     "source_task": "pose_estimation",
     "task": "pose_estimation",
     "variant": "yolo11-x-pose_640x640_pre-optimized",
@@ -18400,25 +18356,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IInstanceSegFactory"
     ],
-    "factory_class": "YoloPreoptSegFactory",
-    "family": "yolo_preopt_seg",
+    "factory_class": "Yolo11SegFactory",
+    "family": "yolo11_seg",
     "imports": [
       "from common.base import IInstanceSegFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptSegPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8InstanceSegPostprocessor",
       "from common.visualizers import InstanceSegVisualizer"
     ],
     "model_name": "yolo11_x_seg_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptSegPostprocessor",
+      "class": "YOLOv8InstanceSegPostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -18447,12 +18401,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt_seg",
+    "source_dir": "yolo11_seg",
     "source_task": "instance_segmentation",
     "task": "instance_segmentation",
     "variant": "yolo11-x-seg_640x640_pre-optimized",
@@ -18536,24 +18488,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IDetectionFactory"
     ],
-    "factory_class": "YoloPreoptFactory",
-    "family": "yolo_preopt",
+    "factory_class": "Yolo11Factory",
+    "family": "yolo11",
     "imports": [
       "from common.base import IDetectionFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptDetectionPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8Postprocessor",
       "from common.visualizers import DetectionVisualizer"
     ],
     "model_name": "yolo11_x_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptDetectionPostprocessor",
+      "class": "YOLOv8Postprocessor",
       "args": [
         {
           "token": "input_width"
@@ -18582,11 +18533,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt",
+    "source_dir": "yolo11",
     "source_task": "object_detection",
     "task": "object_detection",
     "variant": "yolo11-x_640x640_pre-optimized",
@@ -22149,24 +22099,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IDetectionFactory"
     ],
-    "factory_class": "YoloPreoptFactory",
-    "family": "yolo_preopt",
+    "factory_class": "Yolov12Factory",
+    "family": "yolov12",
     "imports": [
       "from common.base import IDetectionFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptDetectionPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8Postprocessor",
       "from common.visualizers import DetectionVisualizer"
     ],
     "model_name": "yolov12_l_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptDetectionPostprocessor",
+      "class": "YOLOv8Postprocessor",
       "args": [
         {
           "token": "input_width"
@@ -22195,11 +22144,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt",
+    "source_dir": "yolov12",
     "source_task": "object_detection",
     "task": "object_detection",
     "variant": "yolov12-l_640x640_pre-optimized",
@@ -22283,24 +22231,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IDetectionFactory"
     ],
-    "factory_class": "YoloPreoptFactory",
-    "family": "yolo_preopt",
+    "factory_class": "Yolov12Factory",
+    "family": "yolov12",
     "imports": [
       "from common.base import IDetectionFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptDetectionPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8Postprocessor",
       "from common.visualizers import DetectionVisualizer"
     ],
     "model_name": "yolov12_m_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptDetectionPostprocessor",
+      "class": "YOLOv8Postprocessor",
       "args": [
         {
           "token": "input_width"
@@ -22329,11 +22276,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt",
+    "source_dir": "yolov12",
     "source_task": "object_detection",
     "task": "object_detection",
     "variant": "yolov12-m_640x640_pre-optimized",
@@ -22484,24 +22430,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IDetectionFactory"
     ],
-    "factory_class": "YoloPreoptFactory",
-    "family": "yolo_preopt",
+    "factory_class": "Yolov12Factory",
+    "family": "yolov12",
     "imports": [
       "from common.base import IDetectionFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptDetectionPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8Postprocessor",
       "from common.visualizers import DetectionVisualizer"
     ],
     "model_name": "yolov12_n_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptDetectionPostprocessor",
+      "class": "YOLOv8Postprocessor",
       "args": [
         {
           "token": "input_width"
@@ -22530,11 +22475,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt",
+    "source_dir": "yolov12",
     "source_task": "object_detection",
     "task": "object_detection",
     "variant": "yolov12-n_640x640_pre-optimized",
@@ -22618,24 +22562,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IDetectionFactory"
     ],
-    "factory_class": "YoloPreoptFactory",
-    "family": "yolo_preopt",
+    "factory_class": "Yolov12Factory",
+    "family": "yolov12",
     "imports": [
       "from common.base import IDetectionFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptDetectionPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8Postprocessor",
       "from common.visualizers import DetectionVisualizer"
     ],
     "model_name": "yolov12_s_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptDetectionPostprocessor",
+      "class": "YOLOv8Postprocessor",
       "args": [
         {
           "token": "input_width"
@@ -22664,11 +22607,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt",
+    "source_dir": "yolov12",
     "source_task": "object_detection",
     "task": "object_detection",
     "variant": "yolov12-s_640x640_pre-optimized",
@@ -22752,25 +22694,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IInstanceSegFactory"
     ],
-    "factory_class": "YoloPreoptSegFactory",
-    "family": "yolo_preopt_seg",
+    "factory_class": "Yolov12SegFactory",
+    "family": "yolov12_seg",
     "imports": [
       "from common.base import IInstanceSegFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptSegPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8InstanceSegPostprocessor",
       "from common.visualizers import InstanceSegVisualizer"
     ],
     "model_name": "yolov12_seg_l_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptSegPostprocessor",
+      "class": "YOLOv8InstanceSegPostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -22799,12 +22739,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt_seg",
+    "source_dir": "yolov12_seg",
     "source_task": "instance_segmentation",
     "task": "instance_segmentation",
     "variant": "yolov12-seg-l_640x640_pre-optimized",
@@ -22888,25 +22826,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IInstanceSegFactory"
     ],
-    "factory_class": "YoloPreoptSegFactory",
-    "family": "yolo_preopt_seg",
+    "factory_class": "Yolov12SegFactory",
+    "family": "yolov12_seg",
     "imports": [
       "from common.base import IInstanceSegFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptSegPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8InstanceSegPostprocessor",
       "from common.visualizers import InstanceSegVisualizer"
     ],
     "model_name": "yolov12_seg_m_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptSegPostprocessor",
+      "class": "YOLOv8InstanceSegPostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -22935,12 +22871,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt_seg",
+    "source_dir": "yolov12_seg",
     "source_task": "instance_segmentation",
     "task": "instance_segmentation",
     "variant": "yolov12-seg-m_640x640_pre-optimized",
@@ -23024,25 +22958,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IInstanceSegFactory"
     ],
-    "factory_class": "YoloPreoptSegFactory",
-    "family": "yolo_preopt_seg",
+    "factory_class": "Yolov12SegFactory",
+    "family": "yolov12_seg",
     "imports": [
       "from common.base import IInstanceSegFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptSegPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8InstanceSegPostprocessor",
       "from common.visualizers import InstanceSegVisualizer"
     ],
     "model_name": "yolov12_seg_n_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptSegPostprocessor",
+      "class": "YOLOv8InstanceSegPostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -23071,12 +23003,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt_seg",
+    "source_dir": "yolov12_seg",
     "source_task": "instance_segmentation",
     "task": "instance_segmentation",
     "variant": "yolov12-seg-n_640x640_pre-optimized",
@@ -23160,25 +23090,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IInstanceSegFactory"
     ],
-    "factory_class": "YoloPreoptSegFactory",
-    "family": "yolo_preopt_seg",
+    "factory_class": "Yolov12SegFactory",
+    "family": "yolov12_seg",
     "imports": [
       "from common.base import IInstanceSegFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptSegPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8InstanceSegPostprocessor",
       "from common.visualizers import InstanceSegVisualizer"
     ],
     "model_name": "yolov12_seg_s_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptSegPostprocessor",
+      "class": "YOLOv8InstanceSegPostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -23207,12 +23135,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt_seg",
+    "source_dir": "yolov12_seg",
     "source_task": "instance_segmentation",
     "task": "instance_segmentation",
     "variant": "yolov12-seg-s_640x640_pre-optimized",
@@ -23296,25 +23222,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IInstanceSegFactory"
     ],
-    "factory_class": "YoloPreoptSegFactory",
-    "family": "yolo_preopt_seg",
+    "factory_class": "Yolov12SegFactory",
+    "family": "yolov12_seg",
     "imports": [
       "from common.base import IInstanceSegFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptSegPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8InstanceSegPostprocessor",
       "from common.visualizers import InstanceSegVisualizer"
     ],
     "model_name": "yolov12_seg_x_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptSegPostprocessor",
+      "class": "YOLOv8InstanceSegPostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -23343,12 +23267,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt_seg",
+    "source_dir": "yolov12_seg",
     "source_task": "instance_segmentation",
     "task": "instance_segmentation",
     "variant": "yolov12-seg-x_640x640_pre-optimized",
@@ -23432,24 +23354,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IDetectionFactory"
     ],
-    "factory_class": "YoloPreoptFactory",
-    "family": "yolo_preopt",
+    "factory_class": "Yolov12Factory",
+    "family": "yolov12",
     "imports": [
       "from common.base import IDetectionFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptDetectionPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8Postprocessor",
       "from common.visualizers import DetectionVisualizer"
     ],
     "model_name": "yolov12_x_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptDetectionPostprocessor",
+      "class": "YOLOv8Postprocessor",
       "args": [
         {
           "token": "input_width"
@@ -23478,11 +23399,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt",
+    "source_dir": "yolov12",
     "source_task": "object_detection",
     "task": "object_detection",
     "variant": "yolov12-x_640x640_pre-optimized",
@@ -23566,24 +23486,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IDetectionFactory"
     ],
-    "factory_class": "YoloPreoptFactory",
-    "family": "yolo_preopt",
+    "factory_class": "Yolov13Factory",
+    "family": "yolov13",
     "imports": [
       "from common.base import IDetectionFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptDetectionPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8Postprocessor",
       "from common.visualizers import DetectionVisualizer"
     ],
     "model_name": "yolov13_l_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptDetectionPostprocessor",
+      "class": "YOLOv8Postprocessor",
       "args": [
         {
           "token": "input_width"
@@ -23612,11 +23531,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt",
+    "source_dir": "yolov13",
     "source_task": "object_detection",
     "task": "object_detection",
     "variant": "yolov13-l_640x640_pre-optimized",
@@ -23700,24 +23618,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IDetectionFactory"
     ],
-    "factory_class": "YoloPreoptFactory",
-    "family": "yolo_preopt",
+    "factory_class": "Yolov13Factory",
+    "family": "yolov13",
     "imports": [
       "from common.base import IDetectionFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptDetectionPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8Postprocessor",
       "from common.visualizers import DetectionVisualizer"
     ],
     "model_name": "yolov13_n_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptDetectionPostprocessor",
+      "class": "YOLOv8Postprocessor",
       "args": [
         {
           "token": "input_width"
@@ -23746,11 +23663,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt",
+    "source_dir": "yolov13",
     "source_task": "object_detection",
     "task": "object_detection",
     "variant": "yolov13-n_640x640_pre-optimized",
@@ -23834,24 +23750,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IDetectionFactory"
     ],
-    "factory_class": "YoloPreoptFactory",
-    "family": "yolo_preopt",
+    "factory_class": "Yolov13Factory",
+    "family": "yolov13",
     "imports": [
       "from common.base import IDetectionFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptDetectionPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8Postprocessor",
       "from common.visualizers import DetectionVisualizer"
     ],
     "model_name": "yolov13_s_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptDetectionPostprocessor",
+      "class": "YOLOv8Postprocessor",
       "args": [
         {
           "token": "input_width"
@@ -23880,11 +23795,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt",
+    "source_dir": "yolov13",
     "source_task": "object_detection",
     "task": "object_detection",
     "variant": "yolov13-s_640x640_pre-optimized",
@@ -23968,24 +23882,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IDetectionFactory"
     ],
-    "factory_class": "YoloPreoptFactory",
-    "family": "yolo_preopt",
+    "factory_class": "Yolov13Factory",
+    "family": "yolov13",
     "imports": [
       "from common.base import IDetectionFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptDetectionPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8Postprocessor",
       "from common.visualizers import DetectionVisualizer"
     ],
     "model_name": "yolov13_x_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptDetectionPostprocessor",
+      "class": "YOLOv8Postprocessor",
       "args": [
         {
           "token": "input_width"
@@ -24014,11 +23927,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt",
+    "source_dir": "yolov13",
     "source_task": "object_detection",
     "task": "object_detection",
     "variant": "yolov13-x_640x640_pre-optimized",
@@ -28528,25 +28440,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_keypoints": 17
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IPoseFactory"
     ],
-    "factory_class": "YoloPreoptPoseFactory",
-    "family": "yolo_preopt_pose",
+    "factory_class": "Yolov8PoseFactory",
+    "family": "yolov8_pose",
     "imports": [
       "from common.base import IPoseFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptPosePostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8PosePostprocessor",
       "from common.visualizers import PoseVisualizer"
     ],
     "model_name": "yolov8_l_pose_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptPosePostprocessor",
+      "class": "YOLOv8PosePostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -28575,12 +28485,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_keypoints": 17
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt_pose",
+    "source_dir": "yolov8_pose",
     "source_task": "pose_estimation",
     "task": "pose_estimation",
     "variant": "yolov8-l-pose_640x640_pre-optimized",
@@ -28662,25 +28570,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IInstanceSegFactory"
     ],
-    "factory_class": "YoloPreoptSegFactory",
-    "family": "yolo_preopt_seg",
+    "factory_class": "Yolov8SegFactory",
+    "family": "yolov8_seg",
     "imports": [
       "from common.base import IInstanceSegFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptSegPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8InstanceSegPostprocessor",
       "from common.visualizers import InstanceSegVisualizer"
     ],
     "model_name": "yolov8_l_seg_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptSegPostprocessor",
+      "class": "YOLOv8InstanceSegPostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -28709,12 +28615,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt_seg",
+    "source_dir": "yolov8_seg",
     "source_task": "instance_segmentation",
     "task": "instance_segmentation",
     "variant": "yolov8-l-seg_640x640_pre-optimized",
@@ -28798,24 +28702,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IDetectionFactory"
     ],
-    "factory_class": "YoloPreoptFactory",
-    "family": "yolo_preopt",
+    "factory_class": "Yolov8Factory",
+    "family": "yolov8",
     "imports": [
       "from common.base import IDetectionFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptDetectionPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8Postprocessor",
       "from common.visualizers import DetectionVisualizer"
     ],
     "model_name": "yolov8_l_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptDetectionPostprocessor",
+      "class": "YOLOv8Postprocessor",
       "args": [
         {
           "token": "input_width"
@@ -28844,11 +28747,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt",
+    "source_dir": "yolov8",
     "source_task": "object_detection",
     "task": "object_detection",
     "variant": "yolov8-l_640x640_pre-optimized",
@@ -28935,25 +28837,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_keypoints": 17
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IPoseFactory"
     ],
-    "factory_class": "YoloPreoptPoseFactory",
-    "family": "yolo_preopt_pose",
+    "factory_class": "Yolov8PoseFactory",
+    "family": "yolov8_pose",
     "imports": [
       "from common.base import IPoseFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptPosePostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8PosePostprocessor",
       "from common.visualizers import PoseVisualizer"
     ],
     "model_name": "yolov8_m_pose_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptPosePostprocessor",
+      "class": "YOLOv8PosePostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -28982,12 +28882,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_keypoints": 17
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt_pose",
+    "source_dir": "yolov8_pose",
     "source_task": "pose_estimation",
     "task": "pose_estimation",
     "variant": "yolov8-m-pose_640x640_pre-optimized",
@@ -29072,25 +28970,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IInstanceSegFactory"
     ],
-    "factory_class": "YoloPreoptSegFactory",
-    "family": "yolo_preopt_seg",
+    "factory_class": "Yolov8SegFactory",
+    "family": "yolov8_seg",
     "imports": [
       "from common.base import IInstanceSegFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptSegPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8InstanceSegPostprocessor",
       "from common.visualizers import InstanceSegVisualizer"
     ],
     "model_name": "yolov8_m_seg_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptSegPostprocessor",
+      "class": "YOLOv8InstanceSegPostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -29119,12 +29015,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt_seg",
+    "source_dir": "yolov8_seg",
     "source_task": "instance_segmentation",
     "task": "instance_segmentation",
     "variant": "yolov8-m-seg_640x640_pre-optimized",
@@ -29208,24 +29102,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IDetectionFactory"
     ],
-    "factory_class": "YoloPreoptFactory",
-    "family": "yolo_preopt",
+    "factory_class": "Yolov8Factory",
+    "family": "yolov8",
     "imports": [
       "from common.base import IDetectionFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptDetectionPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8Postprocessor",
       "from common.visualizers import DetectionVisualizer"
     ],
     "model_name": "yolov8_m_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptDetectionPostprocessor",
+      "class": "YOLOv8Postprocessor",
       "args": [
         {
           "token": "input_width"
@@ -29254,11 +29147,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt",
+    "source_dir": "yolov8",
     "source_task": "object_detection",
     "task": "object_detection",
     "variant": "yolov8-m_640x640_pre-optimized",
@@ -29342,25 +29234,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_keypoints": 17
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IPoseFactory"
     ],
-    "factory_class": "YoloPreoptPoseFactory",
-    "family": "yolo_preopt_pose",
+    "factory_class": "Yolov8PoseFactory",
+    "family": "yolov8_pose",
     "imports": [
       "from common.base import IPoseFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptPosePostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8PosePostprocessor",
       "from common.visualizers import PoseVisualizer"
     ],
     "model_name": "yolov8_n_pose_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptPosePostprocessor",
+      "class": "YOLOv8PosePostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -29389,12 +29279,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_keypoints": 17
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt_pose",
+    "source_dir": "yolov8_pose",
     "source_task": "pose_estimation",
     "task": "pose_estimation",
     "variant": "yolov8-n-pose_640x640_pre-optimized",
@@ -29479,25 +29367,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IInstanceSegFactory"
     ],
-    "factory_class": "YoloPreoptSegFactory",
-    "family": "yolo_preopt_seg",
+    "factory_class": "Yolov8SegFactory",
+    "family": "yolov8_seg",
     "imports": [
       "from common.base import IInstanceSegFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptSegPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8InstanceSegPostprocessor",
       "from common.visualizers import InstanceSegVisualizer"
     ],
     "model_name": "yolov8_n_seg_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptSegPostprocessor",
+      "class": "YOLOv8InstanceSegPostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -29526,12 +29412,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt_seg",
+    "source_dir": "yolov8_seg",
     "source_task": "instance_segmentation",
     "task": "instance_segmentation",
     "variant": "yolov8-n-seg_640x640_pre-optimized",
@@ -29682,24 +29566,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IDetectionFactory"
     ],
-    "factory_class": "YoloPreoptFactory",
-    "family": "yolo_preopt",
+    "factory_class": "Yolov8Factory",
+    "family": "yolov8",
     "imports": [
       "from common.base import IDetectionFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptDetectionPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8Postprocessor",
       "from common.visualizers import DetectionVisualizer"
     ],
     "model_name": "yolov8_n_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptDetectionPostprocessor",
+      "class": "YOLOv8Postprocessor",
       "args": [
         {
           "token": "input_width"
@@ -29728,11 +29611,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt",
+    "source_dir": "yolov8",
     "source_task": "object_detection",
     "task": "object_detection",
     "variant": "yolov8-n_640x640_pre-optimized",
@@ -29819,25 +29701,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_keypoints": 17
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IPoseFactory"
     ],
-    "factory_class": "YoloPreoptPoseFactory",
-    "family": "yolo_preopt_pose",
+    "factory_class": "Yolov8PoseFactory",
+    "family": "yolov8_pose",
     "imports": [
       "from common.base import IPoseFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptPosePostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8PosePostprocessor",
       "from common.visualizers import PoseVisualizer"
     ],
     "model_name": "yolov8_s_pose_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptPosePostprocessor",
+      "class": "YOLOv8PosePostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -29866,12 +29746,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_keypoints": 17
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt_pose",
+    "source_dir": "yolov8_pose",
     "source_task": "pose_estimation",
     "task": "pose_estimation",
     "variant": "yolov8-s-pose_640x640_pre-optimized",
@@ -29955,25 +29833,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IInstanceSegFactory"
     ],
-    "factory_class": "YoloPreoptSegFactory",
-    "family": "yolo_preopt_seg",
+    "factory_class": "Yolov8SegFactory",
+    "family": "yolov8_seg",
     "imports": [
       "from common.base import IInstanceSegFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptSegPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8InstanceSegPostprocessor",
       "from common.visualizers import InstanceSegVisualizer"
     ],
     "model_name": "yolov8_s_seg_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptSegPostprocessor",
+      "class": "YOLOv8InstanceSegPostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -30002,12 +29878,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt_seg",
+    "source_dir": "yolov8_seg",
     "source_task": "instance_segmentation",
     "task": "instance_segmentation",
     "variant": "yolov8-s-seg_640x640_pre-optimized",
@@ -30224,24 +30098,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IDetectionFactory"
     ],
-    "factory_class": "YoloPreoptFactory",
-    "family": "yolo_preopt",
+    "factory_class": "Yolov8Factory",
+    "family": "yolov8",
     "imports": [
       "from common.base import IDetectionFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptDetectionPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8Postprocessor",
       "from common.visualizers import DetectionVisualizer"
     ],
     "model_name": "yolov8_s_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptDetectionPostprocessor",
+      "class": "YOLOv8Postprocessor",
       "args": [
         {
           "token": "input_width"
@@ -30270,11 +30143,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt",
+    "source_dir": "yolov8",
     "source_task": "object_detection",
     "task": "object_detection",
     "variant": "yolov8-s_640x640_pre-optimized",
@@ -30358,25 +30230,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_keypoints": 17
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IPoseFactory"
     ],
-    "factory_class": "YoloPreoptPoseFactory",
-    "family": "yolo_preopt_pose",
+    "factory_class": "Yolov8PoseFactory",
+    "family": "yolov8_pose",
     "imports": [
       "from common.base import IPoseFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptPosePostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8PosePostprocessor",
       "from common.visualizers import PoseVisualizer"
     ],
     "model_name": "yolov8_x_pose_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptPosePostprocessor",
+      "class": "YOLOv8PosePostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -30405,12 +30275,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_keypoints": 17
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt_pose",
+    "source_dir": "yolov8_pose",
     "source_task": "pose_estimation",
     "task": "pose_estimation",
     "variant": "yolov8-x-pose_640x640_pre-optimized",
@@ -30492,25 +30360,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IInstanceSegFactory"
     ],
-    "factory_class": "YoloPreoptSegFactory",
-    "family": "yolo_preopt_seg",
+    "factory_class": "Yolov8SegFactory",
+    "family": "yolov8_seg",
     "imports": [
       "from common.base import IInstanceSegFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptSegPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8InstanceSegPostprocessor",
       "from common.visualizers import InstanceSegVisualizer"
     ],
     "model_name": "yolov8_x_seg_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptSegPostprocessor",
+      "class": "YOLOv8InstanceSegPostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -30539,12 +30405,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt_seg",
+    "source_dir": "yolov8_seg",
     "source_task": "instance_segmentation",
     "task": "instance_segmentation",
     "variant": "yolov8-x-seg_640x640_pre-optimized",
@@ -30628,24 +30492,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IDetectionFactory"
     ],
-    "factory_class": "YoloPreoptFactory",
-    "family": "yolo_preopt",
+    "factory_class": "Yolov8Factory",
+    "family": "yolov8",
     "imports": [
       "from common.base import IDetectionFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptDetectionPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8Postprocessor",
       "from common.visualizers import DetectionVisualizer"
     ],
     "model_name": "yolov8_x_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptDetectionPostprocessor",
+      "class": "YOLOv8Postprocessor",
       "args": [
         {
           "token": "input_width"
@@ -30674,11 +30537,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt",
+    "source_dir": "yolov8",
     "source_task": "object_detection",
     "task": "object_detection",
     "variant": "yolov8-x_640x640_pre-optimized",
@@ -30762,24 +30624,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IDetectionFactory"
     ],
-    "factory_class": "YoloPreoptFactory",
-    "family": "yolo_preopt",
+    "factory_class": "Yolov9Factory",
+    "family": "yolov9",
     "imports": [
       "from common.base import IDetectionFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptDetectionPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8Postprocessor",
       "from common.visualizers import DetectionVisualizer"
     ],
     "model_name": "yolov9_c_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptDetectionPostprocessor",
+      "class": "YOLOv8Postprocessor",
       "args": [
         {
           "token": "input_width"
@@ -30808,11 +30669,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt",
+    "source_dir": "yolov9",
     "source_task": "object_detection",
     "task": "object_detection",
     "variant": "yolov9-c_640x640_pre-optimized",
@@ -30896,24 +30756,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IDetectionFactory"
     ],
-    "factory_class": "YoloPreoptFactory",
-    "family": "yolo_preopt",
+    "factory_class": "Yolov9Factory",
+    "family": "yolov9",
     "imports": [
       "from common.base import IDetectionFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptDetectionPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8Postprocessor",
       "from common.visualizers import DetectionVisualizer"
     ],
     "model_name": "yolov9_e_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptDetectionPostprocessor",
+      "class": "YOLOv8Postprocessor",
       "args": [
         {
           "token": "input_width"
@@ -30942,11 +30801,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt",
+    "source_dir": "yolov9",
     "source_task": "object_detection",
     "task": "object_detection",
     "variant": "yolov9-e_640x640_pre-optimized",
@@ -31030,24 +30888,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IDetectionFactory"
     ],
-    "factory_class": "YoloPreoptFactory",
-    "family": "yolo_preopt",
+    "factory_class": "Yolov9Factory",
+    "family": "yolov9",
     "imports": [
       "from common.base import IDetectionFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptDetectionPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8Postprocessor",
       "from common.visualizers import DetectionVisualizer"
     ],
     "model_name": "yolov9_gelan_c_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptDetectionPostprocessor",
+      "class": "YOLOv8Postprocessor",
       "args": [
         {
           "token": "input_width"
@@ -31076,11 +30933,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt",
+    "source_dir": "yolov9",
     "source_task": "object_detection",
     "task": "object_detection",
     "variant": "yolov9-gelan-c_640x640_pre-optimized",
@@ -31164,24 +31020,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IDetectionFactory"
     ],
-    "factory_class": "YoloPreoptFactory",
-    "family": "yolo_preopt",
+    "factory_class": "Yolov9Factory",
+    "family": "yolov9",
     "imports": [
       "from common.base import IDetectionFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptDetectionPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8Postprocessor",
       "from common.visualizers import DetectionVisualizer"
     ],
     "model_name": "yolov9_m_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptDetectionPostprocessor",
+      "class": "YOLOv8Postprocessor",
       "args": [
         {
           "token": "input_width"
@@ -31210,11 +31065,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt",
+    "source_dir": "yolov9",
     "source_task": "object_detection",
     "task": "object_detection",
     "variant": "yolov9-m_640x640_pre-optimized",
@@ -31298,24 +31152,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IDetectionFactory"
     ],
-    "factory_class": "YoloPreoptFactory",
-    "family": "yolo_preopt",
+    "factory_class": "Yolov9Factory",
+    "family": "yolov9",
     "imports": [
       "from common.base import IDetectionFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptDetectionPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8Postprocessor",
       "from common.visualizers import DetectionVisualizer"
     ],
     "model_name": "yolov9_s_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptDetectionPostprocessor",
+      "class": "YOLOv8Postprocessor",
       "args": [
         {
           "token": "input_width"
@@ -31344,11 +31197,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt",
+    "source_dir": "yolov9",
     "source_task": "object_detection",
     "task": "object_detection",
     "variant": "yolov9-s_640x640_pre-optimized",
@@ -31432,25 +31284,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IInstanceSegFactory"
     ],
-    "factory_class": "YoloPreoptSegFactory",
-    "family": "yolo_preopt_seg",
+    "factory_class": "Yolov9SegFactory",
+    "family": "yolov9_seg",
     "imports": [
       "from common.base import IInstanceSegFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptSegPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8InstanceSegPostprocessor",
       "from common.visualizers import InstanceSegVisualizer"
     ],
     "model_name": "yolov9_seg_c_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptSegPostprocessor",
+      "class": "YOLOv8InstanceSegPostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -31479,12 +31329,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt_seg",
+    "source_dir": "yolov9_seg",
     "source_task": "instance_segmentation",
     "task": "instance_segmentation",
     "variant": "yolov9-seg-c_640x640_pre-optimized",
@@ -31568,25 +31416,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IInstanceSegFactory"
     ],
-    "factory_class": "YoloPreoptSegFactory",
-    "family": "yolo_preopt_seg",
+    "factory_class": "Yolov9SegFactory",
+    "family": "yolov9_seg",
     "imports": [
       "from common.base import IInstanceSegFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptSegPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8InstanceSegPostprocessor",
       "from common.visualizers import InstanceSegVisualizer"
     ],
     "model_name": "yolov9_seg_e_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptSegPostprocessor",
+      "class": "YOLOv8InstanceSegPostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -31615,12 +31461,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt_seg",
+    "source_dir": "yolov9_seg",
     "source_task": "instance_segmentation",
     "task": "instance_segmentation",
     "variant": "yolov9-seg-e_640x640_pre-optimized",
@@ -31704,25 +31548,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IInstanceSegFactory"
     ],
-    "factory_class": "YoloPreoptSegFactory",
-    "family": "yolo_preopt_seg",
+    "factory_class": "Yolov9SegFactory",
+    "family": "yolov9_seg",
     "imports": [
       "from common.base import IInstanceSegFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptSegPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8InstanceSegPostprocessor",
       "from common.visualizers import InstanceSegVisualizer"
     ],
     "model_name": "yolov9_seg_gelan_c_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptSegPostprocessor",
+      "class": "YOLOv8InstanceSegPostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -31751,12 +31593,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300,
-      "num_mask_coefs": 32
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt_seg",
+    "source_dir": "yolov9_seg",
     "source_task": "instance_segmentation",
     "task": "instance_segmentation",
     "variant": "yolov9-seg-gelan-c_640x640_pre-optimized",
@@ -31907,24 +31747,23 @@
       "include_stream_inputs": true
     },
     "dir_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
     "extra_methods": [],
     "factory_bases": [
       "IDetectionFactory"
     ],
-    "factory_class": "YoloPreoptFactory",
-    "family": "yolo_preopt",
+    "factory_class": "Yolov9Factory",
+    "family": "yolov9",
     "imports": [
       "from common.base import IDetectionFactory",
-      "from common.processors import LetterboxPreprocessor, PreoptDetectionPostprocessor",
+      "from common.processors import LetterboxPreprocessor, YOLOv8Postprocessor",
       "from common.visualizers import DetectionVisualizer"
     ],
     "model_name": "yolov9_t_640x640_pre_optimized",
     "postprocessor": {
-      "class": "PreoptDetectionPostprocessor",
+      "class": "YOLOv8Postprocessor",
       "args": [
         {
           "token": "input_width"
@@ -31953,11 +31792,10 @@
       "config_overrides": {}
     },
     "registry_config": {
-      "score_threshold": 0.3,
-      "nms_threshold": 0.45,
-      "top_k": 300
+      "score_threshold": 0.4,
+      "nms_threshold": 0.5
     },
-    "source_dir": "yolo_preopt",
+    "source_dir": "yolov9",
     "source_task": "object_detection",
     "task": "object_detection",
     "variant": "yolov9-t_640x640_pre-optimized",

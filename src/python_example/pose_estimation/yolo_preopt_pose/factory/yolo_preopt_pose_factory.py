@@ -2,7 +2,7 @@
 
 One factory serves every variant of the ``yolo_preopt_pose`` family: the per-variant
 differences -- processor classes and their non-default arguments -- live in
-``variants/<dxnn-stem>.json`` rather than in 15 near-identical factory files.
+``variants/<dxnn-stem>.json`` rather than in 5 near-identical factory files.
 
 """
 from pathlib import Path

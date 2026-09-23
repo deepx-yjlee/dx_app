@@ -2,7 +2,7 @@
 
 One factory serves every variant of the ``yolov12`` family: the per-variant
 differences -- processor classes and their non-default arguments -- live in
-``variants/<dxnn-stem>.json`` rather than in 5 near-identical factory files.
+``variants/<dxnn-stem>.json`` rather than in 10 near-identical factory files.
 
 """
 from pathlib import Path

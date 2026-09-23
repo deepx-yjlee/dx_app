@@ -41,7 +41,7 @@
     "config_overrides": {}
   },
   "postprocessor": {
-    "class": "NanoDetPostprocessor",
+    "class": "PicoDetPostprocessor",
     "args": [
       {
         "token": "input_width"

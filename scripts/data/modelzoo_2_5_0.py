@@ -48,12 +48,16 @@ except ImportError:  # run directly as scripts/data/modelzoo_2_5_0.py
 # upstream repo called it (PaddleSeg's pp-liteseg 960x720 is WxH, MMSeg's
 # stdc1-seg50 512x1024 is HxW) -- so the normalised column is the source, not the stem.
 _GEOMETRY_EXCEPTIONS = {
-    # The zoo transposed this row. Its own vitpose-s_256x192 row says 256x192x3
-    # (w=192, h=256, and the registry agrees), while dark_hrnet_w32_256x192 says
-    # 192x256x3. Both are MMPose top-down person crops at H=256, W=192 -- portrait --
-    # so the dark-hrnet row is the typo. Following it would feed the model a
-    # landscape tensor and silently wreck every keypoint.
-    "dark-hrnet-w32_256x192": (192, 256),
+    # NO exception for dark-hrnet-w32_256x192. There WAS one here, arguing that the
+    # zoo had transposed the row: its own vitpose-s_256x192 row says 256x192x3 while
+    # dark_hrnet_w32_256x192 says 192x256x3, and both are MMPose top-down person crops,
+    # so the dark-hrnet row looked like the typo.
+    #
+    # The model says otherwise. With DX-RT 3.5.0 able to load it, its input tensor is
+    # [1, 192, 256, 3] (NHWC) -- H=192, W=256, landscape -- and its heatmap is
+    # (1, 17, 48, 64), which at stride 4 means exactly that. The zoo row was right and
+    # the reasoning from convention was wrong. Left as a comment because "the table
+    # looks transposed" is a tempting argument to make again.
     # Not an image. The .dxnn takes [1, 77, 512] CLIP token embeddings, and
     # CLIPTextPostprocessor documents its own axes as input_width=77 (token length),
     # input_height=512 (embedding width). Keep the class's convention.
@@ -168,10 +172,15 @@ GROUPS: list[dict] = [
     dict(
         task="object_detection", task_legacy="object_detection", family="yolo_preopt",
         cpp_donor=None,
-        variants=(_preopt("yolo11", _SIZES) + _preopt("yolo26", _SIZES)
-                  + _preopt("yolov8", _SIZES) + _preopt("yolov12", _SIZES)
-                  + _preopt("yolov13", ("n", "s", "l", "x"))
-                  + _preopt("yolov9", ("t", "s", "m", "c", "e", "gelan-c"))),
+        # MEASURED on DX-RT 3.5.0, not assumed from the name. Of the 63 stems ending
+        # in _pre-optimized, only these five emit the top-k row table (1, 300, 6). The
+        # other 25 detection ones emit (1, 84, 8400) -- the ORDINARY dense head, the
+        # same tensor their plain sibling emits -- so by dx-modelzoo's own rule
+        # (family = postprocessing chain) they belong to their architecture family and
+        # are listed there. "_pre-optimized" in the filename does not imply the
+        # pre-optimized HEAD; for yolo11/v8/v9/v12/v13 it is a compile difference the
+        # application never sees.
+        variants=["yolo26-l_640x640_pre-optimized", "yolo26-m_640x640_pre-optimized", "yolo26-n_640x640_pre-optimized", "yolo26-s_640x640_pre-optimized", "yolo26-x_640x640_pre-optimized"],
         preprocessor=LETTERBOX,
         postprocessor=_proc("PreoptDetectionPostprocessor", WHC),
         visualizer=_proc("DetectionVisualizer", []),
@@ -181,8 +190,9 @@ GROUPS: list[dict] = [
     dict(
         task="pose_estimation", task_legacy="pose_estimation", family="yolo_preopt_pose",
         cpp_donor=None,
-        variants=(_preopt("yolo11", _SIZES, "-pose") + _preopt("yolo26", _SIZES, "-pose")
-                  + _preopt("yolov8", _SIZES, "-pose")),
+        # MEASURED: only these five emit (1, 300, 57). The other ten pose stems emit
+        # (1, 56, 8400), the ordinary dense pose head.
+        variants=["yolo26-l-pose_640x640_pre-optimized", "yolo26-m-pose_640x640_pre-optimized", "yolo26-n-pose_640x640_pre-optimized", "yolo26-s-pose_640x640_pre-optimized", "yolo26-x-pose_640x640_pre-optimized"],
         preprocessor=LETTERBOX,
         postprocessor=_proc("PreoptPosePostprocessor", WHC),
         visualizer=_proc("PoseVisualizer", []),
@@ -190,27 +200,22 @@ GROUPS: list[dict] = [
         config={"score_threshold": 0.3, "nms_threshold": 0.45, "top_k": 300,
                 "num_keypoints": 17},
     ),
-    dict(
-        task="instance_segmentation", task_legacy="instance_segmentation",
-        family="yolo_preopt_seg",
-        cpp_donor=None,
-        variants=(_preopt("yolo11", _SIZES, "-seg") + _preopt("yolov8", _SIZES, "-seg")
-                  + [f"yolov12-seg-{s}_640x640_pre-optimized" for s in _SIZES]
-                  + [f"yolov9-seg-{s}_640x640_pre-optimized"
-                     for s in ("c", "e", "gelan-c")]),
-        preprocessor=LETTERBOX,
-        postprocessor=_proc("PreoptSegPostprocessor", WHC),
-        visualizer=_proc("InstanceSegVisualizer", []),
-        base="IInstanceSegFactory", reference=REF_ULTRALYTICS,
-        config={"score_threshold": 0.3, "nms_threshold": 0.45, "top_k": 300,
-                "num_mask_coefs": 32},
-    ),
+    # There is NO yolo_preopt_seg family. All 18 stems ending in -seg_..._pre-optimized
+    # emit (1, 116, 8400) + (1, 32, 160, 160) -- the ordinary dense segmentation head --
+    # so every one of them is a variant of its architecture's _seg family. The family
+    # was created here on the assumption that the name implied the pre-optimized head;
+    # it does not, and no published model emits a pre-optimized SEG table at all.
+    # PreoptSegPostprocessor is kept (tested, and dx_yolo26 ships a model that needs
+    # it), just not wired to any variant.
 
     # ============================ plain YOLO (25) ===============================
     dict(
         task="object_detection", task_legacy="object_detection", family="yolov12",
         cpp_donor="object_detection/yolov8",
-        variants=_plain("yolov12", _SIZES),
+        # The _pre-optimized stems of this family emit the SAME dense tensor as
+        # the plain ones (measured), so they are variants of this family, not of a
+        # separate mechanism family.
+        variants=_plain("yolov12", _SIZES) + ["yolov12-l_640x640_pre-optimized", "yolov12-m_640x640_pre-optimized", "yolov12-n_640x640_pre-optimized", "yolov12-s_640x640_pre-optimized", "yolov12-x_640x640_pre-optimized"],
         preprocessor=LETTERBOX,
         postprocessor=_proc("YOLOv8Postprocessor", WHC),
         visualizer=_proc("DetectionVisualizer", []),
@@ -220,7 +225,10 @@ GROUPS: list[dict] = [
     dict(
         task="object_detection", task_legacy="object_detection", family="yolov13",
         cpp_donor="object_detection/yolov8",
-        variants=_plain("yolov13", ("n", "s", "l", "x")),
+        # The _pre-optimized stems of this family emit the SAME dense tensor as
+        # the plain ones (measured), so they are variants of this family, not of a
+        # separate mechanism family.
+        variants=_plain("yolov13", ("n", "s", "l", "x")) + ["yolov13-l_640x640_pre-optimized", "yolov13-n_640x640_pre-optimized", "yolov13-s_640x640_pre-optimized", "yolov13-x_640x640_pre-optimized"],
         preprocessor=LETTERBOX,
         postprocessor=_proc("YOLOv8Postprocessor", WHC),
         visualizer=_proc("DetectionVisualizer", []),
@@ -230,7 +238,10 @@ GROUPS: list[dict] = [
     dict(
         task="object_detection", task_legacy="object_detection", family="yolov9",
         cpp_donor="object_detection/yolov9",
-        variants=["yolov9-e_640x640"],
+        # The _pre-optimized stems of this family emit the SAME dense tensor as
+        # the plain ones (measured), so they are variants of this family, not of a
+        # separate mechanism family.
+        variants=["yolov9-e_640x640"] + ["yolov9-c_640x640_pre-optimized", "yolov9-e_640x640_pre-optimized", "yolov9-gelan-c_640x640_pre-optimized", "yolov9-m_640x640_pre-optimized", "yolov9-s_640x640_pre-optimized", "yolov9-t_640x640_pre-optimized"],
         preprocessor=LETTERBOX,
         postprocessor=_proc("YOLOv8Postprocessor", WHC),
         visualizer=_proc("DetectionVisualizer", []),
@@ -251,7 +262,10 @@ GROUPS: list[dict] = [
         task="instance_segmentation", task_legacy="instance_segmentation",
         family="yolov12_seg",
         cpp_donor="instance_segmentation/yolov8_seg",
-        variants=[f"yolov12-seg-{s}_640x640" for s in _SIZES],
+        # The _pre-optimized stems of this family emit the SAME dense tensor as
+        # the plain ones (measured), so they are variants of this family, not of a
+        # separate mechanism family.
+        variants=[f"yolov12-seg-{s}_640x640" for s in _SIZES] + ["yolov12-seg-l_640x640_pre-optimized", "yolov12-seg-m_640x640_pre-optimized", "yolov12-seg-n_640x640_pre-optimized", "yolov12-seg-s_640x640_pre-optimized", "yolov12-seg-x_640x640_pre-optimized"],
         preprocessor=LETTERBOX,
         postprocessor=_proc("YOLOv8InstanceSegPostprocessor", WHC),
         visualizer=_proc("InstanceSegVisualizer", []),
@@ -262,7 +276,10 @@ GROUPS: list[dict] = [
         task="instance_segmentation", task_legacy="instance_segmentation",
         family="yolov9_seg",
         cpp_donor="instance_segmentation/yolov8_seg",
-        variants=[f"yolov9-seg-{s}_640x640" for s in ("c", "e", "gelan-c")],
+        # The _pre-optimized stems of this family emit the SAME dense tensor as
+        # the plain ones (measured), so they are variants of this family, not of a
+        # separate mechanism family.
+        variants=[f"yolov9-seg-{s}_640x640" for s in ("c", "e", "gelan-c")] + ["yolov9-seg-c_640x640_pre-optimized", "yolov9-seg-e_640x640_pre-optimized", "yolov9-seg-gelan-c_640x640_pre-optimized"],
         preprocessor=LETTERBOX,
         postprocessor=_proc("YOLOv8InstanceSegPostprocessor", WHC),
         visualizer=_proc("InstanceSegVisualizer", []),
@@ -283,7 +300,10 @@ GROUPS: list[dict] = [
         # Gap fill: dx-modelzoo's yolo11-pose holds n/s/m/x but not l.
         task="pose_estimation", task_legacy="pose_estimation", family="yolo11_pose",
         cpp_donor="pose_estimation/yolo11_pose",
-        variants=["yolo11-l-pose_640x640"],
+        # The _pre-optimized stems of this family emit the SAME dense tensor as
+        # the plain ones (measured), so they are variants of this family, not of a
+        # separate mechanism family.
+        variants=["yolo11-l-pose_640x640"] + ["yolo11-l-pose_640x640_pre-optimized", "yolo11-m-pose_640x640_pre-optimized", "yolo11-n-pose_640x640_pre-optimized", "yolo11-s-pose_640x640_pre-optimized", "yolo11-x-pose_640x640_pre-optimized"],
         preprocessor=LETTERBOX,
         postprocessor=_proc("YOLOv8PosePostprocessor", WHC),
         visualizer=_proc("PoseVisualizer", []),
@@ -291,6 +311,66 @@ GROUPS: list[dict] = [
         config={"score_threshold": 0.4, "nms_threshold": 0.5},
     ),
 
+    dict(
+        # An EXISTING dx-modelzoo family gaining its _pre-optimized stems: measured,
+        # they emit the same dense tensor as the plain variants already here.
+        task="object_detection", task_legacy="object_detection", family="yolo11",
+        cpp_donor="object_detection/yolo11",
+        variants=["yolo11-l_640x640_pre-optimized", "yolo11-m_640x640_pre-optimized", "yolo11-n_640x640_pre-optimized", "yolo11-s_640x640_pre-optimized", "yolo11-x_640x640_pre-optimized"],
+        preprocessor=LETTERBOX,
+        postprocessor=_proc("YOLOv8Postprocessor", WHC),
+        visualizer=_proc("DetectionVisualizer", []),
+        base="IDetectionFactory", reference=REF_ULTRALYTICS,
+        config={"score_threshold": 0.4, "nms_threshold": 0.5},
+    ),
+    dict(
+        # An EXISTING dx-modelzoo family gaining its _pre-optimized stems: measured,
+        # they emit the same dense tensor as the plain variants already here.
+        task="object_detection", task_legacy="object_detection", family="yolov8",
+        cpp_donor="object_detection/yolov8",
+        variants=["yolov8-l_640x640_pre-optimized", "yolov8-m_640x640_pre-optimized", "yolov8-n_640x640_pre-optimized", "yolov8-s_640x640_pre-optimized", "yolov8-x_640x640_pre-optimized"],
+        preprocessor=LETTERBOX,
+        postprocessor=_proc("YOLOv8Postprocessor", WHC),
+        visualizer=_proc("DetectionVisualizer", []),
+        base="IDetectionFactory", reference=REF_ULTRALYTICS,
+        config={"score_threshold": 0.4, "nms_threshold": 0.5},
+    ),
+    dict(
+        # An EXISTING dx-modelzoo family gaining its _pre-optimized stems: measured,
+        # they emit the same dense tensor as the plain variants already here.
+        task="instance_segmentation", task_legacy="instance_segmentation", family="yolo11_seg",
+        cpp_donor="instance_segmentation/yolo11_seg",
+        variants=["yolo11-l-seg_640x640_pre-optimized", "yolo11-m-seg_640x640_pre-optimized", "yolo11-n-seg_640x640_pre-optimized", "yolo11-s-seg_640x640_pre-optimized", "yolo11-x-seg_640x640_pre-optimized"],
+        preprocessor=LETTERBOX,
+        postprocessor=_proc("YOLOv8InstanceSegPostprocessor", WHC),
+        visualizer=_proc("InstanceSegVisualizer", []),
+        base="IInstanceSegFactory", reference=REF_ULTRALYTICS,
+        config={"score_threshold": 0.4, "nms_threshold": 0.5},
+    ),
+    dict(
+        # An EXISTING dx-modelzoo family gaining its _pre-optimized stems: measured,
+        # they emit the same dense tensor as the plain variants already here.
+        task="instance_segmentation", task_legacy="instance_segmentation", family="yolov8_seg",
+        cpp_donor="instance_segmentation/yolov8_seg",
+        variants=["yolov8-l-seg_640x640_pre-optimized", "yolov8-m-seg_640x640_pre-optimized", "yolov8-n-seg_640x640_pre-optimized", "yolov8-s-seg_640x640_pre-optimized", "yolov8-x-seg_640x640_pre-optimized"],
+        preprocessor=LETTERBOX,
+        postprocessor=_proc("YOLOv8InstanceSegPostprocessor", WHC),
+        visualizer=_proc("InstanceSegVisualizer", []),
+        base="IInstanceSegFactory", reference=REF_ULTRALYTICS,
+        config={"score_threshold": 0.4, "nms_threshold": 0.5},
+    ),
+    dict(
+        # An EXISTING dx-modelzoo family gaining its _pre-optimized stems: measured,
+        # they emit the same dense tensor as the plain variants already here.
+        task="pose_estimation", task_legacy="pose_estimation", family="yolov8_pose",
+        cpp_donor="pose_estimation/yolov8_pose",
+        variants=["yolov8-l-pose_640x640_pre-optimized", "yolov8-m-pose_640x640_pre-optimized", "yolov8-n-pose_640x640_pre-optimized", "yolov8-s-pose_640x640_pre-optimized", "yolov8-x-pose_640x640_pre-optimized"],
+        preprocessor=LETTERBOX,
+        postprocessor=_proc("YOLOv8PosePostprocessor", WHC),
+        visualizer=_proc("PoseVisualizer", []),
+        base="IPoseFactory", reference=REF_ULTRALYTICS,
+        config={"score_threshold": 0.4, "nms_threshold": 0.5},
+    ),
     # ============================ RT-DETR (20) ==================================
     dict(
         task="object_detection", task_legacy="object_detection", family="rtdetr",
@@ -491,7 +571,12 @@ GROUPS: list[dict] = [
     ),
     dict(
         # Text encoder: the .dxnn takes [1, 77, 512] token embeddings, not an image.
-        # See the family README for the open_clip snippet that produces them.
+        # CONFIRMED against the model on DX-RT 3.5.0: its input dtype is float32, and
+        # feeding it the uint8 tensor an image preprocessor produces fails outright
+        # ("Input dtype mismatch for 'x': expected float32, got uint8"). So this variant
+        # cannot be driven from a picture at all -- the example exists for the
+        # postprocessor and the embedding contract, and the README carries the
+        # open_clip snippet that produces the tokens.
         task="zero_shot_image_classification", task_legacy="embedding", family="clip",
         cpp_donor="zero_shot_image_classification/clip",
         variants=["clip-text_resnet50_77x512_openai"],
@@ -525,15 +610,18 @@ GROUPS: list[dict] = [
 
     # ============================ PP-ShiTu detection (2) ========================
     dict(
-        # PP-PicoDet mainbody detector, one foreground class. PicoDet and NanoDet-Plus
-        # share the GFL/DFL head, and NanoDetPostprocessor auto-detects reg_max and the
-        # anchor grid from the tensor shape, so it covers this without a new class.
+        # PP-PicoDet mainbody detector, one foreground class. NanoDetPostprocessor was
+        # the first choice -- PicoDet and NanoDet-Plus share the GFL/DFL head -- and it
+        # does not fit, for packaging rather than algorithm. MEASURED: this model emits
+        # EIGHT tensors, a score and a box tensor per pyramid level
+        # ((1,6400,1)...(1,100,32), strides 8/16/32/64, reg_max 7), where NanoDet emits
+        # one concatenated (1, N, nc + 4*(reg_max+1)).
         task="object_detection", task_legacy="object_detection", family="pp_shitu",
         cpp_donor="object_detection/nanodet",
         variants=["pp-shituv1-mainbody-detection_640x640",
                   "pp-shituv2-mainbody-detection_640x640"],
         preprocessor=LETTERBOX,
-        postprocessor=_proc("NanoDetPostprocessor", WHC),
+        postprocessor=_proc("PicoDetPostprocessor", WHC),
         visualizer=_proc("DetectionVisualizer", []),
         base="IDetectionFactory", reference=REF_PADDLECLAS,
         config={"num_classes": 1, "conf_threshold": 0.4, "nms_threshold": 0.5},

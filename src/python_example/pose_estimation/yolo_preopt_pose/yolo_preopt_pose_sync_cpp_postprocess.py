@@ -4,7 +4,7 @@
 
 One entry point serves the whole family; ``--variant`` picks the model::
 
-    python yolo_preopt_pose_sync_cpp_postprocess.py --variant yolo11-l-pose_640x640_pre-optimized
+    python yolo_preopt_pose_sync_cpp_postprocess.py --variant yolo26-l-pose_640x640_pre-optimized
 """
 import sys
 from pathlib import Path

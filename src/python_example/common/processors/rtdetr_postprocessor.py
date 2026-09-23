@@ -7,9 +7,14 @@ logits and takes the top-k over the flattened (query x class) scores. Its
 preprocessing is a plain resize with no letterbox, so ``ctx`` carries
 ``scale_x``/``scale_y`` and zero padding.
 
-**No RT-DETR .dxnn or .onnx is published** -- all 20 variants return 403 -- so unlike
-the pre-optimized decode this one cannot be pinned to a measurement. It is written to
-the two layouts PaddleDetection actually produces and refuses anything else:
+MEASURED on DX-RT 3.5.0, which is the first runtime able to load these v9 models:
+
+    rtdetr-r18vd-6x_640x640            (300, 6)
+    mask-rtdetr-hgnetv2-s-6x_640x640   (100, 6) + (100, 640, 640) int32 0/1
+
+-- so the ``paddle_nms`` layout below is what these models actually emit, in model-input
+pixels, with NO batch axis. The ``split`` layout is kept for an export without the
+postprocess op. Both are accepted, and anything else is refused:
 
 ``split`` -- the raw decoder head, from an export WITHOUT the postprocess op::
 
@@ -98,8 +103,16 @@ class _RTDETRBase(IPostprocessor):
 
     @staticmethod
     def _find_paddle(outputs: Sequence[np.ndarray]) -> Optional[np.ndarray]:
-        """The (1, N, 6) table PaddleDetection's own postprocess emits."""
+        """The ``[N, 6]`` table PaddleDetection's own postprocess emits.
+
+        MEASURED on DX-RT 3.5.0: rtdetr-r18vd-6x emits ``(300, 6)`` and mask-rtdetr
+        ``(100, 6)`` -- TWO dimensions, no batch axis. The first version of this
+        required ``ndim == 3`` and rejected every real model. Both forms are accepted
+        now, because nothing guarantees the next compile drops the axis too.
+        """
         for out in outputs:
+            if out.ndim == 2 and out.shape[1] == 6:
+                return out
             if out.ndim == 3 and out.shape[0] == 1 and out.shape[2] == 6:
                 return out[0]
         return None
@@ -249,16 +262,26 @@ class MaskRTDETRPostprocessor(_RTDETRBase):
 
     def _find_masks(self, outputs: Sequence[np.ndarray],
                     queries: int) -> np.ndarray:
-        """The (1, N, H, W) per-query mask logits, N matching the query count."""
+        """The per-query masks, ``[N, H, W]``.
+
+        MEASURED on DX-RT 3.5.0: mask-rtdetr-hgnetv2-s emits ``(100, 640, 640)`` of
+        int32 whose values are 0 and 1 -- already binary, already at the model input
+        resolution. Not logits, not prototypes: applying a sigmoid to an integer 1
+        would give 0.73 and thresholding that at 0.5 would still work, which is exactly
+        the kind of accident that hides a wrong assumption. The 4-D ``(1, N, H, W)``
+        form is accepted too.
+        """
         for out in outputs:
             if out.ndim == 4 and out.shape[0] == 1 and out.shape[1] >= queries:
                 return out[0]
+            if out.ndim == 3 and out.shape[0] >= queries:
+                return out
         raise ValueError(
             f"[DXAPP] [ERROR] {type(self).__name__} - per-query mask tensor "
-            f"(1, N>={queries}, H, W) not found in the model outputs.\n"
+            f"(N>={queries}, H, W) not found in the model outputs.\n"
             f"  Got: {_shapes(outputs)}\n"
-            "  mask-RT-DETR emits the query boxes/logits AND one mask map per query; "
-            "only the boxes were found."
+            "  mask-RT-DETR emits the query table AND one mask per query; only the "
+            "table was found."
         )
 
     def process(self, outputs: List[np.ndarray],
@@ -273,9 +296,13 @@ class MaskRTDETRPostprocessor(_RTDETRBase):
 
         results = []
         for i in self._merge_duplicates(boxes):
-            logits = masks[query_index[i]].astype(np.float32)
-            probability = 1.0 / (1.0 + np.exp(-logits)) if _needs_sigmoid(logits) \
-                else logits
+            raw = masks[query_index[i]].astype(np.float32)
+            # An already-binary int32 mask needs no sigmoid; a float logit map does.
+            probability = 1.0 / (1.0 + np.exp(-raw)) if _needs_sigmoid(raw) else raw
+            # INTER_LINEAR for both forms. numpy's astype CONVERTS an int32 mask
+            # rather than reinterpreting its bits (unlike a C++ float* cast over the
+            # same buffer), so a 0/1 mask arrives here as 0.0/1.0 and interpolating
+            # before the 0.5 threshold simply gives a smoother edge.
             full = cv2.resize(probability, (ctx.original_width, ctx.original_height),
                               interpolation=cv2.INTER_LINEAR)
             box = boxes[i]

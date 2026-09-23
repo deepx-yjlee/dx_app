@@ -68,12 +68,19 @@ def _split(rows: list[tuple[list[float], int, float]]):
     return boxes, logits
 
 
-def _paddle(rows: list[list[float]]):
-    """(1, N, 6) in PaddleDetection's [class, score, x1, y1, x2, y2] layout."""
-    table = np.zeros((1, QUERIES, 6), dtype=np.float32)
+def _paddle(rows: list[list[float]], batched: bool = False):
+    """PaddleDetection's [class, score, x1, y1, x2, y2] table.
+
+    MEASURED on DX-RT 3.5.0: rtdetr-r18vd-6x_640x640 emits (300, 6) -- TWO dimensions,
+    no batch axis -- with the corners in model-input pixels. mask-rtdetr emits (100, 6)
+    the same way. `batched=True` produces the 3-D form as well, because nothing
+    guarantees every compile drops the batch axis and a decode that only handles one of
+    them is a decode that breaks on the next model.
+    """
+    table = np.zeros((QUERIES, 6), dtype=np.float32)
     for i, row in enumerate(rows):
-        table[0, i] = row
-    return table
+        table[i] = row
+    return table[None, ...] if batched else table
 
 
 # --------------------------------------------------------------- split layout
@@ -153,7 +160,7 @@ def test_boxes_are_clipped_into_the_frame():
 # --------------------------------------------------------------- paddle layout
 
 def test_decodes_the_paddle_postprocess_layout():
-    """[class, score, x1, y1, x2, y2] in model-input pixels."""
+    """[class, score, x1, y1, x2, y2] in model-input pixels -- the measured layout."""
     table = _paddle([[5.0, 0.9, 64.0, 128.0, 192.0, 320.0]])
     results = RTDETRPostprocessor(640, 640, {"score_threshold": 0.5,
                                              "layout": "paddle_nms"}
@@ -173,6 +180,17 @@ def test_the_paddle_layout_is_detected_from_a_lone_six_column_tensor():
     results = RTDETRPostprocessor(640, 640, {"score_threshold": 0.5}
                                   ).process([table], _ctx())
     assert len(results) == 1 and results[0].class_id == 5
+
+
+def test_the_batched_paddle_layout_decodes_identically():
+    """(1, N, 6) and (N, 6) must give the same answer."""
+    rows = [[5.0, 0.9, 64.0, 128.0, 192.0, 320.0]]
+    post = RTDETRPostprocessor(640, 640, {"score_threshold": 0.5})
+    flat = post.process([_paddle(rows)], _ctx())
+    batched = post.process([_paddle(rows, batched=True)], _ctx())
+    assert len(flat) == len(batched) == 1
+    assert flat[0].class_id == batched[0].class_id
+    assert flat[0].box == pytest.approx(batched[0].box)
 
 
 def test_paddle_layout_padding_rows_are_ignored():
@@ -204,12 +222,19 @@ def test_an_explicit_layout_that_does_not_fit_fails_rather_than_falling_back():
 
 # --------------------------------------------------------------- mask variant
 
-def test_mask_rtdetr_pairs_each_query_with_its_mask():
-    boxes, logits = _split([([0.5, 0.5, 0.4, 0.4], 3, 10.0)])
-    masks = np.full((1, QUERIES, 160, 160), -10.0, dtype=np.float32)
-    masks[0, 0] = 10.0                      # query 0 is on everywhere
+def test_mask_rtdetr_pairs_each_query_with_its_measured_mask():
+    """MEASURED: mask-rtdetr emits (100, 6) + (100, 640, 640) int32 0/1.
+
+    The masks are ALREADY binary and already at the model input resolution -- not
+    logits, not prototypes, no sigmoid to apply. The first version of this decode
+    expected (1, N, H, W) float logits and would have squashed an integer 1 to 0.73
+    before thresholding it.
+    """
+    table = _paddle([[3.0, 0.9, 128.0, 128.0, 384.0, 384.0]])
+    masks = np.zeros((QUERIES, 640, 640), dtype=np.int32)
+    masks[0, 100:500, 100:500] = 1
     results = MaskRTDETRPostprocessor(640, 640, {"score_threshold": 0.5}
-                                      ).process([boxes, logits, masks], _ctx())
+                                      ).process([table, masks], _ctx())
     assert len(results) == 1
     assert results[0].class_id == 3
     assert results[0].mask.shape == (720, 1280)
@@ -217,22 +242,32 @@ def test_mask_rtdetr_pairs_each_query_with_its_mask():
     assert results[0].mask.sum() > 0
 
 
+def test_mask_rtdetr_accepts_float_logit_masks_too():
+    """A compile that leaves the masks as logits must still decode."""
+    table = _paddle([[3.0, 0.9, 128.0, 128.0, 384.0, 384.0]])
+    masks = np.full((QUERIES, 160, 160), -10.0, dtype=np.float32)
+    masks[0] = 10.0
+    results = MaskRTDETRPostprocessor(640, 640, {"score_threshold": 0.5}
+                                      ).process([table, masks], _ctx())
+    assert len(results) == 1 and results[0].mask.sum() > 0
+
+
 def test_mask_rtdetr_confines_the_mask_to_its_box():
-    boxes, logits = _split([([0.5, 0.5, 0.2, 0.2], 3, 10.0)])
-    masks = np.full((1, QUERIES, 160, 160), 10.0, dtype=np.float32)
+    # box in input pixels 256..384 x 256..320 -> original 512..768 x 288..360
+    table = _paddle([[3.0, 0.9, 256.0, 256.0, 384.0, 320.0]])
+    masks = np.ones((QUERIES, 640, 640), dtype=np.int32)   # on everywhere
     mask = MaskRTDETRPostprocessor(640, 640, {"score_threshold": 0.5}
-                                   ).process([boxes, logits, masks], _ctx())[0].mask
-    # box in original coords: x 512..768, y 288..432
+                                   ).process([table, masks], _ctx())[0].mask
     assert mask[:200, :].sum() == 0, "painted above the box"
     assert mask[:, :400].sum() == 0, "painted left of the box"
-    assert mask[300:420, 530:750].sum() > 0, "box interior is empty"
+    assert mask[300:355, 530:750].sum() > 0, "box interior is empty"
 
 
 def test_mask_rtdetr_says_so_when_the_mask_tensor_is_missing():
-    boxes, logits = _split([([0.5, 0.5, 0.2, 0.2], 3, 10.0)])
+    table = _paddle([[3.0, 0.9, 128.0, 128.0, 384.0, 384.0]])
     with pytest.raises(ValueError) as exc:
         MaskRTDETRPostprocessor(640, 640, {"score_threshold": 0.5}
-                                ).process([boxes, logits], _ctx())
+                                ).process([table], _ctx())
     message = str(exc.value)
     assert "mask" in message.lower()
-    assert "(1, 300, 4)" in message, "the error must print the actual shapes"
+    assert "(300, 6)" in message, "the error must print the actual shapes"

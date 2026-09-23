@@ -47,6 +47,7 @@ from .rtdetr_postprocessor import (
 from .embedding_postprocessor import GenericEmbeddingPostprocessor
 from .matting_postprocessor import PPMattingPostprocessor
 from .anomaly_postprocessor import AnomalyFeaturePostprocessor
+from .picodet_postprocessor import PicoDetPostprocessor
 from .damoyolo_postprocessor import DamoYoloPostprocessor
 from .ssd_postprocessor import SSDPostprocessor
 from .tflite_det_postprocessor import TFLiteDetectionPostprocessor
@@ -104,6 +105,9 @@ __all__ = [
     "PPMattingPostprocessor",
     # Anomaly detection: a feature response, not a published anomaly score.
     "AnomalyFeaturePostprocessor",
+    # PP-PicoDet: a GFL head delivered one tensor per pyramid level, unlike
+    # NanoDet which concatenates them.
+    "PicoDetPostprocessor",
     # Preprocessors
     'LetterboxPreprocessor',
     'SimpleResizePreprocessor',
