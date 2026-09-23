@@ -87,7 +87,8 @@ def main() -> int:
         passed = statuses.get("PASS", 0)
         failed = statuses.get("FAIL", 0)
         other = sum(v for k, v in statuses.items() if k not in ("PASS", "FAIL"))
-        with_latency = sum(1 for r in results if r.get("infer_ms"))
+        with_latency = sum(1 for r in results
+                           if r.get("infer_ms") is not None)
         ran[(tree, kind)] = {r["variant"] for r in results}
         print(f"{tree + '/' + kind:<42} {passed:>5} {failed:>5} {other:>6} "
               f"{len(report.get('unsupported_container', [])):>12} {with_latency:>10}")
@@ -105,8 +106,10 @@ def main() -> int:
         # first version of this audit conflated the two and called four healthy
         # combinations failures. It is still worth flagging, because latency is how a
         # regression shows up before it becomes a failure.
+        # `is None`, not falsy: "Inference 0.00 ms" is what a one-frame async run
+        # reports for its submit-to-callback turnaround, and 0.0 is a reading.
         no_latency = [r["variant"] for r in results
-                      if r["status"] == "PASS" and not r.get("infer_ms")
+                      if r["status"] == "PASS" and r.get("infer_ms") is None
                       and not r["variant"].startswith(LATENCY_EXEMPT_PREFIXES)]
         if no_latency:
             warnings.append(f"{tree}/{kind}: {len(no_latency)} PASS carry no latency "
@@ -167,7 +170,7 @@ def main() -> int:
     # Latency sanity, across every combination at once.
     latencies = [(r["variant"], r["infer_ms"], f"{t}/{k}")
                  for (t, k), rep in reports.items()
-                 for r in rep["results"] if r.get("infer_ms")]
+                 for r in rep["results"] if r.get("infer_ms") is not None]
     if latencies:
         slowest = sorted(latencies, key=lambda x: -x[1])[:5]
         fastest = sorted(latencies, key=lambda x: x[1])[:3]

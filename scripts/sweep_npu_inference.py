@@ -288,7 +288,9 @@ def main() -> int:
     counts = {s: sum(1 for r in results if r["status"] == s)
               for s in ("PASS", "FAIL", "TIMEOUT", "NO_INFERENCE")}
     print(f"\n==== {a.tree} / {a.kind} ====")
-    ms = [r["infer_ms"] for r in results if r.get("infer_ms")]
+    # `is not None`, not truthiness: a single-frame async run reports
+    # "Inference 0.00 ms" and 0.0 would silently leave the statistics.
+    ms = [r["infer_ms"] for r in results if r.get("infer_ms") is not None]
     comp = [r["completed"] for r in results if r.get("completed") is not None]
     print(f"  PASS={counts['PASS']}  FAIL={counts['FAIL']}  TIMEOUT={counts['TIMEOUT']}"
           f"  NO_INFERENCE={counts['NO_INFERENCE']}"
