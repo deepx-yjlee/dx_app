@@ -288,6 +288,52 @@ def test_task_and_family_match_the_snapshot(registry, snapshot, provisional):
     assert not bad, f"task/family disagree with their declared table: {bad}"
 
 
+def _on_disk_variant_families(tree: str) -> dict[str, set[tuple[str, str]]]:
+    """``variant stem -> {(task, family)}`` for every config in one example tree.
+
+    The glob is ``<task>/<family>/variants/<stem>.json``. The family directory is
+    what the entry script loads; a second copy under another family is a second
+    recipe, not a duplicate name.
+    """
+    locations: dict[str, set[tuple[str, str]]] = {}
+    root = PROJECT_ROOT / "src" / tree
+    for path in root.glob("*/*/variants/*.json"):
+        task_name = path.parent.parent.parent.name
+        family_name = path.parent.parent.name
+        locations.setdefault(path.stem, set()).add((task_name, family_name))
+    return locations
+
+
+def test_variant_config_lives_only_in_the_registry_family(registry):
+    """Each variant config exists only under the (task, family) the registry assigns.
+
+    Entry scripts load ``<family>/variants/<stem>.json`` from their own directory.
+    Reassigning a stem in the registry and writing the new config does not remove
+    the old file, and a stem-set check (zoo page, manifest, registry dxnn_file)
+    still passes because both copies share a stem. The leftover is what
+    ``yolo_preopt_sync.py --variant yolo11-l_640x640_pre-optimized`` used to load:
+    a PreoptDetectionPostprocessor recipe for a dense YOLO head.
+    """
+    assigned: dict[str, set[tuple[str, str]]] = {}
+    for entry in registry:
+        assigned.setdefault(entry["variant"], set()).add((entry["task"], entry["family"]))
+
+    misplaced: list[str] = []
+    for tree in ("python_example", "cpp_example"):
+        found = _on_disk_variant_families(tree)
+        stems = set(assigned) | set(found)
+        for stem in sorted(stems):
+            want = assigned.get(stem, set())
+            got = found.get(stem, set())
+            if got == want:
+                continue
+            misplaced.append(f"{tree}/{stem}: on disk {sorted(got)}, registry {sorted(want)}")
+    assert not misplaced, (
+        "variant config outside the registry-assigned family:\n  "
+        + "\n  ".join(misplaced)
+    )
+
+
 def test_exceptions_carry_their_declared_values(registry):
     by_name = {e["model_name"]: e for e in registry}
     for name, (variant, task, family) in EXCEPTIONS.items():
