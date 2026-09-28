@@ -114,6 +114,23 @@ def _ser_depth(items, img_h, img_w):
     }
 
 
+def _ser_anomaly(items, img_h, img_w):
+    """Heatmap stats plus the two scalars, so the C++ peer can be diffed against it.
+
+    Neither tree serialised this result type: the family was added after the verify
+    harness, and the two implementations then diverged unnoticed -- Python moved to the
+    three-network EfficientAD combination while C++ kept one network's magnitude.
+    """
+    first = items[0]
+    return {
+        "image_height": img_h, "image_width": img_w,
+        "output_stats": _np_stats(first.heatmap)
+        if getattr(first, "heatmap", None) is not None else {},
+        "score": float(first.score),
+        "channels": int(first.channels),
+    }
+
+
 def _ser_segmentation(items, img_h, img_w):
     first = items[0]
     unique = int(len(np.unique(first.mask))) if first.mask.size > 0 else 0
@@ -201,6 +218,7 @@ _SERIALIZER_MAP = {
     "PoseResult":             _ser_pose,
     "InstanceSegResult":      _ser_instance_seg,
     "DepthResult":            _ser_depth,
+    "AnomalyResult":          _ser_anomaly,
     "SegmentationResult":     _ser_segmentation,
     "ClassificationResult":   _ser_classification,
     "OBBResult":              _ser_obb,

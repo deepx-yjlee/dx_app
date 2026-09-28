@@ -4,11 +4,12 @@
  *
  * Hand-written, not carried over from a donor: no existing family in this tree
  * consumes this model's output, so there is no factory whose behaviour would be right.
- * The result is a DepthResult and this uses the depth runner and
- * DepthVisualizer: both are continuous per-pixel maps rendered as a
- * colormap, so reusing them avoids a new runner and result type for four
- * models whose .dxnn files do not exist yet. It is a FEATURE RESPONSE,
- * not the published anomaly score -- see the postprocessor header.
+ *
+ * ONE network, on purpose: PatchCore's real metric needs a memory bank of training
+ * features -- a fit step, not a model -- so this declares no companions and the
+ * response is a FEATURE MAGNITUDE, not the published anomaly score. See the
+ * postprocessor header. It shares the anomaly runner and visualizer with EfficientAD,
+ * which is what keeps the render identical to the Python example's.
  */
 
 #ifndef PATCHCORE_FACTORY_HPP
@@ -17,7 +18,7 @@
 #include "common/base/i_factory.hpp"
 #include "common/processors/simple_resize_preprocessor.hpp"
 #include "common/processors/anomaly_postprocessor.hpp"
-#include "common/visualizers/depth_visualizer.hpp"
+#include "common/visualizers/anomaly_visualizer.hpp"
 #include "common/config/model_config.hpp"
 
 #include <string>
@@ -26,7 +27,7 @@
 
 namespace dxapp {
 
-class PatchcoreFactory : public IDepthEstimationFactory {
+class PatchcoreFactory : public IAnomalyDetectionFactory {
 public:
     /// Select the variant (a .dxnn stem) this factory builds for.
     /// Empty means the family default. Called from main(), the
@@ -39,14 +40,14 @@ public:
         return std::make_unique<SimpleResizePreprocessor>(input_width, input_height);
     }
 
-    PostprocessorPtr<DepthResult> createPostprocessor(
+    PostprocessorPtr<AnomalyResult> createPostprocessor(
         int input_width, int input_height) override {
         return std::make_unique<AnomalyFeaturePostprocessor>(
             input_width, input_height);
     }
 
-    VisualizerPtr<DepthResult> createVisualizer() override {
-        return std::make_unique<DepthVisualizer>();
+    VisualizerPtr<AnomalyResult> createVisualizer() override {
+        return std::make_unique<AnomalyVisualizer>();
     }
 
     std::string getModelName() const override {

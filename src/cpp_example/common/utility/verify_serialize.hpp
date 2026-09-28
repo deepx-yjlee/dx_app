@@ -180,6 +180,16 @@ inline json serializeDepth(const std::vector<DepthResult>& items, int img_h, int
     return result;
 }
 
+inline json serializeAnomaly(const std::vector<AnomalyResult>& items, int img_h, int img_w) {
+    json result = {{"image_height", img_h}, {"image_width", img_w}};
+    if (!items.empty()) {
+        result["output_stats"] = matStats(items[0].heatmap);
+        result["score"] = items[0].score;
+        result["channels"] = items[0].channels;
+    }
+    return result;
+}
+
 inline json serializeSegmentation(const std::vector<SegmentationResult>& items, int img_h, int img_w) {
     json result = {{"image_height", img_h}, {"image_width", img_w}};
     if (!items.empty()) {
@@ -344,6 +354,7 @@ DXAPP_VERIFY_DUMP_IMPL(FaceDetectionResult, serializeFace)
 DXAPP_VERIFY_DUMP_IMPL(PoseResult, serializePose)
 DXAPP_VERIFY_DUMP_IMPL(InstanceSegmentationResult, serializeInstanceSeg)
 DXAPP_VERIFY_DUMP_IMPL(DepthResult, serializeDepth)
+DXAPP_VERIFY_DUMP_IMPL(AnomalyResult, serializeAnomaly)
 DXAPP_VERIFY_DUMP_IMPL(SegmentationResult, serializeSegmentation)
 DXAPP_VERIFY_DUMP_IMPL(ClassificationResult, serializeClassification)
 DXAPP_VERIFY_DUMP_IMPL(OBBResult, serializeOBB)

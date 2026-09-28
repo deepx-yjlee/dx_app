@@ -487,6 +487,45 @@ inline void writeToVideo(cv::VideoWriter& writer, const cv::Mat& frame,
  * uses its filename as a subdirectory name to avoid collisions when saving
  * multiple images from the same source directory.
  */
+/**
+ * @brief Resolve a factory's companion .dxnn files beside the primary model.
+ *
+ * `declared` is what the factory's getCompanionModels() returned: (role, filename)
+ * pairs, where a relative filename is resolved in the primary model's own directory --
+ * how a model set stays together on disk.
+ *
+ * A missing companion throws. Falling back to the primary alone would produce a
+ * heatmap that still looks like a heatmap while meaning something else entirely, which
+ * is exactly the failure a single-network "EfficientAD" example already demonstrated.
+ *
+ * Mirrors resolve_companion_models() in the Python runner.
+ */
+inline std::vector<std::pair<std::string, std::string>> resolveCompanionModels(
+    const std::vector<std::pair<std::string, std::string>>& declared,
+    const std::string& primaryPath) {
+    std::vector<std::pair<std::string, std::string>> resolved;
+    if (declared.empty()) return resolved;
+
+    const fs::path base = fs::absolute(fs::path(primaryPath)).parent_path();
+    for (const auto& item : declared) {
+        fs::path candidate(item.second);
+        if (!candidate.is_absolute()) candidate = base / candidate;
+        if (!fs::is_regular_file(candidate)) {
+            std::ostringstream msg;
+            msg << "[DXAPP] [ERROR] companion model for role '" << item.first
+                << "' not found: " << candidate.string() << "\n"
+                << "  This factory needs it alongside the primary model ("
+                << fs::path(primaryPath).filename().string() << ").\n"
+                << "  This model set must be downloaded together; running the primary "
+                   "network alone would produce a different measurement under the same "
+                   "name.\n";
+            throw std::runtime_error(msg.str());
+        }
+        resolved.emplace_back(item.first, candidate.string());
+    }
+    return resolved;
+}
+
 inline std::string buildPerImageSavePath(const std::string& runDir,
                                         const std::string& modelName,
                                         const std::string& imagePath,

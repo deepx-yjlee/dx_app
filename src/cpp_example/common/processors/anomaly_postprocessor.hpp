@@ -11,20 +11,14 @@
  *  * PatchCore needs a memory bank of training-set features to turn its embedding
  *    into a distance.
  *
- * dx_app has no in-tree multi-model application pattern, so each variant gets a
- * single-model feature-extraction example: the per-pixel magnitude of the feature
- * response. That is a real, working application -- it is not the published EfficientAD
- * or PatchCore metric, and `min_depth`/`max_depth` below carry the raw response range
- * so the caller can see what was normalised away.
- *
- * The result is a DepthResult and the family uses the depth runner and
- * DepthVisualizer. That is deliberate: both are continuous per-pixel maps rendered as
- * a colormap, and reusing them means no new runner, no new result type and no new
- * visualizer for a group of four models whose .dxnn files do not exist yet. The field
- * is named depth_map; its contents are an anomaly response.
+ * EfficientAD is now served by EfficientADPostprocessor, which the anomaly runner
+ * feeds with all three networks. THIS class remains for PATCHCORE, whose real metric
+ * needs a memory bank of training-set features -- a fit step, not a model -- so a
+ * single network can only report the per-pixel magnitude of its feature response.
+ * That is a real, working application; it is not the published PatchCore metric.
  *
  * Mirrors src/python_example/common/processors/anomaly_postprocessor.py, whose unit
- * tests pin this behaviour.
+ * tests pin this behaviour, and is cross-checked against it numerically.
  */
 
 #ifndef ANOMALY_POSTPROCESSOR_HPP
@@ -39,17 +33,18 @@
 #include <vector>
 
 #include "common/base/i_processor.hpp"
+#include "common/processors/efficientad_postprocessor.hpp"
 #include "common/processors/postprocess_utils.hpp"
 
 namespace dxapp {
 
-class AnomalyFeaturePostprocessor : public IPostprocessor<DepthResult> {
+class AnomalyFeaturePostprocessor : public IPostprocessor<AnomalyResult> {
 public:
     AnomalyFeaturePostprocessor(int input_width = 256, int input_height = 256)
         : input_width_(input_width), input_height_(input_height) {}
 
-    std::vector<DepthResult> process(const dxrt::TensorPtrs& outputs,
-                                     const PreprocessContext& ctx) override {
+    std::vector<AnomalyResult> process(const dxrt::TensorPtrs& outputs,
+                                       const PreprocessContext& ctx) override {
         int channels = 0, height = 0, width = 0;
         bool channels_last = false;
         const float* data = findFeatures(outputs, channels, height, width,
@@ -89,14 +84,17 @@ public:
                    cv::Size(ctx.original_width, ctx.original_height), 0, 0,
                    cv::INTER_LINEAR);
 
-        DepthResult result;
-        result.depth_map = heatmap;
-        result.width = ctx.original_width;
-        result.height = ctx.original_height;
-        // The RAW response range, not the normalised one: it is the only way to see
-        // how much contrast the normalisation stretched.
-        result.min_depth = static_cast<float>(lo);
-        result.max_depth = static_cast<float>(hi);
+        cv::threshold(heatmap, heatmap, 1.0, 1.0, cv::THRESH_TRUNC);
+        cv::threshold(heatmap, heatmap, 0.0, 0.0, cv::THRESH_TOZERO);
+
+        AnomalyResult result;
+        result.heatmap = heatmap;
+        // The percentile of the NORMALISED map, as the Python peer reports: with one
+        // network there is no disagreement to measure in raw units, so the number is
+        // frame-relative and says so on the frame.
+        result.score = linearPercentile(
+            std::vector<float>(heatmap.begin<float>(), heatmap.end<float>()), 99.0);
+        result.channels = channels;
         return {std::move(result)};
     }
 

@@ -12,6 +12,8 @@
 #include <array>
 #include <memory>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "i_processor.hpp"
 #include "i_visualizer.hpp"
@@ -265,6 +267,53 @@ public:
 /**
  * @brief Abstract Factory interface for image restoration models
  */
+/**
+ * @brief Factory for anomaly-detection models.
+ *
+ * The only interface here that can declare COMPANION models. EfficientAD ships as
+ * three .dxnn files whose outputs must be combined, and `-m` names exactly one; adding
+ * a second flag would change the CLI contract that run_demo.sh, every sweep and every
+ * generated entry relies on. So the factory declares what else it needs and the runner
+ * resolves those files beside the primary one -- the same design the Python runner uses.
+ */
+class IAnomalyDetectionFactory {
+public:
+    virtual ~IAnomalyDetectionFactory() = default;
+
+    virtual PreprocessorPtr createPreprocessor(int input_width, int input_height) = 0;
+    virtual PostprocessorPtr<AnomalyResult> createPostprocessor(int input_width,
+                                                                int input_height) = 0;
+    virtual VisualizerPtr<AnomalyResult> createVisualizer() = 0;
+    virtual std::string getModelName() const = 0;
+    virtual std::string getTaskType() const = 0;
+
+    /**
+     * @brief Extra .dxnn files this factory needs, as (role, filename) pairs.
+     *
+     * A relative filename is resolved in the primary model's own directory, which is
+     * how a model set stays together. The default is none: every other family runs one
+     * network, and a missing companion must fail loudly rather than quietly degrade to
+     * the primary alone -- a one-network "EfficientAD" heatmap still looks like a
+     * heatmap while meaning something else entirely.
+     */
+    virtual std::vector<std::pair<std::string, std::string>> getCompanionModels(
+        const std::string& primary_path) const {
+        (void)primary_path;
+        return {};
+    }
+
+    virtual void loadConfig(const ModelConfig& /*config*/) { /* No-op: subclasses override to apply runtime parameters */ }
+
+    /**
+     * @brief Input normalization for float-input models.
+     *
+     * Default: none, so the runner feeds raw uint8 or a plain /255 float buffer.
+     * Present because the anomaly runner is the depth runner's twin and shares its
+     * float-input path.
+     */
+    virtual InputNormalizationParams getInputNormalization() const { return {}; }
+};
+
 class IRestorationFactory {
 public:
     virtual ~IRestorationFactory() = default;

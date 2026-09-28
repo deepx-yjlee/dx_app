@@ -8,13 +8,13 @@
 
 #include "factory/efficientad_factory.hpp"
 #include "common/utility/variant_from_args.hpp"
-#include "common/runner/sync_depth_runner.hpp"
+#include "common/runner/sync_anomaly_runner.hpp"
 
 int main(int argc, char* argv[]) {
     // Default-construct so the factory's own member initialisation runs, THEN select
     // the variant. Passing the variant to a constructor would bypass that.
     auto factory = std::make_unique<dxapp::EfficientadFactory>();
     factory->setVariant(dxapp::variantFromArgs(argc, argv));
-    dxapp::SyncDepthRunner<dxapp::EfficientadFactory> runner(std::move(factory));
+    dxapp::SyncAnomalyRunner<dxapp::EfficientadFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

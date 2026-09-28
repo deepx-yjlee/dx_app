@@ -264,6 +264,25 @@ struct DepthResult {
 };
 
 /**
+ * @brief Anomaly-detection response
+ *
+ * Mirrors the Python AnomalyResult. Two producers, two meanings:
+ * EfficientADPostprocessor runs all three networks and returns EfficientAD's own
+ * combination of their disagreements, with `score` read off the RAW combination so it
+ * ranks frames; AnomalyFeaturePostprocessor sees one network and can only report a
+ * feature magnitude, with `score` off the normalised map. `heatmap` is always
+ * normalised against its own frame, so a hot region stays visible whatever the
+ * absolute magnitudes -- it is not comparable between frames.
+ */
+struct AnomalyResult {
+    cv::Mat heatmap;      // Float H x W, 0..1, frame-relative
+    float score{0.0f};
+    int channels{0};
+
+    AnomalyResult() = default;
+};
+
+/**
  * @brief Image restoration result
  */
 struct RestorationResult {
