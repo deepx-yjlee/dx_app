@@ -130,6 +130,8 @@ dx_app/
 │   │       ├── config/         #   ModelConfig loader
 │   │       └── utility/        #   Labels, preprocessing, profiling, run_dir, signal_handler, verify_serialize
 │   ├── python_example/         # Python end-to-end examples (499 variants / 24 tasks, 356 published)
+│   │                           #   <task>/<family>/<variant>/ holds config.json and thin entry scripts
+│   │                           #   factory/ and <family>_sync.py stay on the family (--variant)
 │   │   └── common/             # ← Shared Python runtime layer
 │   │       ├── base/           #   Abstract interfaces (IFactory, IProcessor, ...)
 │   │       ├── processors/     #   35 shared post-processors
