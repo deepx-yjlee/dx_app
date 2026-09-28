@@ -71,8 +71,8 @@ def registry() -> list:
 
 @pytest.fixture(scope="module")
 def variant_configs() -> set:
-    return {p.stem for p in
-            (PROJECT_ROOT / "src" / "python_example").glob("*/*/variants/*.json")}
+    return {p.parent.name for p in
+            (PROJECT_ROOT / "src" / "python_example").glob("*/*/*/config.json")}
 
 
 def _parsed(manifest: list):

@@ -87,12 +87,13 @@ def test_the_super_resolution_sample_override_still_matches():
     for Real-ESRGAN instead of the 275x150 one, so the returned name -- literal OR
     variant -- has to keep starting with "realesrgan" once punctuation is stripped.
     """
-    variants = sorted((PROJECT_ROOT / "src" / "cpp_example" / "super_resolution"
-                       / "realesrgan" / "variants").glob("*.json"))
-    assert variants, "realesrgan variants not found"
-    for variant in variants:
-        key = "".join(c for c in variant.stem.lower() if c.isalnum())
-        assert key.startswith("realesrgan"), f"{variant.stem} -> {key}"
+    configs = sorted((PROJECT_ROOT / "src" / "cpp_example" / "super_resolution"
+                      / "realesrgan").glob("*/config.json"))
+    assert configs, "realesrgan model folders not found"
+    for config_path in configs:
+        variant_name = config_path.parent.name
+        key = "".join(c for c in variant_name.lower() if c.isalnum())
+        assert key.startswith("realesrgan"), f"{variant_name} -> {key}"
 
 
 def test_a_wrapper_postprocessors_name_is_left_alone():

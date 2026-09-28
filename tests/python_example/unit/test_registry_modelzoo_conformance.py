@@ -206,7 +206,7 @@ def test_alias_entries_are_retained_not_deleted(registry):
         for tree in ("python_example", "cpp_example"):
             fam = PROJECT_ROOT / "src" / tree / entry["task"] / entry["family"]
             assert fam.is_dir(), f"alias {name}: family dir missing -> {fam}"
-            cfg = fam / "variants" / f"{entry['variant']}.json"
+            cfg = fam / entry["variant"] / "config.json"
             assert cfg.is_file(), f"alias {name}: variant config missing -> {cfg}"
         # The alias shares its canonical entry's variant, so the config it points at is
         # the canonical one -- that sharing is the whole point of an alias.
@@ -291,26 +291,26 @@ def test_task_and_family_match_the_snapshot(registry, snapshot, provisional):
 def _on_disk_variant_families(tree: str) -> dict[str, set[tuple[str, str]]]:
     """``variant stem -> {(task, family)}`` for every config in one example tree.
 
-    The glob is ``<task>/<family>/variants/<stem>.json``. The family directory is
+    The glob is ``<task>/<family>/<variant>/config.json``. The family directory is
     what the entry script loads; a second copy under another family is a second
     recipe, not a duplicate name.
     """
     locations: dict[str, set[tuple[str, str]]] = {}
     root = PROJECT_ROOT / "src" / tree
-    for path in root.glob("*/*/variants/*.json"):
+    for path in root.glob("*/*/*/config.json"):
         task_name = path.parent.parent.parent.name
         family_name = path.parent.parent.name
-        locations.setdefault(path.stem, set()).add((task_name, family_name))
+        locations.setdefault(path.parent.name, set()).add((task_name, family_name))
     return locations
 
 
-def test_variant_config_lives_only_in_the_registry_family(registry):
+def test_variant_config_lives_only_in_the_registry_model_folder(registry):
     """Each variant config exists only under the (task, family) the registry assigns.
 
-    Entry scripts load ``<family>/variants/<stem>.json`` from their own directory.
-    Reassigning a stem in the registry and writing the new config does not remove
-    the old file, and a stem-set check (zoo page, manifest, registry dxnn_file)
-    still passes because both copies share a stem. The leftover is what
+    Entry scripts load ``<family>/<variant>/config.json``. Reassigning a stem in
+    the registry and writing the new config does not remove the old file, and a
+    stem-set check (zoo page, manifest, registry dxnn_file) still passes because
+    both copies share a stem. The leftover is what
     ``yolo_preopt_sync.py --variant yolo11-l_640x640_pre-optimized`` used to load:
     a PreoptDetectionPostprocessor recipe for a dense YOLO head.
     """

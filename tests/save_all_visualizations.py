@@ -139,7 +139,7 @@ def _load_factory(factory_key: str, variant: str):
 
 
 def _variant_config(factory_key: str, variant: str) -> dict:
-    p = SRC / factory_key / "variants" / f"{variant}.json"
+    p = SRC / factory_key / variant / "config.json"
     return json.loads(p.read_text(encoding="utf-8")) if p.is_file() else {}
 
 

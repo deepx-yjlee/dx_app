@@ -60,10 +60,10 @@ def test_python_image_only_wrappers_mark_stream_inputs_unsupported():
     ]:
         # The guarantee moved from a source literal to the variant config: one family
         # entry script serves every variant, so it reads include_stream_inputs from
-        # variants/<stem>.json instead of hard-coding False. Assert the DATA now.
+        # <variant>/config.json instead of hard-coding False. Assert the DATA now.
         # root may be a task dir (holding families) or a family dir itself.
-        configs = sorted(root.glob("*/variants/*.json")) or \
-            sorted(root.glob("variants/*.json"))
+        configs = sorted(root.glob("*/*/config.json")) or \
+            sorted(root.glob("*/config.json"))
         assert configs, f"no variant configs under {root}"
         for cfg_path in configs:
             cfg = json.loads(cfg_path.read_text(encoding="utf-8"))

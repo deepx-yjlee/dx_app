@@ -39,7 +39,7 @@ def test_limit_nms_candidates_returns_original_arrays_when_disabled() -> None:
 
 def test_high_cost_yolo_configs_bound_nms_candidates() -> None:
     config_paths = [
-        ROOT / 'src/python_example/object_detection/yolov5/variants/yolov5-s_640x640_nospp.json',
+        ROOT / 'src/python_example/object_detection/yolov5/yolov5-s_640x640_nospp/config.json',
     ]
 
     for config_path in config_paths:
