@@ -2,7 +2,7 @@
 
 One factory serves every variant of the ``dope`` family: the per-variant
 differences -- processor classes and their non-default arguments -- live in
-``variants/<dxnn-stem>.json`` rather than in 1 near-identical factory files.
+``<variant>/config.json`` rather than in 1 near-identical factory files.
 
 Variants needing computed arguments delegate to ``custom_ops.py``.
 """
@@ -22,15 +22,15 @@ _co_spec = _ilu.spec_from_file_location(
 custom_ops = _ilu.module_from_spec(_co_spec)
 _co_spec.loader.exec_module(custom_ops)
 
-_VARIANTS_DIR = str(Path(__file__).resolve().parent.parent / "variants")
+_FAMILY_DIR = str(Path(__file__).resolve().parent.parent)
 
 
 class DopeFactory(_FactoryConfigMixin):
     """Config-driven factory for the dope family."""
 
     def __init__(self, config: dict = None, variant: str = None):
-        self.variant = variant or default_variant(_VARIANTS_DIR)
-        self.spec = load_variant_config(_VARIANTS_DIR, self.variant)
+        self.variant = variant or default_variant(_FAMILY_DIR)
+        self.spec = load_variant_config(_FAMILY_DIR, self.variant)
         # The variant config supplies the defaults; an explicit config overrides them.
         self.config = {**(self.spec.get("config") or {}), **(config or {})}
 

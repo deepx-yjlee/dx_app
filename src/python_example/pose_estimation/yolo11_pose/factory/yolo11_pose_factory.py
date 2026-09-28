@@ -2,7 +2,7 @@
 
 One factory serves every variant of the ``yolo11_pose`` family: the per-variant
 differences -- processor classes and their non-default arguments -- live in
-``variants/<dxnn-stem>.json`` rather than in 10 near-identical factory files.
+``<variant>/config.json`` rather than in 10 near-identical factory files.
 
 """
 from pathlib import Path
@@ -13,15 +13,15 @@ from common.variant_config import (
     default_variant,
     load_variant_config,
 )
-_VARIANTS_DIR = str(Path(__file__).resolve().parent.parent / "variants")
+_FAMILY_DIR = str(Path(__file__).resolve().parent.parent)
 
 
 class Yolo11PoseFactory(IPoseFactory):
     """Config-driven factory for the yolo11_pose family."""
 
     def __init__(self, config: dict = None, variant: str = None):
-        self.variant = variant or default_variant(_VARIANTS_DIR)
-        self.spec = load_variant_config(_VARIANTS_DIR, self.variant)
+        self.variant = variant or default_variant(_FAMILY_DIR)
+        self.spec = load_variant_config(_FAMILY_DIR, self.variant)
         # The variant config supplies the defaults; an explicit config overrides them.
         self.config = {**(self.spec.get("config") or {}), **(config or {})}
 
