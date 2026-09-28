@@ -45,11 +45,24 @@ class AnomalyVisualizer(IVisualizer):
             np.clip(heatmap * 255.0, 0, 255).astype(np.uint8), self.colormap)
         output = cv2.addWeighted(output, 1.0 - self.alpha, coloured, self.alpha, 0.0)
 
-        label = f"relative severity {result.score:.3f}"
+        label = f"relative severity {result.score:.4f}"
         if result.channels:
             label += f"  ({result.channels} ch)"
-        cv2.putText(output, label, (12, 28), cv2.FONT_HERSHEY_SIMPLEX, 0.7,
-                    (0, 0, 0), 3, cv2.LINE_AA)
-        cv2.putText(output, label, (12, 28), cv2.FONT_HERSHEY_SIMPLEX, 0.7,
-                    (255, 255, 255), 1, cv2.LINE_AA)
+
+        # A dark plate behind one stroke, not an outline pass plus a fill pass:
+        # cv2.getTextSize's width depends on THICKNESS (312 px at 1, 332 px at 3 for
+        # this label), so drawing the same string twice at different thicknesses
+        # desynchronises the glyph advance and the two copies drift apart across the
+        # line. The plate is also what every other visualizer in this tree uses.
+        scale, thickness = 0.7, 1
+        (text_w, text_h), baseline = cv2.getTextSize(
+            label, cv2.FONT_HERSHEY_SIMPLEX, scale, thickness)
+        origin = (12, 12 + text_h)
+        plate = output.copy()
+        cv2.rectangle(plate, (origin[0] - 6, origin[1] - text_h - 6),
+                      (origin[0] + text_w + 6, origin[1] + baseline + 4),
+                      (0, 0, 0), -1)
+        cv2.addWeighted(plate, 0.5, output, 0.5, 0.0, output)
+        cv2.putText(output, label, origin, cv2.FONT_HERSHEY_SIMPLEX, scale,
+                    (255, 255, 255), thickness, cv2.LINE_AA)
         return output
