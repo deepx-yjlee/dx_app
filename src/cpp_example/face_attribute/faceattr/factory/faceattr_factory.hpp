@@ -45,7 +45,12 @@ public:
         threshold_ = config.get<float>("threshold", threshold_);
     }
 
-    std::string getModelName() const override { return "Face_attr_ResNet_v1_18"; }
+    std::string getModelName() const override {
+        // The variant IS the .dxnn stem, so it names the model actually loaded --
+        // every runner builds its artifact directory and window title from this.
+        // The literal is the family fallback for a bare run with no -m.
+        return variant_.empty() ? "Face_attr_ResNet_v1_18" : variant_;
+    }
     std::string getTaskType() const override { return "attribute_recognition"; }
 
 private:

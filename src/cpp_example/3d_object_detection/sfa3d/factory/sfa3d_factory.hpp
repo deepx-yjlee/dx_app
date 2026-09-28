@@ -50,7 +50,12 @@ public:
         nms_threshold_ = config.get<float>("nms_threshold", nms_threshold_);
     }
 
-    std::string getModelName() const override { return "sfa3d_608x608"; }
+    std::string getModelName() const override {
+        // The variant IS the .dxnn stem, so it names the model actually loaded --
+        // every runner builds its artifact directory and window title from this.
+        // The literal is the family fallback for a bare run with no -m.
+        return variant_.empty() ? "sfa3d_608x608" : variant_;
+    }
     std::string getTaskType() const override { return "3d_detection"; }
 
 private:

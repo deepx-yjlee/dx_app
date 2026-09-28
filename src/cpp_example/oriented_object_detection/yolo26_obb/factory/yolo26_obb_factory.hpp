@@ -50,7 +50,12 @@ public:
         score_threshold_ = config.get<float>("score_threshold", score_threshold_);
     }
 
-    std::string getModelName() const override { return "Yolo26l_obb"; }
+    std::string getModelName() const override {
+        // The variant IS the .dxnn stem, so it names the model actually loaded --
+        // every runner builds its artifact directory and window title from this.
+        // The literal is the family fallback for a bare run with no -m.
+        return variant_.empty() ? "Yolo26l_obb" : variant_;
+    }
     std::string getTaskType() const override { return "obb_detection"; }
 
 private:

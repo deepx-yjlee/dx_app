@@ -148,6 +148,46 @@ def member_name(decl: str) -> str:
     return m.group(1) + "_" if m else decl
 
 
+_MODEL_NAME_ONELINER = re.compile(
+    r'^(?P<indent>[ \t]*)(?P<sig>std::string getModelName\(\) const override \{) '
+    r'return "(?P<literal>[^"]*)"; \}[ \t]*$', re.M)
+
+
+def variant_aware_model_name(body: str, cls_name: str) -> str:
+    """Make ``getModelName()`` answer with the variant the factory was GIVEN.
+
+    Every runner builds its artifact directory and window title from this one call, so
+    a family literal there mislabels every run of every other variant: ``-m
+    arcface_mobilefacenet_112x112.dxnn`` rendered into
+    ``Arcface_iResNet100_ms1m_sync-image-...``, and iResNet100 vs MobileFaceNet is a
+    20x difference in model size. Python's ``get_model_name()`` already returns the
+    variant, so the two trees disagreed as well.
+
+    The literal stays as the fallback: a bare run with no ``-m`` has no variant.
+
+    Scoped to the FACTORY class. Three headers (yolopv2, superpoint, dope) define a
+    wrapper postprocessor FIRST, which implements ``IPostprocessor::getModelName()``,
+    holds no ``variant_`` and names its algorithm rather than a model -- rewriting it
+    does not compile.
+    """
+    at = body.index(f"class {cls_name}")
+
+    def sub(m):
+        inner = m.group("indent") + "    "
+        return (
+            f'{m.group("indent")}{m.group("sig")}\n'
+            f"{inner}// The variant IS the .dxnn stem, so it names the model actually "
+            f"loaded --\n"
+            f"{inner}// every runner builds its artifact directory and window title "
+            f"from this.\n"
+            f"{inner}// The literal is the family fallback for a bare run with no -m.\n"
+            f'{inner}return variant_.empty() ? "{m.group("literal")}" : variant_;\n'
+            f'{m.group("indent")}}}'
+        )
+
+    return body[:at] + _MODEL_NAME_ONELINER.sub(sub, body[at:])
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -389,6 +429,8 @@ def main() -> int:
                 + "\n\nnamespace dxapp {", 1)
         if "#include <string>" not in body:
             body = body.replace("namespace dxapp {", "#include <string>\n#include <utility>\n\nnamespace dxapp {", 1)
+
+        body = variant_aware_model_name(body, cls_new)
 
         (fdir / "factory" / f"{family}_factory.hpp").write_text(body, encoding="utf-8")
         if fam_dispatch:

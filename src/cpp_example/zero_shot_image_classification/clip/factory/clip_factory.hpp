@@ -39,7 +39,12 @@ public:
         return std::make_unique<EmbeddingVisualizer>();
     }
 
-    std::string getModelName() const override { return "Clip Rn50X16"; }
+    std::string getModelName() const override {
+        // The variant IS the .dxnn stem, so it names the model actually loaded --
+        // every runner builds its artifact directory and window title from this.
+        // The literal is the family fallback for a bare run with no -m.
+        return variant_.empty() ? "Clip Rn50X16" : variant_;
+    }
     std::string getTaskType() const override { return "embedding"; }
 
 private:

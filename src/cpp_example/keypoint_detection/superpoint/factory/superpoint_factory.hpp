@@ -209,7 +209,12 @@ public:
             track_max_length_, nn_thresh_, max_pixel_dist_, ratio_thresh_);
     }
 
-    std::string getModelName() const override { return "SuperPoint"; }
+    std::string getModelName() const override {
+        // The variant IS the .dxnn stem, so it names the model actually loaded --
+        // every runner builds its artifact directory and window title from this.
+        // The literal is the family fallback for a bare run with no -m.
+        return variant_.empty() ? "SuperPoint" : variant_;
+    }
     std::string getTaskType() const override { return "keypoint_detection"; }
 
 private:

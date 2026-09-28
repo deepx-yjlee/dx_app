@@ -64,7 +64,12 @@ public:
         num_keypoints_ = config.get<int>("num_keypoints", num_keypoints_);
     }
 
-    std::string getModelName() const override { return "YOLO-pose-preopt"; }
+    std::string getModelName() const override {
+        // The variant IS the .dxnn stem, so it names the model actually loaded --
+        // every runner builds its artifact directory and window title from this.
+        // The literal is the family fallback for a bare run with no -m.
+        return variant_.empty() ? "YOLO-pose-preopt" : variant_;
+    }
     std::string getTaskType() const override { return "pose_estimation"; }
 
 private:
