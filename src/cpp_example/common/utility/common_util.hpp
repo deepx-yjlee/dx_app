@@ -490,17 +490,21 @@ inline void writeToVideo(cv::VideoWriter& writer, const cv::Mat& frame,
 inline std::string buildPerImageSavePath(const std::string& runDir,
                                         const std::string& modelName,
                                         const std::string& imagePath,
-                                        int img_idx = 0) {
+                                        int img_idx = 0,
+                                        bool createDirs = true) {
     if (runDir.empty()) return std::string();
     fs::path base(runDir);
     fs::path model_dir = base / (modelName);
-    fs::create_directories(model_dir);
 
     fs::path fname = fs::path(imagePath).filename();
     std::string stem = fname.stem().string();
     if (stem.empty()) stem = "image" + std::to_string(img_idx);
     fs::path out = model_dir / (stem + std::string("_output.jpg"));
-    fs::create_directories(out.parent_path());
+    // `createDirs = false` is for the callers whose visualizer may legitimately render
+    // nothing -- the embedding comparison, whose first image is only the reference.
+    // Creating the directory up front left an EMPTY <model>_sync/ next to run_info.txt,
+    // which reads exactly like an output that failed to be written.
+    if (createDirs) fs::create_directories(out.parent_path());
     return out.string();
 }
 

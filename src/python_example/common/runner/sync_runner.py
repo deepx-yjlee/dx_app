@@ -1072,9 +1072,13 @@ class SyncRunner:
         env_save = os.environ.get("DXAPP_SAVE_IMAGE")
         if not save_enabled and not env_save:
             return 0.0
+        if output_img is None:
+            self._warn_nothing_rendered(image_path)
+            return 0.0
         t0 = time.perf_counter()
         if save_enabled and run_dir and output_img is not None:
             base = os.path.splitext(os.path.basename(image_path))[0]
+            run_dir.mkdir(parents=True, exist_ok=True)
             cv2.imwrite(str(run_dir / f"{base}_result.jpg"), output_img)
             if sr_only is not None:
                 cv2.imwrite(str(run_dir / f"{base}_output_only.jpg"), sr_only)
@@ -1084,6 +1088,31 @@ class SyncRunner:
                 _stem, _ext = os.path.splitext(env_save)
                 cv2.imwrite(f"{_stem}_output_only{_ext}", sr_only)
         return time.perf_counter() - t0
+
+    def _warn_nothing_rendered(self, image_path: str) -> None:
+        """Say that --save wrote nothing, and why -- once per run.
+
+        A comparison visualizer keeps the first image as its reference and returns no
+        frame for it, so a single-image run legitimately saves nothing. Without this
+        message the run looks completely successful -- performance summary, run
+        directory, no picture -- and the only way to find out why is to read the
+        visualizer.
+        """
+        if getattr(self, "_nothing_rendered_warned", False):
+            return
+        self._nothing_rendered_warned = True
+        name = os.path.basename(image_path) if image_path else "the input"
+        if getattr(self.visualizer, "NEEDS_REFERENCE", False):
+            logger.warning(
+                "No output image for %s: this task compares against a reference, and "
+                "the FIRST image becomes that reference (nothing to compare it with "
+                "yet). Pass a directory holding 2 or more images so each one after the "
+                "first is compared -- e.g. --image sample/img/face_pair (or "
+                "sample/img/person_pair for Re-ID).", name)
+        else:
+            logger.warning(
+                "No output image for %s: the visualizer returned no frame, so nothing "
+                "was saved.", name)
 
     def _display_image_output(self, output_img: np.ndarray,
                               display: bool) -> float:
@@ -1171,7 +1200,10 @@ class SyncRunner:
                 if batch_run_dir:
                     base = os.path.splitext(os.path.basename(img_path))[0]
                     sub_dir = batch_run_dir / base
-                    sub_dir.mkdir(parents=True, exist_ok=True)
+                    # Created lazily, where the image is actually written: a comparison
+                    # visualizer renders nothing for its reference frame, and creating
+                    # the folder here left an empty 1_reference/ that reads like an
+                    # output which failed to be written.
                 result = self._image_inference_once(
                     img_path, display, save_enabled, sub_dir)
                 _add_sync_metrics(batch_metrics, result["metrics"])

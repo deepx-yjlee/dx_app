@@ -60,6 +60,8 @@ struct AsyncEmbeddingDisplayArgs {
 template <typename FactoryT>
 class AsyncEmbeddingRunner {
     bool verbose_ = false;
+    // The reference-frame explanation is printed once per run, not once per frame.
+    std::atomic<bool> nothing_rendered_warned_{false};
 
 public:
     explicit AsyncEmbeddingRunner(std::unique_ptr<FactoryT> factory)
@@ -233,7 +235,7 @@ public:
                 fillModelInputBuffer(ie, buf, preprocessed);
                 std::string save_path;
                 if (!run_dir.empty()) {
-                    save_path = dxapp::buildPerImageSavePath(run_dir, factory_->getModelName() + "_async", imageFiles[i % imageFiles.size()], i);
+                    save_path = dxapp::buildPerImageSavePath(run_dir, factory_->getModelName() + "_async", imageFiles[i % imageFiles.size()], i, /*createDirs=*/false);
                 }
                 auto ud = std::make_unique<AsyncUserData>(AsyncUserData{display_image.clone(), ctx, std::move(save_path), {}});
                 metrics_.waitForSlot();
@@ -446,8 +448,20 @@ private:
             if (!result_frame.empty()) {
                 dxapp::saveDebugImage(result_frame);
             }
+            if (!args.save_path.empty() && result_frame.empty()
+                    && !nothing_rendered_warned_.exchange(true)) {
+                std::cerr << "[DXAPP] [WARN] No output image for "
+                          << fs::path(args.save_path).filename().string()
+                          << ": this task compares against a reference, and the FIRST "
+                             "image becomes that reference (nothing to compare it with "
+                             "yet). Pass a directory holding 2 or more images so each "
+                             "one after the first is compared -- e.g. -i "
+                             "sample/img/face_pair (or sample/img/person_pair for "
+                             "Re-ID)." << std::endl;
+            }
             if (!args.save_path.empty() && !result_frame.empty()) {
                 auto t_save_start = std::chrono::high_resolution_clock::now();
+                fs::create_directories(fs::path(args.save_path).parent_path());
                 cv::imwrite(args.save_path, result_frame);
                 if (verbose_) {
                     std::cout << "\n[DXAPP] [INFO] Saved output image: " << fs::absolute(args.save_path).string() << std::endl;

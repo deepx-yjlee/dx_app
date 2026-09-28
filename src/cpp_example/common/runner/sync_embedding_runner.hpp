@@ -38,6 +38,8 @@ namespace dxapp {
 template <typename FactoryT>
 class SyncEmbeddingRunner {
     bool verbose_ = false;
+    // The reference-frame explanation is printed once per run, not once per frame.
+    bool nothing_rendered_warned_ = false;
 
 public:
     explicit SyncEmbeddingRunner(std::unique_ptr<FactoryT> factory)
@@ -304,9 +306,22 @@ private:
         double t_save = 0.0;
         double t_display = 0.0;
         bool quit_requested = false;
+        if (result_frame.empty() && !saveImagePath.empty()
+                && !nothing_rendered_warned_) {
+            nothing_rendered_warned_ = true;
+                std::cerr << "[DXAPP] [WARN] No output image for "
+                          << fs::path(saveImagePath).filename().string()
+                          << ": this task compares against a reference, and the FIRST "
+                             "image becomes that reference (nothing to compare it with "
+                             "yet). Pass a directory holding 2 or more images so each "
+                             "one after the first is compared -- e.g. -i "
+                             "sample/img/face_pair (or sample/img/person_pair for "
+                             "Re-ID)." << std::endl;
+        }
         if (!result_frame.empty()) {
             if (!saveImagePath.empty()) {
                 auto save_start = std::chrono::high_resolution_clock::now();
+                fs::create_directories(fs::path(saveImagePath).parent_path());
                 cv::imwrite(saveImagePath, result_frame);
                 auto save_end = std::chrono::high_resolution_clock::now();
                 t_save = std::chrono::duration<double, std::milli>(save_end - save_start).count();
@@ -356,7 +371,7 @@ private:
             std::string currentImagePath = imageFiles[i % imageFiles.size()];
             std::string savePath;
             if (!runDir.empty() && saveMode) {
-                savePath = dxapp::buildPerImageSavePath(runDir, factory_->getModelName() + "_sync", currentImagePath, i);
+                savePath = dxapp::buildPerImageSavePath(runDir, factory_->getModelName() + "_sync", currentImagePath, i, /*createDirs=*/false);
             }
             auto tr0 = std::chrono::high_resolution_clock::now();
             cv::Mat img = cv::imread(currentImagePath);
