@@ -33,10 +33,14 @@ PUBLICATION_FIELDS = ("published",)
 # model_name -> (variant, task, family). The ONLY entries allowed to miss the
 # dx-modelzoo snapshot. See the spec's "Documented exceptions" table.
 EXCEPTIONS: dict[str, tuple[str, str, str]] = {
-    "efficientnet_lite0":     ("efficientnet-lite0_256x256", "image_classification", "efficientnet"),
     "scrfd500m_ppu":          ("SCRFD500M_PPU",              "face_detection",       "scrfd"),
     "yolov5pose_ppu":         ("YOLOV5Pose_PPU",             "pose_estimation",      "yolov5_pose"),
 }
+# efficientnet_lite0 was here while dx_app called the model 256x256 and the snapshot
+# called it 224x224. The two .dxnn files are BYTE-IDENTICAL on the CDN (md5
+# 5c966e8e...) and the binary self-reports [1, 224, 224, 3], so 256x256 was simply a
+# wrong name. It now resolves from the snapshot like every other model, which is why
+# it is neither an exception nor a SNAPSHOT_GAP any more.
 
 # RETENTION POLICY: a conflicting example is KEPT, never deleted.
 #
@@ -59,7 +63,9 @@ ALIASES: dict[str, str] = {
 }
 
 # In the snapshot but intentionally not in dx_app: no example, not on disk.
-SNAPSHOT_GAPS = {"efficientnet-lite0_224x224"}
+# Empty since the 2_5_0 revision: efficientnet-lite0 is 224x224 there, and dx_app was
+# the only side still on 256x256 -- the gap WAS the disagreement.
+SNAPSHOT_GAPS: set[str] = set()
 
 # Field names the migration wrote in an earlier revision and must no longer emit.
 # The migration rebuilds each entry by dropping the fields it is about to rewrite,

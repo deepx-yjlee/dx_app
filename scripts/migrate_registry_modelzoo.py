@@ -38,7 +38,7 @@ SNAPSHOT = PROJECT_ROOT / "tests" / "data" / "modelzoo_cv_tree.json"
 
 # model_name -> (variant, task, family); the entries the snapshot cannot supply.
 EXCEPTIONS: dict[str, tuple[str, str, str]] = {
-    "efficientnet_lite0":     ("efficientnet-lite0_256x256", "image_classification", "efficientnet"),
+    "efficientnet_lite0":     ("efficientnet-lite0_224x224", "image_classification", "efficientnet"),
     "scrfd500m_ppu":          ("SCRFD500M_PPU",              "face_detection",       "scrfd"),
     "yolov5pose_ppu":         ("YOLOV5Pose_PPU",             "pose_estimation",      "yolov5_pose"),
 }

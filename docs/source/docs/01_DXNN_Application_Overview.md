@@ -39,8 +39,8 @@ You can quickly evaluate inference capabilities without modifying the source cod
 - Output: Top-1 class  
 - Example run  
 ```bash
-./bin/efficientnet_lite0_async -m ./assets/models/efficientnet-lite0_256x256.dxnn -i ./sample/ILSVRC2012/0.jpeg -l 1
-./bin/efficientnet_lite0_sync  -m ./assets/models/efficientnet-lite0_256x256.dxnn -i ./sample/ILSVRC2012/0.jpeg -l 1
+./bin/efficientnet_lite0_async -m ./assets/models/efficientnet-lite0_224x224.dxnn -i ./sample/ILSVRC2012/0.jpeg -l 1
+./bin/efficientnet_lite0_sync  -m ./assets/models/efficientnet-lite0_224x224.dxnn -i ./sample/ILSVRC2012/0.jpeg -l 1
 ```
 
 **Object Detection (YOLOv8N)**  

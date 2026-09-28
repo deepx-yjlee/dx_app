@@ -39,8 +39,12 @@ per_task = {}
 for variant in sorted(results):
     if results[variant]["status"] != "PASS":
         continue
-    task = reg[variant]["task"]
-    per_task.setdefault(task, variant)
+    entry = reg.get(variant)
+    if entry is None:
+        # The report predates a rename (efficientnet-lite0_256x256 -> _224x224), so
+        # the registry no longer knows this variant. A stale row is not a failure.
+        continue
+    per_task.setdefault(entry["task"], variant)
 
 rows, drew, blank, failed = [], 0, 0, 0
 for task, variant in sorted(per_task.items()):

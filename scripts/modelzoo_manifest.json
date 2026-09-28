@@ -248,7 +248,7 @@
   {
     "name": "EfficientNet_Lite0",
     "category": "Classification",
-    "dxnn_url": "https://sdk.deepx.ai/modelzoo/dxnn/2_4_0/efficientnet-lite0_256x256.dxnn",
+    "dxnn_url": "https://sdk.deepx.ai/modelzoo/q-lite-dxnn/2_4_0/efficientnet-lite0_224x224.dxnn",
     "json_url": null
   },
   {

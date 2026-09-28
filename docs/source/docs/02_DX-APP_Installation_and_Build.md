@@ -403,7 +403,7 @@ You can run the examples using the same command line instructions as in Linux, b
 
 classification example  
 ```shell
-./bin/efficientnet_lite0_async.exe -m ./assets/models/efficientnet-lite0_256x256.dxnn -i ./sample/ILSVRC2012/0.jpeg 
+./bin/efficientnet_lite0_async.exe -m ./assets/models/efficientnet-lite0_224x224.dxnn -i ./sample/ILSVRC2012/0.jpeg 
 ```
 
 object detection example  
