@@ -5,7 +5,7 @@
 Mirrors scripts/generate_family_layout.py on the C++ side, emitting per
 ``<task>/<family>/``::
 
-    variants/<dxnn-stem>.json      the same variant configs the python tree uses
+    <variant>/config.json          the same variant config the python tree uses
     factory/<family>_factory.hpp   one factory for the family
     <family>_sync.cpp, <family>_async.cpp
 
@@ -188,6 +188,49 @@ def variant_aware_model_name(body: str, cls_name: str) -> str:
     return body[:at] + _MODEL_NAME_ONELINER.sub(sub, body[at:])
 
 
+def _python_config(py_root: Path, task: str, family: str, variant: str) -> Path | None:
+    """Prefer ``<family>/<variant>/config.json``; accept the old variants/ file."""
+    current = py_root / task / family / variant / "config.json"
+    if current.is_file():
+        return current
+    legacy = py_root / task / family / "variants" / f"{variant}.json"
+    return legacy if legacy.is_file() else None
+
+
+def sync_configs(py_root: Path, cpp_root: Path) -> int:
+    """Copy per-model config.json files into an existing C++ tree.
+
+    Does not regenerate factories or entry points. Removes a leftover
+    ``variants/`` directory after the configs have moved.
+    """
+    reg = json.loads(REGISTRY.read_text(encoding="utf-8"))
+    copied = 0
+    missing: list[str] = []
+    families: set[Path] = set()
+    for entry in reg:
+        src = _python_config(py_root, entry["task"], entry["family"], entry["variant"])
+        if src is None:
+            missing.append(f"{entry['task']}/{entry['family']}/{entry['variant']}")
+            continue
+        dest_dir = cpp_root / entry["task"] / entry["family"] / entry["variant"]
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        dest = dest_dir / "config.json"
+        data = src.read_bytes()
+        if not dest.is_file() or dest.read_bytes() != data:
+            dest.write_bytes(data)
+        copied += 1
+        families.add(dest_dir.parent)
+    for family_dir in families:
+        legacy = family_dir / "variants"
+        if legacy.is_dir():
+            shutil.rmtree(legacy)
+    print(f"cpp configs synced: {copied}")
+    if missing:
+        print(f"ABORT: {len(missing)} python configs missing, e.g. {missing[:3]}")
+        return 1
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -198,11 +241,16 @@ def main() -> int:
     ap.add_argument("--py-stage", default=None,
                     help="generated python tree, to copy variant configs from "
                          "(default: src/python_example)")
+    ap.add_argument("--sync-configs", action="store_true",
+                    help="only copy <variant>/config.json into --out and drop "
+                         "variants/. Safe on src/cpp_example; does not rebuild sources.")
     a = ap.parse_args()
 
     src_root = (Path(a.orig) / "src" / "cpp_example") if a.orig else CPP_SRC
     py_root = Path(a.py_stage) if a.py_stage else (ROOT / "src" / "python_example")
     out = Path(a.out)
+    if a.sync_configs:
+        return sync_configs(py_root, out)
     # Refuse to wipe a real source tree. This script rmtree's its output, and unlike
     # generate_family_layout.py it has no --in-place mode, so pointing --out at
     # src/cpp_example would delete common/ and CMakeLists.txt -- neither of which it
@@ -246,14 +294,15 @@ def main() -> int:
 
     for (task, family), members in sorted(fams.items()):
         fdir = out / task / family
-        (fdir / "variants").mkdir(parents=True, exist_ok=True)
         (fdir / "factory").mkdir(parents=True, exist_ok=True)
 
         # Variant configs: reuse the python tree's, so both trees read one description.
         for e in members:
-            srcj = py_root / task / family / "variants" / f"{e['variant']}.json"
-            if srcj.is_file():
-                (fdir / "variants" / f"{e['variant']}.json").write_bytes(srcj.read_bytes())
+            srcj = _python_config(py_root, task, family, e["variant"])
+            if srcj is not None:
+                dest = fdir / e["variant"] / "config.json"
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                dest.write_bytes(srcj.read_bytes())
                 n_var += 1
 
         # Donor = alphabetically first canonical variant with a factory.

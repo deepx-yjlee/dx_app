@@ -1,10 +1,10 @@
 # Copyright (C) 2018- DEEPX Ltd. All rights reserved.
-"""Build a variant's processors from its ``variants/<dxnn-stem>.json`` config.
+"""Build a variant's processors from its ``<family>/<variant>/config.json``.
 
 Under the dx-modelzoo family/variant layout one factory serves every variant of its
 family, so the per-variant differences -- which processor class, and any non-default
 constructor arguments -- live in the variant config instead of in 353 near-identical
-factory files.
+factory files. Each variant is a directory named after the ``.dxnn`` stem.
 
 A spec records the original constructor call SHAPE rather than just its arguments::
 
@@ -41,21 +41,44 @@ class VariantConfigError(RuntimeError):
     """A variant config cannot be turned into a processor."""
 
 
+def iter_variant_configs(family_dir: str | Path) -> list[tuple[str, Path]]:
+    """``(variant name, config.json)`` for one family, sorted by name.
+
+    The in-tree layout is ``<family>/<variant>/config.json``. A single-model
+    extract keeps one ``config.json`` beside the entry script; the directory
+    name is then the variant.
+    """
+    root = Path(family_dir)
+    nested: list[tuple[str, Path]] = []
+    if root.is_dir():
+        for child in root.iterdir():
+            config_path = child / "config.json"
+            if child.is_dir() and config_path.is_file():
+                nested.append((child.name, config_path))
+    if nested:
+        return sorted(nested, key=lambda item: item[0])
+    flat = root / "config.json"
+    if flat.is_file():
+        return [(root.name, flat)]
+    return []
+
+
 @lru_cache(maxsize=None)
-def load_variant_config(variants_dir: str, variant: str) -> dict:
-    """Read ``<variants_dir>/<variant>.json``."""
-    path = Path(variants_dir) / f"{variant}.json"
-    if not path.is_file():
-        available = sorted(p.stem for p in Path(variants_dir).glob("*.json"))
+def load_variant_config(family_dir: str, variant: str) -> dict:
+    """Read ``<family_dir>/<variant>/config.json`` (or a flat single-model config)."""
+    by_name = dict(iter_variant_configs(family_dir))
+    path = by_name.get(variant)
+    if path is None:
+        available = sorted(by_name)
         raise VariantConfigError(
-            f"no variant config {path.name!r} in {variants_dir}. "
+            f"no variant config {variant!r} in {family_dir}. "
             f"Available: {available}"
         )
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def default_variant(variants_dir: str) -> str:
-    """The family's default variant: the alphabetically first PUBLISHED config.
+def default_variant(family_dir: str) -> str:
+    """The family's default variant: the alphabetically first PUBLISHED model folder.
 
     Families are selected by ``--variant``; this exists so a bare invocation still
     runs something sensible rather than erroring on a missing flag.
@@ -71,16 +94,16 @@ def default_variant(variants_dir: str) -> str:
     the first config: there is nothing better to pick, and the runner's own
     missing-model error names the file.
     """
-    paths = sorted(Path(variants_dir).glob("*.json"), key=lambda p: p.stem)
-    if not paths:
-        raise VariantConfigError(f"no variant configs in {variants_dir}")
-    for path in paths:
+    configs = iter_variant_configs(family_dir)
+    if not configs:
+        raise VariantConfigError(f"no variant configs in {family_dir}")
+    for name, path in configs:
         try:
             if json.loads(path.read_text(encoding="utf-8")).get("published", True):
-                return path.stem
+                return name
         except (OSError, json.JSONDecodeError):
             continue
-    return paths[0].stem
+    return configs[0][0]
 
 
 def _resolve_class(name: str):
