@@ -39,7 +39,7 @@ REPORT = ROOT / "artifacts" / "npu_sweep"
 
 
 def variant_config(tree: str, task: str, family: str, variant: str) -> dict | None:
-    p = ROOT / "src" / tree / task / family / "variants" / f"{variant}.json"
+    p = ROOT / "src" / tree / task / family / variant / "config.json"
     return json.loads(p.read_text(encoding="utf-8")) if p.is_file() else None
 
 

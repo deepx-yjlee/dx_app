@@ -2,8 +2,8 @@
 # Copyright (C) 2018- DEEPX Ltd. All rights reserved.
 """Restructure the example trees into the dx-modelzoo task/family/variant layout.
 
-353 per-variant directories collapse into 89 ``<task>/<family>/`` directories, each
-holding ONE factory plus one ``variants/<dxnn-stem>.json`` per variant -- the layout
+353 per-variant directories collapse into ``<task>/<family>/`` directories, each
+holding ONE factory plus one ``<variant>/config.json`` per model -- the layout
 dx-modelzoo uses (``custom_ops.py`` + one config per variant).
 
 ``config/model_registry.json`` is the sole source of truth: task, family, variant,

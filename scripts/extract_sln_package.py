@@ -50,6 +50,8 @@ class ModelRef:
     category: str
     model: str
     path: Path
+    # Set when the caller named one <family>/<variant> folder.
+    only_variant: str | None = None
 
 
 def resolve_model(raw, cpp_example_dir=CPP_EXAMPLE_DIR):
@@ -86,6 +88,19 @@ def resolve_model(raw, cpp_example_dir=CPP_EXAMPLE_DIR):
         if not path.is_dir():
             print(f"[DXAPP] [ERROR] Model not found: {raw}", file=sys.stderr)
             sys.exit(1)
+
+        # task/family/variant — C++ sources stay on the family; pack one config.
+        if (path / "config.json").is_file():
+            family = path.parent
+            if not (family / f"{family.name}_sync.cpp").is_file():
+                print(f"[DXAPP] [ERROR] Model not found: {raw}", file=sys.stderr)
+                sys.exit(1)
+            return ModelRef(
+                category=category,
+                model=family.name,
+                path=family,
+                only_variant=path.name,
+            )
 
         return ModelRef(category=category, model=model, path=path)
     else:
@@ -532,6 +547,19 @@ def extract_package(model_ref, output_dir, generate_sln=True):
             async_cpp,
             src_dir / f"{model_ref.model}_async.cpp",
             "Async source",
+        )
+
+    # One config.json per model folder. A variant argument keeps only that folder.
+    for child in sorted(model_ref.path.iterdir()):
+        config_path = child / "config.json"
+        if not child.is_dir() or not config_path.is_file():
+            continue
+        if model_ref.only_variant and child.name != model_ref.only_variant:
+            continue
+        copy_with_warn(
+            config_path,
+            package_dir / child.name / "config.json",
+            f"Model config {child.name}",
         )
 
     # Copy model-local factory if present

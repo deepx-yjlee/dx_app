@@ -19,6 +19,7 @@
 #
 # Examples:
 #   ./extract_model_package.sh object_detection/yolov7
+#   ./extract_model_package.sh depth_estimation/depthanythingv2/depthanythingv2-vitb_224x224 --output-dir /tmp/x --lang py
 #   ./extract_model_package.sh all
 #   ./extract_model_package.sh all --lang cpp
 #   ./extract_model_package.sh all --lang py
@@ -53,7 +54,7 @@ usage() {
     echo "Usage: $0 <model_dir|all> [--lang cpp|py|both] [--output-dir <path>] [--no-prune] [--clean]"
     echo ""
     echo "Arguments:"
-    echo "  model_dir           Relative path to model directory (e.g., object_detection/yolov7)"
+    echo "  model_dir           Family (task/family) or one model (task/family/variant)"
     echo "  all                 Prepare all model directories"
     echo "  --lang <mode>       Language: cpp, py, or both (default: both)"
     echo "  --output-dir <path> Export to a separate directory (default: in-place)"
@@ -277,37 +278,82 @@ EOF
 }
 
 # =========================================================================
+# Resolve task/family or task/family/variant
+# Prints "<family_rel>|<variant>" (variant empty for a whole family).
+# =========================================================================
+resolve_model_arg() {
+    local lang="$1"
+    local rel="${2%/}"
+    local src_root
+    case "$lang" in
+        py)  src_root="$PY_SRC_DIR" ;;
+        cpp) src_root="$CPP_SRC_DIR" ;;
+        *)   return 1 ;;
+    esac
+    if [ -f "$src_root/$rel/config.json" ]; then
+        echo "$(dirname "$rel")|$(basename "$rel")"
+        return 0
+    fi
+    if [ -d "$src_root/$rel" ]; then
+        echo "$rel|"
+        return 0
+    fi
+    return 1
+}
+
+# Copy <variant>/config.json trees. only_variant empty means every model folder.
+copy_model_configs() {
+    local src_family="$1"
+    local dst_family="$2"
+    local only_variant="$3"
+    local child name
+    for child in "$src_family"/*/; do
+        [ -d "$child" ] || continue
+        [ -f "${child}config.json" ] || continue
+        name="$(basename "$child")"
+        if [ -n "$only_variant" ] && [ "$name" != "$only_variant" ]; then
+            continue
+        fi
+        mkdir -p "$dst_family/$name"
+        cp "${child}config.json" "$dst_family/$name/config.json"
+    done
+}
+
+# =========================================================================
 # C++ - Prepare a single model directory for standalone deployment
 # =========================================================================
 prepare_model_cpp() {
-    local model_dir="$1"
-    local src_model_dir="$CPP_SRC_DIR/$model_dir"
+    local family_rel="$1"
+    local only_variant="$2"
+    local src_model_dir="$CPP_SRC_DIR/$family_rel"
     local target_dir
     local model_name
-    model_name=$(basename "$model_dir")
+    model_name=$(basename "$family_rel")
 
     if [ ! -d "$src_model_dir" ]; then
-        echo -e "${RED}[DXAPP] [ERROR]${NC} C++ directory not found: $model_dir"
+        echo -e "${RED}[DXAPP] [ERROR]${NC} C++ directory not found: $family_rel"
         return 1
     fi
 
-    # Determine target: output-dir or in-place
+    # Family sources stay at <task>/<family> even when only one model config is packed.
+    # Executables are per family; the selected model is <variant>/config.json.
     if [ -n "$OUTPUT_DIR" ]; then
-        target_dir="$OUTPUT_DIR/cpp/$model_dir"
+        target_dir="$OUTPUT_DIR/cpp/$family_rel"
         mkdir -p "$target_dir"
-        # Copy model source files
         find "$src_model_dir" -maxdepth 1 -type f | while read -r f; do
             cp "$f" "$target_dir/"
         done
-        # Copy factory/ subdirectory
         if [ -d "$src_model_dir/factory" ]; then
             cp -r "$src_model_dir/factory" "$target_dir/factory"
         fi
+        copy_model_configs "$src_model_dir" "$target_dir" "$only_variant"
     else
         target_dir="$src_model_dir"
     fi
 
-    echo -e "${CYAN}[PREPARE]${NC} C++ $model_dir${OUTPUT_DIR:+ → $target_dir}"
+    local label="$family_rel"
+    [ -n "$only_variant" ] && label="$family_rel/$only_variant"
+    echo -e "${CYAN}[PREPARE]${NC} C++ $label${OUTPUT_DIR:+ → $target_dir}"
 
     # 1. Copy common/ headers
     rm -rf "$target_dir/common"
@@ -363,11 +409,11 @@ prepare_model_cpp() {
     generate_cmake "$target_dir" "$model_name"
     echo "  → CMakeLists.txt generated"
 
-    echo -e "${GREEN}[SUCCESS]${NC} C++ standalone ready: $model_dir"
+    echo -e "${GREEN}[SUCCESS]${NC} C++ standalone ready: $label"
     if [ -n "$OUTPUT_DIR" ]; then
         echo "  Build: cd $target_dir && mkdir -p build && cd build && cmake .. && make -j\$(nproc)"
     else
-        echo "  Build: cd $model_dir && mkdir -p build && cd build && cmake .. && make -j\$(nproc)"
+        echo "  Build: cd $family_rel && mkdir -p build && cd build && cmake .. && make -j\$(nproc)"
     fi
     echo ""
 }
@@ -392,27 +438,53 @@ clean_model_py() {
 # Python - Prepare a single model directory for standalone deployment
 # =========================================================================
 prepare_model_py() {
-    local model_dir="$1"
-    local src_model_dir="$PY_SRC_DIR/$model_dir"
+    local family_rel="$1"
+    local only_variant="$2"
+    local src_model_dir="$PY_SRC_DIR/$family_rel"
     local target_dir
 
     if [ ! -d "$src_model_dir" ]; then
-        echo -e "${RED}[DXAPP] [ERROR]${NC} Python directory not found: $model_dir"
+        echo -e "${RED}[DXAPP] [ERROR]${NC} Python directory not found: $family_rel"
         return 1
     fi
 
-    # Determine target: output-dir or in-place
+    # A single model is a self-contained folder: its scripts, config.json, the
+    # shared factory/, custom_ops.py and a pruned common/. A family export keeps
+    # every model folder under <task>/<family>/.
     if [ -n "$OUTPUT_DIR" ]; then
-        target_dir="$OUTPUT_DIR/py/$model_dir"
-        mkdir -p "$target_dir"
-        # Copy model source files
-        find "$src_model_dir" -maxdepth 1 -type f | while read -r f; do
-            cp "$f" "$target_dir/"
-        done
-        # Copy factory/ subdirectory
-        if [ -d "$src_model_dir/factory" ]; then
-            cp -r "$src_model_dir/factory" "$target_dir/factory"
+        if [ -n "$only_variant" ]; then
+            target_dir="$OUTPUT_DIR/py/$family_rel/$only_variant"
+            mkdir -p "$target_dir"
+            find "$src_model_dir/$only_variant" -maxdepth 1 -type f | while read -r f; do
+                cp "$f" "$target_dir/"
+            done
+            if [ -d "$src_model_dir/factory" ]; then
+                cp -r "$src_model_dir/factory" "$target_dir/factory"
+            fi
+            if [ -f "$src_model_dir/custom_ops.py" ]; then
+                cp "$src_model_dir/custom_ops.py" "$target_dir/custom_ops.py"
+            fi
+        else
+            target_dir="$OUTPUT_DIR/py/$family_rel"
+            mkdir -p "$target_dir"
+            find "$src_model_dir" -maxdepth 1 -type f | while read -r f; do
+                cp "$f" "$target_dir/"
+            done
+            if [ -d "$src_model_dir/factory" ]; then
+                cp -r "$src_model_dir/factory" "$target_dir/factory"
+            fi
+            copy_model_configs "$src_model_dir" "$target_dir" ""
+            local child name
+            for child in "$src_model_dir"/*/; do
+                [ -f "${child}config.json" ] || continue
+                name="$(basename "$child")"
+                find "$child" -maxdepth 1 -type f ! -name 'config.json' | while read -r f; do
+                    cp "$f" "$target_dir/$name/"
+                done
+            done
         fi
+    elif [ -n "$only_variant" ]; then
+        target_dir="$src_model_dir/$only_variant"
     else
         target_dir="$src_model_dir"
     fi
@@ -431,7 +503,9 @@ prepare_model_py() {
     # Prune unreachable common/ modules and rewrite the __init__.py barrels (opt-in)
     run_prune "$target_dir" py
 
-    echo -e "${GREEN}[SUCCESS]${NC} Python standalone ready: $model_dir${OUTPUT_DIR:+ → $target_dir}"
+    local label="$family_rel"
+    [ -n "$only_variant" ] && label="$family_rel/$only_variant"
+    echo -e "${GREEN}[SUCCESS]${NC} Python standalone ready: $label${OUTPUT_DIR:+ → $target_dir}"
 }
 
 # =========================================================================
@@ -440,16 +514,24 @@ prepare_model_py() {
 process_model() {
     local model_dir="$1"
     local lang="$2"
+    local resolved family_rel only_variant
+
+    if ! resolved="$(resolve_model_arg "$lang" "$model_dir")"; then
+        echo -e "${RED}[DXAPP] [ERROR]${NC} directory not found: $model_dir ($lang)"
+        return 1
+    fi
+    family_rel="${resolved%%|*}"
+    only_variant="${resolved#*|}"
 
     if [ "$CLEAN_MODE" = true ]; then
         case "$lang" in
-            cpp) clean_model_cpp "$model_dir" ;;
-            py)  clean_model_py "$model_dir" ;;
+            cpp) clean_model_cpp "$family_rel" ;;
+            py)  clean_model_py "$family_rel" ;;
         esac
     else
         case "$lang" in
-            cpp) prepare_model_cpp "$model_dir" ;;
-            py)  prepare_model_py "$model_dir" ;;
+            cpp) prepare_model_cpp "$family_rel" "$only_variant" ;;
+            py)  prepare_model_py "$family_rel" "$only_variant" ;;
         esac
     fi
 }
