@@ -110,6 +110,21 @@ def legacy_media(entry: dict, spec: dict) -> tuple[str | None, str | None, bool]
     return image, video, image_only
 
 
+# Per-variant escapes from the legacy task tables. The tables key on task_legacy, so
+# every clip variant inherits "embedding" -- image-only, compared against a reference
+# image. That is right for the embedding variants and wrong for the one that carries a
+# prompt bank: zero-shot classification is a per-frame label, so it runs on video like
+# any classifier. Keyed by variant because the task name cannot express the difference.
+VARIANT_MEDIA_OVERRIDE = {
+    "clip-img_vit-b32_256x256_datacomp-s34b-b86k": {
+        "image_only": False,
+        "default_image": "sample/img/sample_dog.jpg",
+        "default_video": "assets/videos/dogs.mp4",
+        "include_stream_inputs": True,
+    },
+}
+
+
 def variant_json(entry: dict, spec: dict) -> dict:
     default_image, default_video, legacy_image_only = legacy_media(entry, spec)
     return {
@@ -122,10 +137,13 @@ def variant_json(entry: dict, spec: dict) -> dict:
         # Taken from the legacy runner tables, not from the registry field: the
         # registry marks 17 variants image_only while the runner treats 12 of those as
         # image-only for CLI purposes and the rest only at runtime.
-        "image_only": legacy_image_only,
+        "image_only": VARIANT_MEDIA_OVERRIDE.get(entry["variant"], {})
+                      .get("image_only", legacy_image_only),
         "registry_image_only": entry["image_only"],
-        "default_image": default_image,
-        "default_video": default_video,
+        "default_image": VARIANT_MEDIA_OVERRIDE.get(entry["variant"], {})
+                         .get("default_image", default_image),
+        "default_video": VARIANT_MEDIA_OVERRIDE.get(entry["variant"], {})
+                         .get("default_video", default_video),
         "zoo_canonical": entry["zoo_canonical"],
         # Whether a .dxnn exists to download. 143 of the 499 variants are declared in
         # the registry but not published yet, and default_variant() needs to know:
@@ -139,9 +157,12 @@ def variant_json(entry: dict, spec: dict) -> dict:
         "config": spec.get("dir_config") if spec.get("dir_config") is not None
         else (entry.get("config") or {}),
         "registry_config": entry.get("config") or {},
-        "cli": spec.get("cli") or {"include_stream_inputs": True,
-                                   "include_output": False,
-                                   "include_kitti_paths": False},
+        "cli": {**(spec.get("cli") or {"include_stream_inputs": True,
+                                       "include_output": False,
+                                       "include_kitti_paths": False}),
+                **({"include_stream_inputs": True}
+                   if VARIANT_MEDIA_OVERRIDE.get(entry["variant"], {})
+                       .get("include_stream_inputs") else {})},
         "preprocessor": spec.get("preprocessor"),
         "postprocessor": spec.get("postprocessor"),
         "visualizer": spec.get("visualizer"),

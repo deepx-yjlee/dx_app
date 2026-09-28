@@ -7,6 +7,11 @@ below and the family factory delegates to them, which preserves behaviour by
 construction rather than by a re-derivation that could drift.
 """
 
+from pathlib import Path
+
+from common.processors import CLIPZeroShotPostprocessor
+from common.visualizers import ClassificationVisualizer
+
 # ---- carried over verbatim from src/python_example/embedding/vit_b_32_256_datacomp_s34b_b86k/factory/vit_b_32_256_datacomp_s34b_b86k_factory.py ----
 """
 Vit_b_32_256_datacomp_s34b_b86k Factory
@@ -70,17 +75,39 @@ class Vit_b_32_256_datacomp_s34b_b86kFactory(IEmbeddingFactory):
             std=[s * 255.0 for s in std],
         )
 
+    # ---- zero-shot head (diverges from the carried-over factory ON PURPOSE) ----
+    # The carried-over factory returned an image EMBEDDING and compared two images.
+    # That is not what `zero_shot_image_classification` means, and the task cannot be
+    # completed on device: the zoo's only text tower is an OpenAI RN50 whose .dxnn
+    # emits the transformer's [1,77,512] hidden states, not a joint embedding -- a
+    # different checkpoint AND an incomplete graph. So the text side is frozen at
+    # build time into prompt_bank.json (scripts/build_clip_prompt_bank.py) and the
+    # runtime does one numpy dot product against it. Every OTHER clip variant keeps
+    # the embedding-comparison behaviour.
+    _BANK = Path(__file__).resolve().parent / "prompt_bank.json"
+
+    def _bank_labels(self):
+        import json
+        return json.loads(self._BANK.read_text(encoding="utf-8"))["labels"]
+
     def create_postprocessor(self, input_width: int, input_height: int):
-        return CLIPImagePostprocessor(input_width, input_height, self.config)
+        return CLIPZeroShotPostprocessor(
+            input_width, input_height,
+            {**self.config, "prompt_bank": str(self._BANK),
+             "top_k": int(self.config.get("top_k", 5))},
+        )
 
     def create_visualizer(self):
-        return EmbeddingVisualizer()
+        # ClassificationVisualizer indexes ITS OWN list by class_id, so it has to be
+        # given the bank's labels in the bank's order -- an imagenet1000 default would
+        # print a confident, entirely unrelated word.
+        return ClassificationVisualizer(custom_labels=self._bank_labels())
 
     def get_model_name(self) -> str:
         return "vit_b_32_256_datacomp_s34b_b86k"
 
     def get_task_type(self) -> str:
-        return "embedding"
+        return "classification"
 
 # ---- carried over verbatim from src/python_example/embedding/vit_l_14_datacomp_xl_s13b_b90k/factory/vit_l_14_datacomp_xl_s13b_b90k_factory.py ----
 """
