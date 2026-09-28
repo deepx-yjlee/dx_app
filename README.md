@@ -84,13 +84,37 @@ This section guides you through the environment setup and the initial build proc
 > has announced but not published yet; `scripts/download_models.py` reports them as
 > *Pending* rather than as errors.
 >
-> **Those 143 also need a newer DXRT.** Their `.dxnn` files are container **format
-> version 9**, and DX-RT v3.4.2 parses 6-8 (`Model file format version 9 is not
-> supported`). So even with the files in `assets/models/` they cannot be loaded here:
-> `scripts/sweep_npu_inference.py` reads the 8-byte header up front and reports them as
-> `UNSUPPORTED_FORMAT`, never as passing and never as a failure of the example code.
-> The 356 published models are version 8 (two are version 6) and run normally.
+> *Pending* is a CDN **403** on the model's `2_5_0/` URL -- a publication state, not a
+> broken file and not missing example code. The example code is complete for all 499.
+>
+> **Those 143 need DX-RT 3.5.0.** Their `.dxnn` files are container **format version
+> 9**, which DX-RT 3.4.2 refuses (`Model file format version 9 is not supported`)
+> while 3.5.0 parses it. `scripts/sweep_npu_inference.py` probes the runtime once per
+> container version and reports `UNSUPPORTED_FORMAT` rather than a failure of the
+> example code, so the same tree is honest on either runtime. On 3.5.0 all 499
+> variants run; the 356 published models are version 8 (two are version 6).
 
+
+
+> **Two examples depend on something a `.dxnn` cannot carry.**
+>
+> * `zero_shot_image_classification/clip` -- zero-shot needs text, and the zoo's only
+>   text tower (`clip-text_resnet50_77x512_openai`) emits the transformer's
+>   `[1,77,512]` hidden states rather than a joint embedding, from a different
+>   checkpoint than any image tower here. So the prompts are encoded once at build
+>   time by `scripts/build_clip_prompt_bank.py` into `prompt_bank.json`, and the app
+>   stays numpy-only. **The prompt set is therefore fixed at build time** -- re-run the
+>   script with `--labels` to change it. Only the ViT-B/32 256x256 variant ships a
+>   bank; the other clip variants keep the image-to-image embedding comparison.
+> * `anomaly_detection/efficientad` -- the map is EfficientAD's own combination of the
+>   student-teacher and autoencoder disagreements, so the example loads all three
+>   networks from one `-m` (the factory declares the companions). What it cannot
+>   reproduce is the published SCORE: that divides by q_st/q_ae quantiles fitted on the
+>   training set, which no `.dxnn` carries, so severity is comparable across frames for
+>   this model set and to nothing else. `patchcore` is still single-network, because
+>   its metric needs a memory bank of training features.
+>
+> The C++ examples for both families are still the single-model versions.
 
 The project is structured to separate core logic from language-specific implementations.  
 ```text
