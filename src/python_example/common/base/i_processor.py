@@ -134,13 +134,23 @@ class SegmentationResult:
 
 @dataclass
 class AnomalyResult:
-    """Anomaly-detection feature response.
+    """Anomaly-detection response.
 
-    Deliberately a feature response, not an anomaly score. EfficientAD needs its
-    teacher, student and autoencoder together to form a score, and PatchCore needs
-    a memory bank of training features; each .dxnn here is one model. `score` is
-    therefore a relative severity (the heatmap's 99th percentile), useful for
-    ranking frames and NOT comparable to a published EfficientAD/PatchCore metric.
+    Two producers, two meanings, and the difference matters:
+
+    * :class:`EfficientADPostprocessor` runs the teacher, student and autoencoder
+      together and returns EfficientAD's own combination of their disagreements.
+      `score` is the raw combination's 99th percentile -- comparable across frames
+      for that model set, and NOT to a published MVTec figure, because the reference
+      implementation divides by q_st/q_ae quantiles fitted on the training set and a
+      .dxnn carries no such constants.
+    * :class:`AnomalyFeaturePostprocessor` sees ONE network, so it can only report the
+      magnitude of a feature response. PatchCore is scored that way here because its
+      real metric needs a memory bank of training features, which is a fit step rather
+      than a model.
+
+    `heatmap` is always normalised against its own frame, so that a hot region is
+    visible whatever the absolute magnitudes; it is not comparable between frames.
     """
     heatmap: np.ndarray = field(default_factory=lambda: np.array([]))  # H*W float [0,1]
     score: float = 0.0

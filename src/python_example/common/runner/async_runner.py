@@ -58,6 +58,7 @@ from .sync_runner import (
     _resolve_config_path, _parse_loop_value, _window_should_close,
     _DEFAULT_SAMPLE_IMAGE, _IMG_STREET, _IMAGE_ONLY_TASKS,
     _show_image_only_no_input_hint, _reject_image_only_stream_input,
+    resolve_companion_models,
 )
 
 logger = logging.getLogger(__name__)
@@ -129,6 +130,7 @@ class AsyncRunner:
         self._display_size = display_size
 
         self.ie: Optional[Any] = None
+        self._companion_engines: List[tuple] = []
         self.preprocessor = None
         self.postprocessor = None
         self.visualizer = None
@@ -293,6 +295,11 @@ class AsyncRunner:
             self.ie = InferenceEngine(model_path, option)
         else:
             self.ie = InferenceEngine(model_path)
+
+        self._companion_engines = []
+        for role, path in resolve_companion_models(self.factory, model_path):
+            self._companion_engines.append((role, InferenceEngine(path)))
+            logger.info(f"Companion model ({role}): {path}")
 
         input_info = self.ie.get_input_tensors_info()
         shape = input_info[0]["shape"]
@@ -463,7 +470,10 @@ class AsyncRunner:
 
                 # Submit async inference
                 input_tensor = self._prep_input(input_tensor)
-                req_id = self.ie.run_async([input_tensor])
+                req_ids = [self.ie.run_async([input_tensor])]
+                for _role, engine in self._companion_engines:
+                    req_ids.append(engine.run_async([input_tensor]))
+                req_id = req_ids
                 t_submit = time.perf_counter()
 
                 with self._metrics_lock:
@@ -495,7 +505,12 @@ class AsyncRunner:
                 t_wait_start = time.perf_counter()
                 frame, input_tensor, req_id, ctx, t_submit, t_queue_entry = item
 
-                outputs = self.ie.wait(req_id)
+                # Companion results are appended in the order the factory declared
+                # them: EfficientAD's teacher and autoencoder are the same shape, so
+                # the order is the only thing that identifies them.
+                outputs = list(self.ie.wait(req_id[0]))
+                for (_role, engine), rid in zip(self._companion_engines, req_id[1:]):
+                    outputs.extend(engine.wait(rid))
                 t_done = time.perf_counter()
 
                 with self._metrics_lock:

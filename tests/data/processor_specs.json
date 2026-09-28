@@ -4308,8 +4308,16 @@
       "include_output": false,
       "include_stream_inputs": true
     },
-    "dir_config": {},
-    "extra_methods": [],
+    "dir_config": {
+      "roles": [
+        "autoencoder",
+        "student",
+        "teacher"
+      ]
+    },
+    "extra_methods": [
+      "def get_companion_models(self, primary_path: str):\n        \"\"\"The other two EfficientAD networks, beside the one ``-m`` named.\n\n        EfficientAD scores a DISAGREEMENT -- the student's first 384 channels\n        predict the teacher and its second 384 predict the autoencoder -- so no\n        single network can produce the map. Declaring the set on the factory keeps\n        the one-``-m`` CLI contract that run_demo.sh and every sweep rely on; the\n        runner resolves these names in the primary model's own directory.\n\n        The returned order matches ``config.roles`` in each variant config, which\n        is the only thing that tells two same-shaped 384-channel maps apart.\n        \"\"\"\n        from pathlib import Path as _Path\n        roles = (\"student\", \"teacher\", \"autoencoder\")\n        stem = _Path(primary_path).name\n        primary = next((r for r in roles if f\"-{r}_\" in stem), None)\n        if primary is None:\n            raise ValueError(\n                f\"{stem} does not name an EfficientAD role; expected one of \"\n                f\"{roles}.\")\n        return [(other, stem.replace(f\"-{primary}_\", f\"-{other}_\"))\n                for other in roles if other != primary]"
+    ],
     "factory_bases": [
       "IAnomalyDetectionFactory"
     ],
@@ -4317,12 +4325,12 @@
     "family": "efficientad",
     "imports": [
       "from common.base import IAnomalyDetectionFactory",
-      "from common.processors import SimpleResizePreprocessor, AnomalyFeaturePostprocessor",
+      "from common.processors import SimpleResizePreprocessor, EfficientADPostprocessor",
       "from common.visualizers import AnomalyVisualizer"
     ],
     "model_name": "efficientad_m_autoencoder_256x256",
     "postprocessor": {
-      "class": "AnomalyFeaturePostprocessor",
+      "class": "EfficientADPostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -4350,7 +4358,13 @@
       "kwargs": {},
       "config_overrides": {}
     },
-    "registry_config": {},
+    "registry_config": {
+      "roles": [
+        "autoencoder",
+        "student",
+        "teacher"
+      ]
+    },
     "source_dir": "efficientad",
     "source_task": "anomaly_detection",
     "task": "anomaly_detection",
@@ -4368,8 +4382,16 @@
       "include_output": false,
       "include_stream_inputs": true
     },
-    "dir_config": {},
-    "extra_methods": [],
+    "dir_config": {
+      "roles": [
+        "student",
+        "teacher",
+        "autoencoder"
+      ]
+    },
+    "extra_methods": [
+      "def get_companion_models(self, primary_path: str):\n        \"\"\"The other two EfficientAD networks, beside the one ``-m`` named.\n\n        EfficientAD scores a DISAGREEMENT -- the student's first 384 channels\n        predict the teacher and its second 384 predict the autoencoder -- so no\n        single network can produce the map. Declaring the set on the factory keeps\n        the one-``-m`` CLI contract that run_demo.sh and every sweep rely on; the\n        runner resolves these names in the primary model's own directory.\n\n        The returned order matches ``config.roles`` in each variant config, which\n        is the only thing that tells two same-shaped 384-channel maps apart.\n        \"\"\"\n        from pathlib import Path as _Path\n        roles = (\"student\", \"teacher\", \"autoencoder\")\n        stem = _Path(primary_path).name\n        primary = next((r for r in roles if f\"-{r}_\" in stem), None)\n        if primary is None:\n            raise ValueError(\n                f\"{stem} does not name an EfficientAD role; expected one of \"\n                f\"{roles}.\")\n        return [(other, stem.replace(f\"-{primary}_\", f\"-{other}_\"))\n                for other in roles if other != primary]"
+    ],
     "factory_bases": [
       "IAnomalyDetectionFactory"
     ],
@@ -4377,12 +4399,12 @@
     "family": "efficientad",
     "imports": [
       "from common.base import IAnomalyDetectionFactory",
-      "from common.processors import SimpleResizePreprocessor, AnomalyFeaturePostprocessor",
+      "from common.processors import SimpleResizePreprocessor, EfficientADPostprocessor",
       "from common.visualizers import AnomalyVisualizer"
     ],
     "model_name": "efficientad_m_student_256x256",
     "postprocessor": {
-      "class": "AnomalyFeaturePostprocessor",
+      "class": "EfficientADPostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -4410,7 +4432,13 @@
       "kwargs": {},
       "config_overrides": {}
     },
-    "registry_config": {},
+    "registry_config": {
+      "roles": [
+        "student",
+        "teacher",
+        "autoencoder"
+      ]
+    },
     "source_dir": "efficientad",
     "source_task": "anomaly_detection",
     "task": "anomaly_detection",
@@ -4428,8 +4456,16 @@
       "include_output": false,
       "include_stream_inputs": true
     },
-    "dir_config": {},
-    "extra_methods": [],
+    "dir_config": {
+      "roles": [
+        "teacher",
+        "student",
+        "autoencoder"
+      ]
+    },
+    "extra_methods": [
+      "def get_companion_models(self, primary_path: str):\n        \"\"\"The other two EfficientAD networks, beside the one ``-m`` named.\n\n        EfficientAD scores a DISAGREEMENT -- the student's first 384 channels\n        predict the teacher and its second 384 predict the autoencoder -- so no\n        single network can produce the map. Declaring the set on the factory keeps\n        the one-``-m`` CLI contract that run_demo.sh and every sweep rely on; the\n        runner resolves these names in the primary model's own directory.\n\n        The returned order matches ``config.roles`` in each variant config, which\n        is the only thing that tells two same-shaped 384-channel maps apart.\n        \"\"\"\n        from pathlib import Path as _Path\n        roles = (\"student\", \"teacher\", \"autoencoder\")\n        stem = _Path(primary_path).name\n        primary = next((r for r in roles if f\"-{r}_\" in stem), None)\n        if primary is None:\n            raise ValueError(\n                f\"{stem} does not name an EfficientAD role; expected one of \"\n                f\"{roles}.\")\n        return [(other, stem.replace(f\"-{primary}_\", f\"-{other}_\"))\n                for other in roles if other != primary]"
+    ],
     "factory_bases": [
       "IAnomalyDetectionFactory"
     ],
@@ -4437,12 +4473,12 @@
     "family": "efficientad",
     "imports": [
       "from common.base import IAnomalyDetectionFactory",
-      "from common.processors import SimpleResizePreprocessor, AnomalyFeaturePostprocessor",
+      "from common.processors import SimpleResizePreprocessor, EfficientADPostprocessor",
       "from common.visualizers import AnomalyVisualizer"
     ],
     "model_name": "efficientad_m_teacher_256x256",
     "postprocessor": {
-      "class": "AnomalyFeaturePostprocessor",
+      "class": "EfficientADPostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -4470,7 +4506,13 @@
       "kwargs": {},
       "config_overrides": {}
     },
-    "registry_config": {},
+    "registry_config": {
+      "roles": [
+        "teacher",
+        "student",
+        "autoencoder"
+      ]
+    },
     "source_dir": "efficientad",
     "source_task": "anomaly_detection",
     "task": "anomaly_detection",

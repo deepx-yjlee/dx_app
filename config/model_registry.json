@@ -8380,10 +8380,16 @@
     "original_name": "EfficientAD-M Autoencoder",
     "csv_task": "AD",
     "add_model_task": "anomaly_detection",
-    "postprocessor": "AnomalyFeaturePostprocessor",
+    "postprocessor": "EfficientADPostprocessor",
     "input_width": 256,
     "input_height": 256,
-    "config": {},
+    "config": {
+      "roles": [
+        "autoencoder",
+        "student",
+        "teacher"
+      ]
+    },
     "source": "https://github.com/amazon-science/efficient-ad",
     "supported": true,
     "variant": "efficientad-m-autoencoder_256x256",
@@ -8401,10 +8407,16 @@
     "original_name": "EfficientAD-M Student",
     "csv_task": "AD",
     "add_model_task": "anomaly_detection",
-    "postprocessor": "AnomalyFeaturePostprocessor",
+    "postprocessor": "EfficientADPostprocessor",
     "input_width": 256,
     "input_height": 256,
-    "config": {},
+    "config": {
+      "roles": [
+        "student",
+        "teacher",
+        "autoencoder"
+      ]
+    },
     "source": "https://github.com/amazon-science/efficient-ad",
     "supported": true,
     "variant": "efficientad-m-student_256x256",
@@ -8422,10 +8434,16 @@
     "original_name": "EfficientAD-M Teacher",
     "csv_task": "AD",
     "add_model_task": "anomaly_detection",
-    "postprocessor": "AnomalyFeaturePostprocessor",
+    "postprocessor": "EfficientADPostprocessor",
     "input_width": 256,
     "input_height": 256,
-    "config": {},
+    "config": {
+      "roles": [
+        "teacher",
+        "student",
+        "autoencoder"
+      ]
+    },
     "source": "https://github.com/amazon-science/efficient-ad",
     "supported": true,
     "variant": "efficientad-m-teacher_256x256",

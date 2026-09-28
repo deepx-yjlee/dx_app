@@ -11,14 +11,15 @@ from ..base import AnomalyResult, IVisualizer
 
 
 class AnomalyVisualizer(IVisualizer):
-    """Overlay the feature response on the frame, with its relative severity.
+    """Overlay the anomaly response on the frame, with its relative severity.
 
     The severity is labelled "relative" on the frame itself, and that wording is
-    deliberate: these are single networks out of multi-network methods (EfficientAD
-    needs its teacher, student and autoencoder together; PatchCore needs a memory bank
-    of training features), so the number ranks frames against each other and is not
-    the published EfficientAD or PatchCore score. Printing a bare "score" would invite
-    exactly the comparison it cannot support.
+    deliberate in both cases it serves. EfficientAD now runs as the ensemble it is --
+    teacher, student and autoencoder together -- but its published score divides by
+    q_st/q_ae quantiles fitted on the training set, which no .dxnn carries. PatchCore
+    is still a single network here, because its metric needs a memory bank of training
+    features. So the number ranks frames against each other for one model set, and
+    printing a bare "score" would invite exactly the comparison it cannot support.
     """
 
     def __init__(self, alpha: float = 0.5, colormap: int = cv2.COLORMAP_JET):

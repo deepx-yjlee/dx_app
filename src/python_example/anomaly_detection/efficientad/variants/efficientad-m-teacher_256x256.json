@@ -12,8 +12,20 @@
   "zoo_canonical": false,
   "published": false,
   "legacy_model_name": "efficientad_m_teacher_256x256",
-  "config": {},
-  "registry_config": {},
+  "config": {
+    "roles": [
+      "teacher",
+      "student",
+      "autoencoder"
+    ]
+  },
+  "registry_config": {
+    "roles": [
+      "teacher",
+      "student",
+      "autoencoder"
+    ]
+  },
   "cli": {
     "include_kitti_paths": false,
     "include_output": false,
@@ -33,7 +45,7 @@
     "config_overrides": {}
   },
   "postprocessor": {
-    "class": "AnomalyFeaturePostprocessor",
+    "class": "EfficientADPostprocessor",
     "args": [
       {
         "token": "input_width"

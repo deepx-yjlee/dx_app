@@ -21,8 +21,11 @@ stays in the architecture family (``_decode``); a different *postprocessing mech
 gets its own family, even though ``yolov8-n_640x640_ppu`` shares weights with
 ``yolov8-n_640x640`` (``yolo-ppu`` holds v3/v4/v5/v7/v8/v9/v10/11/v12/x side by side).
 Pre-optimized models carry a wholly different chain -- a top-k row table, no dense
-decode, no standard NMS -- so they get mechanism families: ``yolo_preopt``,
-``yolo_preopt_pose``, ``yolo_preopt_seg``.
+decode, no standard NMS -- so they get mechanism families: ``yolo_preopt`` and
+``yolo_preopt_pose``. A ``_pre-optimized`` filename alone does NOT put a model there:
+only the ten stems MEASURED to emit the table (yolo26 det and pose) belong to them, and
+every other ``_pre-optimized`` stem emits its plain sibling's tensor and stays in its
+architecture family. There is no ``yolo_preopt_seg`` -- see the note where it would be.
 
 dx_app renders dx-modelzoo's ``-`` as ``_`` in directory and registry ``family``
 values, as it already does for ``yolo-ppu`` -> ``yolo_ppu`` and ``stdc-seg`` ->
@@ -169,6 +172,32 @@ def _preopt(arch: str, sizes, infix: str = "") -> list[str]:
 
 def _plain(arch: str, sizes, infix: str = "", res: str = "640x640") -> list[str]:
     return [f"{arch}-{s}{infix}_{res}" for s in sizes]
+
+
+EFFICIENTAD_COMPANIONS = [
+    'def get_companion_models(self, primary_path: str):\n'
+    '        """The other two EfficientAD networks, beside the one ``-m`` named.\n'
+    '\n'
+    '        EfficientAD scores a DISAGREEMENT -- the student\'s first 384 channels\n'
+    '        predict the teacher and its second 384 predict the autoencoder -- so no\n'
+    '        single network can produce the map. Declaring the set on the factory keeps\n'
+    '        the one-``-m`` CLI contract that run_demo.sh and every sweep rely on; the\n'
+    '        runner resolves these names in the primary model\'s own directory.\n'
+    '\n'
+    '        The returned order matches ``config.roles`` in each variant config, which\n'
+    '        is the only thing that tells two same-shaped 384-channel maps apart.\n'
+    '        """\n'
+    '        from pathlib import Path as _Path\n'
+    '        roles = ("student", "teacher", "autoencoder")\n'
+    '        stem = _Path(primary_path).name\n'
+    '        primary = next((r for r in roles if f"-{r}_" in stem), None)\n'
+    '        if primary is None:\n'
+    '            raise ValueError(\n'
+    '                f"{stem} does not name an EfficientAD role; expected one of "\n'
+    '                f"{roles}.")\n'
+    '        return [(other, stem.replace(f"-{primary}_", f"-{other}_"))\n'
+    '                for other in roles if other != primary]'
+]
 
 
 # --------------------------------------------------------------------- the table
@@ -545,10 +574,20 @@ GROUPS: list[dict] = [
         variants=[f"efficientad-m-{p}_256x256"
                   for p in ("teacher", "student", "autoencoder")],
         preprocessor=SIMPLE,
-        postprocessor=_proc("AnomalyFeaturePostprocessor", WHC),
+        postprocessor=_proc("EfficientADPostprocessor", WHC),
         visualizer=_proc("AnomalyVisualizer", []),
         base="IAnomalyDetectionFactory", reference=REF_EFFICIENTAD,
         config={},
+        # ``-m`` names the PRIMARY network and the companions follow it, so each
+        # variant sees its outputs in a different order. Teacher and autoencoder are
+        # both (1,384,H,W): only this declaration distinguishes them.
+        config_by_variant={
+            f"efficientad-m-{primary}_256x256": {
+                "roles": [primary] + [r for r in ("student", "teacher", "autoencoder")
+                                      if r != primary]}
+            for primary in ("teacher", "student", "autoencoder")
+        },
+        extra_methods=EFFICIENTAD_COMPANIONS,
     ),
     dict(
         task="anomaly_detection", task_legacy="anomaly_detection", family="patchcore",
@@ -690,14 +729,16 @@ def expand() -> list[dict]:
                 "dataset": dataset,
                 "license": license_,
                 "reference": group["reference"],
-                "config": dict(group["config"]),
+                "config": {**group["config"],
+                           **(group.get("config_by_variant") or {}).get(variant, {})},
                 "preprocessor": group["preprocessor"],
                 "postprocessor": group["postprocessor"],
                 "visualizer": group["visualizer"],
                 "factory_bases": [group["base"]],
                 # A pose factory must carry get_num_keypoints or it cannot be built.
-                "extra_methods": (COCO_17_KEYPOINTS
-                                  if group["base"] == "IPoseFactory" else []),
+                "extra_methods": group.get(
+                    "extra_methods",
+                    COCO_17_KEYPOINTS if group["base"] == "IPoseFactory" else []),
                 "imports": [
                     f"from common.base import {group['base']}",
                     f"from common.processors import {group['preprocessor']['class']}, "

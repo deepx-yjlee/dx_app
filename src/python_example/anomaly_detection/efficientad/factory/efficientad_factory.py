@@ -48,3 +48,26 @@ class EfficientadFactory(IAnomalyDetectionFactory):
 
     def get_task_type(self) -> str:
         return self.spec["task"]
+
+    def get_companion_models(self, primary_path: str):
+            """The other two EfficientAD networks, beside the one ``-m`` named.
+
+            EfficientAD scores a DISAGREEMENT -- the student's first 384 channels
+            predict the teacher and its second 384 predict the autoencoder -- so no
+            single network can produce the map. Declaring the set on the factory keeps
+            the one-``-m`` CLI contract that run_demo.sh and every sweep rely on; the
+            runner resolves these names in the primary model's own directory.
+
+            The returned order matches ``config.roles`` in each variant config, which
+            is the only thing that tells two same-shaped 384-channel maps apart.
+            """
+            from pathlib import Path as _Path
+            roles = ("student", "teacher", "autoencoder")
+            stem = _Path(primary_path).name
+            primary = next((r for r in roles if f"-{r}_" in stem), None)
+            if primary is None:
+                raise ValueError(
+                    f"{stem} does not name an EfficientAD role; expected one of "
+                    f"{roles}.")
+            return [(other, stem.replace(f"-{primary}_", f"-{other}_"))
+                    for other in roles if other != primary]

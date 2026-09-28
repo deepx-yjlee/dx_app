@@ -46,6 +46,7 @@ from .rtdetr_postprocessor import (
 # borrowing ArcFacePostprocessor's hardcoded "face_embedding"/"arcface".
 from .embedding_postprocessor import GenericEmbeddingPostprocessor
 from .matting_postprocessor import PPMattingPostprocessor
+from .efficientad_postprocessor import EfficientADPostprocessor
 from .anomaly_postprocessor import AnomalyFeaturePostprocessor
 from .picodet_postprocessor import PicoDetPostprocessor
 from .damoyolo_postprocessor import DamoYoloPostprocessor
@@ -106,6 +107,7 @@ __all__ = [
     "PPMattingPostprocessor",
     # Anomaly detection: a feature response, not a published anomaly score.
     "AnomalyFeaturePostprocessor",
+    "EfficientADPostprocessor",
     # PP-PicoDet: a GFL head delivered one tensor per pyramid level, unlike
     # NanoDet which concatenates them.
     "PicoDetPostprocessor",

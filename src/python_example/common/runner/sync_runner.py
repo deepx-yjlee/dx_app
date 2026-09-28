@@ -323,6 +323,44 @@ def _variant_spec(factory) -> dict:
     return spec if isinstance(spec, dict) else {}
 
 
+def resolve_companion_models(factory, primary_path: str) -> List[tuple]:
+    """``[(role, absolute path)]`` for the extra .dxnn files *factory* needs.
+
+    A factory opts in by defining ``get_companion_models(primary_path)`` returning
+    ``[(role, filename-or-path)]``; a relative name is resolved in the primary model's
+    own directory, which is how every deployment keeps a model set together.
+
+    Declaring this on the FACTORY rather than on the command line keeps the one-``-m``
+    contract that run_demo.sh, the sweeps and every generated entry script rely on.
+
+    A missing companion raises. Falling back to the primary alone would produce a
+    heatmap that still looks like a heatmap while meaning something else entirely --
+    the exact failure that a single-network "EfficientAD" example already demonstrated.
+    """
+    getter = getattr(factory, "get_companion_models", None)
+    if getter is None:
+        return []
+    declared = getter(primary_path) or []
+
+    base = Path(primary_path).resolve().parent
+    resolved = []
+    for role, name in declared:
+        path = Path(name)
+        if not path.is_absolute():
+            path = base / path
+        if not path.is_file():
+            raise FileNotFoundError(
+                f"[DXAPP] [ERROR] companion model for role {role!r} not found: {path}\n"
+                f"  {type(factory).__name__} needs it alongside the primary model "
+                f"({Path(primary_path).name}).\n"
+                "  This model set must be downloaded together; running the primary "
+                "network alone would produce a different measurement under the same "
+                "name."
+            )
+        resolved.append((role, str(path)))
+    return resolved
+
+
 def _is_image_only(factory, task_type: Optional[str]) -> bool:
     spec = _variant_spec(factory)
     if "image_only" in spec:
@@ -632,6 +670,7 @@ class SyncRunner:
         self._display_size = display_size or _DEFAULT_DISPLAY_SIZE
 
         self.ie: Optional[Any] = None
+        self._companion_engines: List[tuple] = []
         self.input_width = 0
         self.input_height = 0
         self.preprocessor = None
@@ -720,6 +759,13 @@ class SyncRunner:
 
         _check_model_version(self.ie)
 
+        self._companion_engines = []
+        for role, path in resolve_companion_models(self.factory, model_path):
+            engine = InferenceEngine(path)
+            _check_model_version(engine)
+            self._companion_engines.append((role, engine))
+            logger.info(f"Companion model ({role}): {path}")
+
         input_info = self.ie.get_input_tensors_info()
         shape = input_info[0]["shape"]
         self._input_dtype = input_info[0].get("dtype", np.uint8)
@@ -798,7 +844,14 @@ class SyncRunner:
         return input_tensor
 
     def infer(self, input_tensor: np.ndarray) -> List[np.ndarray]:
-        return self.ie.run([self._prep_input(input_tensor)])
+        prepared = self._prep_input(input_tensor)
+        outputs = list(self.ie.run([prepared]))
+        # Primary first, then companions in the order the factory declared them.
+        # Teacher and autoencoder are the same shape, so nothing downstream could
+        # recover the mapping if this order were incidental.
+        for _role, engine in self._companion_engines:
+            outputs.extend(engine.run([prepared]))
+        return outputs
 
     def postprocess(self, outputs: List[np.ndarray], ctx):
         if self._cpp_postprocessor is not None:
