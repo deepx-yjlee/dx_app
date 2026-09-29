@@ -4,7 +4,7 @@
 
 ## 개요
 
-dx_app은 22개 AI 작업에 걸쳐 353개의 컴파일된 `.dxnn` 모델을 제공하며, Python (4개 변형) 및 C++ 예제를 포함합니다.
+dx_app은 {{TASK_COUNT}}개 AI 작업에 걸쳐 {{MODEL_COUNT}}개의 컴파일된 `.dxnn` 모델을 제공하며, Python (4개 변형) 및 C++ 예제를 포함합니다.
 
 ## 응답 언어
 
@@ -264,21 +264,25 @@ logger = logging.getLogger(__name__)
 ## 파일 구조
 
 ```
-src/python_example/{task}/{model}/
-├── __init__.py
-├── config.json
-├── {model}_factory.py
-├── {model}_sync.py
-├── {model}_async.py
-├── {model}_sync_cpp_postprocess.py
-└── {model}_async_cpp_postprocess.py
+src/python_example/{task}/{family}/
+├── factory/{family}_factory.py
+├── {family}_sync.py                 # family entry; --variant
+├── {family}_async.py
+├── {family}_sync_cpp_postprocess.py
+├── {family}_async_cpp_postprocess.py
+└── {variant}/                       # directory name is the .dxnn stem
+    ├── config.json
+    ├── {variant}_sync.py            # thin entry; variant is fixed
+    ├── {variant}_async.py
+    ├── {variant}_sync_cpp_postprocess.py
+    └── {variant}_async_cpp_postprocess.py
 
-src/cpp_example/{task}/{model}/
-├── CMakeLists.txt
-├── main.cpp
-├── config.json
-├── include/
-└── src/
+src/cpp_example/{task}/{family}/
+├── factory/{family}_factory.hpp
+├── {family}_sync.cpp                # variant comes from the .dxnn stem
+├── {family}_async.cpp
+└── {variant}/
+    └── config.json
 ```
 
 ## 플레이스홀더 코드 금지 (MANDATORY)
@@ -510,9 +514,9 @@ Artifact Verification Gate는 각 artifact가 **어떻게** 검증되는지 정�
    낭비합니다. 시스템 프롬프트와 대화 이력에 있는 지식을 사용하세요.
 
 
-## 22개 지원 AI 작업
+## {{TASK_COUNT}}개 지원 AI 작업
 
-3d_object_detection, attribute_recognition, classification, depth_estimation, embedding, face_alignment, face_detection, hand_detection, hand_landmark, image_denoising, image_enhancement, instance_segmentation, keypoint_detection, obb_detection, object_detection, object_pose_estimation, panoptic_driving_perception, pose_estimation, ppu, reid, semantic_segmentation, super_resolution
+{{TASK_LIST}}
 
 ## 하드웨어
 

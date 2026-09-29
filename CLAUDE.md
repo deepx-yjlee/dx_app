@@ -4,7 +4,7 @@
 
 ## Overview
 
-dx_app provides 353 compiled `.dxnn` models across 22 AI tasks with Python (4 variants) and C++ examples.
+dx_app provides {{MODEL_COUNT}} compiled `.dxnn` models across {{TASK_COUNT}} AI tasks with Python (4 variants) and C++ examples.
 
 ## Response Language
 
@@ -274,21 +274,25 @@ logger = logging.getLogger(__name__)
 ## File Structure
 
 ```
-src/python_example/{task}/{model}/
-├── __init__.py
-├── config.json
-├── {model}_factory.py
-├── {model}_sync.py
-├── {model}_async.py
-├── {model}_sync_cpp_postprocess.py
-└── {model}_async_cpp_postprocess.py
+src/python_example/{task}/{family}/
+├── factory/{family}_factory.py
+├── {family}_sync.py                 # family entry; --variant
+├── {family}_async.py
+├── {family}_sync_cpp_postprocess.py
+├── {family}_async_cpp_postprocess.py
+└── {variant}/                       # directory name is the .dxnn stem
+    ├── config.json
+    ├── {variant}_sync.py            # thin entry; variant is fixed
+    ├── {variant}_async.py
+    ├── {variant}_sync_cpp_postprocess.py
+    └── {variant}_async_cpp_postprocess.py
 
-src/cpp_example/{task}/{model}/
-├── CMakeLists.txt
-├── main.cpp
-├── config.json
-├── include/
-└── src/
+src/cpp_example/{task}/{family}/
+├── factory/{family}_factory.hpp
+├── {family}_sync.cpp                # variant comes from the .dxnn stem
+├── {family}_async.cpp
+└── {variant}/
+    └── config.json
 ```
 
 ## No Placeholder Code (MANDATORY)
@@ -528,9 +532,9 @@ When the user is absent — autopilot mode, `--yolo` flag, or system auto-respon
    already in your system prompt and conversation history.
 
 
-## 22 Supported AI Tasks
+## {{TASK_COUNT}} Supported AI Tasks
 
-3d_object_detection, attribute_recognition, classification, depth_estimation, embedding, face_alignment, face_detection, hand_detection, hand_landmark, image_denoising, image_enhancement, instance_segmentation, keypoint_detection, obb_detection, object_detection, object_pose_estimation, panoptic_driving_perception, pose_estimation, ppu, reid, semantic_segmentation, super_resolution
+{{TASK_LIST}}
 
 ## Hardware
 

@@ -84,25 +84,28 @@ runner.run();
 
 ### Directory Pattern & File Pattern 
 
-Each model family usually has its own directory.
+Each model family has one directory. The factory and family entries stay there.
+Each variant directory is named after the `.dxnn` stem and holds `config.json` only.
+The family entry selects the variant from that stem.
 
 Example:
 
 ```text
-src/cpp_example/object_detection/yolov9s/
-├── config.json
+src/cpp_example/object_detection/yolov8/
 ├── factory/
-│   └── yolov9s_factory.hpp    # Assembles processor + visualizer from common/
-├── yolov9s_sync.cpp            # Entry point → sync_detection_runner
-└── yolov9s_async.cpp           # Entry point → async_detection_runner
+│   └── yolov8_factory.hpp       # One factory for every yolov8 variant
+├── yolov8_sync.cpp              # Entry → sync_detection_runner
+├── yolov8_async.cpp             # Entry → async_detection_runner
+└── yolov8-n_640x640/
+    └── config.json              # This variant's runtime settings
 ```
 
 Common files:
 
-- `config.json`: model-specific runtime settings  
-- `factory/`: factory header wiring shared `common/` components  
-- `*_sync.cpp`: synchronous execution example (via task-specific sync runner)  
-- `*_async.cpp`: asynchronous execution example (via task-specific async runner)  
+- `<family>/<variant>/config.json`: that variant's runtime settings
+- `factory/`: factory header wiring shared `common/` components
+- `<family>_sync.cpp`: synchronous entry for every variant of the family
+- `<family>_async.cpp`: asynchronous entry for every variant of the family  
 
 ---
 
@@ -198,7 +201,7 @@ When `--save` is enabled, a timestamped directory is created (e.g., `artifacts/c
 
 **Configuration Management (`--config`)**  
 
-Runtime parameters (thresholds, top-k, etc.) can be customized per-model via `config.json`. If omitted, auto-detected adjacent to the model file.
+Runtime parameters (thresholds, top-k, etc.) live in `<family>/<variant>/config.json`. The family entry picks that folder from the `.dxnn` stem. A single-model extract may keep `config.json` beside the entry.
 
 ### Verification & Diagnostics
 

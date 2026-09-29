@@ -103,7 +103,13 @@ If dx-app-builder determined an existing example exists and the user chose optio
 
 ### Phase 3: Build
 
-Create files in this order under `src/python_example/<task>/<model>/`:
+In the source tree, put the shared factory and family entries in
+`src/python_example/<task>/<family>/`, and put `config.json` plus the thin
+entry scripts in `src/python_example/<task>/<family>/<variant>/`.
+The variant directory name is the `.dxnn` stem. A `dx-agent-dev/` session
+for one model stays flat (factory, entries, and `config.json` together).
+
+Create production files in this order:
 
 #### 3a. Factory (`factory/<model>_factory.py`)
 
@@ -355,15 +361,20 @@ Run validation checks:
 Present summary to user:
 ```
 Created files:
-  src/python_example/<task>/<model>/
-    factory/__init__.py
-    factory/<model>_factory.py
-    <model>_sync.py
-    <model>_async.py
-    <model>_sync_cpp_postprocess.py
-    <model>_async_cpp_postprocess.py
-    config.json
+  src/python_example/<task>/<family>/
     __init__.py
+    factory/__init__.py
+    factory/<family>_factory.py
+    <family>_sync.py
+    <family>_async.py
+    <family>_sync_cpp_postprocess.py
+    <family>_async_cpp_postprocess.py
+    <variant>/
+      config.json
+      <variant>_sync.py
+      <variant>_async.py
+      <variant>_sync_cpp_postprocess.py
+      <variant>_async_cpp_postprocess.py
 
 Run with:
     python <model>_sync.py --model ../../assets/models/<model>.dxnn \
@@ -403,21 +414,25 @@ Run with:
 ## Standard File Structure
 
 ```
-src/python_example/<task>/<model>/
+src/python_example/<task>/<family>/
     __init__.py
-    config.json
     factory/
         __init__.py
-        <model>_factory.py
-    <model>_sync.py
-    <model>_async.py
-    <model>_sync_cpp_postprocess.py       # optional
-    <model>_async_cpp_postprocess.py      # optional
-    <model>_sync_ort_off.py               # optional (USE_ORT=OFF)
-    <model>_async_ort_off.py              # optional (USE_ORT=OFF)
-    <model>_sync_cpp_postprocess_ort_off.py   # optional
-    <model>_async_cpp_postprocess_ort_off.py  # optional
+        <family>_factory.py
+    <family>_sync.py                          # --variant
+    <family>_async.py
+    <family>_sync_cpp_postprocess.py          # optional
+    <family>_async_cpp_postprocess.py         # optional
+    <variant>/                                # .dxnn stem
+        config.json
+        <variant>_sync.py                     # thin entry; variant fixed
+        <variant>_async.py
+        <variant>_sync_cpp_postprocess.py     # optional
+        <variant>_async_cpp_postprocess.py    # optional
 ```
+
+ORT-off entry scripts, when present, stay on the family next to
+`<family>_sync.py` (for example `yolov8n_sync_ort_off.py`).
 
 ## Preprocessor / Postprocessor / Visualizer Lookup
 

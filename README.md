@@ -121,6 +121,8 @@ The project is structured to separate core logic from language-specific implemen
 dx_app/
 ├── src/
 │   ├── cpp_example/            # C++ end-to-end examples (499 variants / 24 tasks, 356 published)
+│   │                           #   <task>/<family>/<variant>/ holds config.json only
+│   │                           #   factory/ and <family>_sync.cpp stay on the family (.dxnn stem)
 │   │   └── common/             # ← Shared C++ runtime layer
 │   │       ├── base/           #   Abstract interfaces (IFactory, IProcessor, ...)
 │   │       ├── processors/     #   40 shared post-processors
@@ -270,7 +272,7 @@ Dumps raw input/output tensors for debugging. On exception, tensors are auto-dum
 
 ## Model Config (`--config`)
 
-Runtime parameters (score threshold, NMS threshold, top-k) can be tuned per-model via `config.json`. If not specified, the runner auto-detects `config.json` adjacent to the model or script.
+Runtime parameters (score threshold, NMS threshold, top-k) live in `<task>/<family>/<variant>/config.json`. A Python family entry selects that folder with `--variant`. A variant thin script sits next to its `config.json` and fixes the variant. A C++ family entry takes the variant from the `.dxnn` stem. A single-model extract may keep `config.json` beside the entry script.
 
 ## Version Compatibility
 

@@ -102,12 +102,17 @@ for _path in [str(_v3_dir), str(_module_dir)]:
 
 ### When to Use Production Path
 
-Only create files in `src/python_example/<task>/<model>/` when the user EXPLICITLY says:
+Only create files under `src/python_example/` when the user EXPLICITLY says:
 - "Add this to the production codebase"
 - "Create this in src/"
 - "Make this a permanent addition"
 
 Default behavior: ALWAYS use `dx-agent-dev/`.
+
+Production layout: the shared factory and `<family>_*.py` entries go in
+`src/python_example/<task>/<family>/`. `config.json` and the thin
+`<variant>_*.py` scripts go in `<family>/<variant>/`. The variant directory
+name is the `.dxnn` stem.
 
 > **NEVER reuse previous session artifacts.** Do NOT check, list, browse, or
 > reference files from previous sessions in `dx-agent-dev/`. Each build
@@ -625,6 +630,10 @@ if __name__ == "__main__":
 
 ## Step 11: Create config.json
 
+In a `dx-agent-dev/` session this file sits next to the entry scripts.
+In the source tree it belongs at `src/python_example/<task>/<family>/<variant>/config.json`.
+Family factories read it with `common.variant_config.load_variant_config`.
+
 ### Detection models
 ```json
 {
@@ -860,14 +869,18 @@ class IFactory(ABC):
 
 Before declaring the app complete, verify all files exist:
 
-- [ ] `src/python_example/<task>/<model>/__init__.py`
-- [ ] `src/python_example/<task>/<model>/config.json`
-- [ ] `src/python_example/<task>/<model>/factory/__init__.py`
-- [ ] `src/python_example/<task>/<model>/factory/<model>_factory.py`
-- [ ] `src/python_example/<task>/<model>/<model>_sync.py`
-- [ ] `src/python_example/<task>/<model>/<model>_async.py`
-- [ ] `src/python_example/<task>/<model>/<model>_sync_cpp_postprocess.py` (if applicable)
-- [ ] `src/python_example/<task>/<model>/<model>_async_cpp_postprocess.py` (if applicable)
+- [ ] `src/python_example/<task>/<family>/__init__.py`
+- [ ] `src/python_example/<task>/<family>/factory/__init__.py`
+- [ ] `src/python_example/<task>/<family>/factory/<family>_factory.py`
+- [ ] `src/python_example/<task>/<family>/<family>_sync.py`
+- [ ] `src/python_example/<task>/<family>/<family>_async.py`
+- [ ] `src/python_example/<task>/<family>/<family>_sync_cpp_postprocess.py` (if applicable)
+- [ ] `src/python_example/<task>/<family>/<family>_async_cpp_postprocess.py` (if applicable)
+- [ ] `src/python_example/<task>/<family>/<variant>/config.json`
+- [ ] `src/python_example/<task>/<family>/<variant>/<variant>_sync.py`
+- [ ] `src/python_example/<task>/<family>/<variant>/<variant>_async.py`
+- [ ] `src/python_example/<task>/<family>/<variant>/<variant>_sync_cpp_postprocess.py` (if applicable)
+- [ ] `src/python_example/<task>/<family>/<variant>/<variant>_async_cpp_postprocess.py` (if applicable)
 - [ ] `setup.sh` — environment setup script (**MUST** detect/activate venv — see setup.sh template below)
 - [ ] `run.sh` — one-command inference launcher (**MUST** use real model + sample image paths — see run.sh template below)
 - [ ] `session.log` — actual command output with structured blocks (see session.log template below)

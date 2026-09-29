@@ -54,12 +54,17 @@ dx-agent-dev/<YYYYMMDD-HHMMSS>_<model>_<task>/
 
 ### When to Use Production Path
 
-Only create files in `src/cpp_example/<task>/<model>/` when the user EXPLICITLY says:
+Only create files under `src/cpp_example/` when the user EXPLICITLY says:
 - "Add this to the production codebase"
 - "Create this in src/"
 - "Make this a permanent addition"
 
 Default behavior: ALWAYS use `dx-agent-dev/`.
+
+Production layout: the factory and `<family>_*.cpp` entries go in
+`src/cpp_example/<task>/<family>/`. `config.json` goes in `<family>/<variant>/`.
+That folder has no C++ entry file. The family entry selects the variant from
+the `.dxnn` stem.
 
 ## Phase 0: Prerequisites Check
 
@@ -314,7 +319,9 @@ target_include_directories(<model>_async PRIVATE
 
 ## Step 6: Create config.json
 
-Same as Python config.json:
+Same keys as the Python config. In the source tree the file is
+`src/cpp_example/<task>/<family>/<variant>/config.json`. The family entry
+selects that variant from the `.dxnn` stem.
 
 ```json
 {
@@ -390,13 +397,13 @@ int model_ver = engine.get_model_version();
 ## File Structure Summary
 
 ```
-src/cpp_example/<task>/<model>/
-    CMakeLists.txt
-    config.json
+src/cpp_example/<task>/<family>/
     factory/
-        <model>_factory.hpp
-    <model>_sync.cpp
-    <model>_async.cpp           # optional
+        <family>_factory.hpp
+    <family>_sync.cpp
+    <family>_async.cpp          # optional
+    <variant>/                  # .dxnn stem; config only
+        config.json
 ```
 
 ## Build and Run

@@ -16,8 +16,10 @@ preprocessors, postprocessors, and visualizers.
 ```
 +===================================================================+
 |  Layer 3: Application Layer                                        |
-|  src/python_example/<task>/<model>/    (22 tasks, 353 models)      |
-|  src/cpp_example/<task>/<model>/       (C++ counterparts)          |
+|  src/python_example/<task>/<family>/   factory + family entries    |
+|    <variant>/                          config.json + thin scripts  |
+|  src/cpp_example/<task>/<family>/      factory + family entries    |
+|    <variant>/                          config.json only            |
 +===================================================================+
         |                                       |
         | uses                                  | uses
@@ -151,33 +153,46 @@ Per-task visualization:
 
 ### Python Applications
 
-Located in `src/python_example/<task>/<model>/`:
+Located in `src/python_example/<task>/<family>/`. One factory serves every
+variant of the family. Per-variant settings live in
+`<family>/<variant>/config.json`, loaded by `common.variant_config.load_variant_config`.
+The variant directory name is the `.dxnn` stem.
 
-Each model directory contains:
 ```
-<model>/
+<family>/
     __init__.py
-    config.json              # Model-specific thresholds
     factory/
         __init__.py
-        <model>_factory.py   # Concrete IFactory implementation
-    <model>_sync.py          # Synchronous variant
-    <model>_async.py         # Asynchronous variant
-    <model>_sync_cpp_postprocess.py    # Sync + C++ postprocess
-    <model>_async_cpp_postprocess.py   # Async + C++ postprocess
+        <family>_factory.py              # One IFactory for the family
+    <family>_sync.py                     # Family entry; selects --variant
+    <family>_async.py
+    <family>_sync_cpp_postprocess.py
+    <family>_async_cpp_postprocess.py
+    <variant>/                           # e.g. yolov8-n_640x640
+        config.json                      # Thresholds and processor spec
+        <variant>_sync.py                # Thin entry; variant is fixed
+        <variant>_async.py
+        <variant>_sync_cpp_postprocess.py
+        <variant>_async_cpp_postprocess.py
 ```
+
+A single-model extract may keep one `config.json` beside the entry script
+instead of a nested variant directory.
 
 ### C++ Applications
 
-Located in `src/cpp_example/<task>/<model>/`:
+Located in `src/cpp_example/<task>/<family>/`. The family entry takes the
+variant from the `.dxnn` stem (`variantFromArgs`). The variant directory
+holds `config.json` only.
 
 ```
-<model>/
-    config.json
+<family>/
     factory/
-        <model>_factory.hpp
-    <model>_sync.cpp
-    <model>_async.cpp
+        <family>_factory.hpp
+    <family>_sync.cpp
+    <family>_async.cpp
+    <variant>/
+        config.json
 ```
 
 ## Sync vs Async Execution

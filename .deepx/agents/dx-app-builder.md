@@ -59,8 +59,8 @@ Before classifying or routing any task:
 ## Scope
 
 dx_app provides **standalone inference applications** only:
-- Python apps (sync default + optional async/cpp variants) under `src/python_example/<task>/<model>/`
-- C++ apps under `src/cpp_example/<task>/<model>/`
+- Python apps under `src/python_example/<task>/<family>/`, with `config.json` and thin entries in `<family>/<variant>/`
+- C++ apps under `src/cpp_example/<task>/<family>/`, with `config.json` in `<family>/<variant>/`
 - No streaming pipelines (that belongs to dx_stream)
 - No GStreamer elements or pipeline graphs
 
@@ -327,8 +327,9 @@ dx_app v3.0.0 Architecture
 ===========================
 
 Layer 3 — Application Layer
-  src/python_example/<task>/<model>/       # 22 task dirs, 353 models
-  src/cpp_example/<task>/<model>/          # C++ counterparts
+  src/python_example/<task>/<family>/<variant>/   # config.json + thin entries
+  src/cpp_example/<task>/<family>/<variant>/      # config.json only
+  # factory/ and <family>_* entries stay on the family directory
 
 Layer 2 — Framework Layer
   src/python_example/common/
@@ -534,11 +535,11 @@ Plan:
   Model:   yolo26n
   Variant: Python sync + async (2 files)
   Files:
-    src/python_example/object_detection/yolo26n/
-      factory/yolo26n_factory.py
-      yolo26n_sync.py
-      yolo26n_async.py
-      config.json
+    src/python_example/object_detection/yolov8/
+      factory/yolov8_factory.py
+      yolov8_sync.py
+      yolov8-n_640x640/config.json
+      yolov8-n_640x640/yolov8-n_640x640_sync.py
   Config:  score_threshold=0.25, nms_threshold=0.45
 ```
 

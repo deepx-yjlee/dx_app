@@ -83,17 +83,24 @@ A JSON registry stores per-model metadata (task, postprocessor type, input dimen
 
 ### Directory & File Pattern
 
-Each model family has its own directory with a consistent structure:  
+Each model family has one directory. The factory and family entries stay there.
+Each variant is a subdirectory named after the `.dxnn` stem and holds `config.json`
+plus thin entry scripts.
 
 ```text
-src/python_example/object_detection/yolov9s/
-├── config.json                           # Model-specific runtime settings
+src/python_example/object_detection/yolov8/
 ├── factory/
-│   └── yolov9s_factory.py                # Wires shared processor + visualizer
-├── yolov9s_sync.py                       # Pure Python synchronous
-├── yolov9s_async.py                      # Pure Python asynchronous
-├── yolov9s_sync_cpp_postprocess.py       # Synchronous + C++ binding
-└── yolov9s_async_cpp_postprocess.py      # Asynchronous + C++ binding
+│   └── yolov8_factory.py                     # One factory for the family
+├── yolov8_sync.py                            # Family entry; selects --variant
+├── yolov8_async.py
+├── yolov8_sync_cpp_postprocess.py
+├── yolov8_async_cpp_postprocess.py
+└── yolov8-n_640x640/
+    ├── config.json                           # This variant's runtime settings
+    ├── yolov8-n_640x640_sync.py              # Thin entry; variant is fixed
+    ├── yolov8-n_640x640_async.py
+    ├── yolov8-n_640x640_sync_cpp_postprocess.py
+    └── yolov8-n_640x640_async_cpp_postprocess.py
 ```
 
 ---
@@ -200,7 +207,7 @@ When `DISPLAY`/`WAYLAND_DISPLAY` environment variables are absent, `cv2.imshow()
 
 **Model Configuration** (`--config`)  
 
-Runtime parameters (thresholds, top-k, etc.) are loaded via `_FactoryConfigMixin` with alias normalization (`score_threshold` → `conf_threshold`). If omitted, `config.json` is auto-detected adjacent to the model or script.  
+Runtime parameters (thresholds, top-k, etc.) come from `<family>/<variant>/config.json` via `load_variant_config`, with alias normalization (`score_threshold` → `conf_threshold`). A family entry selects the folder with `--variant`. A thin script in that folder fixes the variant. A single-model extract may keep `config.json` beside the entry script.  
 
 **Fast Postprocessing** (`--fast-postprocess`)  
 

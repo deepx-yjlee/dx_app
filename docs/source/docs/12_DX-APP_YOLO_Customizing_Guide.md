@@ -52,22 +52,29 @@ Use `scripts/add_model.sh` to create the C++ and Python example trees from the c
 ./scripts/add_model.sh custom_yolox object_detection --postprocessor yolox --lang both
 ```
 
-Generated files follow the standard layout:
+Generated files follow the family/variant layout. `<family>` is the shared
+implementation. `<variant>` is the `.dxnn` stem.
 
 ```text
-src/cpp_example/object_detection/<model_name>/
-├── config.json
-├── factory/<model_name>_factory.hpp
-├── <model_name>_sync.cpp
-└── <model_name>_async.cpp
+src/cpp_example/object_detection/<family>/
+├── factory/<family>_factory.hpp
+├── <family>_sync.cpp
+├── <family>_async.cpp
+└── <variant>/
+    └── config.json
 
-src/python_example/object_detection/<model_name>/
-├── config.json
-├── factory/<model_name>_factory.py
-├── <model_name>_sync.py
-├── <model_name>_async.py
-├── <model_name>_sync_cpp_postprocess.py
-└── <model_name>_async_cpp_postprocess.py
+src/python_example/object_detection/<family>/
+├── factory/<family>_factory.py
+├── <family>_sync.py
+├── <family>_async.py
+├── <family>_sync_cpp_postprocess.py
+├── <family>_async_cpp_postprocess.py
+└── <variant>/
+    ├── config.json
+    ├── <variant>_sync.py
+    ├── <variant>_async.py
+    ├── <variant>_sync_cpp_postprocess.py
+    └── <variant>_async_cpp_postprocess.py
 ```
 
 After generation, review both language trees. Do not assume a generated factory is final; the selected template only gives a safe starting point.
@@ -317,7 +324,7 @@ Do not add registry entries for local experiments or customer-only artifacts unl
 
 ### Build target is missing
 
-- Confirm the generated directory name matches `<model_name>`.
+- Confirm the family directory is `<family>/` and the variant directory is the `.dxnn` stem.
 - Run `./scripts/dx_tool.sh validate` to catch layout issues.
 - Check that CMake discovered the generated example directory.
 

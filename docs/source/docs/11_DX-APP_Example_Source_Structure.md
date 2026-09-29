@@ -245,28 +245,40 @@ Python runners are **generic**: `SyncRunner` and `AsyncRunner` work for all task
 
 ### How Model Directories Connect to `common/`
 
-**C++ model directory**  
+**C++ family directory**
+
+The factory and family entries stay on `<task>/<family>/`. Each variant directory
+holds `config.json` only. The family entry selects the variant from the `.dxnn` stem.
 
 ```text
-src/cpp_example/object_detection/yolov9s/
-├── config.json
+src/cpp_example/object_detection/yolov8/
 ├── factory/
-│   └── yolov9s_factory.hpp      # Assembles processor + visualizer from common/
-├── yolov9s_sync.cpp              # Entry point → sync_detection_runner
-└── yolov9s_async.cpp             # Entry point → async_detection_runner
+│   └── yolov8_factory.hpp         # One factory for every yolov8 variant
+├── yolov8_sync.cpp                # Entry → sync_detection_runner
+├── yolov8_async.cpp               # Entry → async_detection_runner
+└── yolov8-n_640x640/
+    └── config.json                # This variant's runtime settings
 ```
 
-**Python model directory**  
+**Python family directory**
+
+One factory serves the family. `<family>_sync.py` selects `--variant`.
+`<family>/<variant>/` holds `config.json` and thin entry scripts that fix that variant.
 
 ```text
-src/python_example/object_detection/yolov9s/
-├── config.json
+src/python_example/object_detection/yolov8/
 ├── factory/
-│   └── yolov9s_factory.py                # Assembles processor + visualizer from common/
-├── yolov9s_sync.py                       # Entry point → SyncRunner
-├── yolov9s_async.py                      # Entry point → AsyncRunner
-├── yolov9s_sync_cpp_postprocess.py       # Entry point → SyncRunner + C++ binding
-└── yolov9s_async_cpp_postprocess.py      # Entry point → AsyncRunner + C++ binding
+│   └── yolov8_factory.py
+├── yolov8_sync.py                          # Family entry; --variant
+├── yolov8_async.py
+├── yolov8_sync_cpp_postprocess.py
+├── yolov8_async_cpp_postprocess.py
+└── yolov8-n_640x640/
+    ├── config.json
+    ├── yolov8-n_640x640_sync.py            # Thin entry; variant fixed
+    ├── yolov8-n_640x640_async.py
+    ├── yolov8-n_640x640_sync_cpp_postprocess.py
+    └── yolov8-n_640x640_async_cpp_postprocess.py
 ```
 
 The factory imports shared components from `common/`:
@@ -292,68 +304,49 @@ runner = SyncRunner(factory)
 runner.run()
 ```
 
-This means adding a new model typically requires only a `config.json` and a factory file — the shared infrastructure handles everything else.
+Adding a variant usually means a new `<family>/<variant>/config.json`. Add a family factory only when the family does not exist yet.
 
-### Variant Naming Rules
+### Entry Naming
 
-**C++ variants**  
+**C++**
 
-A typical C++ model directory contains:  
-
-```text
-config.json
-factory/
-<model>_sync.cpp
-<model>_async.cpp
-```
-
-Example:
+Family entries live next to `factory/`. The variant folder is config only.
 
 ```text
-src/cpp_example/object_detection/yolov9s/
-├── config.json
-├── factory/
-├── yolov9s_sync.cpp
-└── yolov9s_async.cpp
+src/cpp_example/<task>/<family>/
+├── factory/<family>_factory.hpp
+├── <family>_sync.cpp
+├── <family>_async.cpp
+└── <variant>/
+    └── config.json
 ```
 
-Common C++ variant patterns:  
+- `<family>_sync.cpp`: sequential execution for every variant of the family
+- `<family>_async.cpp`: pipelined execution for every variant of the family
 
-- `*_sync.cpp`: sequential execution path  
-- `*_async.cpp`: pipelined or threaded execution path  
-- task/model-specific additional variants when required  
+**Python**
 
-**Python variants**  
-
-A typical Python model directory contains:  
+Family entries select `--variant`. Thin scripts under `<variant>/` fix one stem.
 
 ```text
-config.json
-factory/
-<model>_sync.py
-<model>_async.py
-<model>_sync_cpp_postprocess.py
-<model>_async_cpp_postprocess.py
+src/python_example/<task>/<family>/
+├── factory/<family>_factory.py
+├── <family>_sync.py
+├── <family>_async.py
+├── <family>_sync_cpp_postprocess.py
+├── <family>_async_cpp_postprocess.py
+└── <variant>/
+    ├── config.json
+    ├── <variant>_sync.py
+    ├── <variant>_async.py
+    ├── <variant>_sync_cpp_postprocess.py
+    └── <variant>_async_cpp_postprocess.py
 ```
 
-Example:
-
-```text
-src/python_example/object_detection/yolov9s/
-├── config.json
-├── factory/
-├── yolov9s_sync.py
-├── yolov9s_async.py
-├── yolov9s_sync_cpp_postprocess.py
-└── yolov9s_async_cpp_postprocess.py
-```
-
-Common Python variant patterns:  
-
-- `*_sync.py`: Python-only synchronous path  
-- `*_async.py`: Python-only asynchronous path  
-- `*_sync_cpp_postprocess.py`: synchronous path using shared C++ post-processing bindings  
-- `*_async_cpp_postprocess.py`: asynchronous path using shared C++ post-processing bindings  
+- `*_sync.py`: synchronous path
+- `*_async.py`: asynchronous path
+- `*_sync_cpp_postprocess.py`: synchronous path using shared C++ post-processing bindings
+- `*_async_cpp_postprocess.py`: asynchronous path using shared C++ post-processing bindings
 
 ---
 
