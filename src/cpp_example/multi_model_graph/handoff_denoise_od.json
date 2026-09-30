@@ -3,8 +3,8 @@
   "name": "denoise-then-detect",
   "nodes": [
     { "id": "cam",     "type": "source", "uri": "sample/img/sample_people.jpg" },
-    { "id": "denoise", "model": "dncnn_color_blind" },
-    { "id": "od",      "model": "yolov5n" }
+    { "id": "denoise", "model": "dncnn-color_512x512" },
+    { "id": "od",      "model": "yolov5-n_640x640" }
   ],
   "edges": [
     { "from": "cam",     "to": "denoise" },

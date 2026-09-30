@@ -3,8 +3,8 @@
   "name": "aerial-obb-classify",
   "nodes": [
     { "id": "cam", "type": "source", "uri": "sample/img/sample_airport_satellite_view.png" },
-    { "id": "obb", "model": "yolo26l_obb" },
-    { "id": "cls", "model": "resnet50" }
+    { "id": "obb", "model": "yolo26-l-obb_1024x1024" },
+    { "id": "cls", "model": "resnet50_224x224" }
   ],
   "edges": [
     { "from": "cam", "to": "obb" },

@@ -3,10 +3,10 @@
   "name": "person-reid",
   "nodes": [
     { "id": "cam",  "type": "source", "uri": "sample/img/sample_people.jpg" },
-    { "id": "od",   "model": "yolov8n",
+    { "id": "od",   "model": "yolov8-n_640x640",
       "params": { "score_threshold": 0.35 },
       "track":  { "algo": "iou", "iou": 0.3, "max_age": 30 } },
-    { "id": "reid", "model": "casvit_t" }
+    { "id": "reid", "model": "casvit-t_224x224" }
   ],
   "edges": [
     { "from": "cam", "to": "od" },

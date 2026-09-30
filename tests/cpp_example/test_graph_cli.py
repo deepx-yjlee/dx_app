@@ -845,10 +845,13 @@ def test_camera_with_frames_writes_that_many_images(tmp_path):
 @pytest.mark.parametrize("binary", BINARIES)
 @pytest.mark.parametrize("graph", SAMPLE_GRAPHS)
 def test_every_sample_graph_validates(binary, graph):
-    """--check must pass on every shipped sample without touching the NPU."""
+    """--check must pass on every shipped sample without touching the NPU.
+    The samples name each model by its variant, so no old-name note is
+    printed (Decision 2 stage 1)."""
     result = run(binary, "--check", "{}/{}".format(GRAPHS, graph))
     assert result.returncode == 0, result.stdout + result.stderr
     assert "OK" in result.stdout
+    assert "is the old name of" not in result.stdout + result.stderr, result.stdout
 
 
 # Two sources feeding one detector: two streams (SP2). --check only.
