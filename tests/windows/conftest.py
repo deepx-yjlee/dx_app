@@ -12,6 +12,10 @@ from pathlib import Path
 import pytest
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(PROJECT_ROOT / "tests"))
+from test_helpers.platform_paths import resolve_bin_dir  # noqa: E402
+
+BIN_DIR = resolve_bin_dir(PROJECT_ROOT)
 
 # --- Register DXRT DLL directories so dx_postprocess can load ---
 if sys.platform == "win32":
@@ -19,13 +23,12 @@ if sys.platform == "win32":
     _DLL_SEARCH_DIRS = [
         os.path.join(_DEEPX_SDK_DIR, "csharp"),
         os.path.join(_DEEPX_SDK_DIR, "bin"),
-        str(PROJECT_ROOT / "bin" / "Release"),
+        str(BIN_DIR),
         str(PROJECT_ROOT / "lib"),
     ]
     for _dll_dir in _DLL_SEARCH_DIRS:
         if os.path.isdir(_dll_dir):
             os.add_dll_directory(_dll_dir)
-BIN_DIR = PROJECT_ROOT / "bin" / "Release" if os.name == "nt" else PROJECT_ROOT / "bin"
 MODELS_DIR = PROJECT_ROOT / "assets" / "models"
 VIDEOS_DIR = PROJECT_ROOT / "assets" / "videos"
 SAMPLE_DIR = PROJECT_ROOT / "sample" / "img"
