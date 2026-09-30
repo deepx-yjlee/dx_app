@@ -55,6 +55,7 @@ SAMPLE_GRAPHS = [
     MULTISTREAM,
     "chain_zerodce_od_pose_emb.json",
     "chain_sr_od_pose.json",
+    "hand_cascade.json",
 ]
 ONE_SOURCE_SAMPLES = [g for g in SAMPLE_GRAPHS if g != MULTISTREAM]
 
@@ -1430,7 +1431,9 @@ def test_every_sample_graph_is_retargetable_without_a_rebuild(tmp_path, graph):
              (("yolov8s_pose", "yolov8-s-pose_640x640"), "yolo26-n-pose_640x640"),
              (("yolov5n", "yolov5-n_640x640"), "yolov5-s_640x640"),
              (("dncnn_color_blind", "dncnn-color_512x512"), "dncnn-15_512x512"),
-             (("realesrgan_x2", "realesrgan-x2_192x192"), "realesrgan-x4_192x192")]
+             (("realesrgan_x2", "realesrgan-x2_192x192"), "realesrgan-x4_192x192"),
+             (("mediapipe_hand_detector_1", "mediapipe-hand-detector_192x192"),
+              "scrfd-500m_640x640")]
     swaps = {name: target for names, target in pairs for name in names}
     swapped = False
     for node in spec["nodes"]:
@@ -2606,3 +2609,132 @@ def test_check_prints_the_resources_a_node_needs(tmp_path):
     assert 'resource: node "vpr": gallery {} [present, DXGAL1]'.format(gallery) in result.stdout, \
         result.stdout
     assert 'note: node "clip": the CLIP prompt bank is Python-only' in result.stdout, result.stdout
+
+
+# The multi_model runtime (teammate code, Decision 3) runs hand_cascade and
+# worker_safety from its own pipeline.json files. The graph engine ships the
+# same two scenarios as graph JSON; these tests hold the two side by side.
+PIPELINE_DIR = PROJECT_ROOT / "src" / "cpp_example" / "multi_model"
+HAND_CASCADE = "hand_cascade.json"
+WORKER_SAFETY = "worker_safety.json"
+HAND_IMAGE = "sample/img/sample_hand.jpg"
+HAND_MODELS = ("mediapipe-hand-detector_192x192.dxnn", "mediapipe-hands-lite_224x224.dxnn")
+# Spec N21: a landmark may move this far between the two runtimes.
+LANDMARK_TOLERANCE_PX = 2.0
+
+
+def _hand_count_line(text):
+    """palms=N hands=M from multi_model_run's one summary line."""
+    match = re.search(r"^event=\S+ palms=(\d+) hands=(\d+)$", text, re.M)
+    assert match, text
+    return int(match.group(1)), int(match.group(2))
+
+
+def _corners(box):
+    """[x, y, w, h] as [left, top, right, bottom]."""
+    return [box[0], box[1], box[0] + box[2], box[1] + box[3]]
+
+
+@pytest.mark.graph_parity
+def test_hand_cascade_graph_matches_the_pipeline_runtime(tmp_path):
+    """hand_cascade.json against multi_model/hand_cascade/pipeline.json.
+
+    multi_model_run gives the palm and hand counts. hand_cascade_probe runs
+    the same runtime's stages and reports each palm's crop and landmarks in
+    frame coordinates, on two crops: the runner's (each corner truncated)
+    and the one the graph engine cuts (the clamped size truncated), which
+    can be one pixel shorter. The landmark model moves by several pixels
+    over that one row (6.4 px on this image), so the 2 px comparison is made
+    on the graph engine's crop, and the two crops must differ by at most one
+    pixel per edge.
+    """
+    bin_dir = resolve_bin_dir()
+    for tool in ("multi_model_run", "hand_cascade_probe"):
+        if not (bin_dir / tool).exists():
+            pytest.skip("{} not built".format(tool))
+    for dxnn in HAND_MODELS:
+        if not (MODEL_DIR / dxnn).is_file():
+            pytest.skip("{} not downloaded".format(dxnn))
+
+    args = ["--pipeline", str(PIPELINE_DIR / "hand_cascade" / "pipeline.json"),
+            "--image", HAND_IMAGE, "--models-dir", str(MODEL_DIR)]
+    runner = run("multi_model_run", *args)
+    assert runner.returncode == 0, runner.stdout + runner.stderr
+    palms, hands = _hand_count_line(runner.stdout)
+    assert hands > 0, runner.stdout
+
+    probe = run("hand_cascade_probe", *args)
+    assert probe.returncode == 0, probe.stdout + probe.stderr
+    theirs = json.loads(probe.stdout)
+    assert (theirs["palms"], theirs["hands"]) == (palms, hands), theirs["count_line"]
+
+    frame = sync_equals_async(tmp_path, HAND_CASCADE)
+    palm_items = frame["nodes"]["palm"]["payload"]["items"]
+    ours_palms = sum(1 for item in palm_items if item["box"][2] > 0 and item["box"][3] > 0)
+    crops = frame["roi_nodes"].get("landmark", [])
+    assert (ours_palms, len(crops)) == (palms, hands), (palm_items, len(crops))
+
+    by_palm = {crop["palm_index"]: crop for crop in theirs["crops"]}
+    for crop in crops:
+        origin = crop["origin"]
+        mine = by_palm[origin["parent_index"]]
+        palm_box = _corners(palm_items[origin["parent_index"]]["box"])
+        their_palm = theirs["palm_boxes"][origin["parent_index"]]["box"]
+        assert all(abs(a - b) <= LANDMARK_TOLERANCE_PX for a, b in zip(palm_box, their_palm)), \
+            (palm_box, their_palm)
+
+        graph_crop = _corners(origin["src_box"])
+        assert graph_crop == mine["graph_rule"]["crop"], (graph_crop, mine["graph_rule"]["crop"])
+        assert all(abs(a - b) <= 1 for a, b in zip(graph_crop, mine["crop"])), \
+            (graph_crop, mine["crop"])
+
+        ours_hands = crop["payload"]["items"]
+        assert len(ours_hands) == len(mine["hands"]), (ours_hands, mine["hands"])
+        expected = mine["graph_rule"]["hands"]
+        assert len(ours_hands) == len(expected)
+        for ours_hand, their_hand in zip(ours_hands, expected):
+            assert len(ours_hand["keypoints"]) == len(their_hand["landmarks"]), origin
+            for point, (tx, ty) in zip(ours_hand["keypoints"], their_hand["landmarks"]):
+                x, y = to_source(origin["inv_align"], point["x"], point["y"])
+                assert abs(x - tx) <= LANDMARK_TOLERANCE_PX and \
+                    abs(y - ty) <= LANDMARK_TOLERANCE_PX, ((x, y), (tx, ty), origin)
+
+
+@pytest.mark.graph
+def test_worker_safety_graph_mirrors_the_pipeline_structure():
+    """worker_safety.json against multi_model/worker_safety/pipeline.json,
+    structure only: the ppe stage needs ppe_yolo26n.dxnn, which is in
+    neither the registry nor the manifest ([RULED Q2-3: BLOCKED])."""
+    pipeline = json.loads((PIPELINE_DIR / "worker_safety" / "pipeline.json")
+                          .read_text(encoding="utf-8"))
+    ours = json.loads((GRAPH_DIR / WORKER_SAFETY).read_text(encoding="utf-8"))
+    assert ours["name"] == "worker_safety"
+
+    stages = [stage for stage in pipeline["stages"]
+              if stage.get("kind", "npu") == "npu" and stage["id"] != "ppe"]
+    models = {node["id"]: node["model"] for node in ours["nodes"] if "model" in node}
+    assert models == {stage["id"]: stage["variant"] for stage in stages}
+
+    their_edges = set()
+    for stage in stages:
+        for upstream in stage.get("depends_on", []):
+            their_edges.add((upstream, stage["id"]))
+        if "bind" in stage:
+            their_edges.add((stage["bind"]["source"], stage["id"]))
+    sources = {node["id"] for node in ours["nodes"] if node.get("type") == "source"}
+    our_edges = {(edge["from"], edge["to"]) for edge in ours["edges"]
+                 if edge["from"] not in sources}
+    assert our_edges == their_edges
+    # A fan-out: every model reads the source frame, as every stage without
+    # depends_on reads the frame in the pipeline runtime.
+    assert {edge["to"] for edge in ours["edges"] if edge["from"] in sources} == set(models)
+
+    for binary in BINARIES:
+        result = run(binary, "--check", "{}/{}".format(GRAPHS, WORKER_SAFETY))
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "OK" in result.stdout, result.stdout
+        # --check exits 0 when only model files are absent; the one it may
+        # name is the person detector's (not in the pinned v8 store).
+        missing = [line for line in result.stdout.splitlines()
+                   if "[MISSING]" in line or line.lstrip().startswith('node "')]
+        assert all("yolo26-n_640x640" in line for line in missing), missing

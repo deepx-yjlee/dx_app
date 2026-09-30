@@ -65,6 +65,8 @@ Shipped samples, next to the CLI sources in `src/cpp_example/multi_model_graph/`
 | `handoff_denoise_od.json` | denoise, then detect on the denoised image (image hand-off on a plain edge) | `dncnn_color_blind` → `yolov5n` |
 | `handoff_sr_od_cls.json` | super-resolve ×2, then detect on the large image → per-person crop → classifier | `realesrgan_x2` → `yolov8n` → `resnet50` |
 | `multistream_od_two_sources.json` | two sources, each its own stream, through one shared tracked detector and one reid | `yolov8n` → `casvit_t` |
+| `hand_cascade.json` | palm detector → per-palm crop → 21 hand landmarks; the graph form of `multi_model/hand_cascade/pipeline.json` | `mediapipe-hand-detector_192x192` → `mediapipe-hands-lite_224x224` |
+| `worker_safety.json` | person detector and pose model in parallel; the graph form of `multi_model/worker_safety/pipeline.json` without its `ppe` stage, whose `ppe_yolo26n.dxnn` is in neither the registry nor the model-zoo manifest | `yolo26-n_640x640` + `yolo26-n-pose_640x640` |
 
 ---
 

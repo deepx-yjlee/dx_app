@@ -306,6 +306,25 @@ if(DXAPP_BUILD_GRAPH_TESTS)
     if(NOT MSVC)
         target_link_libraries(graph_engine_test pthread)
     endif()
+
+    # Test-only probe for test_hand_cascade_graph_matches_the_pipeline_runtime:
+    # the multi_model runtime's palm crops and hand landmarks in frame
+    # coordinates. Links the multi_model sources unchanged, as multi_model_run
+    # does (main.cpp excepted).
+    add_executable(hand_cascade_probe
+        ${CPP_EXAMPLE_DIR}/multi_model_graph/hand_cascade_probe.cpp
+        ${CPP_EXAMPLE_DIR}/multi_model/pipeline.cpp
+        ${CPP_EXAMPLE_DIR}/multi_model/registry.cpp
+        ${CPP_EXAMPLE_DIR}/multi_model/runner.cpp
+    )
+    target_compile_options(hand_cascade_probe PRIVATE ${COMMON_COMPILE_FLAGS})
+    dxapp_graph_strict_flags(hand_cascade_probe)
+    target_compile_definitions(hand_cascade_probe PRIVATE ${COMMON_COMPILE_DEFINITIONS})
+    target_include_directories(hand_cascade_probe PRIVATE ${CPP_EXAMPLE_DIR})
+    target_link_libraries(hand_cascade_probe dxapp_common_obj ${COMMON_LIBS})
+    if(TARGET dxapp_stage_vcpkg_dlls)
+        add_dependencies(hand_cascade_probe dxapp_stage_vcpkg_dlls)
+    endif()
 endif()
 
 # Plain-assert tests for common/ code outside the graph engine (processors,
