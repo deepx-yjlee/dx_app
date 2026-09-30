@@ -11,7 +11,6 @@
   "default_video": "assets/videos/dance-solo.mov",
   "zoo_canonical": false,
   "published": false,
-  "legacy_model_name": "yolo26_l_pose_640x640_pre_optimized",
   "config": {
     "score_threshold": 0.3,
     "nms_threshold": 0.45,

@@ -1,0 +1,19 @@
+{
+  "object_detection": {"box_iou": 0.999, "score_abs_diff": 0.001},
+  "obb_detection": {"box_iou": 0.999, "score_abs_diff": 0.001},
+  "instance_segmentation": {"mask_iou": 0.999, "box_iou": 0.999},
+  "semantic_segmentation": {"miou": 0.9999},
+  "classification": {"top_k": 5, "logit_abs_diff": 0.001},
+  "attribute_recognition": {"top_k": 5, "logit_abs_diff": 0.001},
+  "embedding": {"cosine_sim": 0.9999},
+  "reid": {"cosine_sim": 0.9999},
+  "depth_estimation": {"psnr_db": 60.0},
+  "super_resolution": {"psnr_db": 60.0},
+  "image_denoising": {"psnr_db": 60.0},
+  "image_enhancement": {"psnr_db": 60.0},
+  "pose_estimation": {"keypoint_l2_px": 0.5},
+  "face_alignment": {"keypoint_l2_px": 0.5},
+  "hand_landmark": {"keypoint_l2_px": 0.5},
+  "face_detection": {"box_iou": 0.999, "score_abs_diff": 0.001},
+  "ppu": {"box_iou": 0.999, "score_abs_diff": 0.001}
+}

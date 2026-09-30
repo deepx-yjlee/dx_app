@@ -50,7 +50,7 @@ public:
         // Image-only tasks: if no input was given, show a hint and exit normally
         // (do not auto-run inference on a default sample).
         std::string task = factory_->getTaskType();
-        bool imageOnlyTask = (task == "embedding" || task == "reid" || task == "attribute_recognition");
+        bool imageOnlyTask = dxapp::isComparisonOnlyTask(task);
         bool hasStreamInput = !args.videoFile.empty() || args.cameraIndex >= 0 || !args.rtspUrl.empty();
         if (imageOnlyTask && hasStreamInput) {
             dxapp::fatal_error("[DXAPP] [ERROR] Task '" + task + "' supports image input only (-i / --image_path). "

@@ -6,9 +6,9 @@ Emits, per ``<task>/<family>/``:
 
     <variant>/config.json       one model folder per .dxnn stem
     <variant>/<variant>_{sync,async,sync_cpp_postprocess,async_cpp_postprocess}.py
-    factory/<family>_factory.py one config-driven factory for the whole family
-    custom_ops.py               ONLY for families config cannot express
-    <family>_{sync,async,...}.py  thin family entry points (--variant still works)
+    <variant>/factory/<variant>_factory.py
+                                config-driven factory owned by that variant
+    <variant>/custom_ops.py     ONLY for families config cannot express
 
 340 of 352 variants rebuild identically from their variant config (proved by
 scripts/verify_processor_spec_equivalence.py). The other 12, across 8 families, pass
@@ -35,6 +35,8 @@ import json
 import shutil
 import sys
 from pathlib import Path
+
+from relocate_python_variant_factories import relocate_tree
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src" / "python_example"))
@@ -151,7 +153,6 @@ def variant_json(entry: dict, spec: dict) -> dict:
         # picking the alphabetically first config would otherwise make a bare run of
         # clip / yolo11_pose / stdc_seg fail on a missing model where it used to work.
         "published": entry.get("published", True),
-        "legacy_model_name": entry["model_name"],
         # The on-disk config.json is authoritative: it is what the original factory
         # read. The registry field disagrees for 75 of 352 variants, and using it would
         # silently move e.g. FastSAM's score threshold from 0.7 to 0.4.
@@ -499,6 +500,9 @@ def main() -> int:
         print(f"      {k}: {v}")
     if unknown_base:
         print(f"  UNKNOWN IFactory bases (fell back): {sorted(unknown_base)}")
+    # Family factories are a staging shape. The tree that ships matches C++:
+    # each variant directory owns factory/ and the family entry scripts are gone.
+    print(f"  variant factories : {relocate_tree(out)}")
     return 0
 
 

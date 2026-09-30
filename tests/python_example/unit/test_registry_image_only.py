@@ -83,19 +83,32 @@ def test_runner_image_only_set_still_matches_this_mirror():
     )
 
 
-def test_models_that_move_into_video_capable_tasks_keep_image_only(registry):
-    """Models whose task gains video capability must stay image-only."""
+def test_relocated_comparison_models_keep_image_only(registry):
+    """A variant that compares against a stored set must stay image-only after a move.
+
+    These four were relocated by task re-classifications, and the flag is the only
+    thing stopping a video source being accepted for a model that has nothing to
+    compare frame-by-frame.
+
+    The two EigenPlaces variants were listed here as `super_resolution`, which was
+    never a considered assignment -- it was the only slot the legacy task tables had
+    for a bare embedding, and it left a place-recognition model defaulting to
+    sample/img/face_pair. DX Model Zoo 2_5_0 gave them their own category and they now
+    sit in `visual_place_recognition`, which is itself image-only; casvit's
+    `image_classification` is video-capable, so for those two the flag is still the
+    only guard. Both cases are pinned, because the hazard is a flag quietly flipping.
+    """
     by_variant = {e["variant"]: e for e in registry}
     movers = [
         ("casvit-t_224x224", "image_classification"),
         ("casvit-m_224x224", "image_classification"),
-        ("eigenplaces-resnet18_512x512", "super_resolution"),
-        ("eigenplaces-resnet50_512x512", "super_resolution"),
+        ("eigenplaces-resnet18_512x512", "visual_place_recognition"),
+        ("eigenplaces-resnet50_512x512", "visual_place_recognition"),
     ]
     for variant, new_task in movers:
         e = by_variant.get(variant)
         assert e is not None, f"{variant} missing from the registry"
         assert e["task"] == new_task, f"{variant}: task is {e['task']}, expected {new_task}"
         assert e["image_only"] is True, (
-            f"{variant} moves into video-capable task {new_task} and MUST keep image_only=True"
+            f"{variant} sits in task {new_task} and MUST keep image_only=True"
         )

@@ -17,7 +17,7 @@ Read `.deepx/README.md` for the complete index.
 
 ## Overview
 
-dx_app provides {{MODEL_COUNT}} compiled `.dxnn` models across {{TASK_COUNT}} AI tasks with Python (4 variants) and C++ examples.
+dx_app provides 500 model variants across 28 AI tasks with Python (4 variants) and C++ examples. 499 of them have a downloadable `.dxnn`; `vit-l-p16_512x512_swag` is declared but unpublished (its manifest row carries `pending: true`).
 
 ## Context Routing Table
 
@@ -232,9 +232,40 @@ Persistent knowledge in `.deepx/memory/`. Read at task start, update when learni
 {{FRAGMENT:git-operations-user-handles}}
 
 
-## {{TASK_COUNT}} Supported AI Tasks
+## 28 Supported AI Tasks
 
-{{TASK_LIST}}
+| AI task | Variants | Example tree |
+|---|--:|---|
+| `object_detection` | 169 | `src/{python,cpp}_example/object_detection/` |
+| `image_classification` | 137 | `src/{python,cpp}_example/image_classification/` |
+| `instance_segmentation` | 53 | `src/{python,cpp}_example/instance_segmentation/` |
+| `pose_estimation` | 37 | `src/{python,cpp}_example/pose_estimation/` |
+| `semantic_segmentation` | 24 | `src/{python,cpp}_example/semantic_segmentation/` |
+| `face_detection` | 19 | `src/{python,cpp}_example/face_detection/` |
+| `depth_estimation` | 10 | `src/{python,cpp}_example/depth_estimation/` |
+| `super_resolution` | 6 | `src/{python,cpp}_example/super_resolution/` |
+| `image_denoising` | 5 | `src/{python,cpp}_example/image_denoising/` |
+| `oriented_object_detection` | 5 | `src/{python,cpp}_example/oriented_object_detection/` |
+| `zero_shot_image_classification` | 5 | `src/{python,cpp}_example/zero_shot_image_classification/` |
+| `anomaly_detection` | 4 | `src/{python,cpp}_example/anomaly_detection/` |
+| `face_recognition` | 4 | `src/{python,cpp}_example/face_recognition/` |
+| `visual_place_recognition` **(2_5_0 new)** | 3 | `src/{python,cpp}_example/visual_place_recognition/` |
+| `face_landmark` | 2 | `src/{python,cpp}_example/face_landmark/` |
+| `image_matting` **(2_5_0 new)** | 2 | `src/{python,cpp}_example/image_matting/` |
+| `image_retrieval` **(2_5_0 new)** | 2 | `src/{python,cpp}_example/image_retrieval/` |
+| `low_light_enhancement` | 2 | `src/{python,cpp}_example/low_light_enhancement/` |
+| `person_attribute` | 2 | `src/{python,cpp}_example/person_attribute/` |
+| `3d_object_detection` | 1 | `src/{python,cpp}_example/3d_object_detection/` |
+| `face_attribute` | 1 | `src/{python,cpp}_example/face_attribute/` |
+| `hand_detection` | 1 | `src/{python,cpp}_example/hand_detection/` |
+| `hand_landmark` | 1 | `src/{python,cpp}_example/hand_landmark/` |
+| `keypoint_detection` | 1 | `src/{python,cpp}_example/keypoint_detection/` |
+| `object_pose_estimation` | 1 | `src/{python,cpp}_example/object_pose_estimation/` |
+| `panoptic_driving_perception` | 1 | `src/{python,cpp}_example/panoptic_driving_perception/` |
+| `person_reid` **(2_5_0 new)** | 1 | `src/{python,cpp}_example/person_reid/` |
+| `zero_shot_instance_segmentation` | 1 | `src/{python,cpp}_example/zero_shot_instance_segmentation/` |
+
+Counts come from `config/model_registry.json`; regenerate this section when the registry changes (`python3 -c "import json,collections;print(collections.Counter(r['task'] for r in json.load(open('config/model_registry.json'))))"`).
 
 {{FRAGMENT:git-safety-superpowers}}
 

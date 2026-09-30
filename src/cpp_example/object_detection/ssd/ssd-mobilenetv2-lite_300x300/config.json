@@ -11,7 +11,6 @@
   "default_video": "assets/videos/snowboard.mp4",
   "zoo_canonical": true,
   "published": true,
-  "legacy_model_name": "ssdmv2lite",
   "config": {
     "has_background": true,
     "nms_threshold": 0.45,

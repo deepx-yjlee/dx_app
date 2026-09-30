@@ -570,14 +570,19 @@ private:
         // the reorder buffer below can emit frames strictly in submit order.
         auto renderArgs = [&](AsyncDepthDisplayArgs& args) {
             if (!args.original_frame || args.original_frame->empty()) return;
-            auto t_render_start = std::chrono::high_resolution_clock::now();
-            cv::Mat result_frame = args.original_frame->clone();
-            if (args.results) result_frame = visualizer.draw(result_frame, *args.results, args.ctx);
-            auto t_render_end = std::chrono::high_resolution_clock::now();
-            {
-                std::lock_guard<std::mutex> lock(metrics_.metrics_mutex);
-                metrics_.sum_render += std::chrono::duration<double, std::milli>(t_render_end - t_render_start).count();
-                metrics_.render_completed++;
+            const bool need_render = mustRenderFrame(
+                no_display, save_on, args.save_path, display_pump_);
+            cv::Mat result_frame;
+            if (need_render) {
+                auto t_render_start = std::chrono::high_resolution_clock::now();
+                result_frame = args.original_frame->clone();
+                if (args.results) result_frame = visualizer.draw(result_frame, *args.results, args.ctx);
+                auto t_render_end = std::chrono::high_resolution_clock::now();
+                {
+                    std::lock_guard<std::mutex> lock(metrics_.metrics_mutex);
+                    metrics_.sum_render += std::chrono::duration<double, std::milli>(t_render_end - t_render_start).count();
+                    metrics_.render_completed++;
+                }
             }
             if (!args.save_path.empty() && !result_frame.empty()) {
                 cv::imwrite(args.save_path, result_frame);

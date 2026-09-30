@@ -1,39 +1,39 @@
-# SFA3D 608x608 — LiDAR 3D Object Detection 예제
+# SFA3D 608x608 — LiDAR 3D object detection example
 
-KITTI LiDAR point cloud를 BEV(Bird's-Eye-View)로 변환해 3D object를 검출하는 SFA3D
-예제입니다. Python 4 variant와 C++ 2 variant를 제공합니다.
+This example converts a KITTI LiDAR point cloud to a bird's-eye view (BEV) and
+detects 3D objects with SFA3D. It provides 4 Python variants and 2 C++ variants.
 
-| 항목 | 값 |
-|------|-----|
+| Item | Value |
+|------|-------|
 | Model | `sfa3d_608x608` (`sfa3d_608x608.dxnn`) |
 | Task type | `3d_detection` |
-| Input | LiDAR point cloud (`.bin`) — KITTI velodyne 포맷 |
-| Input 해상도 | 608 × 608 (BEV) |
-| Class | `Pedestrian`, `Car`, `Cyclist` |
+| Input | LiDAR point cloud (`.bin`) — KITTI velodyne format |
+| Input resolution | 608 × 608 (BEV) |
+| Classes | `Pedestrian`, `Car`, `Cyclist` |
 
 ---
 
-## 1. 사전 준비
+## 1. Prerequisites
 
-### 1-1. 빌드
+### 1-1. Build
 
 ```bash
-./install.sh && ./build.sh      # C++ 예제 + dx_postprocess pybind11 빌드 (Linux)
+./install.sh && ./build.sh      # C++ examples + dx_postprocess pybind11 (Linux)
 # Windows: build.bat --minimal
 ```
 
-- C++ 예제(`sfa3d_608x608_sync` / `_async`)는 위 빌드로 생성됩니다.
-- Python `*_cpp_postprocess.py` variant는 `dx_postprocess` pybind11 모듈이 필요합니다(빌드에 포함).
-  > **중요**: SFA3D 후처리(`src/postprocess/sfa3d/`)를 수정하면 `dx_postprocess.so`를 **반드시 재빌드**해야 합니다.
-  > 구버전 모듈 사용 시 `z3d`/`dim` 값이 틀려 Cam+Box 시각화가 깨집니다.
+- The C++ examples (`sfa3d_608x608_sync` / `_async`) are produced by that build.
+- The Python `*_cpp_postprocess.py` variants need the `dx_postprocess` pybind11 module (included in the build).
+  > **Important:** after editing the SFA3D postprocess (`src/postprocess/sfa3d/`), **rebuild** `dx_postprocess.so`.
+  > A stale module produces wrong `z3d` / `dim` values and breaks the Cam+Box view.
 
-### 1-2. 모델 다운로드
+### 1-2. Download the model
 
 ```bash
 ./setup.sh --models sfa3d_608x608     # → assets/models/sfa3d_608x608.dxnn
 ```
 
-### 1-3. NPU 확인
+### 1-3. Check the NPU
 
 ```bash
 dxrt-cli -s
@@ -41,61 +41,62 @@ dxrt-cli -s
 
 ---
 
-## 2. 파일 구조
+## 2. Layout
 
 ```
-src/python_example/3d_object_detection/sfa3d_608x608/
-├── README.md                                       # (이 문서)
-├── config.json                                     # score/nms threshold 등
-├── calib_policy.py                                 # calib 동반 파일 정책
-├── factory/sfa3d_608x608_factory.py         # IDetectionFactory 구현
-├── sfa3d_608x608_sync.py                    # ① Python sync
-├── sfa3d_608x608_async.py                   # ② Python async
-├── sfa3d_608x608_sync_cpp_postprocess.py    # ③ Python sync + C++ postprocess
-└── sfa3d_608x608_async_cpp_postprocess.py   # ④ Python async + C++ postprocess
+src/python_example/3d_object_detection/sfa3d/
+├── README.md
+├── calib_policy.py                                 # companion calib-file policy
+└── sfa3d_608x608/
+    ├── config.json                                 # score / nms thresholds
+    ├── factory/sfa3d_608x608_factory.py            # IDetectionFactory
+    ├── sfa3d_608x608_sync.py                       # 1 Python sync
+    ├── sfa3d_608x608_async.py                      # 2 Python async
+    ├── sfa3d_608x608_sync_cpp_postprocess.py       # 3 Python sync + C++ postprocess
+    └── sfa3d_608x608_async_cpp_postprocess.py      # 4 Python async + C++ postprocess
 
-src/cpp_example/3d_object_detection/sfa3d_608x608/
+src/cpp_example/3d_object_detection/sfa3d/sfa3d_608x608/
 ├── config.json
-├── factory/sfa3d_608x608_factory.hpp        # I3DDetectionFactory 구현
-├── sfa3d_608x608_sync.cpp                   # ⑤ C++ sync
-└── sfa3d_608x608_async.cpp                  # ⑥ C++ async
+├── factory/sfa3d_608x608_factory.hpp               # I3DDetectionFactory
+├── sfa3d_608x608_sync.cpp                          # 5 C++ sync
+└── sfa3d_608x608_async.cpp                         # 6 C++ async
 ```
 
 ---
 
-## 3. 실행 방법
+## 3. How to run
 
-### 3-1. Python (`src/python_example/` 에서 실행)
+### 3-1. Python (run from `src/python_example/`)
 
 ```bash
-cd src/python_example/3d_object_detection/sfa3d_608x608
+cd src/python_example/3d_object_detection/sfa3d/sfa3d_608x608
 
-# ① sync — 단일 .bin
+# 1 sync — one .bin
 python sfa3d_608x608_sync.py \
-  -m ../../../../assets/models/sfa3d_608x608.dxnn \
-  -i ../../../../sample/kitti/velodyne/000049.bin
+  -m ../../../../../assets/models/sfa3d_608x608.dxnn \
+  -i ../../../../../sample/kitti/velodyne/000049.bin
 
-# ② async — velodyne 디렉터리 batch
+# 2 async — velodyne directory batch
 python sfa3d_608x608_async.py \
-  -m ../../../../assets/models/sfa3d_608x608.dxnn \
-  -i ../../../../sample/kitti/velodyne
+  -m ../../../../../assets/models/sfa3d_608x608.dxnn \
+  -i ../../../../../sample/kitti/velodyne
 
-# ③ / ④ C++ postprocess variant (dx_postprocess 모듈 필요, 미설치 시 Python postprocessor로 fallback)
-python sfa3d_608x608_sync_cpp_postprocess.py  -m <model.dxnn> -i <bin 또는 velodyne 디렉터리>
-python sfa3d_608x608_async_cpp_postprocess.py -m <model.dxnn> -i <velodyne 디렉터리>
+# 3 / 4 C++ postprocess variants (dx_postprocess required; falls back to the Python postprocessor if it is missing)
+python sfa3d_608x608_sync_cpp_postprocess.py  -m <model.dxnn> -i <bin or velodyne directory>
+python sfa3d_608x608_async_cpp_postprocess.py -m <model.dxnn> -i <velodyne directory>
 ```
 
-입력을 생략하면 기본 샘플 `sample/kitti/velodyne/000049.bin` 을 사용합니다.
+If the input is omitted, the default sample `sample/kitti/velodyne/000049.bin` is used.
 
-### 3-2. C++ (빌드 산출 바이너리)
+### 3-2. C++ (built binaries)
 
 ```bash
-# sync — 단일 .bin
+# sync — one .bin
 ./sfa3d_608x608_sync \
   -m assets/models/sfa3d_608x608.dxnn \
   -i sample/kitti/velodyne/000049.bin
 
-# async — velodyne 디렉터리 batch + 저장 + headless
+# async — velodyne directory batch, save, headless
 ./sfa3d_608x608_async \
   -m assets/models/sfa3d_608x608.dxnn \
   -i sample/kitti/velodyne \
@@ -106,36 +107,37 @@ python sfa3d_608x608_async_cpp_postprocess.py -m <model.dxnn> -i <velodyne 디�
 
 ---
 
-## 4. CLI 옵션
+## 4. CLI options
 
-| 옵션 | 설명 |
-|------|------|
-| `-m`, `--model` | `.dxnn` 모델 경로 (필수) |
-| `-i`, `--image` | LiDAR `.bin` 단일 파일 **또는** velodyne 디렉터리 |
-| `--calib-dir` | `{frame_id}.txt` calib 파일 디렉터리 (`-i` stem과 짝) |
-| `--image2-dir` | `{frame_id}.png/.jpg` 카메라 이미지 디렉터리 (`-i` stem과 짝) |
-| `--save`, `-s` | 결과 이미지 저장 |
-| `--no-display` | 창 출력 비활성화 (headless) |
-| `--config` | `config.json` 경로 (기본 자동 탐지) |
-| `--loop`, `-l` | 추론 반복 횟수 |
-| `--show-log` | 프레임별 상세 로그 출력 (기본은 조용함) |
+| Option | Description |
+|--------|-------------|
+| `-m`, `--model` | path to the `.dxnn` model (required) |
+| `-i`, `--image` | one LiDAR `.bin` file **or** a velodyne directory |
+| `--calib-dir` | directory of `{frame_id}.txt` calib files (paired with the `-i` stem) |
+| `--image2-dir` | directory of `{frame_id}.png/.jpg` camera images (paired with the `-i` stem) |
+| `--save`, `-s` | save the result image |
+| `--no-display` | disable window output (headless) |
+| `--config` | path to `config.json` (auto-detected by default) |
+| `--loop`, `-l` | inference repeat count |
+| `--show-log` | per-frame verbose log (quiet by default) |
 
-> 기본 KITTI 레이아웃(`velodyne/` + `calib/` + `image_2/`)이면 `--calib-dir`/`--image2-dir`는 생략 가능합니다.
-> Python·C++ 모두 `-h`/`--help`로 옵션을 확인할 수 있습니다.
+> With the default KITTI layout (`velodyne/` + `calib/` + `image_2/`),
+> `--calib-dir` and `--image2-dir` can be omitted.
+> Both Python and C++ accept `-h` / `--help`.
 
 ---
 
-## 5. 입력 / 샘플
+## 5. Input / samples
 
-- **지원 입력**: `--image` (`.bin` 단일 파일 또는 velodyne 디렉터리)
-- **미지원 입력**: `--video`, `--camera`, `--rtsp` (LiDAR 전용 파이프라인)
+- **Supported input:** `--image` (one `.bin` file or a velodyne directory)
+- **Unsupported input:** `--video`, `--camera`, `--rtsp` (LiDAR-only pipeline)
 
-| Frame | 설명 |
-|-------|------|
-| `000049` | Car — 기본 데모 |
+| Frame | Description |
+|-------|-------------|
+| `000049` | Car — default demo |
 | `000535` | Car / Pedestrian |
 
-샘플 데이터: `sample/kitti/{velodyne,calib,image_2,label_2}/`
+Sample data: `sample/kitti/{velodyne,calib,image_2,label_2}/`
 
 ---
 
@@ -150,45 +152,45 @@ python sfa3d_608x608_async_cpp_postprocess.py -m <model.dxnn> -i <velodyne 디�
 }
 ```
 
-| 키 | 설명 |
-|----|------|
-| `score_threshold` | 검출 confidence 임계값 |
-| `nms_threshold` | NMS IoU 임계값 |
-| `max_detections` | 최대 검출 개수 |
-| `require_calib` | `true`면 calib 파일이 없을 때 에러 (기본 `false`) |
+| Key | Description |
+|-----|-------------|
+| `score_threshold` | detection confidence threshold |
+| `nms_threshold` | NMS IoU threshold |
+| `max_detections` | maximum number of detections |
+| `require_calib` | `true` raises an error when the calib file is missing (default `false`) |
 
 ---
 
-## 7. 시각화 (BEV)
+## 7. Visualization (BEV)
 
-- **모델 입력 BEV**는 변경하지 않습니다 (preprocessor grid: +y → 오른쪽 열).
-- **표시용**으로만 BEV raster를 먼저 수평 flip한 뒤, box/legend/label을 display 좌표 `col = (y_max - y)`로 그립니다.
-- 패널 제목(`"BEV"` 등)은 flip 이후에 그려져 글자가 뒤집히지 않습니다.
-- calib(`--calib-dir`)와 카메라 이미지(`--image2-dir`)가 있으면 Cam+Box(원근 투영) 뷰가 함께 렌더링됩니다.
-
----
-
-## 8. `--show-log` 동작
-
-다른 dx_app 예제와 동일합니다.
-
-| 출력 | `--show-log` 없음 | `--show-log` 있음 |
-|------|-------------------|-------------------|
-| Model loaded / input size | O | O |
-| Starting inference | O | O |
-| PERFORMANCE SUMMARY | O | O |
-| Config loaded | X | O |
-| Input 경로 / 해상도 | X | O |
-| `[Result] Detected N...` / 검출 좌표 | X | O |
-| 프레임별 Read/Pre/Infer ms | X | O |
+- The **model-input BEV** is not modified (preprocessor grid: +y maps to the right column).
+- For **display only**, the BEV raster is flipped horizontally first, then boxes, the legend, and labels are drawn in display coordinates `col = (y_max - y)`.
+- Panel titles (for example `"BEV"`) are drawn after the flip, so the text is not mirrored.
+- When both calib (`--calib-dir`) and a camera image (`--image2-dir`) are present, a Cam+Box (perspective projection) view is rendered as well.
 
 ---
 
-## 9. 트러블슈팅
+## 8. `--show-log`
 
-| 증상 | 원인 / 해결 |
-|------|-------------|
-| `dx_postprocess.SFA3DPostProcess not available` | pybind 모듈 미설치 → Python postprocessor로 자동 fallback. C++ postprocess를 쓰려면 `./build.sh`로 `dx_postprocess` 재빌드 |
-| Cam+Box 뷰가 깨짐 | 구버전 `dx_postprocess.so` 사용 → 후처리 수정 후 모듈 재빌드 |
-| 모델을 찾지 못함 | `./setup.sh --models sfa3d_608x608` 로 다운로드 후 `-m` 경로 확인 |
-| `--video`/`--camera` 동작 안 함 | SFA3D는 LiDAR `.bin` 입력 전용 (의도된 제한) |
+Same behavior as the other dx_app examples.
+
+| Output | without `--show-log` | with `--show-log` |
+|--------|----------------------|-------------------|
+| Model loaded / input size | yes | yes |
+| Starting inference | yes | yes |
+| PERFORMANCE SUMMARY | yes | yes |
+| Config loaded | no | yes |
+| Input path / resolution | no | yes |
+| `[Result] Detected N...` / detection coordinates | no | yes |
+| Per-frame Read / Pre / Infer milliseconds | no | yes |
+
+---
+
+## 9. Troubleshooting
+
+| Symptom | Cause / fix |
+|---------|-------------|
+| `dx_postprocess.SFA3DPostProcess not available` | The pybind module is not installed, so the example falls back to the Python postprocessor. Rebuild `dx_postprocess` with `./build.sh` to use the C++ postprocess. |
+| Cam+Box view is broken | A stale `dx_postprocess.so` is loaded. Rebuild the module after editing the postprocess. |
+| Model not found | Download it with `./setup.sh --models sfa3d_608x608` and check the `-m` path. |
+| `--video` / `--camera` do nothing | SFA3D accepts only LiDAR `.bin` input. That limit is intentional. |

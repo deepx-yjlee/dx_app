@@ -11,7 +11,6 @@
   "default_video": "assets/videos/obb.mp4",
   "zoo_canonical": true,
   "published": true,
-  "legacy_model_name": "yolo26x_obb",
   "config": {
     "score_threshold": 0.3
   },

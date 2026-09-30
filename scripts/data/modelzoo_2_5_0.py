@@ -554,14 +554,23 @@ GROUPS: list[dict] = [
         config={"num_classes": 11},          # CamVid
     ),
     dict(
-        task="semantic_segmentation", task_legacy="semantic_segmentation",
+        # The zoo lists these under Image Matting, not Semantic Segmentation, and the
+        # distinction is not cosmetic: SemanticSegmentationVisualizer reads `mask` as
+        # CLASS IDS and paints it with a 19-colour Cityscapes palette, which renders a
+        # continuous alpha matte as a two-tone segmentation and discards the matte.
+        task="image_matting", task_legacy="semantic_segmentation",
         family="ppmatting",
         cpp_donor=None,
         variants=["ppmatting-hrnet-w48-composition_512x512",
                   "ppmatting-hrnet-w48-distinctions_512x512"],
-        preprocessor=SIMPLE,
+        # Gated illumination gain: a white shirt on a white studio wall (frame mean
+        # 209) left the face and hands as EXACT zeros in the matte. See
+        # SimpleResizePreprocessor.mean_target for the measurement; the gate keeps
+        # every in-distribution subject bit-identical.
+        preprocessor=_proc("SimpleResizePreprocessor", WH,
+                           mean_target=110, mean_target_above=195),
         postprocessor=_proc("PPMattingPostprocessor", WHC),
-        visualizer=_proc("SemanticSegmentationVisualizer", []),
+        visualizer=_proc("MattingVisualizer", [{"token": "config"}]),
         base="ISegmentationFactory", reference=REF_PADDLESEG,
         config={"alpha_threshold": 0.5},
     ),
@@ -602,12 +611,20 @@ GROUPS: list[dict] = [
 
     # ============================ CLIP / embedding (6) ==========================
     dict(
-        task="zero_shot_image_classification", task_legacy="embedding", family="clip",
-        cpp_donor="zero_shot_image_classification/clip",
+        # Zoo category: Image Retrieval holds this checkpoint's TEXT tower; its image
+        # tower comes with it, because retrieval needs both halves of one embedding
+        # space. MEASURED: this .dxnn takes uint8 [1,224,224,3], so CLIP_SIMPLE (which
+        # emits float32) made the example unrunnable -- "Input dtype mismatch for 'x':
+        # expected uint8, got float32". The normalisation is folded into the compiled
+        # graph, as for every other uint8 model here.
+        task="image_retrieval", task_legacy="embedding", family="clip_rn50",
+        cpp_donor="image_retrieval/clip_rn50",
         variants=["clip-img_resnet50_224x224_openai"],
-        preprocessor=CLIP_SIMPLE,
-        postprocessor=_proc("CLIPImagePostprocessor", WHC),
-        visualizer=_proc("EmbeddingVisualizer", []),
+        preprocessor=SIMPLE,
+        postprocessor=_proc("GalleryRetrievalPostprocessor", WHC,
+                            model_type="image_embedding",
+                            model_name="clip-img_resnet50_224x224_openai"),
+        visualizer=_proc("RetrievalVisualizer", [{"token": "config"}]),
         base="IEmbeddingFactory", reference=REF_CLIP, config={},
     ),
     dict(
@@ -627,8 +644,8 @@ GROUPS: list[dict] = [
         # cannot be driven from a picture at all -- the example exists for the
         # postprocessor and the embedding contract, and the README carries the
         # open_clip snippet that produces the tokens.
-        task="zero_shot_image_classification", task_legacy="embedding", family="clip",
-        cpp_donor="zero_shot_image_classification/clip",
+        task="image_retrieval", task_legacy="embedding", family="clip_rn50",
+        cpp_donor="image_retrieval/clip_rn50",
         variants=["clip-text_resnet50_77x512_openai"],
         preprocessor=SIMPLE,
         postprocessor=_proc("CLIPTextPostprocessor", WHC),
@@ -636,25 +653,29 @@ GROUPS: list[dict] = [
         base="IEmbeddingFactory", reference=REF_CLIP, config={},
     ),
     dict(
-        task="super_resolution", task_legacy="embedding", family="pp_shitu_rec",
-        cpp_donor="super_resolution/eigenplaces",
+        # Zoo category: Visual Place Recognition. It was filed under super_resolution
+        # purely because the legacy task tables had nowhere else to put an embedding.
+        task="visual_place_recognition", task_legacy="embedding",
+        family="pp_shitu_rec",
+        cpp_donor="visual_place_recognition/eigenplaces",
         variants=["pp-shituv2-feature-extraction_224x224"],
         preprocessor=SIMPLE,
-        postprocessor=_proc("GenericEmbeddingPostprocessor", WHC,
-                            model_type="retrieval_embedding",
-                            model_name="pp_shituv2_rec"),
-        visualizer=_proc("EmbeddingVisualizer", []),
+        postprocessor=_proc("GalleryRetrievalPostprocessor", WHC,
+                            model_type="place_descriptor",
+                            model_name="pp-shituv2-feature-extraction_224x224"),
+        visualizer=_proc("RetrievalVisualizer", [{"token": "config"}]),
         base="IEmbeddingFactory", reference=REF_PADDLECLAS, config={},
     ),
     dict(
-        task="image_classification", task_legacy="reid", family="repvgg_reid",
+        # Zoo category: Person ReID.
+        task="person_reid", task_legacy="reid", family="repvgg_reid",
         cpp_donor="image_classification/casvit",
         variants=["repvgg-a0-reid_256x128"],
         preprocessor=SIMPLE,
-        postprocessor=_proc("GenericEmbeddingPostprocessor", WHC,
+        postprocessor=_proc("GalleryRetrievalPostprocessor", WHC,
                             model_type="person_reid_embedding",
-                            model_name="repvgg_a0_reid"),
-        visualizer=_proc("EmbeddingVisualizer", []),
+                            model_name="repvgg-a0-reid_256x128"),
+        visualizer=_proc("RetrievalVisualizer", [{"token": "config"}]),
         base="IEmbeddingFactory", reference=REF_PADDLECLAS, config={},
     ),
 
@@ -695,12 +716,23 @@ GROUPS: list[dict] = [
     ),
 ]
 
-# Models that ARE downloadable today: the 4 zoo rows carrying a q-master .dxnn but no
-# q-lite one. Measured 2026-09-22: HTTP 200 at modelzoo/q-master-dxnn/2_4_0/.
+# The 4 zoo rows carrying a q-master .dxnn but no q-lite one. This decides the
+# download TIER and nothing else -- it used to double as "is this published", which
+# stopped being true when the zoo published 2_5_0. Measured 2026-09-22 and again
+# 2026-09-30: HTTP 200 at modelzoo/q-master-dxnn/2_4_0/.
 Q_MASTER_ONLY = frozenset({
     "beit-l-p16_384x384", "levit-128s_224x224",
     "vit-b-p16_384x384", "vit-t-p16_224x224",
 })
+
+# Declared but NOT downloadable. DX Model Zoo published 2_5_0 on 2026-09-30 and all
+# but one of these models came with it: probing every URL in the manifest that day gave
+# 498 -> 200 and exactly one -> 403. DEEPX reported that one as failing to build.
+#
+# This is the only thing that marks a model unpublished. Inferring it from the version
+# directory (anything under /2_5_0/) was correct only while 2_5_0 was unreleased; after
+# publication that rule marks 492 of 499 rows pending and hides every real 403.
+UNPUBLISHED = frozenset({"vit-l-p16_512x512_swag"})
 
 
 def _legacy_model_name(variant: str) -> str:
@@ -748,7 +780,11 @@ def expand() -> list[dict]:
                 "cpp_donor": group["cpp_donor"],
                 "legacy_model_name": _legacy_model_name(variant),
                 "manifest_category": MANIFEST_CATEGORY[group["task_legacy"]],
-                "published": variant in Q_MASTER_ONLY,
+                "published": variant not in UNPUBLISHED,
+                # q-lite carries 492 of the 496 files the zoo page offers; the tier is
+                # a property of the model, not of its publication state.
+                "manifest_tier": ("q-master", "2_4_0")
+                                 if variant in Q_MASTER_ONLY else ("q-lite", "2_5_0"),
             })
     return rows
 

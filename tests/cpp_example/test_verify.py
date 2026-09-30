@@ -82,7 +82,7 @@ def discover_async_cases() -> List[tuple]:
 
 
 def _pick_representative(cases: list, max_count: int = 3) -> list:
-    priority = ["yolov5s_", "yolov8n_", "fastdepth"]
+    priority = ["yolov5-s_640x640", "yolov8-n", "fastdepth"]
     selected = []
     for exe, mp in cases:
         for p in priority:

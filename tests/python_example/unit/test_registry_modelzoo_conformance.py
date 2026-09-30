@@ -83,6 +83,25 @@ FAMILY_OVERRIDES: dict[tuple[str, str], str] = {
     ("semantic_segmentation", "casvit"): "casvit_seg",
 }
 
+# variant -> the task DX Model Zoo's own page assigns it, where that differs from the
+# harvested dx-modelzoo GitHub tree. The snapshot is a RECORD of upstream (see its
+# `source`/`ref`/`harvested_at`), so it is not edited to reflect our decisions; the
+# disagreement is declared here instead, with its reason.
+#
+# The zoo page introduced four task categories in release 2_5_0 that the harvested tree
+# predates. Both EigenPlaces variants were filed as `super_resolution` -- not a
+# considered choice but the only slot the legacy task tables had for a bare embedding,
+# and it left a place-recognition model defaulting to sample/img/face_pair. The zoo
+# lists them under Visual Place Recognition, which is what they are.
+#
+# Only these two need an entry: the other five re-classified variants are 2_5_0
+# additions, absent from the harvested tree, so the provisional table already carries
+# their task and is updated in place by the emitter.
+ZOO_PAGE_TASK: dict[str, str] = {
+    "eigenplaces-resnet18_512x512": "visual_place_recognition",
+    "eigenplaces-resnet50_512x512": "visual_place_recognition",
+}
+
 
 def _snake(family: str) -> str:
     """dx-modelzoo family -> dx_app family directory (import-safe)."""
@@ -274,7 +293,8 @@ def test_task_and_family_match_the_snapshot(registry, snapshot, provisional):
             continue
         upstream = snapshot.get(e["variant"])
         if upstream is not None:
-            want = (upstream["task"], _family_for(upstream["task"], upstream["family"]))
+            task = ZOO_PAGE_TASK.get(e["variant"], upstream["task"])
+            want = (task, _family_for(upstream["task"], upstream["family"]))
         elif e["variant"] in provisional:
             ours = provisional[e["variant"]]
             want = (ours["task"], ours["family"])

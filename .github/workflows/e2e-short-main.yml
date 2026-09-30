@@ -1,0 +1,11 @@
+name: E2E main short test
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  e2e_short_main:
+    uses: deepx/do_workflows-central/.github/workflows/dx_app-e2e-short-main.yml@main
+    secrets: inherit

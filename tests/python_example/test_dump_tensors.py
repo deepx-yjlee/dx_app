@@ -52,7 +52,7 @@ def _pick_representative(max_count: int = 3) -> List[tuple]:
             continue
         candidates.append((sync_scripts[0], model_path, model_name))
 
-    priority = ["yolov5s", "yolov8n", "fastdepth"]
+    priority = ["yolov5-s_640x640", "yolov8-n", "fastdepth"]
     selected = []
     for script, model, name in candidates:
         for p in priority:

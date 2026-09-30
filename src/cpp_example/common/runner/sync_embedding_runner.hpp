@@ -61,12 +61,12 @@ public:
         // (do not auto-run inference on a default sample).
         std::string task = factory_->getTaskType();
         bool hasStreamInput = !args.videoFile.empty() || args.cameraIndex >= 0 || !args.rtspUrl.empty();
-        if ((task == "embedding" || task == "reid" || task == "attribute_recognition") && hasStreamInput) {
+        if (dxapp::isComparisonOnlyTask(task) && hasStreamInput) {
             dxapp::fatal_error("[DXAPP] [ERROR] Task '" + task + "' supports image input only (-i / --image_path). "
                 "Video/camera input requires a detection crop pipeline and is not supported in single-model examples. "
                 "Use -i (--image_path) to provide an image file or directory.");
         }
-        if ((task == "embedding" || task == "reid" || task == "attribute_recognition")
+        if (dxapp::isComparisonOnlyTask(task)
             && args.imageFilePath.empty()) {
             std::cout << "[DXAPP] [INFO] Task '" << task << "' takes image input only." << std::endl;
             std::cout << "        -> Provide an image with -i (--image_path), e.g. -i "

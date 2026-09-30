@@ -223,6 +223,38 @@ class EmbeddingResult:
 
 
 @dataclass
+class GalleryMatch:
+    """One ranked hit from a retrieval gallery."""
+    rank: int = 0
+    score: float = 0.0          # cosine similarity in [-1, 1], higher is nearer
+    path: str = ""              # gallery image, repo-relative, for the visualizer
+    label: str = ""             # gallery folder name, "" when the set is unlabelled
+
+
+@dataclass
+class RetrievalResult:
+    """A query descriptor plus its ranking against a prebuilt gallery.
+
+    This is :class:`EmbeddingResult` with the comparison already done. An embedding
+    model alone cannot answer "which place/product/person is this?" -- that needs a
+    gallery to rank against -- so image retrieval, visual place recognition and person
+    ReID all produce this: the same descriptor, plus the top-k it matched.
+
+    ``embedding`` is kept so that everything which already consumes a descriptor
+    (verification, the embedding comparison visualizer) keeps working unchanged.
+
+    ``matches`` is ordered best-first and may be empty: with no gallery loaded the
+    postprocessor still returns the descriptor rather than failing, and the visualizer
+    then says so instead of drawing an empty strip.
+    """
+    embedding: np.ndarray = field(default_factory=lambda: np.array([]))
+    model_type: str = ""
+    matches: List[GalleryMatch] = field(default_factory=list)
+    gallery_size: int = 0
+    gallery_name: str = ""
+
+
+@dataclass
 class SuperResolutionResult:
     """Result from super-resolution models (ESPCN, etc.)."""
     output_image: np.ndarray = field(default_factory=lambda: np.array([]))  # upscaled HWC uint8

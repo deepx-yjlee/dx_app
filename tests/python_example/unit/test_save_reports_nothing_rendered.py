@@ -5,7 +5,7 @@ A comparison visualizer -- ArcFace, CasViT Re-ID, the CLIP embedding variants --
 the FIRST image as its reference and returns no frame for it. Run against a single
 image, the whole pipeline therefore succeeds, prints a performance summary, creates a
 run directory, and saves no picture. Nothing in that sequence is wrong, and nothing in
-it is explained either: the observed report was "arcface 결과 이미지가 만들어지지 않았어"
+it is explained either: the observed report was that the ArcFace result image was never written
 after a run that behaved exactly as designed.
 
 So the silence is the defect. These tests pin the message and its hint.
@@ -102,7 +102,7 @@ def test_nothing_rendered_leaves_no_empty_directory_behind(tmp_path):
 
     The batch path used to mkdir one folder per input up front, so a comparison
     visualizer's reference frame left `1_reference/` sitting empty next to the two
-    real outputs -- which is how "결과 이미지가 만들어지지 않았어" looked from outside.
+    real outputs -- which is how "the result image was never written" looked from outside.
     """
     class _RefVisualizer:
         NEEDS_REFERENCE = True

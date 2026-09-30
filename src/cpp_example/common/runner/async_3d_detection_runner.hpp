@@ -84,7 +84,7 @@ public:
         {
             const std::string _io_task = factory_->getTaskType();
             const bool _io_stream = !args.videoFile.empty() || args.cameraIndex >= 0 || !args.rtspUrl.empty();
-            if (_io_task == "3d_detection" && _io_stream) {
+            if ((_io_task == "3d_detection" || _io_task == "3d_object_detection") && _io_stream) {
                 dxapp::fatal_error("[DXAPP] [ERROR] Task '" + _io_task + "' supports image input only (-i / --image_path). "
                     "Video/camera input requires a detection crop pipeline and is not supported in single-model examples. "
                     "Use -i (--image_path) to provide an image file or directory.");
@@ -611,16 +611,21 @@ private:
         // the reorder buffer below can emit frames strictly in submit order.
         auto renderArgs = [&](AsyncOBBDisplayArgs& args) {
             if (!args.original_frame || args.original_frame->empty()) return;
-            if (auto* sfa_viz = dynamic_cast<SFA3DVisualizer*>(&visualizer)) {
-                sfa_viz->setSourcePath(args.source_path);
-            }
-            auto t_render_start = std::chrono::high_resolution_clock::now();
-            cv::Mat result_frame = visualizer.draw(*args.original_frame, *args.detections, args.ctx);
-            auto t_render_end = std::chrono::high_resolution_clock::now();
-            {
-                std::lock_guard<std::mutex> lock(metrics_.metrics_mutex);
-                metrics_.sum_render += std::chrono::duration<double, std::milli>(t_render_end - t_render_start).count();
-                metrics_.render_completed++;
+            const bool need_render = mustRenderFrame(
+                no_display, save_on, args.save_path, display_pump_);
+            cv::Mat result_frame;
+            if (need_render) {
+                if (auto* sfa_viz = dynamic_cast<SFA3DVisualizer*>(&visualizer)) {
+                    sfa_viz->setSourcePath(args.source_path);
+                }
+                auto t_render_start = std::chrono::high_resolution_clock::now();
+                result_frame = visualizer.draw(*args.original_frame, *args.detections, args.ctx);
+                auto t_render_end = std::chrono::high_resolution_clock::now();
+                {
+                    std::lock_guard<std::mutex> lock(metrics_.metrics_mutex);
+                    metrics_.sum_render += std::chrono::duration<double, std::milli>(t_render_end - t_render_start).count();
+                    metrics_.render_completed++;
+                }
             }
             if (!args.save_path.empty() && !result_frame.empty()) {
                 cv::imwrite(args.save_path, result_frame);

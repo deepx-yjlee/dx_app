@@ -118,7 +118,11 @@ def test_every_published_manifest_row_is_offered_by_the_page(manifest, html_link
 
 def test_every_offered_q_lite_model_has_an_example(html_links, variant_configs):
     """The other direction: a model on the page that no example can run."""
-    offered = html_links.get(("q-lite-dxnn", "2_4_0"), set())
+    # Version-agnostic on purpose: the zoo moved the whole q-lite tier from 2_4_0 to
+    # 2_5_0 on 2026-09-30, and pinning the directory here broke the check rather than
+    # catching anything.
+    offered = {fn for (tier, _ver), files in html_links.items()
+               if tier == "q-lite-dxnn" for fn in files}
     assert offered, "no q-lite links parsed from the page"
     unused = sorted(f for f in offered if Path(f).stem not in variant_configs)
     assert not unused, f"models offered by the page with no example variant: {unused}"
@@ -133,10 +137,19 @@ def test_the_registry_and_the_manifest_agree_on_every_file(manifest, registry):
         f"only in manifest: {sorted(manifest_files - registry_files)}")
 
 
-def test_a_published_row_means_a_2_4_0_url(manifest, registry):
-    """`published` drives the downloader, which treats 403 on a 2_4_0 URL as an error
-    and only tolerates it behind the /2_5_0/ pending marker."""
-    by_file = {parts[2]: parts for _row, parts in _parsed(manifest) if parts}
-    wrong = [m["variant"] for m in registry
-             if m["published"] and by_file.get(m["dxnn_file"], ("", "", ""))[1] == "2_5_0"]
-    assert not wrong, f"published but pointing at a pending 2_5_0 URL: {wrong}"
+def test_unpublished_rows_are_flagged_not_inferred_from_the_version(manifest, registry):
+    """Which models are unpublished is DECLARED, never read off the URL.
+
+    The downloader used to infer it -- any URL containing /2_5_0/ was "not published
+    yet" -- which held only while 2_5_0 was unreleased. The zoo published it on
+    2026-09-30 and moved the whole q-lite tier there, so that rule would now mark 492
+    of 499 rows pending and turn every real 403 into a silent skip. Probing all 499
+    URLs that day: 498 -> 200, and exactly one -> 403.
+
+    So a row carries `pending: true` and nothing else means unpublished.
+    """
+    flagged = {row["name"] for row in manifest if row.get("pending")}
+    unpublished = {m["model_name"] for m in registry if not m["published"]}
+    assert flagged == unpublished, (
+        f"manifest flags {sorted(flagged)}, registry says {sorted(unpublished)}")
+

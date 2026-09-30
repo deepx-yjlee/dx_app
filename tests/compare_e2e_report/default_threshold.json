@@ -1,0 +1,16 @@
+{
+  "global": {
+    "async": {
+      "e2e_fps": 20.0,
+      "inflight_avg": 30.0,
+      "inflight_max": 30.0
+    },
+    "sync": {
+      "e2e_fps": 20.0,
+      "read_fps": 30.0,
+      "preprocess_fps": 30.0,
+      "inference_fps": 30.0,
+      "postprocess_fps": 30.0
+    }
+  }
+}

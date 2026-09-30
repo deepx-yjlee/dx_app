@@ -46,6 +46,7 @@ from .rtdetr_postprocessor import (
 # borrowing ArcFacePostprocessor's hardcoded "face_embedding"/"arcface".
 from .embedding_postprocessor import GenericEmbeddingPostprocessor
 from .matting_postprocessor import PPMattingPostprocessor
+from .gallery_retrieval_postprocessor import GalleryRetrievalPostprocessor
 from .efficientad_postprocessor import EfficientADPostprocessor
 from .anomaly_postprocessor import AnomalyFeaturePostprocessor
 from .picodet_postprocessor import PicoDetPostprocessor
@@ -105,6 +106,9 @@ __all__ = [
     # PaddleSeg matting: a continuous alpha matte, not a class map.
     "GenericEmbeddingPostprocessor",
     "PPMattingPostprocessor",
+    # Image retrieval / visual place recognition / person ReID: one descriptor
+    # ranked against a gallery built on the NPU at build time.
+    "GalleryRetrievalPostprocessor",
     # Anomaly detection: a feature response, not a published anomaly score.
     "AnomalyFeaturePostprocessor",
     "EfficientADPostprocessor",

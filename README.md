@@ -78,21 +78,23 @@ This section guides you through the environment setup and the initial build proc
 
 ## Repository Layout
 
-> **On the two counts below.** The trees carry **499 variants** across 24 AI tasks, of
-> which **356 have a published `.dxnn`** to download. The other 143 are declared --
-> registry entry, example code, variant config, build target -- for models DX Model Zoo
-> has announced but not published yet; `scripts/download_models.py` reports them as
-> *Pending* rather than as errors.
+> **On the counts below.** The trees carry **499 variants** across 28 AI tasks, and
+> since DX Model Zoo published release **2_5_0** on 2026-09-30, **498 of them have a
+> downloadable `.dxnn`**. Probing every manifest URL that day: 498 → HTTP 200, one →
+> 403.
 >
-> *Pending* is a CDN **403** on the model's `2_5_0/` URL -- a publication state, not a
-> broken file and not missing example code. The example code is complete for all 499.
+> That one is `vit-l-p16_512x512_swag`, which DEEPX reported as failing to build. It is
+> still declared -- registry entry, example code, variant config, build target -- and
+> its manifest row carries `pending: true`, so `scripts/download_models.py` reports it
+> as *Pending* rather than as an error. Which models are unpublished is declared, never
+> inferred from the version directory: 2_5_0 is now the ordinary release, so treating
+> it as "unpublished" would hide every real 403.
 >
-> **Those 143 need DX-RT 3.5.0.** Their `.dxnn` files are container **format version
-> 9**, which DX-RT 3.4.2 refuses (`Model file format version 9 is not supported`)
-> while 3.5.0 parses it. `scripts/sweep_npu_inference.py` probes the runtime once per
+> **2_5_0 needs DX-RT 3.5.0.** Those `.dxnn` files are container **format version 9**,
+> which DX-RT 3.4.2 refuses (`Model file format version 9 is not supported`) while
+> 3.5.0 parses it. `scripts/sweep_npu_inference.py` probes the runtime once per
 > container version and reports `UNSUPPORTED_FORMAT` rather than a failure of the
-> example code, so the same tree is honest on either runtime. On 3.5.0 all 499
-> variants run; the 356 published models are version 8 (two are version 6).
+> example code, so the same tree is honest on either runtime.
 
 
 
@@ -120,7 +122,7 @@ The project is structured to separate core logic from language-specific implemen
 ```text
 dx_app/
 ├── src/
-│   ├── cpp_example/            # C++ end-to-end examples (499 variants / 24 tasks, 356 published)
+│   ├── cpp_example/            # C++ end-to-end examples (499 variants / 28 tasks, 498 downloadable)
 │   │                           #   <task>/<family>/<variant>/ holds config.json only
 │   │                           #   factory/ and <family>_sync.cpp stay on the family (.dxnn stem)
 │   │   └── common/             # ← Shared C++ runtime layer
@@ -131,7 +133,7 @@ dx_app/
 │   │       ├── visualizers/    #   12 task-specific visualizers
 │   │       ├── config/         #   ModelConfig loader
 │   │       └── utility/        #   Labels, preprocessing, profiling, run_dir, signal_handler, verify_serialize
-│   ├── python_example/         # Python end-to-end examples (499 variants / 24 tasks, 356 published)
+│   ├── python_example/         # Python end-to-end examples (499 variants / 28 tasks, 498 downloadable)
 │   │                           #   <task>/<family>/<variant>/ holds config.json and thin entry scripts
 │   │                           #   factory/ and <family>_sync.py stay on the family (--variant)
 │   │   └── common/             # ← Shared Python runtime layer
@@ -392,7 +394,9 @@ Templates are categorized by task across multiple task directories. All examples
 - **Face Detection:** SCRFD, YOLOv5Face, YOLOv7Face, RetinaFace  
 - **Pose Estimation:** YOLOv8-Pose  
 - **Segmentation:** BiSeNet, DeepLabV3+, SegFormer, YOLOv8Seg  
-- **Depth, Embedding, OBB, Denoising, Enhancement, Super Resolution, Hand Landmark, Attribute Recognition, Re-ID, PPU**  
+- **Image Retrieval / Visual Place Recognition / Person Re-ID:** CLIP RN50, EigenPlaces, PP-ShiTuV2, RepVGG-A0 -- each ranks a query descriptor against a gallery built on the NPU (`sample/gallery/*.bin`, one shared format both example trees read -- see `scripts/build_gallery_database.py`)  
+- **Image Matting:** PP-Matting HRNet-W48 (continuous alpha matte, not a class map)  
+- **Depth, Embedding, OBB, Denoising, Enhancement, Super Resolution, Hand Landmark, Attribute Recognition, PPU**  
 
 Functional Variants  
 
@@ -489,7 +493,7 @@ Build the C++ binaries and the Python dx_postprocess bindings simultaneously.
 
 **Step 4. Execution Examples**  
 
-The quickest way to explore all 22 AI task categories (23 demos tasks) is the unified interactive demo script:
+The quickest way to explore all 24 AI task categories (27 demo tasks) is the unified interactive demo script:
 
 ```bash
 # Interactive — select task, mode, and input type from menus
@@ -510,30 +514,40 @@ The quickest way to explore all 22 AI task categories (23 demos tasks) is the un
 
 **Demo Task ↔ Model Reference**
 
-Each of the 23 demo tasks uses exactly one model. When you run `run_demo.sh`, any missing models and videos are **automatically downloaded** — no manual `setup.sh` required.
+Each of the 27 demo tasks uses exactly one model. When you run `run_demo.sh`, any missing models and videos are **automatically downloaded** — no manual `setup.sh` required.
 
-| # | Demo Task | Model File | Category | Size |
-|--:|-----------|-----------|----------|-----:|
-| 0 | Object Detection (YOLOv7) | YoloV7.dxnn | Object Detection | 74 MB |
-| 1 | Object Detection (YOLOv11N) | YOLOV11N.dxnn | Object Detection | 7.0 MB |
-| 2 | Face Detection (SCRFD500M) | SCRFD500M.dxnn | Face Detection | 2.1 MB |
-| 3 | OBB Detection (YOLO26N-OBB) | yolo26n-obb.dxnn | OBB Detection | 7.5 MB |
-| 4 | Pose Estimation (YOLOv8s-Pose) | yolov8s_pose.dxnn | Pose Estimation | 25 MB |
-| 5 | Hand Landmark (HandLandmarkLite) | HandLandmarkLite_1.dxnn | Hand Landmark | 2.5 MB |
-| 6 | Face Alignment (3DDFA-V2) | 3ddfa_v2_mobilnetv1_120x120.dxnn | Face Alignment | 6.5 MB |
-| 7 | Instance Segmentation (YOLOv8N-Seg) | yolov8n_seg.dxnn | Instance Segmentation | 8.9 MB |
-| 8 | Semantic Segmentation (DeepLabV3+) | DeepLabV3PlusMobilenet.dxnn | Semantic Segmentation | 13 MB |
-| 9 | Classification (ResNet50) | ResNet50.dxnn | Classification | 50 MB |
-| 10 | Depth Estimation (SCDepthV3) | scdepthv3.dxnn | Depth Estimation | 29 MB |
-| 11 | Image Denoising (DnCNN-50) | DnCNN_50.dxnn | Image Denoising | 4.1 MB |
-| 12 | Super Resolution (ESPCN-X4) | ESPCN_X4.dxnn | Super Resolution | 83 KB |
-| 13 | Image Enhancement (Zero-DCE) | zero_dce.dxnn | Image Enhancement | 9.7 MB |
-| 14 | Embedding (ArcFace) | arcface_mobilefacenet.dxnn | Embedding | 29 MB |
-| 15 | Attribute Recognition (DeepMAR) | deepmar_resnet50.dxnn | Attribute Recognition | 46 MB |
-| 16 | Person Re-ID (CasViT-T) | casvit_t.dxnn | ReID | 82 MB |
-| 17 | PPU Pipeline (YOLOv7-PPU) | YoloV7_PPU.dxnn | PPU | 74 MB |
+| # | Demo Task | Model File | Group |
+|--:|-----------|-----------|-------|
+| 0 | Object Detection (YOLOv7) | `yolov7_640x640.dxnn` | Detection |
+| 1 | Object Detection (YOLOv11N) | `yolo11-n_640x640.dxnn` | Detection |
+| 2 | Face Detection (SCRFD500M) | `scrfd-500m_640x640.dxnn` | Detection |
+| 3 | OBB Detection (YOLO26N-OBB) | `yolo26-n-obb_1024x1024.dxnn` | Detection |
+| 4 | Pose Estimation (YOLOv8s-Pose) | `yolov8-s-pose_640x640.dxnn` | Pose & Landmark |
+| 5 | Hand Landmark (HandLandmarkLite) | `mediapipe-hands-lite_224x224.dxnn` | Pose & Landmark |
+| 6 | Face Alignment (3DDFA-V2) | `3ddfa-v2_mobilenetv1_120x120.dxnn` | Pose & Landmark |
+| 7 | Instance Segmentation (YOLOv8N-Seg) | `yolov8-n-seg_640x640.dxnn` | Segmentation |
+| 8 | Semantic Segmentation (DeepLabV3+) | `deeplabv3plus_mobilenetv1_512x512.dxnn` | Segmentation |
+| 9 | Classification (ResNet50) | `resnet50_224x224.dxnn` | Classification |
+| 10 | Depth Estimation (YOLO26-Depth-S) | `yolo26-depth-s_768x768.dxnn` | Depth Estimation |
+| 11 | Image Denoising (DnCNN-50) | `dncnn-50_512x512.dxnn` | Image Restoration |
+| 12 | Super Resolution (ESPCN-X4) | `espcn-x4_17x17.dxnn` | Image Restoration |
+| 13 | Image Enhancement (Zero-DCE) | `zerodce_400x600.dxnn` | Image Restoration |
+| 14 | Embedding (ArcFace) | `arcface_mobilefacenet_112x112.dxnn` | Recognition |
+| 15 | Attribute Recognition (DeepMAR) | `deepmar_resnet50_224x224.dxnn` | Recognition |
+| 16 | Person Re-ID (CasViT-T) | `casvit-t_224x224.dxnn` | Recognition |
+| 17 | PPU Pipeline (YOLOv7-PPU) | `yolov7_640x640_ppu.dxnn` | PPU |
+| 18 | Keypoint Detection (SuperPoint) | `superpoint_480x640.dxnn` | Keypoint & Pose |
+| 19 | Object Pose Estimation (DOPE) | `dope-hope-ketchup_480x640.dxnn` | Keypoint & Pose |
+| 20 | Panoptic Driving (YOLOPv2) | `yolopv2_384x640.dxnn` | Driving & 3D |
+| 21 | 3D Object Detection (SFA3D) | `sfa3d_608x608.dxnn` | Driving & 3D |
+| 22 | Hand Detection (MediaPipe Palm) | `mediapipe-hand-detector_192x192.dxnn` | Hand Detection |
+| 23 | Image Retrieval (CLIP RN50) | `clip-img_resnet50_224x224_openai.dxnn` | Retrieval & Matting |
+| 24 | Visual Place Recognition (EigenPlaces R18) | `eigenplaces-resnet18_512x512.dxnn` | Retrieval & Matting |
+| 25 | Person Re-ID (RepVGG-A0) | `repvgg-a0-reid_256x128.dxnn` | Retrieval & Matting |
+| 26 | Image Matting (PP-Matting HRNet-W48) | `ppmatting-hrnet-w48-composition_512x512.dxnn` | Retrieval & Matting |
 
-**Total demo models: ~470 MB** · Sample videos: ~1.1 GB
+Sizes are not listed here because they move with each DX Model Zoo release; `./setup.sh --demo-models` downloads exactly this set and reports each file. The
+sample video pack is a separate ~1.1 GB download (`./setup_sample_videos.sh`).
 
 To download only specific demo models without running the demo:
 ```bash
@@ -541,7 +555,7 @@ To download only specific demo models without running the demo:
 ```
 
 > **TIP — Running other models**  
-> `run_demo.sh` showcases 23 representative models. To run or benchmark **all 347 registered models**,
+> `run_demo.sh` showcases 27 representative models. To run or benchmark **all 499 registered variants**,
 > use the **example runner** or the **DX Model Tool**:
 >
 > ```bash

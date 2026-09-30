@@ -705,11 +705,15 @@ if (!no_display) {
     // pipeline is serial, so every imshow is charged to frame time.
     constexpr double SYNC_PREVIEW_FPS = 10.0;
     static DisplayPump pump{"Output", SYNC_PREVIEW_FPS};
+    // waitKey only when a preview slot is due. Calling it on every frame
+    // sits on this serial loop and caps end-to-end FPS at the GUI rate.
+    if (pump.wouldShow()) {
     auto display_start = std::chrono::high_resolution_clock::now();
     pump.offer(result_frame);
     if (!pump.pump()) quit_requested = true;
     auto display_end = std::chrono::high_resolution_clock::now();
     t_display = std::chrono::duration<double, std::milli>(display_end - display_start).count();
+    }
 }
         return {quit_requested, t_save, t_display};
     }

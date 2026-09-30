@@ -298,9 +298,29 @@ struct RestorationResult {
  * 
  * Stores a normalized feature vector from encoder models (e.g., CLIP, ArcFace).
  */
+struct GalleryMatch {
+    int rank{0};
+    float score{0.0f};        // cosine similarity in [-1, 1], higher is nearer
+    std::string path;         // gallery image, repo-relative, for the visualizer
+    std::string label;        // gallery folder name, empty when unlabelled
+};
+
 struct EmbeddingResult {
     std::vector<float> embedding;  // Feature vector
     int dimension{0};              // Embedding dimension
+
+    // Retrieval fields, filled only by GalleryRetrievalPostprocessor and left empty
+    // by every pure-embedding model. They live HERE, rather than in a RetrievalResult
+    // of their own, because IEmbeddingFactory and IVisualizer are templated on this
+    // exact type: a derived struct would be sliced by the runner's
+    // std::vector<EmbeddingResult>, and a separate type would need a parallel factory
+    // interface plus its own sync and async runner for no behavioural gain.
+    // (The Python tree can afford a distinct RetrievalResult because its runner is
+    // duck-typed and its verify serializer dispatches on the class name; the JSON both
+    // trees emit is the same either way.)
+    std::vector<GalleryMatch> matches;   // ranked best-first
+    int gallery_size{0};
+    std::string gallery_name;
 
     EmbeddingResult() = default;
 };

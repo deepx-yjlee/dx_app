@@ -1,0 +1,70 @@
+.git
+.github/agents/copilot-pr-review.md
+.github/workflows/
+.github/release-excluded
+.github/CODEOWNERS
+.github/Makefile
+.github/pull_request_template.md
+.gitignore
+sonar-project.properties
+Makefile
+.vscode/settings.json
+src/python_example/object_detection/yolov5/yolov5_async_cpp_postprocess_ort_off.py
+src/python_example/object_detection/yolov5/yolov5_async_ort_off.py
+src/python_example/object_detection/yolov5/yolov5_sync_cpp_postprocess_ort_off.py
+src/python_example/object_detection/yolov5/yolov5_sync_ort_off.py
+src/python_example/object_detection/yolov7/yolov7_async_cpp_postprocess_ort_off.py
+src/python_example/object_detection/yolov7/yolov7_async_ort_off.py
+src/python_example/object_detection/yolov7/yolov7_sync_cpp_postprocess_ort_off.py
+src/python_example/object_detection/yolov7/yolov7_sync_ort_off.py
+src/python_example/object_detection/yolov8/yolov8_async_cpp_postprocess_ort_off.py
+src/python_example/object_detection/yolov8/yolov8_async_ort_off.py
+src/python_example/object_detection/yolov8/yolov8_sync_cpp_postprocess_ort_off.py
+src/python_example/object_detection/yolov8/yolov8_sync_ort_off.py
+src/python_example/object_detection/yolov9/yolov9_async_cpp_postprocess_ort_off.py
+src/python_example/object_detection/yolov9/yolov9_async_ort_off.py
+src/python_example/object_detection/yolov9/yolov9_sync_cpp_postprocess_ort_off.py
+src/python_example/object_detection/yolov9/yolov9_sync_ort_off.py
+tests/compare_e2e_report/
+scripts/verify/
+scripts/model_audit/
+scripts/audit_models.py
+scripts/verify_examples.py
+tests/golden/
+tests/python_example/unit/test_compare_parity.py
+tests/python_example/unit/test_metrics.py
+tests/python_example/unit/test_model_audit.py
+tests/python_example/unit/test_priority_scorer.py
+tests/python_example/unit/test_verify_examples.py
+tests/req_test/
+reports/
+docs/superpowers/
+
+# Model Zoo emitter / migration toolchain — regenerates config/model_registry.json,
+# tests/data/processor_specs.json, tests/data/modelzoo_cv_tree.json and
+# scripts/modelzoo_manifest.json from a hardcoded release table. A released package
+# ships the OUTPUTS; it never needs to regenerate them.
+scripts/add_modelzoo_2_5_0_models.py
+scripts/data/
+scripts/harvest_modelzoo_tree.py
+scripts/migrate_registry_modelzoo.py
+scripts/generate_manifest.py
+scripts/extract_processor_specs.py
+scripts/verify_processor_spec_equivalence.py
+tests/python_example/unit/test_modelzoo_2_5_0_additions.py
+
+# One-off layout migrations — they need the PRE-restructure example tree (--orig),
+# which is not in the package, so they cannot run against a release at all.
+scripts/generate_family_layout.py
+scripts/relocate_python_variant_factories.py
+scripts/restructure_examples.py
+scripts/verify_generated_layout.py
+
+# Internal QA / audit harnesses — developer sweeps over the whole registry, hardcoded
+# local paths, or thermal pacing for the e2e rig. Not user-facing.
+scripts/audit_sweep_reports.py
+scripts/verify_example_output.py
+scripts/verify_preopt_contract.py
+scripts/regen_test_models_conf.py
+scripts/check_temperature.sh
+scripts/batch_add_models.sh

@@ -1,20 +1,9 @@
 # Copyright (C) 2018- DEEPX Ltd. All rights reserved.
-"""A C++ family factory must name the variant it was actually given.
+"""Each C++ variant example names itself.
 
-One example serves a whole family and the variant is the ``.dxnn`` stem, so
-``variantFromArgs()`` reads it straight off ``-m``. ``getModelName()`` was left as the
-literal the family was generated with, and every runner builds its artifact directory
-and window title from that call:
-
-    ./bin/arcface_sync -m .../arcface_mobilefacenet_112x112.dxnn --save
-      -> artifacts/cpp_example/Arcface_iResNet100_ms1m_sync-image-...
-
-The right model runs -- ``run_info.txt`` records its real path -- but every label
-around it names a different one, and iResNet100 vs MobileFaceNet is a 20x difference in
-size. Python's ``get_model_name()`` already returns ``self.variant``, so the two trees
-also disagreed.
-
-The literal stays as the fallback: a bare run with no ``-m`` has no variant to report.
+The executable, factory, and config live in ``<task>/<family>/<variant>/``.
+``getModelName()`` returns that variant folder name, which is the ``.dxnn`` stem.
+A wrapper postprocessor in the same header still names the algorithm, not the model.
 """
 from __future__ import annotations
 
@@ -22,33 +11,27 @@ import re
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-CPP_FACTORIES = sorted((PROJECT_ROOT / "src" / "cpp_example").glob("*/*/factory/*.hpp"))
+CPP_FACTORIES = sorted(
+    (PROJECT_ROOT / "src" / "cpp_example").glob("*/*/*/factory/*_factory.hpp")
+)
 
 GET_MODEL_NAME = re.compile(r"getModelName\(\)\s*const\s*override\s*\{(.*?)\}", re.S)
 CLASS = re.compile(r"^\s*class\s+(\w+)\s*:", re.M)
 
 
-def _factory_bodies(path: Path):
-    """``getModelName()`` bodies that belong to a FACTORY class.
-
-    Three headers (yolopv2, superpoint, dope) also define a wrapper postprocessor in
-    the same file, and ``IPostprocessor`` declares a ``getModelName()`` of its own.
-    Those classes hold no variant and never see the command line -- their name is the
-    algorithm's, not the model's -- so they are excluded by the only durable marker:
-    whether the enclosing class actually declares ``std::string variant_;``.
-    """
+def _factory_class_body(path: Path) -> str:
+    """The class that builds the pipeline, not a wrapper postprocessor."""
     text = path.read_text(encoding="utf-8")
     class_starts = [m.start() for m in CLASS.finditer(text)]
-    bodies = []
     for match in GET_MODEL_NAME.finditer(text):
         before = [s for s in class_starts if s < match.start()]
         if not before:
             continue
         after = [s for s in class_starts if s > match.start()]
         body = text[before[-1]:(after[0] if after else len(text))]
-        if "std::string variant_;" in body:
-            bodies.append(match.group(1))
-    return bodies
+        if "createPreprocessor" in body:
+            return match.group(1)
+    raise AssertionError(f"no factory getModelName() in {path}")
 
 
 def test_the_factories_are_found_at_all():
@@ -56,27 +39,16 @@ def test_the_factories_are_found_at_all():
     assert len(CPP_FACTORIES) > 100
 
 
-def test_every_factory_reports_the_variant_it_was_given():
+def test_every_factory_reports_its_variant_folder():
     offenders = []
     for path in CPP_FACTORIES:
-        for body in _factory_bodies(path):
-            if "variant_" not in body:
-                offenders.append(path.relative_to(PROJECT_ROOT).as_posix())
+        variant = path.parent.parent.name
+        body = _factory_class_body(path)
+        if f'"{variant}"' not in body:
+            offenders.append(path.relative_to(PROJECT_ROOT).as_posix())
     assert not offenders, (
-        "getModelName() ignores the selected variant in:\n  "
+        "getModelName() does not return the variant folder in:\n  "
         + "\n  ".join(offenders)
-    )
-
-
-def test_a_family_fallback_literal_is_kept_for_a_run_without_m():
-    """With no -m there is no variant, and the label must not go blank."""
-    without_fallback = []
-    for path in CPP_FACTORIES:
-        for body in _factory_bodies(path):
-            if "variant_" in body and not re.search(r'"[^"]+"', body):
-                without_fallback.append(path.relative_to(PROJECT_ROOT).as_posix())
-    assert not without_fallback, (
-        "getModelName() has no fallback name in:\n  " + "\n  ".join(without_fallback)
     )
 
 
@@ -103,15 +75,14 @@ def test_a_wrapper_postprocessors_name_is_left_alone():
     would be wrong anyway: the wrapper names the algorithm it implements.
     """
     wrappers = [
-        PROJECT_ROOT / "src/cpp_example/panoptic_driving_perception/yolopv2/factory/yolopv2_factory.hpp",
-        PROJECT_ROOT / "src/cpp_example/keypoint_detection/superpoint/factory/superpoint_factory.hpp",
-        PROJECT_ROOT / "src/cpp_example/object_pose_estimation/dope/factory/dope_factory.hpp",
+        PROJECT_ROOT / "src/cpp_example/panoptic_driving_perception/yolopv2/yolopv2_384x640/factory/yolopv2_384x640_factory.hpp",
+        PROJECT_ROOT / "src/cpp_example/keypoint_detection/superpoint/superpoint_480x640/factory/superpoint_480x640_factory.hpp",
+        PROJECT_ROOT / "src/cpp_example/object_pose_estimation/dope/dope-hope-ketchup_480x640/factory/dope-hope-ketchup_480x640_factory.hpp",
     ]
     for path in wrappers:
         text = path.read_text(encoding="utf-8")
-        # The wrapper keeps the one-line literal; the factory carries the variant form.
         assert re.search(r'getModelName\(\) const override \{ return "[^"]+"; \}', text), path
-        assert "return variant_.empty() ?" in text, path
+        assert "variant_" not in text, path
 
 
 def test_the_generator_produces_the_same_thing_it_swept():

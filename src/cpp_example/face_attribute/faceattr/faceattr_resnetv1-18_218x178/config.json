@@ -11,7 +11,6 @@
   "default_video": null,
   "zoo_canonical": true,
   "published": true,
-  "legacy_model_name": "face_attr_resnet_v1_18",
   "config": {},
   "registry_config": {},
   "cli": {

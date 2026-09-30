@@ -89,16 +89,15 @@ def resolve_model(raw, cpp_example_dir=CPP_EXAMPLE_DIR):
             print(f"[DXAPP] [ERROR] Model not found: {raw}", file=sys.stderr)
             sys.exit(1)
 
-        # task/family/variant — C++ sources stay on the family; pack one config.
+        # task/family/variant — the example lives in the variant folder.
         if (path / "config.json").is_file():
-            family = path.parent
-            if not (family / f"{family.name}_sync.cpp").is_file():
+            if not (path / f"{path.name}_sync.cpp").is_file():
                 print(f"[DXAPP] [ERROR] Model not found: {raw}", file=sys.stderr)
                 sys.exit(1)
             return ModelRef(
                 category=category,
-                model=family.name,
-                path=family,
+                model=path.name,
+                path=path,
                 only_variant=path.name,
             )
 
@@ -118,6 +117,18 @@ def resolve_model(raw, cpp_example_dir=CPP_EXAMPLE_DIR):
                 candidates.append(
                     ModelRef(category=category_dir.name, model=model, path=model_path)
                 )
+            for family_dir in category_dir.iterdir():
+                if not family_dir.is_dir():
+                    continue
+                variant_path = family_dir / model
+                if variant_path.is_dir() and (variant_path / "config.json").is_file():
+                    candidates.append(
+                        ModelRef(
+                            category=category_dir.name,
+                            model=model,
+                            path=variant_path,
+                        )
+                    )
 
         if len(candidates) == 0:
             print(f"[DXAPP] [ERROR] Model not found: {raw}", file=sys.stderr)
@@ -547,6 +558,14 @@ def extract_package(model_ref, output_dir, generate_sln=True):
             async_cpp,
             src_dir / f"{model_ref.model}_async.cpp",
             "Async source",
+        )
+
+    own_config = model_ref.path / "config.json"
+    if own_config.is_file():
+        copy_with_warn(
+            own_config,
+            package_dir / model_ref.path.name / "config.json",
+            f"Model config {model_ref.path.name}",
         )
 
     # One config.json per model folder. A variant argument keeps only that folder.

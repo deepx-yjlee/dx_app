@@ -65,7 +65,7 @@ public:
         {
             const std::string _io_task = factory_->getTaskType();
             const bool _io_stream = !args.videoFile.empty() || args.cameraIndex >= 0 || !args.rtspUrl.empty();
-            if (_io_task == "3d_detection" && _io_stream) {
+            if ((_io_task == "3d_detection" || _io_task == "3d_object_detection") && _io_stream) {
                 dxapp::fatal_error("[DXAPP] [ERROR] Task '" + _io_task + "' supports image input only (-i / --image_path). "
                     "Video/camera input requires a detection crop pipeline and is not supported in single-model examples. "
                     "Use -i (--image_path) to provide an image file or directory.");
@@ -435,13 +435,21 @@ private:
 
         // Verification dump for 3D detection is not wired yet.
 
+        auto& preview_pump = syncPreviewPump();
+        const auto render_plan = planFrameRender(
+            no_display, saveMode, save_image_path_, preview_pump);
         auto render_start = std::chrono::high_resolution_clock::now();
-        if (auto* sfa_viz = dynamic_cast<SFA3DVisualizer*>(&visualizer)) {
-            sfa_viz->setSourcePath(sourcePath);
+        cv::Mat result_frame;
+        double t_render = 0.0;
+        if (render_plan.need_render) {
+            if (auto* sfa_viz = dynamic_cast<SFA3DVisualizer*>(&visualizer)) {
+                sfa_viz->setSourcePath(sourcePath);
+            }
+            result_frame = visualizer.draw(display_image, results, ctx);
+            auto render_end = std::chrono::high_resolution_clock::now();
+            t_render = std::chrono::duration<double, std::milli>(
+                render_end - render_start).count();
         }
-        cv::Mat result_frame = visualizer.draw(display_image, results, ctx);
-        auto render_end = std::chrono::high_resolution_clock::now();
-        double t_render = std::chrono::duration<double, std::milli>(render_end - render_start).count();
 
         double t_save = 0.0;
         double t_display = 0.0;
@@ -455,18 +463,14 @@ private:
             }
             if (!save_image_path_.empty()) cv::imwrite(save_image_path_, result_frame);
             dxapp::saveDebugImage(result_frame);  // caller's path, independent of --save
-if (!no_display) {
-    // 10 fps, not the 60 fps default: that default assumes the display sits
-    // OFF the critical path, which holds for the async runner. The sync
-    // pipeline is serial, so every imshow is charged to frame time.
-    constexpr double SYNC_PREVIEW_FPS = 10.0;
-    static DisplayPump pump{"Output", SYNC_PREVIEW_FPS};
-    auto display_start = std::chrono::high_resolution_clock::now();
-    pump.offer(result_frame);
-    if (!pump.pump()) quit_requested = true;
-    auto display_end = std::chrono::high_resolution_clock::now();
-    t_display = std::chrono::duration<double, std::milli>(display_end - display_start).count();
-}
+            if (render_plan.preview && preview_pump.guiAvailable()) {
+                auto display_start = std::chrono::high_resolution_clock::now();
+                preview_pump.offer(result_frame);
+                if (!preview_pump.pump()) quit_requested = true;
+                auto display_end = std::chrono::high_resolution_clock::now();
+                t_display = std::chrono::duration<double, std::milli>(
+                    display_end - display_start).count();
+            }
         }
 
         metrics.sum_read += t_read;

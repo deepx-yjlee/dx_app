@@ -11,7 +11,6 @@
   "default_video": "assets/videos/dogs.mp4",
   "zoo_canonical": false,
   "published": false,
-  "legacy_model_name": "yolov8_l_seg_640x640_pre_optimized",
   "config": {
     "score_threshold": 0.4,
     "nms_threshold": 0.5

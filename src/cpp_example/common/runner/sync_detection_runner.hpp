@@ -120,11 +120,25 @@ inline std::tuple<double, double, double, bool> renderSaveDisplay(
     double t_save = 0.0;
     double t_display = 0.0;
     bool quit_requested = false;
-    auto render_start = std::chrono::high_resolution_clock::now();
-    cv::Mat result_frame = display_image.clone();
-    result_frame = visualizer.draw(result_frame, results, ctx);
-    auto render_end = std::chrono::high_resolution_clock::now();
-    t_render = std::chrono::duration<double, std::milli>(render_end - render_start).count();
+    // Sync pays imshow on the frame loop, so the preview is 10 fps. Drawing
+    // (and waitKey) on the frames that will not be shown is what caps E2E FPS.
+    // -s still renders every frame (the file is the overlay); it does not
+    // imshow every frame.
+    constexpr double kSyncPreviewFps = 10.0;
+    static DisplayPump preview_pump{"Output", kSyncPreviewFps};
+    const char* env_save = std::getenv("DXAPP_SAVE_IMAGE");
+    const bool persist = saveMode || !saveImagePath.empty()
+        || (env_save != nullptr && *env_save != '\0');
+    const bool preview = !no_display && preview_pump.wouldShow();
+    const bool need_render = persist || preview;
+    cv::Mat result_frame;
+    if (need_render) {
+        auto render_start = std::chrono::high_resolution_clock::now();
+        result_frame = display_image.clone();
+        result_frame = visualizer.draw(result_frame, results, ctx);
+        auto render_end = std::chrono::high_resolution_clock::now();
+        t_render = std::chrono::duration<double, std::milli>(render_end - render_start).count();
+    }
 
     if (result_frame.empty()) return {t_render, t_save, t_display, quit_requested};
 
@@ -144,25 +158,12 @@ inline std::tuple<double, double, double, bool> renderSaveDisplay(
         t_save = std::chrono::duration<double, std::milli>(save_end - save_start).count();
     }
     dxapp::saveDebugImage(result_frame);
-    if (!no_display) {
-        // The sync pipeline is serial, so display cost lands in the loop by
-        // construction; the lever is the RATE LIMIT. DisplayPump shows at most
-        // DISPLAY_PUMP_DEFAULT_FPS frames per second and pumps events once per tick,
-        // so a pipeline running well above that stops paying HighGUI per frame. It
-        // also no-ops when there is no DISPLAY, instead of letting Qt's missing xcb
-        // plugin qFatal() the process.
-        // 10 fps, not DISPLAY_PUMP_DEFAULT_FPS (60). That default assumes the display
-        // sits OFF the critical path, which holds for the async runner where a
-        // separate thread renders and the pump only shows the newest frame. The sync
-        // pipeline is serial, so every imshow is charged to frame time, and these
-        // models run at 25-54 FPS -- entirely below a 60 fps cap, so the cap never
-        // engaged and display cost was paid on every single frame (-19% to -23%).
-        // A preview does not need to exceed 10 fps to be useful.
-        constexpr double SYNC_PREVIEW_FPS = 10.0;
-        static DisplayPump pump{"Output", SYNC_PREVIEW_FPS};
+    if (preview && preview_pump.guiAvailable()) {
+        // waitKey only on a preview tick. Calling it on every inference frame
+        // is on this serial path and becomes the FPS cap.
         auto display_start = std::chrono::high_resolution_clock::now();
-        pump.offer(result_frame);
-        if (!pump.pump()) {
+        preview_pump.offer(result_frame);
+        if (!preview_pump.pump()) {
             quit_requested = true;
         }
         auto display_end = std::chrono::high_resolution_clock::now();

@@ -23,20 +23,24 @@ def list_categories() -> List[str]:
 
 
 def resolve_minimal_targets() -> List[str]:
+    """Demo executables are named from the .dxnn stem, not the family folder."""
     text = RUN_DEMO.read_text(encoding="utf-8")
     in_array = False
-    bases: List[str] = []
+    stems: List[str] = []
     for line in text.splitlines():
         stripped = line.strip()
-        if stripped.startswith("DEMO_CPP_BASE=("):
+        if stripped.startswith("DEMO_MODEL=("):
             in_array = True
             continue
         if in_array and stripped.startswith(")"):
             break
         if in_array:
-            stripped = stripped.split("#", 1)[0]
-            bases.extend(part for part in stripped.split() if part)
-    return sorted({target for base in bases for target in (f"{base}_sync", f"{base}_async")})
+            stripped = stripped.split("#", 1)[0].replace('"', "").replace("'", "")
+            for part in stripped.split():
+                stem = part[:-5] if part.endswith(".dxnn") else part
+                if stem:
+                    stems.append(stem)
+    return sorted({target for stem in stems for target in (f"{stem}_sync", f"{stem}_async")})
 
 
 def resolve_category_targets(category: str) -> List[str]:
@@ -46,12 +50,13 @@ def resolve_category_targets(category: str) -> List[str]:
     if category in CATEGORY_EXCLUDES or not category_dir.is_dir():
         sys.exit(f"[DXAPP] [ERROR] Unknown category: {category}")
     targets: List[str] = []
-    for model_dir in sorted(path for path in category_dir.iterdir() if path.is_dir()):
-        model = model_dir.name
-        if (model_dir / f"{model}_sync.cpp").is_file():
-            targets.append(f"{model}_sync")
-        if (model_dir / f"{model}_async.cpp").is_file():
-            targets.append(f"{model}_async")
+    for family_dir in sorted(path for path in category_dir.iterdir() if path.is_dir()):
+        for variant_dir in sorted(path for path in family_dir.iterdir() if path.is_dir()):
+            variant = variant_dir.name
+            if (variant_dir / f"{variant}_sync.cpp").is_file():
+                targets.append(f"{variant}_sync")
+            if (variant_dir / f"{variant}_async.cpp").is_file():
+                targets.append(f"{variant}_async")
     if not targets:
         sys.exit("[DXAPP] [ERROR] No build targets resolved.")
     return targets
@@ -128,9 +133,10 @@ def is_multi_config(generator: str) -> bool:
 
 
 def sanitize_batch_var_name(target: str) -> str:
-    """배치 변수명에 사용할 수 있도록 타겟명을 sanitize합니다.
-    
-    영숫자와 언더스코어만 허용하고, 나머지는 언더스코어로 치환합니다.
+    """Sanitize a target name so it can be used as a batch variable.
+
+    Keep only ASCII letters, digits, and underscores. Replace everything else
+    with an underscore.
     """
     import re
     return re.sub(r'[^A-Za-z0-9_]', '_', target)

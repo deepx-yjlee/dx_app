@@ -157,23 +157,26 @@ public:
     bool guiAvailable() const { return gui_available_; }
 
     /**
-     * @brief Would the next offered frame actually be shown?
+     * @brief Reserve the next preview slot, if one is due.
      *
-     * Lets a producer skip work it is about to throw away. The render thread otherwise
-     * draws the overlay for EVERY frame and the pump discards most of them -- measured
-     * 294 of 367 dropped for yolo26-n-pose, i.e. ~80% of a 2.94 ms overlay drawn for
-     * nothing, enough to saturate a core and cost 13% throughput. Rendering is still
-     * required whenever the frame is also being SAVED, so the caller must check that
-     * separately; this only answers the display question.
+     * A true result consumes the slot: the caller must render that frame, and
+     * further callers within @c min_interval_ get false. That is what keeps a
+     * 200+ FPS pipeline from drawing an overlay it is about to throw away.
+     * Saving is NOT this function's concern -- the caller renders every frame
+     * when the pixels are written to disk, and only consults this for a live
+     * preview.
      *
-     * Advisory: the answer can change between the query and the offer. Acting on a
-     * stale "no" costs one skipped preview frame, never correctness.
+     * The slot is reserved here, not when the GUI thread later calls imshow, so
+     * frames queued before the window exists are not all drawn.
      */
     bool wouldShow() const {
         if (!gui_available_ || stopped_.load(std::memory_order_acquire)) return false;
         std::lock_guard<std::mutex> lock(mutex_);
-        if (!window_created_ || min_interval_.count() <= 0.0) return true;
-        return (std::chrono::steady_clock::now() - last_show_) >= min_interval_;
+        if (min_interval_.count() <= 0.0) return true;
+        const auto now = std::chrono::steady_clock::now();
+        if ((now - last_admit_) < min_interval_) return false;
+        last_admit_ = now;
+        return true;
     }
 
     /** Frames actually shown. */
@@ -281,6 +284,10 @@ private:
     cv::Mat pending_;
     bool has_pending_ = false;
     std::chrono::steady_clock::time_point last_show_{};
+    // Last time a producer was told to render a preview. Independent of
+    // last_show_ (when imshow actually ran) so the render thread can skip
+    // frames the pump has not displayed yet.
+    mutable std::chrono::steady_clock::time_point last_admit_{};
 
     // Touched only by the pump thread.
     bool window_created_ = false;
@@ -294,6 +301,59 @@ private:
     std::atomic<int> dropped_{0};
     std::atomic<double> sum_show_ms_{0.0};
 };
+
+/**
+ * @brief True when this frame's pixels must be produced.
+ *
+ * `--no-display` means do not render. `-s` / a per-frame save path /
+ * `DXAPP_SAVE_IMAGE` still render, because the file on disk is the visualized
+ * frame. A live preview renders only the slot @c DisplayPump::wouldShow
+ * reserved -- drawing every frame fills the bounded display queue, the DXRT
+ * callback blocks on push, and end-to-end FPS measures the renderer.
+ */
+inline bool mustRenderFrame(bool no_display, bool save_on,
+                            const std::string& save_path,
+                            const DisplayPump& pump) {
+    if (save_on || !save_path.empty()) return true;
+    const char* env_save = std::getenv("DXAPP_SAVE_IMAGE");
+    if (env_save != nullptr && *env_save != '\0') return true;
+    if (no_display) return false;
+    return pump.wouldShow();
+}
+
+/** Sync preview rate. imshow is on the frame loop, so this stays below the async 60. */
+constexpr double SYNC_PREVIEW_FPS = 10.0;
+
+/** One pump per process. Sync runners share it; only one runner executes. */
+inline DisplayPump& syncPreviewPump() {
+    static DisplayPump pump{"Output", SYNC_PREVIEW_FPS};
+    return pump;
+}
+
+/**
+ * @brief Split "draw the overlay" from "paint the window" for a sync frame.
+ *
+ * persist: -s, a save path, or DXAPP_SAVE_IMAGE. Every such frame is drawn.
+ * preview: a live-window slot. wouldShow() is called only when a window is
+ * requested, so --no-display does not consume a slot.
+ */
+struct FrameRenderPlan {
+    bool persist = false;
+    bool preview = false;
+    bool need_render = false;
+};
+
+inline FrameRenderPlan planFrameRender(bool no_display, bool save_on,
+                                       const std::string& save_path,
+                                       DisplayPump& pump) {
+    const char* env_save = std::getenv("DXAPP_SAVE_IMAGE");
+    FrameRenderPlan plan;
+    plan.persist = save_on || !save_path.empty()
+        || (env_save != nullptr && *env_save != '\0');
+    plan.preview = !no_display && pump.wouldShow();
+    plan.need_render = plan.persist || plan.preview;
+    return plan;
+}
 
 /**
  * @brief Run the inference pipeline on a worker thread while the calling thread
@@ -322,11 +382,27 @@ void runPipelineWithDisplay(PipelineFn&& pipeline, DisplayPump& pump,
             std::this_thread::sleep_for(std::chrono::milliseconds(2));
         }
     } else {
+        // Idle between pumps. A tight loop spends the whole run inside
+        // waitKey(), and HighGUI holds the OpenCV lock while it does -- that
+        // stalls preprocess/render on the worker and caps end-to-end FPS near
+        // the GUI rate (~90 FPS on the YOLO26 async runs) no matter how fast
+        // the NPU is. The preview is already rate-limited; this is just the
+        // event-poll gap.
+        constexpr auto kGuiPollIdle = std::chrono::milliseconds(8);
+        bool user_quit = false;
         while (!done.load(std::memory_order_acquire)) {
             if (!pump.pump()) {
+                user_quit = true;
                 on_user_quit();
                 break;
             }
+            std::this_thread::sleep_for(kGuiPollIdle);
+        }
+        // The idle gap can outlast a short pipeline: the last offered frame is
+        // still pending when the worker sets done. Show it once. A user quit
+        // already stopped the pump, so do not service the window again.
+        if (!user_quit) {
+            pump.pump();
         }
     }
     worker.join();

@@ -11,7 +11,6 @@
   "default_video": "assets/videos/snowboard.mp4",
   "zoo_canonical": true,
   "published": true,
-  "legacy_model_name": "yolov11s",
   "config": {
     "nms_threshold": 0.45,
     "score_threshold": 0.25

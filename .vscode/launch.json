@@ -12718,7 +12718,7 @@
             "program": "${workspaceFolder}/bin/yolo26_cls_sync",
             "args": [
                 "-m",
-                "assets/models/yolo26-l_224x224.dxnn",
+                "assets/models/yolo26-cls-l_224x224.dxnn",
                 "-i",
                 "sample/img/sample_dog.jpg",
                 "-l",
@@ -12745,7 +12745,7 @@
             "program": "${workspaceFolder}/bin/yolo26_cls_sync",
             "args": [
                 "-m",
-                "assets/models/yolo26-l_224x224.dxnn",
+                "assets/models/yolo26-cls-l_224x224.dxnn",
                 "-i",
                 "sample/img",
                 "-l",
@@ -12772,7 +12772,7 @@
             "program": "${workspaceFolder}/bin/yolo26_cls_sync",
             "args": [
                 "-m",
-                "assets/models/yolo26-l_224x224.dxnn",
+                "assets/models/yolo26-cls-l_224x224.dxnn",
                 "-v",
                 "assets/videos/dogs.mp4"
             ],
@@ -12797,7 +12797,7 @@
             "program": "${workspaceFolder}/bin/yolo26_cls_sync",
             "args": [
                 "-m",
-                "assets/models/yolo26-l_224x224.dxnn",
+                "assets/models/yolo26-cls-l_224x224.dxnn",
                 "-v",
                 "assets/videos/dogs.mp4",
                 "-s"
@@ -12823,7 +12823,7 @@
             "program": "${workspaceFolder}/bin/yolo26_cls_sync",
             "args": [
                 "-m",
-                "assets/models/yolo26-l_224x224.dxnn",
+                "assets/models/yolo26-cls-l_224x224.dxnn",
                 "-r",
                 "rtsp://192.168.30.100:8554/stream6"
             ],
@@ -12848,7 +12848,7 @@
             "program": "${workspaceFolder}/bin/yolo26_cls_sync",
             "args": [
                 "-m",
-                "assets/models/yolo26-l_224x224.dxnn",
+                "assets/models/yolo26-cls-l_224x224.dxnn",
                 "-c",
                 "0"
             ],
@@ -12873,7 +12873,7 @@
             "program": "${workspaceFolder}/bin/yolo26_cls_async",
             "args": [
                 "-m",
-                "assets/models/yolo26-l_224x224.dxnn",
+                "assets/models/yolo26-cls-l_224x224.dxnn",
                 "-i",
                 "sample/img/sample_dog.jpg",
                 "-l",
@@ -12900,7 +12900,7 @@
             "program": "${workspaceFolder}/bin/yolo26_cls_async",
             "args": [
                 "-m",
-                "assets/models/yolo26-l_224x224.dxnn",
+                "assets/models/yolo26-cls-l_224x224.dxnn",
                 "-i",
                 "sample/img",
                 "-l",
@@ -12927,7 +12927,7 @@
             "program": "${workspaceFolder}/bin/yolo26_cls_async",
             "args": [
                 "-m",
-                "assets/models/yolo26-l_224x224.dxnn",
+                "assets/models/yolo26-cls-l_224x224.dxnn",
                 "-v",
                 "assets/videos/dogs.mp4"
             ],
@@ -12952,7 +12952,7 @@
             "program": "${workspaceFolder}/bin/yolo26_cls_async",
             "args": [
                 "-m",
-                "assets/models/yolo26-l_224x224.dxnn",
+                "assets/models/yolo26-cls-l_224x224.dxnn",
                 "-v",
                 "assets/videos/dogs.mp4",
                 "-s"
@@ -12978,7 +12978,7 @@
             "program": "${workspaceFolder}/bin/yolo26_cls_async",
             "args": [
                 "-m",
-                "assets/models/yolo26-l_224x224.dxnn",
+                "assets/models/yolo26-cls-l_224x224.dxnn",
                 "-r",
                 "rtsp://192.168.30.100:8554/stream6"
             ],
@@ -13003,7 +13003,7 @@
             "program": "${workspaceFolder}/bin/yolo26_cls_async",
             "args": [
                 "-m",
-                "assets/models/yolo26-l_224x224.dxnn",
+                "assets/models/yolo26-cls-l_224x224.dxnn",
                 "-c",
                 "0"
             ],

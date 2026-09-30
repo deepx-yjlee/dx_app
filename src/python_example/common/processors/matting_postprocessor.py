@@ -2,8 +2,16 @@
 """PP-Matting postprocessor: a continuous alpha matte.
 
 PaddleSeg's matting models emit one channel -- the foreground opacity of every pixel
--- rather than a class map. Neither ppmatting .dxnn is published (both URLs return
-403), so this is written to that output shape and refuses anything else.
+-- rather than a class map, so this is written to that output shape and refuses
+anything else. MEASURED on both published .dxnn (DX Model Zoo 2_5_0): input uint8
+[1,512,512,3], output float32 [1,1,512,512] already in [0,1].
+
+Matting is trimap-free here, so it needs a subject separable from its background.
+Measured foreground coverage over six sample subjects: the beach portrait 19.6% and
+the dog 27.2% matte cleanly, while a white shirt and skin against a white studio
+backdrop collapses to 10.6% (composition) / 1.6% (distinctions) with the face and
+hands punched out. That is the model's limit, not a preprocessing bug -- the examples
+default to subjects each variant resolves.
 
 The result carries both forms on purpose:
 

@@ -16,7 +16,7 @@ and reports structured results with severity levels.
 
 ## Scope
 
-dx_app contains **22 AI tasks** and **353 models** across two language targets:
+dx_app contains **28 AI tasks** and **500 model variants** across two language targets:
 
 - Python apps under `src/python_example/<task>/<model>/`
 - C++ apps under `src/cpp_example/<task>/<model>/`

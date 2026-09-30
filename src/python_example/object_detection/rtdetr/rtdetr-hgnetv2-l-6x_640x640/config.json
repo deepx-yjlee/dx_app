@@ -11,7 +11,6 @@
   "default_video": "assets/videos/snowboard.mp4",
   "zoo_canonical": false,
   "published": false,
-  "legacy_model_name": "rtdetr_hgnetv2_l_6x_640x640",
   "config": {
     "score_threshold": 0.4,
     "nms_threshold": 1.0

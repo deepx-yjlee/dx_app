@@ -11,7 +11,6 @@
   "default_video": "assets/videos/blackbox-city-road.mp4",
   "zoo_canonical": false,
   "published": false,
-  "legacy_model_name": "efficientad_m_student_256x256",
   "config": {
     "roles": [
       "student",

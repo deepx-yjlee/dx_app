@@ -153,18 +153,16 @@ def spec_entry(row: dict) -> dict:
 def manifest_entry(row: dict) -> dict:
     """Download URLs.
 
-    The refreshed zoo table serves the published models from
-    modelzoo/q-lite-dxnn/2_4_0/ (measured 200; the older modelzoo/dxnn/2_4_0/ alias
-    still resolves too). The 143 unpublished stems are guessed at the next version
-    directory and 403 until DX Model Zoo publishes them -- download_models.py reports
-    those as PENDING rather than as 143 errors. The 4 q-master-only models use their
-    measured, working URLs.
+    DX Model Zoo published 2_5_0 on 2026-09-30 and moved its whole q-lite tier there,
+    so q-lite/2_5_0 is now the ordinary case: 492 of the 496 files the page offers live
+    there, and the remaining 4 keep their measured q-master/2_4_0 URLs.
+
+    The tier comes from the row, not from `published`. The two were the same fact only
+    while 2_5_0 was unreleased; a model can now be q-lite AND unpublished, which is
+    exactly what vit-l-p16_512x512_swag is.
     """
     stem = row["variant"]
-    if row["published"]:
-        base, version = "q-master", "2_4_0"
-    else:
-        base, version = "q-lite", "2_5_0"
+    base, version = row["manifest_tier"]
     return {
         # 'name' is the legacy model_name in all 352 existing rows -- it is what
         # `download_models.py --model <name>` whitelists against -- while the .dxnn
@@ -173,7 +171,12 @@ def manifest_entry(row: dict) -> dict:
         "name": row["legacy_model_name"],
         "category": row["manifest_category"],
         "dxnn_url": f"https://sdk.deepx.ai/modelzoo/{base}-dxnn/{version}/{stem}.dxnn",
-        "json_url": f"https://sdk.deepx.ai/modelzoo/{base}-json/{version}/{stem}.json",
+        # Zoo sidecar JSON is not used by the examples. Keep the key so every
+        # row has the same shape, but leave it empty so download_models.py
+        # does not fetch it.
+        "json_url": None,
+        # Declared, so download_models.py can tell an expected 403 from a real one.
+        **({"pending": True} if not row["published"] else {}),
     }
 
 

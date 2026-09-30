@@ -1,0 +1,150 @@
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+*.ko
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# VSCode
+.vscode/
+.vscode/launch.json
+.vscode/tasks.json
+.vscode/settings.json
+
+.idea/
+
+# Build output files
+build_arm64*/
+build_aarch64*/
+build_riscv64*/
+build_x86_64*/
+build*/
+
+/bin
+/lib
+/include
+
+/util
+/*.jpg
+/*.png
+/*.mp4
+/*.avi
+
+# docker
+docker/*.tar.gz
+
+/artifacts/
+/assets/
+/reports/dev/
+/reports/*.json
+/reports/*.html
+/reports/viz/
+/reports/priority/
+/reports/weekly/
+/tests/test_visualization_result/
+/tests/python_example/bench/
+download/
+
+# VS(Windows)
+.vs/*
+out/*
+vcpkg_installed/*
+
+# third_party lib
+third_party/
+
+# egg-info
+lib/pybind/dx_postprocess.egg-info/
+
+# python virtual environments
+venv*
+venv*/
+.venv/
+
+.cache/
+*/*.yml
+
+# Log files
+logs/
+*.log
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# pytest / coverage
+htmlcov/
+performance_reports/
+coverage.xml
+coverage.json
+.coverage
+*/.coverage
+.pytest_cache/
+
+# test output artifacts (save-mode output images/videos for inspection)
+.test_artifacts/
+
+# mkdocs files
+docs/docs/*
+
+# C++ coverage files
+tests/cpp_example/coverage
+tests/cpp_example/*csv
+dx_app-feat-cpp_python_refactor/
+.ci-venv/
+/error_tensors/
+
+# Golden parity tensors (re-capture via scripts/verify/capture_golden.py)
+tests/golden/**/*.npy
+tests/golden/**/*.npz
+
+# ATD superpowers setup directory
+atd_superpowers-setup/
+docs/superpowers/
+.worktrees/
+
+# BEGIN superpowers-copilot-cli-hooks
+.github/extensions/superpowers-enforcer/extension.mjs
+.github/extensions/superpowers-enforcer/config.json
+# END superpowers-copilot-cli-hooks
+
+# BEGIN superpowers-copilot-vscode-hooks
+.github/hooks/hooks.json
+.github/hooks/config.json
+.github/hooks/scripts/session-start.sh
+.github/hooks/scripts/pre-tool-use.sh
+.github/hooks/scripts/post-tool-use.sh
+# END superpowers-copilot-vscode-hooks
+
+# Begin output of dx-agent-dev
+dx-agent-dev/
+# END output of dx-agent-dev

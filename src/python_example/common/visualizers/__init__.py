@@ -24,6 +24,8 @@ from .superpoint_visualizer import SuperPointVisualizer
 from .dope_visualizer import DOPEVisualizer
 from .yolopv2_visualizer import YOLOPv2Visualizer
 from .sfa3d_visualizer import SFA3DVisualizer
+from .matting_visualizer import MattingVisualizer
+from .retrieval_visualizer import RetrievalVisualizer
 
 __all__ = [
     "AnomalyVisualizer",
@@ -46,4 +48,8 @@ __all__ = [
     'DOPEVisualizer',
     'YOLOPv2Visualizer',
     'SFA3DVisualizer',
+    # Alpha matte, not a class map -- see matting_visualizer's docstring.
+    'MattingVisualizer',
+    # Query + top-k gallery panel: retrieval, place recognition, person ReID.
+    'RetrievalVisualizer',
 ]

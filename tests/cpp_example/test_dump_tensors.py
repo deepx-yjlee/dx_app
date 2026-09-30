@@ -76,7 +76,7 @@ def discover_sync_cases() -> List[tuple]:
 
 def _pick_representative(cases: list, max_count: int = 3) -> list:
     """Pick small representative subset."""
-    priority = ["yolov5s_sync", "yolov8n_sync", "fastdepth"]
+    priority = ["yolov5-s_640x640_sync", "yolov8-n_640x640_sync", "fastdepth"]
     selected = []
     for exe, mp in cases:
         for p in priority:

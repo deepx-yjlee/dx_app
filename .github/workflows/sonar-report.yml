@@ -1,0 +1,18 @@
+name: Sonar Weekly Report
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 15 * * 6' # Every Saturday at 24:00 KST
+
+jobs:
+  sonar_report:
+    uses: deepx/do_workflows-central/.github/workflows/sonar-report.yml@main
+    with:
+      project_name: dx_app
+      recipient_type: atd
+      project_key: deepx_dx_app_AZZXDMxmgP_2ECN7V4UL
+      branch: dev
+    secrets:
+      token: ${{ secrets.GH_DCI_TOKEN }}
+      sonar_rest_api_token: ${{ secrets.SONAR_REST_API_TOKEN }}

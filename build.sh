@@ -27,7 +27,7 @@ help() {
     echo -e "  ${COLOR_GREEN}--verbose${COLOR_RESET}    Show detailed build commands during the process."
     echo -e "  ${COLOR_GREEN}--type <TYPE>${COLOR_RESET}  Specify the CMake build type. Valid options: [Release, Debug, RelWithDebInfo]."
     echo -e "  ${COLOR_GREEN}--arch <ARCH>${COLOR_RESET}  Specify the target CPU architecture. Valid options: [x86_64, aarch64]."
-    echo -e "  ${COLOR_GREEN}--target <NAME> [NAME2 ...]${COLOR_RESET} Build only the specified target(s) (e.g., yolov5_sync yolov5_async)."
+    echo -e "  ${COLOR_GREEN}--target <NAME> [NAME2 ...]${COLOR_RESET} Build one target, or every sync/async whose name starts with NAME (e.g., yolov8-m-seg)."
     echo -e "                            Use '--target list' to show all available targets."
     echo -e "  ${COLOR_GREEN}--minimal${COLOR_RESET}     Build run_demo C++ sync/async targets only."
     echo -e "  ${COLOR_GREEN}--category <NAME|list>${COLOR_RESET} Build C++ sync/async targets under a task category."
@@ -388,9 +388,56 @@ if [ "$build_target" == "list" ]; then
     exit 0
 fi
 
+# --target NAME is a prefix of the variant executable (yolov8-m-seg →
+# yolov8-m-seg_640x640_sync and the pre-optimized sibling). An exact ninja
+# target name stays exact, so the pre-optimized binary is not pulled in.
+expand_prefix_targets() {
+    local available
+    local expanded=()
+    local token t
+    local -a matched
+    mapfile -t available < <(ninja -t targets | sed 's/:.*//' | sort -u)
+    for token in "$@"; do
+        matched=()
+        for t in "${available[@]}"; do
+            case "${t}" in
+                *_sync|*_async) ;;
+                *) continue ;;
+            esac
+            if [ "${t}" = "${token}" ]; then
+                matched=("${t}")
+                break
+            fi
+        done
+        if [ ${#matched[@]} -eq 0 ]; then
+            for t in "${available[@]}"; do
+                case "${t}" in
+                    *_sync|*_async) ;;
+                    *) continue ;;
+                esac
+                if [[ "${t}" == "${token}"* ]]; then
+                    matched+=("${t}")
+                fi
+            done
+        fi
+        if [ ${#matched[@]} -eq 0 ]; then
+            echo -e "${TAG_WARN} Build target not found, skipping: ${token}"
+        else
+            expanded+=("${matched[@]}")
+        fi
+    done
+    if [ ${#expanded[@]} -eq 0 ]; then
+        echo -e "${TAG_ERROR} No build targets resolved." >&2
+        exit 1
+    fi
+    build_targets=("${expanded[@]}")
+}
+
 # Filter targets if using --minimal or --category
 if [ "${build_minimal}" = "true" ] || [ -n "${build_category}" ]; then
     filter_existing_targets "${build_targets[@]}"
+elif [ ${#build_targets[@]} -gt 0 ]; then
+    expand_prefix_targets "${build_targets[@]}"
 fi
 
 # Build specific target or all

@@ -880,7 +880,7 @@
       "task": "instance_segmentation",
       "family": "yolo26-seg"
     },
-    "yolo26-l_224x224": {
+    "yolo26-cls-l_224x224": {
       "task": "image_classification",
       "family": "yolo26-cls"
     },
@@ -900,7 +900,7 @@
       "task": "instance_segmentation",
       "family": "yolo26-seg"
     },
-    "yolo26-m_224x224": {
+    "yolo26-cls-m_224x224": {
       "task": "image_classification",
       "family": "yolo26-cls"
     },
@@ -920,7 +920,7 @@
       "task": "instance_segmentation",
       "family": "yolo26-seg"
     },
-    "yolo26-n_224x224": {
+    "yolo26-cls-n_224x224": {
       "task": "image_classification",
       "family": "yolo26-cls"
     },
@@ -940,7 +940,7 @@
       "task": "instance_segmentation",
       "family": "yolo26-seg"
     },
-    "yolo26-s_224x224": {
+    "yolo26-cls-s_224x224": {
       "task": "image_classification",
       "family": "yolo26-cls"
     },
@@ -960,7 +960,7 @@
       "task": "instance_segmentation",
       "family": "yolo26-seg"
     },
-    "yolo26-x_224x224": {
+    "yolo26-cls-x_224x224": {
       "task": "image_classification",
       "family": "yolo26-cls"
     },
@@ -1407,7 +1407,7 @@
   },
   "provisional": {
     "note": "Unpublished in dx-modelzoo as of assigned_at. The (task, family) values here are OUR assignments, following dx-modelzoo's postprocessing-chain rule, because the authoritative upstream table does not exist for these stems yet. When upstream publishes one it must move into 'variants'; test_provisional_never_overlaps_the_harvested_table fails until it does, and harvest_modelzoo_tree.py reports any stem upstream assigns differently.",
-    "assigned_at": "2026-09-23",
+    "assigned_at": "2026-09-30",
     "variant_count": 147,
     "variants": {
       "beit-l-p16_384x384": {
@@ -1415,16 +1415,16 @@
         "family": "beit"
       },
       "clip-img_resnet50_224x224_openai": {
-        "task": "zero_shot_image_classification",
-        "family": "clip"
+        "task": "image_retrieval",
+        "family": "clip_rn50"
       },
       "clip-img_vit-b16-quickgelu_224x224_metaclip-fullcc": {
         "task": "zero_shot_image_classification",
         "family": "clip"
       },
       "clip-text_resnet50_77x512_openai": {
-        "task": "zero_shot_image_classification",
-        "family": "clip"
+        "task": "image_retrieval",
+        "family": "clip_rn50"
       },
       "dark-hrnet-w32_256x192": {
         "task": "pose_estimation",
@@ -1487,7 +1487,7 @@
         "family": "pp_shitu"
       },
       "pp-shituv2-feature-extraction_224x224": {
-        "task": "super_resolution",
+        "task": "visual_place_recognition",
         "family": "pp_shitu_rec"
       },
       "pp-shituv2-mainbody-detection_640x640": {
@@ -1547,15 +1547,15 @@
         "family": "pplcnetv2"
       },
       "ppmatting-hrnet-w48-composition_512x512": {
-        "task": "semantic_segmentation",
+        "task": "image_matting",
         "family": "ppmatting"
       },
       "ppmatting-hrnet-w48-distinctions_512x512": {
-        "task": "semantic_segmentation",
+        "task": "image_matting",
         "family": "ppmatting"
       },
       "repvgg-a0-reid_256x128": {
-        "task": "image_classification",
+        "task": "person_reid",
         "family": "repvgg_reid"
       },
       "rtdetr-hgnetv2-h-6x_640x640": {

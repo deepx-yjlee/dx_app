@@ -877,15 +877,22 @@ private:
                 return;
             }
 
-            // Render
-            auto t_render_start = std::chrono::high_resolution_clock::now();
-            cv::Mat result_frame = args.original_frame->clone();
-            if (args.detections) {
-                result_frame = visualizer.draw(result_frame, *args.detections, args.ctx);
+            // Live preview draws only frames the window will show. --no-display
+            // skips the overlay; -s / DXAPP_SAVE_IMAGE still draw every frame.
+            const bool need_render = mustRenderFrame(
+                no_display, save_on, args.save_path, display_pump_);
+            cv::Mat result_frame;
+            double render_time = 0.0;
+            if (need_render) {
+                auto t_render_start = std::chrono::high_resolution_clock::now();
+                result_frame = args.original_frame->clone();
+                if (args.detections) {
+                    result_frame = visualizer.draw(result_frame, *args.detections, args.ctx);
+                }
+                auto t_render_end = std::chrono::high_resolution_clock::now();
+                render_time = std::chrono::duration<double, std::milli>(
+                    t_render_end - t_render_start).count();
             }
-            auto t_render_end = std::chrono::high_resolution_clock::now();
-            double render_time = std::chrono::duration<double, std::milli>(
-                t_render_end - t_render_start).count();
 
             // Save
             auto t_save_start = std::chrono::high_resolution_clock::now();
@@ -905,11 +912,14 @@ private:
             double save_time = std::chrono::duration<double, std::milli>(
                 t_save_end - t_save_start).count();
 
-            // Update metrics
+            // Update metrics. Skipped preview frames must not count as renders,
+            // or the summary averages the overlay cost down to ~0.
             {
                 std::lock_guard<std::mutex> lock(metrics_.metrics_mutex);
-                metrics_.sum_render += render_time;
-                metrics_.render_completed++;
+                if (need_render) {
+                    metrics_.sum_render += render_time;
+                    metrics_.render_completed++;
+                }
                 metrics_.sum_save += save_time;
             }
 

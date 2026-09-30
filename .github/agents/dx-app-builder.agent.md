@@ -75,7 +75,7 @@ round start.
 Before classifying or routing any task:
 
 1. Read `.github/copilot-instructions.md` for this level's global context (MANDATORY)
-2. Read `.deepx/memory/common_pitfalls.md` (always)
+2. Read `.github/memory/common_pitfalls.md` (always)
 3. Read `.github/skills/dx-agent-app-build-python/SKILL.md` (if Python app)
 
 ---

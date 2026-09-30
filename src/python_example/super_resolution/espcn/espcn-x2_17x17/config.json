@@ -11,7 +11,6 @@
   "default_video": "assets/videos/lowres-drone-city-road.mp4",
   "zoo_canonical": true,
   "published": true,
-  "legacy_model_name": "espcn_x2_1",
   "config": {
     "sr_tile_halo": 4
   },

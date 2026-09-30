@@ -1,0 +1,90 @@
+# dx-runtime/dx_app/.github/workflows/dx-agent-dev-subrepo-gate-cloud.yml
+#
+# Sub-repo drift gate — github.com variant (private mirror deepx-dhyang/* and public DEEPX-AI/*).
+# A sub-repo alone cannot regenerate its CLAUDE.md/.claude/.github/.cursor/.opencode
+# files: the generator and the shared fragments live only in dx-all-suite. This job
+# shallow-clones the suite (same-name branch if it exists, else its default branch),
+# places this checkout at its canonical position inside that tree and runs
+# `dx-agent-gen check` via .deepx/tools/scripts/subrepo_check.sh.
+#
+# Runner: GitHub-hosted ubuntu-latest (pure Python). Token: GC_DCI_TOKEN when the repos are
+# private (deepx-dhyang/* — a fine-grained PAT with contents:read on dx-all-suite and this
+# repo), plain github.token on the public channel. Passed via `git -c http.extraheader=...`
+# (NEVER in the clone URL). Host guard: runs only when github.server_url IS
+# https://github.com; the GHES twin is dx-agent-dev-subrepo-gate-ghes.yml.
+# .github/workflows/ is release-excluded, so this file does NOT reach github.com/DEEPX-AI
+# through the release export — it is committed there by hand (see .deepx/docs/ci-subrepo-gate.md).
+# Required check name: subrepo-gate. Docs: .deepx/docs/ci-subrepo-gate.md
+name: dx-agent-dev sub-repo gate (cloud)
+
+on:
+  pull_request:
+  push:
+    branches: ["main", "staging*", "feature/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  subrepo-gate:
+    name: subrepo-gate
+    if: github.server_url == 'https://github.com' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v4
+        with:
+          path: self
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Clone dx-all-suite (same-name branch, else default)
+        env:
+          TOKEN: ${{ secrets.GC_DCI_TOKEN || github.token }}
+          SERVER: ${{ github.server_url }}
+          OWNER: ${{ github.repository_owner }}
+          REF: ${{ github.head_ref || github.ref_name }}
+        run: |
+          set -euo pipefail
+          HOST="${SERVER#https://}"; HOST="${HOST#http://}"
+          URL="https://${HOST}/${OWNER}/dx-all-suite.git"
+          # base64 -w0 is GNU coreutils (Linux runners); use base64 | tr -d '\n' if the label ever covers macOS
+          AUTH="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$TOKEN" | base64 -w0)"
+          rm -rf "$GITHUB_WORKSPACE/suite"
+          if heads="$(git -c http.extraheader="$AUTH" ls-remote --heads "$URL" "$REF")"; then :; else
+            echo "::error::cannot reach ${URL} (auth/network) — check the token secret"; exit 2; fi
+          if [ -n "$heads" ]; then USE="$REF"; else
+            USE="$(git -c http.extraheader="$AUTH" ls-remote --symref "$URL" HEAD | awk '/^ref:/{sub("refs/heads/","",$2);print $2}')"
+            echo "suite branch '$REF' not found — using default '$USE'"; fi
+          git -c http.extraheader="$AUTH" clone -q --depth 1 --no-recurse-submodules --branch "$USE" "$URL" suite
+          echo "suite: $USE @ $(git -C suite rev-parse --short HEAD)"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Python deps (pip)
+        run: python -m pip install -q "jinja2>=3.1" "pyyaml>=6.0"
+
+      - name: Drift check at canonical position
+        run: bash suite/.deepx/tools/scripts/subrepo_check.sh --subrepo-path dx-runtime/dx_app --repo-dir "$GITHUB_WORKSPACE/self" --suite-dir "$GITHUB_WORKSPACE/suite"
+
+      - name: How to fix
+        if: failure()
+        run: |
+          echo "::error::sub-repo drift gate failed for dx-runtime/dx_app."
+          echo "From a dx-all-suite checkout on the SAME branch (with this repo at dx-runtime/dx_app):"
+          echo "    bash .deepx/tools/scripts/run_all.sh generate && bash .deepx/tools/scripts/run_all.sh check"
+          echo "then commit the regenerated files in THIS repo. Never hand-edit generated files."
+          echo "Reproduce locally: bash <suite>/.deepx/tools/scripts/subrepo_check.sh --subrepo-path dx-runtime/dx_app --repo-dir . --suite-dir <suite> --mode worktree"
+
+      - name: Cleanup suite clone
+        if: always()
+        run: rm -rf "$GITHUB_WORKSPACE/suite"

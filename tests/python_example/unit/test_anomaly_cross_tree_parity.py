@@ -44,29 +44,46 @@ def test_both_trees_carry_an_anomaly_visualizer():
         assert "relative severity" in text, name
 
 
+def _family_files(tree: Path, family: str, suffix: str) -> list[Path]:
+    """Every per-variant file of *family* ending in *suffix*, in either layout.
+
+    The tree moved from one entry per FAMILY (`efficientad_sync.cpp`) to one per
+    VARIANT (`<stem>/<stem>_sync.cpp`) while this test pinned the family paths, so it
+    failed on a tree that had simply been reorganised. Globbing for the suffix keeps
+    the check about WHAT is wired, which is what it exists to protect.
+    """
+    base = tree / "anomaly_detection" / family
+    found = sorted(base.rglob(f"*{suffix}"))
+    assert found, f"no *{suffix} under {base.relative_to(PROJECT_ROOT)}"
+    return found
+
+
 def test_the_anomaly_families_do_not_use_the_depth_runner():
     for family in FAMILIES:
         for kind in ("sync", "async"):
-            entry = _read(CPP / "anomaly_detection" / family / f"{family}_{kind}.cpp")
-            assert f"{kind}_anomaly_runner.hpp" in entry, (family, kind)
-            assert "depth_runner" not in entry, (family, kind)
+            entries = _family_files(CPP, family, f"_{kind}.cpp")
+            for entry in entries:
+                text = _read(entry)
+                assert f"{kind}_anomaly_runner.hpp" in text, entry
+                assert "depth_runner" not in text, entry
 
 
 def test_the_anomaly_factories_produce_an_anomaly_result():
     for family in FAMILIES:
-        text = _read(CPP / "anomaly_detection" / family / "factory"
-                     / f"{family}_factory.hpp")
-        assert "IAnomalyDetectionFactory" in text, family
-        assert "AnomalyVisualizer" in text, family
-        assert "DepthResult" not in text, family
+        for factory in _family_files(CPP, family, "_factory.hpp"):
+            text = _read(factory)
+            assert "IAnomalyDetectionFactory" in text, factory
+            assert "AnomalyVisualizer" in text, factory
+            assert "DepthResult" not in text, factory
 
 
 def test_efficientad_declares_its_companions_in_both_trees():
     """One -m, three engines: the factory is what says so."""
-    assert "getCompanionModels" in _read(
-        CPP / "anomaly_detection/efficientad/factory/efficientad_factory.hpp")
-    assert "get_companion_models" in _read(
-        PY / "anomaly_detection/efficientad/factory/efficientad_factory.py")
+    for tree, suffix, needle in ((CPP, "_factory.hpp", "getCompanionModels"),
+                                 (PY, "_factory.py", "get_companion_models")):
+        factories = _family_files(tree, "efficientad", suffix)
+        assert any(needle in _read(f) for f in factories), (
+            f"no {needle} in any efficientad factory under {tree.name}")
 
 
 def test_both_runners_resolve_companions_and_patchcore_declares_none():
@@ -76,8 +93,8 @@ def test_both_runners_resolve_companions_and_patchcore_declares_none():
         CPP / "common/runner/async_anomaly_runner.hpp")
     assert "resolve_companion_models" in _read(PY / "common/runner/sync_runner.py")
     # PatchCore is one network on purpose: its metric needs a memory bank, not a model.
-    assert "getCompanionModels" not in _read(
-        CPP / "anomaly_detection/patchcore/factory/patchcore_factory.hpp")
+    for factory in _family_files(CPP, "patchcore", "_factory.hpp"):
+        assert "getCompanionModels" not in _read(factory), factory
 
 
 def test_an_anomaly_result_can_be_dumped_for_cross_tree_comparison():

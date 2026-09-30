@@ -11,7 +11,6 @@
   "default_video": "assets/videos/face-alignment-closeup.mp4",
   "zoo_canonical": true,
   "published": true,
-  "legacy_model_name": "3ddfa_v2_mobilnetv1_120x120",
   "config": {},
   "registry_config": {},
   "cli": {

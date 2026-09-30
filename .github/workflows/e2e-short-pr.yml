@@ -1,0 +1,15 @@
+name: E2E PR short test
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e_short_pr:
+    if: startsWith(github.event.pull_request.title, 'ci-skip') == false && startsWith(github.event.pull_request.title, 'doc') == false
+    uses: deepx/do_workflows-central/.github/workflows/dx_app-e2e-short-pr.yml@main
+    secrets: inherit

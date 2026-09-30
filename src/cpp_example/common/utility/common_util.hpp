@@ -589,15 +589,37 @@ inline std::string getDefaultSampleImage(const std::string& taskType,
     if (taskType == "face_alignment")         return "sample/img/sample_face_a1.jpg";
     if (taskType == "instance_segmentation")  return "sample/img/sample_street.jpg";
     if (taskType == "semantic_segmentation")  return "sample/img/sample_parking.jpg";
-    if (taskType == "classification")         return "sample/img/sample_dog.jpg";
+    if (taskType == "classification" || taskType == "image_classification")
+        return "sample/img/sample_dog.jpg";
+    if (taskType == "zero_shot_image_classification") return "sample/img/sample_dog.jpg";
+    if (taskType == "oriented_object_detection") return "sample/img/sample_airport_satellite_view.png";
+    if (taskType == "face_recognition")       return "sample/img/face_pair";
+    if (taskType == "face_landmark")          return "sample/img/sample_face_a1.jpg";
+    if (taskType == "face_attribute" || taskType == "person_attribute")
+        return "sample/img/sample_person_a1.jpg";
+    if (taskType == "low_light_enhancement")  return "sample/img/sample_lowlight.jpg";
+    if (taskType == "object_pose_estimation") return "sample/dope/000000.png";
+    if (taskType == "anomaly_detection")      return "sample/img/sample_parking.jpg";
+    if (taskType == "zero_shot_instance_segmentation") return "sample/img/sample_street.jpg";
     if (taskType == "depth_estimation")       return "sample/img/sample_parking.jpg";
     if (taskType == "image_denoising")        return "sample/img/sample_denoising.jpg";
     if (taskType == "image_enhancement")      return "sample/img/sample_lowlight.jpg";
     if (taskType == "embedding")              return "sample/img/face_pair";
+    // The four task categories DX Model Zoo added in 2_5_0. The three retrieval ones
+    // rank a query against a committed gallery (sample/gallery/*.bin), so their default
+    // is a query held OUT of that gallery -- a query that is also a gallery member
+    // scores a meaningless 1.0000 self-match.
+    if (taskType == "image_retrieval")        return "sample/img/sample_person_a2.jpg";
+    if (taskType == "visual_place_recognition") return "sample/vpr/queries/q1.jpg";
+    if (taskType == "person_reid")            return "sample/reid/queries/sample_person_a2.jpg";
+    // Trimap-free matting needs a subject separable from its background; measured, the
+    // beach portrait mattes cleanly where a white shirt on a white backdrop does not.
+    if (taskType == "image_matting")          return "sample/img/sample_person_b.jpg";
     if (taskType == "attribute_recognition")  return "sample/img/sample_person_a1.jpg";
     if (taskType == "reid")                   return "sample/img/person_pair";
     if (taskType == "ppu")                    return "sample/img/sample_street.jpg";
-    if (taskType == "3d_detection")           return "sample/kitti/velodyne/000049.bin";
+    if (taskType == "3d_detection" || taskType == "3d_object_detection")
+        return "sample/kitti/velodyne/000049.bin";
     return "sample/img/sample_street.jpg";
 }
 
@@ -606,7 +628,20 @@ inline std::string getDefaultSampleImage(const std::string& taskType,
  *
  * Returns empty string for image-only tasks (embedding, attribute_recognition, reid).
  */
+/// True for the tasks that compare one image against a stored set, so a video or
+/// camera source has nothing to compare frame-by-frame. Defined once here because four
+/// runners asked the same question and had drifted to four copies of the answer.
+inline bool isComparisonOnlyTask(const std::string& taskType) {
+    return taskType == "embedding" || taskType == "reid"
+        || taskType == "attribute_recognition" || taskType == "image_retrieval"
+        || taskType == "visual_place_recognition" || taskType == "person_reid"
+        || taskType == "face_recognition" || taskType == "face_attribute"
+        || taskType == "person_attribute";
+}
+
 inline std::string getDefaultSampleVideo(const std::string& taskType) {
+    if (isComparisonOnlyTask(taskType))       return "";
+    if (taskType == "image_matting")          return "assets/videos/person-pair-hallway.mp4";
     if (taskType == "object_detection")       return "assets/videos/snowboard.mp4";
     if (taskType == "face_detection")         return "assets/videos/dance-group.mov";
     if (taskType == "obb_detection")          return "assets/videos/obb.mp4";

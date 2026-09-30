@@ -71,7 +71,7 @@ def discover_fast_sync_cases() -> List[tuple]:
 
 def _pick_one(cases: list) -> list:
     """Pick exactly one fast model for loop test."""
-    priority = ["yolov5s_sync", "yolov8n_sync"]
+    priority = ["yolov5-s_640x640_sync", "yolov8-n_640x640_sync"]
     for exe, mp in cases:
         for p in priority:
             if exe == p:

@@ -79,8 +79,8 @@ def test_python_image_only_help_hides_stream_options():
     absent from ``--help`` and ``--image`` remains available.
     """
     scripts = [
-        "src/python_example/face_recognition/arcface/arcface_sync.py",
-        "src/python_example/image_classification/casvit/casvit_sync.py",
+        "src/python_example/face_recognition/arcface/arcface_mobilefacenet_112x112/arcface_mobilefacenet_112x112_sync.py",
+        "src/python_example/image_classification/casvit/casvit-t_224x224/casvit-t_224x224_sync.py",
     ]
     for relpath in scripts:
         result = subprocess.run(
@@ -107,7 +107,7 @@ def test_python_image_only_stream_input_rejected_by_argparse():
     result = subprocess.run(
         [
             sys.executable,
-            str(ROOT / "src/python_example/face_recognition/arcface/arcface_sync.py"),
+            str(ROOT / "src/python_example/face_recognition/arcface/arcface_mobilefacenet_112x112/arcface_mobilefacenet_112x112_sync.py"),
             "-m",
             "assets/models/arcface_mobilefacenet_112x112.dxnn",
             "--video",
@@ -172,7 +172,7 @@ def test_python_image_only_no_input_prints_hint_before_engine_init():
     result = subprocess.run(
         [
             sys.executable,
-            str(ROOT / "src/python_example/face_recognition/arcface/arcface_sync.py"),
+            str(ROOT / "src/python_example/face_recognition/arcface/arcface_mobilefacenet_112x112/arcface_mobilefacenet_112x112_sync.py"),
             "-m",
             "assets/models/arcface_mobilefacenet_112x112.dxnn",
         ],

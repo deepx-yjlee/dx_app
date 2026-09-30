@@ -69,7 +69,7 @@ public:
         // Image-only tasks: if no input was given, show a hint and exit normally
         // (do not auto-run inference on a default sample).
         std::string task = factory_->getTaskType();
-        bool imageOnlyTask = (task == "embedding" || task == "reid" || task == "attribute_recognition");
+        bool imageOnlyTask = dxapp::isComparisonOnlyTask(task);
         bool hasStreamInput = !args.videoFile.empty() || args.cameraIndex >= 0 || !args.rtspUrl.empty();
         if (imageOnlyTask && hasStreamInput) {
             dxapp::fatal_error("[DXAPP] [ERROR] Task '" + task + "' supports image input only (-i / --image_path). "
@@ -588,14 +588,19 @@ private:
         // the reorder buffer below can emit frames strictly in submit order.
         auto renderArgs = [&](AsyncClassificationDisplayArgs& args) {
             if (!args.original_frame || args.original_frame->empty()) return;
-            auto t_render_start = std::chrono::high_resolution_clock::now();
-            cv::Mat result_frame = args.original_frame->clone();
-            if (args.results) result_frame = visualizer.draw(result_frame, *args.results, args.ctx);
-            auto t_render_end = std::chrono::high_resolution_clock::now();
-            {
-                std::lock_guard<std::mutex> lock(metrics_.metrics_mutex);
-                metrics_.sum_render += std::chrono::duration<double, std::milli>(t_render_end - t_render_start).count();
-                metrics_.render_completed++;
+            const bool need_render = mustRenderFrame(
+                no_display, save_on, args.save_path, display_pump_);
+            cv::Mat result_frame;
+            if (need_render) {
+                auto t_render_start = std::chrono::high_resolution_clock::now();
+                result_frame = args.original_frame->clone();
+                if (args.results) result_frame = visualizer.draw(result_frame, *args.results, args.ctx);
+                auto t_render_end = std::chrono::high_resolution_clock::now();
+                {
+                    std::lock_guard<std::mutex> lock(metrics_.metrics_mutex);
+                    metrics_.sum_render += std::chrono::duration<double, std::milli>(t_render_end - t_render_start).count();
+                    metrics_.render_completed++;
+                }
             }
             if (save_on && writer.isOpened() && !result_frame.empty()) dxapp::writeToVideo(writer, result_frame, SHOW_WINDOW_SIZE_W, SHOW_WINDOW_SIZE_H);
             if (!args.save_path.empty() && !result_frame.empty()) {

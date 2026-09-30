@@ -1,0 +1,94 @@
+# dx-runtime/dx_app/.github/workflows/dx-agent-dev-subrepo-gate-ghes.yml
+#
+# Sub-repo drift gate — closed-network GHES variant (gh.deepx.ai/deepx/*).
+# A sub-repo alone cannot regenerate its CLAUDE.md/.claude/.github/.cursor/.opencode
+# files: the generator and the shared fragments live only in dx-all-suite. This job
+# shallow-clones the suite (same-name branch if it exists, else its default branch),
+# places this checkout at its canonical position inside that tree and runs
+# `dx-agent-gen check` via .deepx/tools/scripts/subrepo_check.sh.
+#
+# Runner: self-hosted, system python3 (jinja2 + pyyaml; .gate-venv fallback).
+# Token: GH_DCI_TOKEN, passed via `git -c http.extraheader=...` (NEVER in the clone URL,
+# which git would persist into suite/.git/config on this self-hosted runner); the suite/
+# clone is removed at the end of the job (`if: always()`). Host guard: runs only when
+# github.server_url is NOT https://github.com — the github.com mirror uses the -cloud twin.
+# .github/workflows/ is release-excluded: this file never reaches github.com/DEEPX-AI.
+# Required check name: subrepo-gate. Docs: .deepx/docs/ci-subrepo-gate.md
+name: dx-agent-dev sub-repo gate (ghes)
+
+on:
+  pull_request:
+  push:
+    branches: ["main", "staging*", "feature/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  subrepo-gate:
+    name: subrepo-gate
+    if: github.server_url != 'https://github.com' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: self-hosted
+    timeout-minutes: 15
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v4
+        with:
+          path: self
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Clone dx-all-suite (same-name branch, else default)
+        env:
+          TOKEN: ${{ secrets.GH_DCI_TOKEN || github.token }}
+          SERVER: ${{ github.server_url }}
+          OWNER: ${{ github.repository_owner }}
+          REF: ${{ github.head_ref || github.ref_name }}
+        run: |
+          set -euo pipefail
+          HOST="${SERVER#https://}"; HOST="${HOST#http://}"
+          URL="https://${HOST}/${OWNER}/dx-all-suite.git"
+          # base64 -w0 is GNU coreutils (Linux runners); use base64 | tr -d '\n' if the label ever covers macOS
+          AUTH="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$TOKEN" | base64 -w0)"
+          rm -rf "$GITHUB_WORKSPACE/suite"
+          if heads="$(git -c http.extraheader="$AUTH" ls-remote --heads "$URL" "$REF")"; then :; else
+            echo "::error::cannot reach ${URL} (auth/network) — check the token secret"; exit 2; fi
+          if [ -n "$heads" ]; then USE="$REF"; else
+            USE="$(git -c http.extraheader="$AUTH" ls-remote --symref "$URL" HEAD | awk '/^ref:/{sub("refs/heads/","",$2);print $2}')"
+            echo "suite branch '$REF' not found — using default '$USE'"; fi
+          git -c http.extraheader="$AUTH" clone -q --depth 1 --no-recurse-submodules --branch "$USE" "$URL" suite
+          echo "suite: $USE @ $(git -C suite rev-parse --short HEAD)"
+
+      - name: Python deps (system python3, .gate-venv fallback)
+        run: |
+          set -euo pipefail
+          if python3 -c "import jinja2, yaml" 2>/dev/null; then echo "deps OK (system python3)"; exit 0; fi
+          echo "system python3 lacks jinja2/pyyaml — trying a job-local venv"
+          rm -rf .gate-venv
+          if python3 -m venv .gate-venv && .gate-venv/bin/python -m pip install -q "jinja2>=3.1" "pyyaml>=6.0"; then
+            echo "$PWD/.gate-venv/bin" >> "$GITHUB_PATH"
+          else
+            echo "::error::Neither system python3 nor a venv could provide jinja2/pyyaml. Pre-install them on the self-hosted runner (apt: python3-jinja2 python3-yaml, or a venv fed from the internal PyPI mirror)."
+            exit 1
+          fi
+
+      - name: Drift check at canonical position
+        run: bash suite/.deepx/tools/scripts/subrepo_check.sh --subrepo-path dx-runtime/dx_app --repo-dir "$GITHUB_WORKSPACE/self" --suite-dir "$GITHUB_WORKSPACE/suite"
+
+      - name: How to fix
+        if: failure()
+        run: |
+          echo "::error::sub-repo drift gate failed for dx-runtime/dx_app."
+          echo "From a dx-all-suite checkout on the SAME branch (with this repo at dx-runtime/dx_app):"
+          echo "    bash .deepx/tools/scripts/run_all.sh generate && bash .deepx/tools/scripts/run_all.sh check"
+          echo "then commit the regenerated files in THIS repo. Never hand-edit generated files."
+          echo "Reproduce locally: bash <suite>/.deepx/tools/scripts/subrepo_check.sh --subrepo-path dx-runtime/dx_app --repo-dir . --suite-dir <suite> --mode worktree"
+
+      - name: Cleanup suite clone and venv
+        if: always()
+        run: rm -rf "$GITHUB_WORKSPACE/suite" .gate-venv

@@ -180,31 +180,40 @@ for i, o in enumerate(out_info):
 ## Model Count by Task (v3.2.2)
 
 > Counts below are a snapshot. `config/model_registry.json` is the single source
-> of truth — query it (`jq 'group_by(.add_model_task) | map({(.[0].add_model_task): length}) | add'`)
+> of truth — query it (`jq 'group_by(.task) | map({(.[0].task): length}) | add'`)
+> on the `task` field, which is the one the example directory layout uses.
+> `add_model_task` and `task_legacy` are the pre-dx-modelzoo spellings and group
+> differently (e.g. everything embedding-shaped collapses into `embedding`).
 > for exact live counts.
 
-| Task | Count | Example Models |
-|---|---|---|
-| classification | 111 | efficientnet, mobilenet, resnet, deit, vit, repvgg |
-| object_detection | 97 | yolov5/6/7/8/9/10/11/26, ssd, nanodet, damoyolo |
-| instance_segmentation | 23 | yolov5_seg, yolov8_seg, yolo11_seg, yolact |
-| pose_estimation | 19 | yolov5_pose, yolov8_pose, yolo11_pose, vit_pose |
-| face_detection | 18 | scrfd, yolov5face, retinaface, ulfgfd |
-| semantic_segmentation | 18 | bisenet, deeplabv3, segformer |
-| ppu | 16 | yolov5/7/8_ppu, scrfd_ppu, yolox_ppu |
-| embedding | 10 | arcface, eigenplaces, clip |
-| depth_estimation | 10 | fastdepth, depth_anything_v2 |
+| Task | Variants | Example families |
+|---|--:|---|
+| object_detection | 169 | damoyolo, efficientdet, nanodet, pp_shitu, rtdetr, ... |
+| image_classification | 137 | alexnet, beit, casvit, deit, densenet, ... |
+| instance_segmentation | 53 | mask_rtdetr, yolact, yolo11_seg, yolo26_seg, yolov12_seg, ... |
+| pose_estimation | 37 | centerpose, dark_hrnet, vitpose, yolo11_pose, yolo26_pose, ... |
+| semantic_segmentation | 24 | bisenet, casvit_seg, ddrnet, deeplabv3, fcn, ... |
+| face_detection | 19 | retinaface, scrfd, ulfgfd, yolov5_face, yolov7_face |
+| depth_estimation | 10 | depthanythingv2, fastdepth, scdepthv3, yolo26_depth |
 | super_resolution | 6 | espcn, realesrgan |
-| image_denoising | 5 | dncnn_15/25/50, dncnn_color_blind, dncnn_gray_blind |
-| obb_detection | 5 | yolo26n_obb |
-| attribute_recognition | 3 | attribute |
-| face_alignment | 2 | 3ddfa_v2 |
-| image_enhancement | 2 | zero_dce, zero_dce_pp |
-| reid | 2 | casvit_t, casvit_m |
-| 3d_object_detection | 1 | sfa3d_608x608 |
+| image_denoising | 5 | dncnn |
+| oriented_object_detection | 5 | yolo26_obb |
+| zero_shot_image_classification | 5 | clip |
+| anomaly_detection | 4 | efficientad, patchcore |
+| face_recognition | 4 | arcface |
+| visual_place_recognition **(2_5_0 new)** | 3 | eigenplaces, pp_shitu_rec |
+| face_landmark | 2 | 3ddfa_v2 |
+| image_matting **(2_5_0 new)** | 2 | ppmatting |
+| image_retrieval **(2_5_0 new)** | 2 | clip_rn50 |
+| low_light_enhancement | 2 | zerodce |
+| person_attribute | 2 | deepmar |
+| 3d_object_detection | 1 | sfa3d |
+| face_attribute | 1 | faceattr |
 | hand_detection | 1 | mediapipe_hand_detector |
-| hand_landmark | 1 | handlandmarklite |
+| hand_landmark | 1 | mediapipe_hands_lite |
 | keypoint_detection | 1 | superpoint |
-| object_pose_estimation | 1 | dope_hope_ketchup |
+| object_pose_estimation | 1 | dope |
 | panoptic_driving_perception | 1 | yolopv2 |
-| **Total** | **353** | across 22 tasks |
+| person_reid **(2_5_0 new)** | 1 | repvgg_reid |
+| zero_shot_instance_segmentation | 1 | fastsam |
+| **Total** | **500** | across 28 tasks |

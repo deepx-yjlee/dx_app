@@ -1,0 +1,10 @@
+name: Sonar Build Analysis on PR
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  sonar-analysis-on-pr:
+    uses: deepx/do_workflows-central/.github/workflows/dx_app-sonar-pr.yml@main
+    secrets: inherit

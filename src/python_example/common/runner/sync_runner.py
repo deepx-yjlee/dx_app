@@ -235,8 +235,12 @@ _VID_LOWRES = "assets/videos/lowres-drone-city-road.mp4"
 # (no palm-detector crop stage), so they use the normal stream pipeline.
 # NOTE: -v/-c/-r are still accepted as CLI options; stream input is rejected at
 # runtime by _reject_image_only_stream_input() with a clear message.
-_IMAGE_ONLY_TASKS = {"embedding", "reid", "attribute_recognition",
-                     "object_pose_estimation", "3d_detection"}
+_IMAGE_ONLY_TASKS = {
+    "embedding", "reid", "attribute_recognition",
+    "face_recognition", "person_attribute", "face_attribute",
+    "person_reid", "image_retrieval", "visual_place_recognition",
+    "object_pose_estimation", "3d_detection", "3d_object_detection",
+}
 
 _DEFAULT_SAMPLE_IMAGE = {
     "object_detection":       _IMG_STREET,
@@ -249,6 +253,19 @@ _DEFAULT_SAMPLE_IMAGE = {
     "instance_segmentation":  _IMG_STREET,
     "semantic_segmentation":  _IMG_PARKING,
     "classification":         "sample/img/sample_dog.jpg",
+    "image_classification":   "sample/img/sample_dog.jpg",
+    "oriented_object_detection": "sample/img/sample_airport_satellite_view.png",
+    "face_recognition":       "sample/img/face_pair",
+    "face_attribute":         "sample/img/sample_person_a1.jpg",
+    "face_landmark":          "sample/img/sample_face_a1.jpg",
+    "person_attribute":       "sample/img/sample_person_a1.jpg",
+    "person_reid":            "sample/reid/queries/sample_person_a2.jpg",
+    "image_retrieval":        "sample/img/sample_person_a2.jpg",
+    "visual_place_recognition": "sample/vpr/queries/q1.jpg",
+    "image_matting":          "sample/img/sample_person_b.jpg",
+    "low_light_enhancement":  "sample/img/sample_lowlight.jpg",
+    "zero_shot_image_classification": "sample/img/sample_dog.jpg",
+    "zero_shot_instance_segmentation": _IMG_STREET,
     "depth_estimation":       _IMG_PARKING,
     "image_denoising":        "sample/img/sample_denoising.jpg",
     "super_resolution":       _IMG_LOWRES_275x150,
@@ -258,9 +275,9 @@ _DEFAULT_SAMPLE_IMAGE = {
     "reid":                   "sample/img/person_pair",
     "ppu":                    _IMG_STREET,
     "keypoint_detection":     _IMG_STREET,
-    "object_pose_estimation": _IMG_STREET,
+    "object_pose_estimation": "sample/dope/000000.png",
     "panoptic_driving_perception": _IMG_PARKING,
-    "3d_object_detection":    _IMG_PARKING,
+    "3d_object_detection":    "sample/kitti/velodyne/000049.bin",
     "3d_detection":           "sample/kitti/velodyne/000049.bin",
     # No industrial-defect sample ships with dx_app, and these models produce a
     # feature response for any input, so a structured scene is the honest default
@@ -1230,7 +1247,8 @@ class SyncRunner:
 
     def _process_stream_frame(self, frame: np.ndarray,
                               frame_count: int, run_dir: Optional[Path],
-                              source_label: str) -> dict:
+                              source_label: str,
+                              do_render: bool = True) -> dict:
         """Run pre/infer/post/viz on a single frame. Returns timing dict + output."""
         input_tensor: Optional[np.ndarray] = None
         outputs: List[np.ndarray] = []
@@ -1248,7 +1266,7 @@ class SyncRunner:
 
             results = self.postprocess(outputs, ctx)
             t3 = time.perf_counter()
-            output_frame = self.visualize(frame, results)
+            output_frame = self.visualize(frame, results) if do_render else None
             t4 = time.perf_counter()
         except Exception:
             dump_target = run_dir if run_dir else create_run_dir(
@@ -1439,6 +1457,10 @@ class SyncRunner:
             use_sr_tiled = self._sr_cache is not None
 
         start_time = time.perf_counter()
+        # Preview rate for the serial sync loop. -s still renders every frame.
+        preview_interval_s = 0.1
+        last_preview = 0.0
+        env_save = os.environ.get("DXAPP_SAVE_IMAGE")
 
         try:
             while True:
@@ -1449,19 +1471,25 @@ class SyncRunner:
                     break
 
                 frame_count += 1
+                now = time.perf_counter()
+                preview_due = display and (now - last_preview) >= preview_interval_s
+                do_render = bool(save_enabled or env_save or preview_due)
                 if use_sr_tiled:
                     result = self._process_sr_stream_frame(
                         frame, frame_count)
                 else:
                     result = self._process_stream_frame(
-                        frame, frame_count, run_dir, source_label)
+                        frame, frame_count, run_dir, source_label,
+                        do_render=do_render)
+                if preview_due and result.get("output_frame") is not None:
+                    last_preview = now
 
                 self._accumulate_stream_metrics(metrics, result, t_read)
                 metrics["sum_save"] += self._save_stream_frame(
                     result["output_frame"], writer)
 
                 t_disp, quit_requested = self._display_stream_frame(
-                    result["output_frame"], display, frame_count)
+                    result["output_frame"], display and preview_due, frame_count)
                 metrics["sum_display"] += t_disp
 
                 if quit_requested:

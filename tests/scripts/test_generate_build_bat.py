@@ -68,8 +68,8 @@ def test_minimal_resolves_run_demo_targets():
     assert result.returncode == 0, result.stderr
     text = output.read_text(encoding="utf-8")
     assert "--target" in text
-    assert "yolov7_sync" in text
-    assert "resnet50_async" in text
+    assert "yolov7_640x640_sync" in text
+    assert "resnet50_224x224_async" in text
     assert "cmake --install" not in text
 
 
@@ -83,14 +83,14 @@ def test_category_requires_value():
 def test_category_build_resolves_category_targets():
     output = scratch_output("build_internal.bat")
 
-    result = run_generator("--category", "classification", "--output", str(output))
+    result = run_generator("--category", "image_classification", "--output", str(output))
 
     assert result.returncode == 0, result.stderr
     text = output.read_text(encoding="utf-8")
     assert "--target" in text
-    assert "alexnet_sync" in text
-    assert "resnet50_sync" in text
-    assert "yolov7_sync" not in text
+    assert "alexnet_224x224_sync" in text
+    assert "resnet50_224x224_sync" in text
+    assert "yolov7_640x640_sync" not in text
 
 
 def test_unknown_category_returns_dxapp_error():
@@ -108,7 +108,7 @@ def test_category_list_prints_categories_without_writing_output():
     result = run_generator("--category", "list", "--output", str(output))
 
     assert result.returncode == 0, result.stderr
-    assert "classification" in result.stdout
+    assert "image_classification" in result.stdout
     assert "object_detection" in result.stdout
     assert not output.exists()
 
@@ -123,7 +123,7 @@ def test_conflicting_generator_modes_are_rejected():
 
 
 def test_targets_with_hyphens_sanitize_batch_variable_names():
-    """배치 변수명은 sanitize되어야 하지만 실제 타겟명과 exe 파일명은 원본 유지"""
+    """The batch variable is sanitized; the real target name and exe filename stay original."""
     output = scratch_output("build_internal.bat")
 
     result = run_generator(
@@ -136,13 +136,13 @@ def test_targets_with_hyphens_sanitize_batch_variable_names():
     assert result.returncode == 0, result.stderr
     text = output.read_text(encoding="utf-8")
     
-    # 원본 타겟명이 CMake 빌드 명령에 사용되어야 함
+    # The original target name is used in the CMake build command.
     assert "--target my-target_v2" in text
     
-    # 원본 exe 파일명이 검색에 사용되어야 함
+    # The original exe filename is used when searching for the binary.
     assert "for /R \"%BUILD_DIR%\" %%F in (my-target_v2.exe)" in text
     
-    # 배치 변수명은 sanitize되어야 함 (하이픈 -> 언더스코어)
+    # The batch variable name is sanitized (hyphen -> underscore).
     assert "FOUND_my_target_v2" in text
 
 

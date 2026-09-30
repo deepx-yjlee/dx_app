@@ -192,6 +192,8 @@ set(CATEGORIES
     hand_landmark
     image_classification
     image_denoising
+    image_matting
+    image_retrieval
     instance_segmentation
     keypoint_detection
     low_light_enhancement
@@ -200,34 +202,45 @@ set(CATEGORIES
     oriented_object_detection
     panoptic_driving_perception
     person_attribute
+    person_reid
     pose_estimation
     semantic_segmentation
     super_resolution
+    visual_place_recognition
     zero_shot_image_classification
     zero_shot_instance_segmentation
 )
 
+# One executable per variant: <task>/<family>/<variant>/<variant>_{sync,async}.cpp
+function(add_variant_example VARIANT_DIR VARIANT_NAME KIND)
+    set(_SRC ${VARIANT_DIR}/${VARIANT_NAME}_${KIND}.cpp)
+    if(NOT EXISTS ${_SRC})
+        return()
+    endif()
+    add_example(${VARIANT_NAME}_${KIND} ${_SRC} "")
+    if(KIND STREQUAL "async" AND NOT MSVC)
+        target_link_libraries(${VARIANT_NAME}_${KIND} pthread)
+    endif()
+endfunction()
+
 foreach(CATEGORY ${CATEGORIES})
-    file(GLOB _MODEL_DIRS RELATIVE ${CPP_EXAMPLE_DIR}/${CATEGORY}
+    file(GLOB _FAMILY_DIRS RELATIVE ${CPP_EXAMPLE_DIR}/${CATEGORY}
          ${CPP_EXAMPLE_DIR}/${CATEGORY}/*)
-    foreach(MODEL ${_MODEL_DIRS})
-        set(_MODEL_DIR ${CPP_EXAMPLE_DIR}/${CATEGORY}/${MODEL})
-        # Skip non-directories
-        if(NOT IS_DIRECTORY ${_MODEL_DIR})
+    foreach(FAMILY ${_FAMILY_DIRS})
+        set(_FAMILY_DIR ${CPP_EXAMPLE_DIR}/${CATEGORY}/${FAMILY})
+        if(NOT IS_DIRECTORY ${_FAMILY_DIR})
             continue()
         endif()
 
-        if(EXISTS ${_MODEL_DIR}/${MODEL}_sync.cpp)
-            add_example(${MODEL}_sync ${_MODEL_DIR}/${MODEL}_sync.cpp "")
-        endif()
-
-        if(EXISTS ${_MODEL_DIR}/${MODEL}_async.cpp)
-            add_example(${MODEL}_async ${_MODEL_DIR}/${MODEL}_async.cpp "")
-            # All async runners use std::thread → need pthread on Linux/GCC
-            if(NOT MSVC)
-                target_link_libraries(${MODEL}_async pthread)
+        file(GLOB _VARIANT_DIRS RELATIVE ${_FAMILY_DIR} ${_FAMILY_DIR}/*)
+        foreach(VARIANT ${_VARIANT_DIRS})
+            set(_VARIANT_DIR ${_FAMILY_DIR}/${VARIANT})
+            if(NOT IS_DIRECTORY ${_VARIANT_DIR})
+                continue()
             endif()
-        endif()
+            add_variant_example(${_VARIANT_DIR} ${VARIANT} sync)
+            add_variant_example(${_VARIANT_DIR} ${VARIANT} async)
+        endforeach()
     endforeach()
 endforeach()
 
@@ -257,6 +270,23 @@ foreach(MULTI_CAT ${_MULTI_CATEGORIES})
         endif()
     endforeach()
 endforeach()
+
+# JSON pipeline runner. Factories are registered in registry.cpp; the JSON
+# file selects among them. Single-model *_sync / *_async targets are unchanged.
+set(MULTI_MODEL_DIR ${CPP_EXAMPLE_DIR}/multi_model)
+add_executable(multi_model_run
+    ${MULTI_MODEL_DIR}/main.cpp
+    ${MULTI_MODEL_DIR}/pipeline.cpp
+    ${MULTI_MODEL_DIR}/registry.cpp
+    ${MULTI_MODEL_DIR}/runner.cpp
+)
+target_compile_options(multi_model_run PRIVATE ${COMMON_COMPILE_FLAGS})
+target_compile_definitions(multi_model_run PRIVATE ${COMMON_COMPILE_DEFINITIONS})
+target_include_directories(multi_model_run PRIVATE ${CPP_EXAMPLE_DIR})
+target_link_libraries(multi_model_run dxapp_common_obj ${COMMON_LIBS})
+if(TARGET dxapp_stage_vcpkg_dlls)
+    add_dependencies(multi_model_run dxapp_stage_vcpkg_dlls)
+endif()
 
 # DOPE builds with core OpenCV only: the C++ visualizer draws the cuboid by
 # connecting the predicted 2-D vertices directly (no solvePnP/projectPoints).

@@ -7,8 +7,8 @@ or any streaming components.
 ## Overview
 
 dx_app provides a three-layer architecture for building AI inference applications
-on DEEPX NPU hardware. Applications are organized by AI task (22 categories) and
-model (353 models), with a shared framework providing common runners, factories,
+on DEEPX NPU hardware. Applications are organized by AI task (28 categories) and
+model (500 variants), with a shared framework providing common runners, factories,
 preprocessors, postprocessors, and visualizers.
 
 ## Three-Layer Architecture
@@ -124,6 +124,9 @@ Per-model-family implementations of IPreprocessor and IPostprocessor:
 - `LetterboxPreprocessor` — aspect-ratio-preserving resize with padding
 - `YOLOv5Postprocessor`, `YOLOv8Postprocessor`, etc.
 - `ClassificationPostprocessor`, `PosePostprocessor`, etc.
+- `PPMattingPostprocessor` — a continuous alpha matte, not a class map
+- `GalleryRetrievalPostprocessor` — a descriptor ranked against a committed gallery
+  (see "Reference galleries" below)
 
 ### visualizers/ — Drawing Utilities
 
@@ -132,6 +135,8 @@ Per-task visualization:
 - `PoseVisualizer` — skeleton overlay
 - `SegmentationVisualizer` — mask overlay
 - `DepthVisualizer` — depth colormap
+- `MattingVisualizer` — original / alpha matte / checkerboard composite
+- `RetrievalVisualizer` — query beside its top-k gallery hits
 
 ### inputs/ — Input Sources
 
@@ -273,4 +278,47 @@ SyncRunner.run(args) / AsyncRunner.run(args)
     +-> factory.create_visualizer()
     |
     +-> _dispatch_input(args) -> image/video/camera/rtsp
+```
+
+
+## Reference galleries
+
+Three of the task categories DX Model Zoo added in release 2_5_0 -- `image_retrieval`,
+`visual_place_recognition`, `person_reid` -- cannot be answered by a model alone. An
+embedding model returns a descriptor; "which place is this?" needs a *set of known
+descriptors* to rank it against. So those examples carry a committed gallery.
+
+```
+scripts/fetch_vpr_toy_dataset.py     third-party sample images -> sample/vpr/
+scripts/build_reid_crops.py          person detector -> sample/reid/  (ReID needs crops)
+scripts/build_gallery_database.py    encode a folder ON THE NPU -> sample/gallery/*.bin
+                                        |
+                        config.json "gallery": "sample/gallery/<purpose>_<variant>.bin"
+                                        |
+        GalleryRetrievalPostprocessor (py)      loadRetrievalGallery (cpp)
+                cosine top-k -> RetrievalResult / EmbeddingResult::matches
+                                        |
+                              RetrievalVisualizer
+```
+
+Three properties are load-bearing:
+
+1. **One file, one format.** `common/processors/gallery_format.py` defines it and
+   `common/processors/gallery_retrieval_postprocessor.hpp` reads the same bytes. A
+   first attempt shipped a `.npz` for Python and a `.bin` for C++ and the two copies
+   disagreed immediately. A gallery that belongs to another encoder does not error --
+   it ranks plausibly and wrongly -- so the file records the producing `.dxnn` stem and
+   its width, and both readers refuse a mismatch.
+2. **Built through the variant's own factory.** `build_gallery_database.py` drives
+   `config.json`, so the gallery cannot be encoded with different preprocessing than
+   the query path. A later preprocessing fix is inherited by rebuilding.
+3. **The query is held out of its gallery.** A query that is also a gallery member
+   scores a meaningless 1.0000 self-match, and the repo ships the same photo under two
+   names, so `--exclude` drops by content hash rather than by path.
+
+Rebuild after changing a variant's preprocessing:
+
+```bash
+python3 scripts/build_gallery_database.py --variant <dxnn-stem> \
+    --images <folder> --out sample/gallery/<purpose>_<dxnn-stem>.bin
 ```

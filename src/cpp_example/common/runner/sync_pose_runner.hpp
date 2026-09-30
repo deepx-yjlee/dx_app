@@ -438,21 +438,19 @@ private:
         verify::dumpVerifyJson(results, model_path_,
             "pose_estimation", display_image.rows, display_image.cols);
 
+        auto& preview_pump = syncPreviewPump();
+        const auto render_plan = planFrameRender(
+            no_display, saveMode, saveImagePath, preview_pump);
         auto render_start = std::chrono::high_resolution_clock::now();
-        // DXAPP_SAVE_IMAGE consumers (CI, AI Studio) run headless with no --save,
-        // so the env hook must keep the frame alive too — otherwise the
-        // saveDebugImage() call below gets an empty frame and writes nothing.
-        const bool need_render = !no_display || saveMode || !saveImagePath.empty()
-                                 || std::getenv("DXAPP_SAVE_IMAGE") != nullptr;
         cv::Mat result_frame;
-        if (need_render) {
+        double t_render = 0.0;
+        if (render_plan.need_render) {
             result_frame = display_image.clone();
             result_frame = visualizer.draw(result_frame, results, preprocess_ctx);
+            auto render_end = std::chrono::high_resolution_clock::now();
+            t_render = std::chrono::duration<double, std::milli>(
+                render_end - render_start).count();
         }
-        auto render_end = std::chrono::high_resolution_clock::now();
-        double t_render = need_render
-            ? std::chrono::duration<double, std::milli>(render_end - render_start).count()
-            : 0.0;
 
         double t_save = 0.0;
         double t_display = 0.0;
@@ -470,18 +468,14 @@ private:
             // The caller's DXAPP_SAVE_IMAGE path is honoured independently of the
             // run-dir save: --save must not swallow the path the caller asked for.
             dxapp::saveDebugImage(result_frame);
-if (!no_display) {
-    // 10 fps, not the 60 fps default: that default assumes the display sits
-    // OFF the critical path, which holds for the async runner. The sync
-    // pipeline is serial, so every imshow is charged to frame time.
-    constexpr double SYNC_PREVIEW_FPS = 10.0;
-    static DisplayPump pump{"Output", SYNC_PREVIEW_FPS};
-    auto display_start = std::chrono::high_resolution_clock::now();
-    pump.offer(result_frame);
-    if (!pump.pump()) quit_requested = true;
-    auto display_end = std::chrono::high_resolution_clock::now();
-    t_display = std::chrono::duration<double, std::milli>(display_end - display_start).count();
-}
+            if (render_plan.preview && preview_pump.guiAvailable()) {
+                auto display_start = std::chrono::high_resolution_clock::now();
+                preview_pump.offer(result_frame);
+                if (!preview_pump.pump()) quit_requested = true;
+                auto display_end = std::chrono::high_resolution_clock::now();
+                t_display = std::chrono::duration<double, std::milli>(
+                    display_end - display_start).count();
+            }
         }
 
         metrics.sum_read += t_read;

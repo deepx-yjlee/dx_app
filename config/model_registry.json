@@ -4862,7 +4862,7 @@
   },
   {
     "model_name": "yolo26l_cls",
-    "dxnn_file": "yolo26-l_224x224.dxnn",
+    "dxnn_file": "yolo26-cls-l_224x224.dxnn",
     "original_name": "yolo26l-cls",
     "csv_task": "IC",
     "add_model_task": "classification",
@@ -4874,7 +4874,7 @@
     },
     "source": "auto_classify",
     "supported": true,
-    "variant": "yolo26-l_224x224",
+    "variant": "yolo26-cls-l_224x224",
     "family": "yolo26_cls",
     "task": "image_classification",
     "task_legacy": "classification",
@@ -4956,7 +4956,7 @@
   },
   {
     "model_name": "yolo26m_cls",
-    "dxnn_file": "yolo26-m_224x224.dxnn",
+    "dxnn_file": "yolo26-cls-m_224x224.dxnn",
     "original_name": "yolo26m-cls",
     "csv_task": "IC",
     "add_model_task": "classification",
@@ -4968,7 +4968,7 @@
     },
     "source": "auto_classify",
     "supported": true,
-    "variant": "yolo26-m_224x224",
+    "variant": "yolo26-cls-m_224x224",
     "family": "yolo26_cls",
     "task": "image_classification",
     "task_legacy": "classification",
@@ -5050,7 +5050,7 @@
   },
   {
     "model_name": "yolo26n_cls",
-    "dxnn_file": "yolo26-n_224x224.dxnn",
+    "dxnn_file": "yolo26-cls-n_224x224.dxnn",
     "original_name": "yolo26n-cls",
     "csv_task": "IC",
     "add_model_task": "classification",
@@ -5062,7 +5062,7 @@
     },
     "source": "auto_classify",
     "supported": true,
-    "variant": "yolo26-n_224x224",
+    "variant": "yolo26-cls-n_224x224",
     "family": "yolo26_cls",
     "task": "image_classification",
     "task_legacy": "classification",
@@ -5121,7 +5121,7 @@
   },
   {
     "model_name": "yolo26s_cls",
-    "dxnn_file": "yolo26-s_224x224.dxnn",
+    "dxnn_file": "yolo26-cls-s_224x224.dxnn",
     "original_name": "yolo26s-cls",
     "csv_task": "IC",
     "add_model_task": "classification",
@@ -5133,7 +5133,7 @@
     },
     "source": "auto_classify",
     "supported": true,
-    "variant": "yolo26-s_224x224",
+    "variant": "yolo26-cls-s_224x224",
     "family": "yolo26_cls",
     "task": "image_classification",
     "task_legacy": "classification",
@@ -5215,7 +5215,7 @@
   },
   {
     "model_name": "yolo26x_cls",
-    "dxnn_file": "yolo26-x_224x224.dxnn",
+    "dxnn_file": "yolo26-cls-x_224x224.dxnn",
     "original_name": "yolo26x-cls",
     "csv_task": "IC",
     "add_model_task": "classification",
@@ -5227,7 +5227,7 @@
     },
     "source": "auto_classify",
     "supported": true,
-    "variant": "yolo26-x_224x224",
+    "variant": "yolo26-cls-x_224x224",
     "family": "yolo26_cls",
     "task": "image_classification",
     "task_legacy": "classification",
@@ -6884,7 +6884,7 @@
     "original_name": "eigenplaces-resnet18-1",
     "csv_task": "FREC",
     "add_model_task": "embedding",
-    "postprocessor": "arcface",
+    "postprocessor": "GalleryRetrievalPostprocessor",
     "input_width": 512,
     "input_height": 512,
     "config": {},
@@ -6892,7 +6892,7 @@
     "supported": true,
     "variant": "eigenplaces-resnet18_512x512",
     "family": "eigenplaces",
-    "task": "super_resolution",
+    "task": "visual_place_recognition",
     "task_legacy": "embedding",
     "image_only": true,
     "zoo_canonical": true,
@@ -6905,7 +6905,7 @@
     "original_name": "eigenplaces-resnet50-1",
     "csv_task": "FREC",
     "add_model_task": "embedding",
-    "postprocessor": "arcface",
+    "postprocessor": "GalleryRetrievalPostprocessor",
     "input_width": 512,
     "input_height": 512,
     "config": {},
@@ -6913,7 +6913,7 @@
     "supported": true,
     "variant": "eigenplaces-resnet50_512x512",
     "family": "eigenplaces",
-    "task": "super_resolution",
+    "task": "visual_place_recognition",
     "task_legacy": "embedding",
     "image_only": true,
     "zoo_canonical": true,
@@ -8248,20 +8248,20 @@
     "original_name": "CLIP ResNet-50 (OpenAI)",
     "csv_task": "FREC",
     "add_model_task": "embedding",
-    "postprocessor": "CLIPImagePostprocessor",
+    "postprocessor": "GalleryRetrievalPostprocessor",
     "input_width": 224,
     "input_height": 224,
     "config": {},
     "source": "https://github.com/openai/CLIP",
     "supported": true,
     "variant": "clip-img_resnet50_224x224_openai",
-    "family": "clip",
-    "task": "zero_shot_image_classification",
+    "family": "clip_rn50",
+    "task": "image_retrieval",
     "task_legacy": "embedding",
     "image_only": true,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "clip_img_vit_b16_quickgelu_224x224_metaclip_fullcc",
@@ -8282,7 +8282,7 @@
     "image_only": true,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "clip_text_resnet50_77x512_openai",
@@ -8297,13 +8297,13 @@
     "source": "https://github.com/openai/CLIP",
     "supported": true,
     "variant": "clip-text_resnet50_77x512_openai",
-    "family": "clip",
-    "task": "zero_shot_image_classification",
+    "family": "clip_rn50",
+    "task": "image_retrieval",
     "task_legacy": "embedding",
     "image_only": true,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "dark_hrnet_w32_256x192",
@@ -8326,7 +8326,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "ddrnet23_slim_1024x2048",
@@ -8349,7 +8349,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "ddrnet23_1024x2048",
@@ -8372,7 +8372,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "efficientad_m_autoencoder_256x256",
@@ -8399,7 +8399,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "efficientad_m_student_256x256",
@@ -8426,7 +8426,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "efficientad_m_teacher_256x256",
@@ -8453,7 +8453,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "levit_128s_224x224",
@@ -8500,7 +8500,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "mask_rtdetr_hgnetv2_l_6x_640x640",
@@ -8524,7 +8524,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "mask_rtdetr_hgnetv2_m_6x_640x640",
@@ -8548,7 +8548,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "mask_rtdetr_hgnetv2_s_6x_640x640",
@@ -8572,7 +8572,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "mask_rtdetr_hgnetv2_x_6x_640x640",
@@ -8596,7 +8596,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "patchcore_224x224",
@@ -8617,7 +8617,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "pp_liteseg_stdc1_camvid_10k_960x720",
@@ -8640,7 +8640,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "pp_shituv1_mainbody_detection_640x640",
@@ -8665,7 +8665,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "pp_shituv2_feature_extraction_224x224",
@@ -8673,7 +8673,7 @@
     "original_name": "PP-ShiTuV2_feature_extraction",
     "csv_task": "FREC",
     "add_model_task": "embedding",
-    "postprocessor": "GenericEmbeddingPostprocessor",
+    "postprocessor": "GalleryRetrievalPostprocessor",
     "input_width": 224,
     "input_height": 224,
     "config": {},
@@ -8681,12 +8681,12 @@
     "supported": true,
     "variant": "pp-shituv2-feature-extraction_224x224",
     "family": "pp_shitu_rec",
-    "task": "super_resolution",
+    "task": "visual_place_recognition",
     "task_legacy": "embedding",
     "image_only": true,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "pp_shituv2_mainbody_detection_640x640",
@@ -8711,7 +8711,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "pphgnet_base_224x224",
@@ -8734,7 +8734,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "pphgnet_small_224x224",
@@ -8757,7 +8757,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "pphgnet_tiny_224x224",
@@ -8780,7 +8780,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "pphgnetv2_b0_224x224",
@@ -8803,7 +8803,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "pphgnetv2_b1_224x224",
@@ -8826,7 +8826,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "pphgnetv2_b2_224x224",
@@ -8849,7 +8849,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "pphgnetv2_b3_224x224",
@@ -8872,7 +8872,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "pphgnetv2_b4_224x224",
@@ -8895,7 +8895,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "pphgnetv2_b5_224x224",
@@ -8918,7 +8918,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "pphgnetv2_b6_224x224",
@@ -8941,7 +8941,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "pplcnetv2_base_224x224",
@@ -8964,7 +8964,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "pplcnetv2_large_224x224",
@@ -8987,7 +8987,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "pplcnetv2_small_224x224",
@@ -9010,7 +9010,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "ppmatting_hrnet_w48_composition_512x512",
@@ -9028,12 +9028,12 @@
     "supported": true,
     "variant": "ppmatting-hrnet-w48-composition_512x512",
     "family": "ppmatting",
-    "task": "semantic_segmentation",
+    "task": "image_matting",
     "task_legacy": "semantic_segmentation",
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "ppmatting_hrnet_w48_distinctions_512x512",
@@ -9051,12 +9051,12 @@
     "supported": true,
     "variant": "ppmatting-hrnet-w48-distinctions_512x512",
     "family": "ppmatting",
-    "task": "semantic_segmentation",
+    "task": "image_matting",
     "task_legacy": "semantic_segmentation",
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "repvgg_a0_reid_256x128",
@@ -9064,7 +9064,7 @@
     "original_name": "RepVGG-A0 Person ReID",
     "csv_task": "REID",
     "add_model_task": "reid",
-    "postprocessor": "GenericEmbeddingPostprocessor",
+    "postprocessor": "GalleryRetrievalPostprocessor",
     "input_width": 128,
     "input_height": 256,
     "config": {},
@@ -9072,12 +9072,12 @@
     "supported": true,
     "variant": "repvgg-a0-reid_256x128",
     "family": "repvgg_reid",
-    "task": "image_classification",
+    "task": "person_reid",
     "task_legacy": "reid",
     "image_only": true,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "rtdetr_hgnetv2_h_6x_640x640",
@@ -9101,7 +9101,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "rtdetr_hgnetv2_l_6x_640x640",
@@ -9125,7 +9125,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "rtdetr_hgnetv2_x_6x_640x640",
@@ -9149,7 +9149,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "rtdetr_r101vd_6x_640x640",
@@ -9173,7 +9173,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "rtdetr_r18vd_6x_640x640",
@@ -9197,7 +9197,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "rtdetr_r34vd_6x_640x640",
@@ -9221,7 +9221,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "rtdetr_r50vd_6x_640x640",
@@ -9245,7 +9245,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "rtdetr_r50vd_m_6x_640x640",
@@ -9269,7 +9269,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "rtdetrv2_r101vd_6x_640x640",
@@ -9293,7 +9293,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "rtdetrv2_r18vd_120e_640x640",
@@ -9317,7 +9317,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "rtdetrv2_r34vd_120e_640x640",
@@ -9341,7 +9341,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "rtdetrv2_r50vd_6x_640x640",
@@ -9365,7 +9365,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "rtdetrv2_r50vd_m_7x_640x640",
@@ -9389,7 +9389,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "rtdetrv3_r18vd_6x_640x640",
@@ -9413,7 +9413,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "rtdetrv3_r50vd_6x_640x640",
@@ -9437,7 +9437,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "stdc1_seg50_512x1024",
@@ -9460,7 +9460,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "stdc1_seg75_768x1536",
@@ -9483,7 +9483,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "stdc2_seg75_768x1536",
@@ -9506,7 +9506,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "swin_b_224x224",
@@ -9529,7 +9529,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "vit_b_p16_384x384",
@@ -9622,7 +9622,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolo11_l_pose_640x640_pre_optimized",
@@ -9646,7 +9646,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolo11_l_seg_640x640_pre_optimized",
@@ -9670,7 +9670,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolo11_l_640x640_pre_optimized",
@@ -9694,7 +9694,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolo11_m_pose_640x640_pre_optimized",
@@ -9718,7 +9718,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolo11_m_seg_640x640_pre_optimized",
@@ -9742,7 +9742,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolo11_m_640x640_pre_optimized",
@@ -9766,7 +9766,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolo11_n_pose_640x640_pre_optimized",
@@ -9790,7 +9790,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolo11_n_seg_640x640_pre_optimized",
@@ -9814,7 +9814,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolo11_n_640x640_pre_optimized",
@@ -9838,7 +9838,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolo11_s_pose_640x640_pre_optimized",
@@ -9862,7 +9862,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolo11_s_seg_640x640_pre_optimized",
@@ -9886,7 +9886,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolo11_s_640x640_pre_optimized",
@@ -9910,7 +9910,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolo11_x_pose_640x640_pre_optimized",
@@ -9934,7 +9934,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolo11_x_seg_640x640_pre_optimized",
@@ -9958,7 +9958,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolo11_x_640x640_pre_optimized",
@@ -9982,7 +9982,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolo26_l_pose_640x640_pre_optimized",
@@ -10008,7 +10008,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolo26_l_640x640_pre_optimized",
@@ -10033,7 +10033,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolo26_m_pose_640x640_pre_optimized",
@@ -10059,7 +10059,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolo26_m_640x640_pre_optimized",
@@ -10084,7 +10084,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolo26_n_pose_640x640_pre_optimized",
@@ -10110,7 +10110,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolo26_n_640x640_pre_optimized",
@@ -10135,7 +10135,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolo26_s_pose_640x640_pre_optimized",
@@ -10161,7 +10161,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolo26_s_640x640_pre_optimized",
@@ -10186,7 +10186,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolo26_x_pose_640x640_pre_optimized",
@@ -10212,7 +10212,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolo26_x_640x640_pre_optimized",
@@ -10237,7 +10237,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov12_cls_l_224x224",
@@ -10260,7 +10260,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov12_cls_m_224x224",
@@ -10283,7 +10283,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov12_cls_n_224x224",
@@ -10306,7 +10306,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov12_cls_s_224x224",
@@ -10329,7 +10329,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov12_cls_x_224x224",
@@ -10352,7 +10352,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov12_l_640x640",
@@ -10376,7 +10376,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov12_l_640x640_pre_optimized",
@@ -10400,7 +10400,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov12_m_640x640",
@@ -10424,7 +10424,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov12_m_640x640_pre_optimized",
@@ -10448,7 +10448,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov12_n_640x640",
@@ -10472,7 +10472,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov12_n_640x640_pre_optimized",
@@ -10496,7 +10496,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov12_s_640x640",
@@ -10520,7 +10520,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov12_s_640x640_pre_optimized",
@@ -10544,7 +10544,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov12_seg_l_640x640",
@@ -10568,7 +10568,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov12_seg_l_640x640_pre_optimized",
@@ -10592,7 +10592,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov12_seg_m_640x640",
@@ -10616,7 +10616,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov12_seg_m_640x640_pre_optimized",
@@ -10640,7 +10640,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov12_seg_n_640x640",
@@ -10664,7 +10664,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov12_seg_n_640x640_pre_optimized",
@@ -10688,7 +10688,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov12_seg_s_640x640",
@@ -10712,7 +10712,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov12_seg_s_640x640_pre_optimized",
@@ -10736,7 +10736,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov12_seg_x_640x640",
@@ -10760,7 +10760,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov12_seg_x_640x640_pre_optimized",
@@ -10784,7 +10784,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov12_x_640x640",
@@ -10808,7 +10808,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov12_x_640x640_pre_optimized",
@@ -10832,7 +10832,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov13_l_640x640",
@@ -10856,7 +10856,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov13_l_640x640_pre_optimized",
@@ -10880,7 +10880,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov13_n_640x640",
@@ -10904,7 +10904,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov13_n_640x640_pre_optimized",
@@ -10928,7 +10928,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov13_s_640x640",
@@ -10952,7 +10952,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov13_s_640x640_pre_optimized",
@@ -10976,7 +10976,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov13_x_640x640",
@@ -11000,7 +11000,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov13_x_640x640_pre_optimized",
@@ -11024,7 +11024,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov6_m6_1280x1280",
@@ -11048,7 +11048,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov8_l_pose_640x640_pre_optimized",
@@ -11072,7 +11072,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov8_l_seg_640x640_pre_optimized",
@@ -11096,7 +11096,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov8_l_640x640_pre_optimized",
@@ -11120,7 +11120,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov8_m_pose_640x640_pre_optimized",
@@ -11144,7 +11144,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov8_m_seg_640x640_pre_optimized",
@@ -11168,7 +11168,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov8_m_640x640_pre_optimized",
@@ -11192,7 +11192,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov8_n_pose_640x640_pre_optimized",
@@ -11216,7 +11216,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov8_n_seg_640x640_pre_optimized",
@@ -11240,7 +11240,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov8_n_640x640_pre_optimized",
@@ -11264,7 +11264,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov8_s_pose_640x640_pre_optimized",
@@ -11288,7 +11288,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov8_s_seg_640x640_pre_optimized",
@@ -11312,7 +11312,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov8_s_640x640_pre_optimized",
@@ -11336,7 +11336,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov8_x_pose_640x640_pre_optimized",
@@ -11360,7 +11360,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov8_x_seg_640x640_pre_optimized",
@@ -11384,7 +11384,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov8_x_640x640_pre_optimized",
@@ -11408,7 +11408,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov9_c_640x640_pre_optimized",
@@ -11432,7 +11432,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov9_e_640x640",
@@ -11456,7 +11456,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov9_e_640x640_pre_optimized",
@@ -11480,7 +11480,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov9_gelan_c_640x640_pre_optimized",
@@ -11504,7 +11504,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov9_m_640x640_pre_optimized",
@@ -11528,7 +11528,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov9_s_640x640_pre_optimized",
@@ -11552,7 +11552,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov9_seg_c_640x640",
@@ -11576,7 +11576,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov9_seg_c_640x640_pre_optimized",
@@ -11600,7 +11600,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov9_seg_e_640x640",
@@ -11624,7 +11624,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov9_seg_e_640x640_pre_optimized",
@@ -11648,7 +11648,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov9_seg_gelan_c_640x640",
@@ -11672,7 +11672,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov9_seg_gelan_c_640x640_pre_optimized",
@@ -11696,7 +11696,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "yolov9_t_640x640_pre_optimized",
@@ -11720,6 +11720,6 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   }
 ]

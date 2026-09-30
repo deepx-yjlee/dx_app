@@ -1,0 +1,12 @@
+name: Sonar Build Analysis on dev
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - dev
+
+jobs:
+  sonar_analysis:
+    uses: deepx/do_workflows-central/.github/workflows/dx_app-sonar-dev.yml@main
+    secrets: inherit

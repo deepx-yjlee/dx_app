@@ -71,6 +71,12 @@ _ASYNC_QUEUE_MAXSIZE = 4
 # A small bound keeps the helper O(1)-ish even if another thread is refilling.
 _DISPLAY_DROP_LIMIT = 8
 
+# Live preview budget. Frames the window will not show are not drawn: drawing
+# every frame fills render_queue (maxsize 4) and the back-pressure reaches
+# inference. --no-display passes display=False and skips this entirely.
+# -s / DXAPP_SAVE_IMAGE still render every frame because the file is the overlay.
+_PREVIEW_INTERVAL_S = 1.0 / 60.0
+
 
 def offer_latest(display_q, item, on_drop=None) -> bool:
     """Publish a frame for display, dropping stale frames instead of blocking.
@@ -620,7 +626,8 @@ class AsyncRunner:
         show_output(img)
 
     def _render_worker(self, queues: dict, save_enabled: bool,
-                       image_save_paths: Optional[list] = None) -> None:
+                       image_save_paths: Optional[list] = None,
+                       display: bool = True) -> None:
         """Render + save thread. Pushes frames to display_queue for main."""
         render_q = queues["render_queue"]
         display_q = queues["display_queue"]
@@ -628,12 +635,23 @@ class AsyncRunner:
         # Frames that get persisted must not be dropped; frames that are only
         # shown on screen must not be allowed to throttle the pipeline.
         lossy_display = not save_enabled and not image_save_paths
+        env_save = os.environ.get("DXAPP_SAVE_IMAGE")
+        persist_all = bool(save_enabled or image_save_paths or env_save)
+        last_preview = 0.0
         try:
             while not self._stop_event.is_set():
                 item = self._dequeue(render_q)
                 if item is _SENTINEL:
                     break
                 frame, results = item
+
+                now = time.perf_counter()
+                preview = display and (now - last_preview) >= _PREVIEW_INTERVAL_S
+                if not persist_all and not preview:
+                    render_idx += 1
+                    continue
+                if preview:
+                    last_preview = now
 
                 t0 = time.perf_counter()
                 output_img = self._run_visualize(frame, results)
@@ -1228,7 +1246,8 @@ class AsyncRunner:
             threading.Thread(target=self._postprocess_worker,
                              args=(queues,), daemon=True),
             threading.Thread(target=self._render_worker,
-                             args=(queues, save_enabled, image_save_paths),
+                             args=(queues, save_enabled, image_save_paths,
+                                   display),
                              daemon=True),
         ]
         for t in threads:

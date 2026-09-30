@@ -13,6 +13,7 @@ Supported result types:
   - ClassificationResult         → classifications[]
   - OBBResult                    → detections[] + angle
   - EmbeddingResult              → embedding{dim, l2_norm, has_nan}
+  - RetrievalResult              → embedding{...} + matches[]
   - HandLandmarkResult           → detections[] + landmarks[]
   - SuperResolutionResult        → output_shape, output_stats
   - EnhancedImageResult          → output_shape, output_stats
@@ -184,6 +185,29 @@ def _ser_embedding(items, img_h, img_w):
     }
 
 
+def _ser_retrieval(items, img_h, img_w):
+    """Descriptor plus its ranking. Both are compared across trees: a matching
+    descriptor with a different order means the gallery differs, not the model."""
+    first = items[0]
+    vec = np.asarray(first.embedding) if first.embedding is not None else np.array([])
+    return {
+        "image_height": img_h, "image_width": img_w,
+        "embedding": {
+            "dim": int(vec.size),
+            "l2_norm": float(np.linalg.norm(vec)) if vec.size > 0 else 0.0,
+            "has_nan": bool(np.isnan(vec).any()) if vec.size > 0 else False,
+            "model_type": str(first.model_type),
+        },
+        "gallery": {"name": str(first.gallery_name),
+                    "size": int(first.gallery_size)},
+        "matches": [
+            {"rank": int(m.rank), "score": float(m.score),
+             "path": str(m.path), "label": str(m.label)}
+            for m in (first.matches or [])
+        ],
+    }
+
+
 def _ser_hand_landmark(items, img_h, img_w):
     return {
         "image_height": img_h, "image_width": img_w,
@@ -223,6 +247,7 @@ _SERIALIZER_MAP = {
     "ClassificationResult":   _ser_classification,
     "OBBResult":              _ser_obb,
     "EmbeddingResult":        _ser_embedding,
+    "RetrievalResult":        _ser_retrieval,
     "HandLandmarkResult":     _ser_hand_landmark,
     "SuperResolutionResult":  _ser_image_output,
     "EnhancedImageResult":    _ser_image_output,

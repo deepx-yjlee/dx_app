@@ -195,7 +195,7 @@ mapping, joined from a committed snapshot of the dx-modelzoo CV tree.
 - **RETENTION POLICY — conflicting examples are kept, never deleted.** The
   alignment renames and regroups; it does not remove examples. An alias keeps its
   own `model_name` as the legacy compat key and shares the canonical entry's
-  `variant`/`family`/`task`/`dxnn_file`. Conflict scope across 353 entries is
+  `variant`/`family`/`task`/`dxnn_file`. Conflict scope across 500 entries is
   exactly 1 (`deit-b_384x384.dxnn`). Differing `config` within a family (14 of 89)
   is NOT a conflict — each variant keeps its own `<family>/<variant>/config.json`.
 - Guarded by `tests/python_example/unit/test_registry_modelzoo_conformance.py`

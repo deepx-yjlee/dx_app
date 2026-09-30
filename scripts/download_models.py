@@ -205,15 +205,21 @@ def _sizeof_fmt(num: float) -> str:
     return f"{num:.1f} TB"
 
 
-# Models declared for a release DX Model Zoo has not published yet. 286 of the manifest
-# URLs point at this directory (143 models x dxnn+json) and every one returns 403 until
-# publication, so their failure is expected and must not read as 286 errors -- while a
-# 403 on a PUBLISHED model still has to be loud.
-PENDING_URL_MARKER = "/2_5_0/"
+# A model DX Model Zoo has declared but not published yet returns 403, and that has to
+# read as "expected, no action" rather than as an error -- while a 403 on a published
+# model stays loud.
+#
+# This used to be inferred from the URL: anything under /2_5_0/ was unpublished. That
+# held only while 2_5_0 was unreleased. The zoo published it on 2026-09-30 and moved the
+# whole q-lite tier there, so the rule would now mark 492 of 499 rows pending and turn
+# every real 403 into a silent skip. Probing all 499 URLs that day: 498 -> 200, and
+# exactly one -> 403 (vit-l-p16_512x512_swag, which DEEPX reported as failing to build).
+#
+# So it is DECLARED: the manifest row carries `pending: true` and nothing else means it.
 
 
-def is_pending(url: str) -> bool:
-    return PENDING_URL_MARKER in (url or "")
+def is_pending(row: dict) -> bool:
+    return bool(row.get("pending")) if isinstance(row, dict) else False
 
 
 def download_file(url: str, dest: Path, session, force: bool = False,
@@ -279,11 +285,12 @@ def download_all(models: list[dict], output_dir: Path, session,
     tasks = []
     for m in models:
         fname = Path(urlparse(m["dxnn_url"]).path).name
-        tasks.append(("dxnn", m["name"], m["dxnn_url"], output_dir / fname))
+        pending = is_pending(m)
+        tasks.append(("dxnn", m["name"], m["dxnn_url"], output_dir / fname, pending))
         if with_json and m.get("json_url"):
             jname = Path(urlparse(m["json_url"]).path).name
             # Save json alongside dxnn in the same output directory
-            tasks.append(("json", m["name"], m["json_url"], output_dir / jname))
+            tasks.append(("json", m["name"], m["json_url"], output_dir / jname, pending))
 
     total = len(tasks)
     head(f"\n{'─'*60}")
@@ -297,8 +304,8 @@ def download_all(models: list[dict], output_dir: Path, session,
     with ThreadPoolExecutor(max_workers=workers) as pool:
         futures = {
             pool.submit(download_file, url, dest, session, force,
-                        is_pending(url)): (kind, name)
-            for kind, name, url, dest in tasks
+                        pending): (kind, name)
+            for kind, name, url, dest, pending in tasks
         }
         done = 0
         for fut in as_completed(futures):
@@ -313,9 +320,9 @@ def download_all(models: list[dict], output_dir: Path, session,
     head(f"\n{'─'*60}")
     head(f"  Done: {counters['ok']} downloaded, {counters['skip']} skipped, {counters['err']} errors  ({elapsed:.1f}s)")
     if counters["pending"]:
-        head(f"  Pending: {counters['pending']} file(s) are not published yet (2_5_0) "
-             "and were skipped. Their examples are already in the tree; they will "
-             "download once DX Model Zoo publishes them. No action needed.")
+        head(f"  Pending: {counters['pending']} file(s) are not published yet and were "
+             "skipped. Their examples are already in the tree; they will download once "
+             "DX Model Zoo publishes them. No action needed.")
     head(f"  Saved to: {output_dir.resolve()}")
     if counters["err_403"]:
         warn(f"{counters['err_403']} file(s) returned HTTP 403 (Forbidden).")

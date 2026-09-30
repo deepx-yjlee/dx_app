@@ -174,13 +174,13 @@ generate_cmake() {
     local sync_sources=()
     local async_sources=()
     while IFS= read -r -d '' f; do
-        sync_sources+=("$(basename "$f")")
-    done < <(find "$target_dir" -maxdepth 1 -name "*_sync.cpp" -print0 2>/dev/null)
+        sync_sources+=("${f#"$target_dir"/}")
+    done < <(find "$target_dir" -name "*_sync.cpp" ! -path "*/common/*" -print0 2>/dev/null)
     while IFS= read -r -d '' f; do
-        async_sources+=("$(basename "$f")")
-    done < <(find "$target_dir" -maxdepth 1 -name "*_async.cpp" -print0 2>/dev/null)
+        async_sources+=("${f#"$target_dir"/}")
+    done < <(find "$target_dir" -name "*_async.cpp" ! -path "*/common/*" -print0 2>/dev/null)
 
-    # pthread 는 COMMON_LIBS 의 Threads::Threads 로 모든 타깃에 링크된다(개별 탐지 불필요).
+    # pthread is linked into every target via Threads::Threads in COMMON_LIBS (no per-target probe).
     # Start generating CMakeLists.txt
     cat > "$target_dir/CMakeLists.txt" << 'CMAKEHEAD'
 # =============================================================================
@@ -202,8 +202,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Find Required Packages
 # =============================================================================
 find_package(OpenCV REQUIRED)
-# async 러너(common/runner/async_*.hpp)가 std::thread 를 사용하므로 pthread 링크가 필요하다.
-# 엔트리 .cpp 만으로는 스레드 사용을 알 수 없어(스레드는 헤더에 있음) 표준 Threads 를 항상 링크한다.
+# Async runners (common/runner/async_*.hpp) use std::thread, so pthread must be linked.
+# The entry .cpp files do not mention threads themselves (the use is in the headers),
+# so always link the standard Threads package.
 find_package(Threads REQUIRED)
 
 if(CROSS_COMPILE OR MSVC)
@@ -255,7 +256,8 @@ CMAKEBODY
 
     # Generate target definitions
     for src in "${sync_sources[@]}"; do
-        local target_name="${src%.cpp}"
+        local target_name
+        target_name="$(basename "${src%.cpp}")"
         cat >> "$target_dir/CMakeLists.txt" << EOF
 # --- ${target_name} ---
 add_executable(${target_name} ${src} \${UTILITY_SOURCES} \${POSTPROCESS_SOURCES})
@@ -266,7 +268,8 @@ EOF
     done
 
     for src in "${async_sources[@]}"; do
-        local target_name="${src%.cpp}"
+        local target_name
+        target_name="$(basename "${src%.cpp}")"
         cat >> "$target_dir/CMakeLists.txt" << EOF
 # --- ${target_name} ---
 add_executable(${target_name} ${src} \${UTILITY_SOURCES} \${POSTPROCESS_SOURCES})
@@ -335,18 +338,35 @@ prepare_model_cpp() {
         return 1
     fi
 
-    # Family sources stay at <task>/<family> even when only one model config is packed.
-    # Executables are per family; the selected model is <variant>/config.json.
+    # Each variant is its own example: factory + <variant>_sync.cpp + <variant>_async.cpp.
     if [ -n "$OUTPUT_DIR" ]; then
-        target_dir="$OUTPUT_DIR/cpp/$family_rel"
-        mkdir -p "$target_dir"
-        find "$src_model_dir" -maxdepth 1 -type f | while read -r f; do
-            cp "$f" "$target_dir/"
-        done
-        if [ -d "$src_model_dir/factory" ]; then
-            cp -r "$src_model_dir/factory" "$target_dir/factory"
+        copy_variant_example() {
+            local src_variant="$1"
+            local dst_variant="$2"
+            local variant_name
+            variant_name="$(basename "$src_variant")"
+            mkdir -p "$dst_variant"
+            cp "$src_variant/${variant_name}_sync.cpp" "$dst_variant/" 2>/dev/null || true
+            cp "$src_variant/${variant_name}_async.cpp" "$dst_variant/" 2>/dev/null || true
+            if [ -d "$src_variant/factory" ]; then
+                cp -r "$src_variant/factory" "$dst_variant/factory"
+            fi
+            if [ -f "$src_variant/config.json" ]; then
+                cp "$src_variant/config.json" "$dst_variant/config.json"
+            fi
+        }
+        if [ -n "$only_variant" ]; then
+            target_dir="$OUTPUT_DIR/cpp/$family_rel/$only_variant"
+            copy_variant_example "$src_model_dir/$only_variant" "$target_dir"
+        else
+            target_dir="$OUTPUT_DIR/cpp/$family_rel"
+            mkdir -p "$target_dir"
+            for child in "$src_model_dir"/*/; do
+                [ -d "$child" ] || continue
+                [ -f "${child}config.json" ] || continue
+                copy_variant_example "${child%/}" "$target_dir/$(basename "$child")"
+            done
         fi
-        copy_model_configs "$src_model_dir" "$target_dir" "$only_variant"
     else
         target_dir="$src_model_dir"
     fi
@@ -392,7 +412,8 @@ prepare_model_cpp() {
             cp "$src_file" "$target_dir/$inc_path"
             ext_factory_count=$((ext_factory_count + 1))
         fi
-    done < <(grep -rh '#include "' "$scan_dir"/*.cpp 2>/dev/null \
+    done < <(find "$scan_dir" -name '*.cpp' ! -path '*/common/*' -print0 2>/dev/null \
+             | xargs -0 grep -h '#include "' 2>/dev/null \
              | sed -n 's/.*#include "\([^"]*\)".*/\1/p' \
              | grep -v '^common/' \
              | grep -v '^<' \
@@ -448,9 +469,9 @@ prepare_model_py() {
         return 1
     fi
 
-    # A single model is a self-contained folder: its scripts, config.json, the
-    # shared factory/, custom_ops.py and a pruned common/. A family export keeps
-    # every model folder under <task>/<family>/.
+    # A single model is a self-contained folder: its scripts, config.json,
+    # variant factory/, custom_ops.py and a pruned common/. A family export
+    # keeps every model folder under <task>/<family>/.
     if [ -n "$OUTPUT_DIR" ]; then
         if [ -n "$only_variant" ]; then
             target_dir="$OUTPUT_DIR/py/$family_rel/$only_variant"
@@ -458,11 +479,8 @@ prepare_model_py() {
             find "$src_model_dir/$only_variant" -maxdepth 1 -type f | while read -r f; do
                 cp "$f" "$target_dir/"
             done
-            if [ -d "$src_model_dir/factory" ]; then
-                cp -r "$src_model_dir/factory" "$target_dir/factory"
-            fi
-            if [ -f "$src_model_dir/custom_ops.py" ]; then
-                cp "$src_model_dir/custom_ops.py" "$target_dir/custom_ops.py"
+            if [ -d "$src_model_dir/$only_variant/factory" ]; then
+                cp -r "$src_model_dir/$only_variant/factory" "$target_dir/factory"
             fi
         else
             target_dir="$OUTPUT_DIR/py/$family_rel"
@@ -470,17 +488,18 @@ prepare_model_py() {
             find "$src_model_dir" -maxdepth 1 -type f | while read -r f; do
                 cp "$f" "$target_dir/"
             done
-            if [ -d "$src_model_dir/factory" ]; then
-                cp -r "$src_model_dir/factory" "$target_dir/factory"
-            fi
-            copy_model_configs "$src_model_dir" "$target_dir" ""
             local child name
             for child in "$src_model_dir"/*/; do
                 [ -f "${child}config.json" ] || continue
                 name="$(basename "$child")"
-                find "$child" -maxdepth 1 -type f ! -name 'config.json' | while read -r f; do
+                mkdir -p "$target_dir/$name"
+                find "$child" -maxdepth 1 -type f | while read -r f; do
                     cp "$f" "$target_dir/$name/"
                 done
+                if [ -d "${child}factory" ]; then
+                    rm -rf "$target_dir/$name/factory"
+                    cp -r "${child}factory" "$target_dir/$name/factory"
+                fi
             done
         fi
     elif [ -n "$only_variant" ]; then

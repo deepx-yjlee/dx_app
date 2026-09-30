@@ -132,9 +132,12 @@ def test_extract_one_model_keeps_a_single_config(tmp_path):
     assert cpp.returncode == 0, cpp.stderr
     cpp_configs = _configs_under(out / "cpp")
     assert len(cpp_configs) == 1
-    family = out / "cpp" / "depth_estimation" / "depthanythingv2"
-    assert (family / "depthanythingv2_sync.cpp").is_file()
-    assert (family / "factory").is_dir()
+    variant = (
+        out / "cpp" / "depth_estimation" / "depthanythingv2"
+        / "depthanythingv2-vitb_224x224"
+    )
+    assert (variant / "depthanythingv2-vitb_224x224_sync.cpp").is_file()
+    assert (variant / "factory").is_dir()
 
 
 def test_extract_family_keeps_every_model_folder(tmp_path):
@@ -159,5 +162,7 @@ def test_extract_family_keeps_every_model_folder(tmp_path):
     assert "depthanythingv2-vitl_224x224" in names
     assert "depthanythingv2-vits_224x224" in names
     family = out / "py" / "depth_estimation" / "depthanythingv2"
-    assert (family / "depthanythingv2_sync.py").is_file()
-    assert (family / "factory").is_dir()
+    variant_dir = family / "depthanythingv2-vitb_224x224"
+    assert (variant_dir / "depthanythingv2-vitb_224x224_sync.py").is_file()
+    assert (variant_dir / "factory").is_dir()
+    assert not (family / "depthanythingv2_sync.py").exists()

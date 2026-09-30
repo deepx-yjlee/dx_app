@@ -4,7 +4,7 @@
 
 ## 개요
 
-dx_app은 {{TASK_COUNT}}개 AI 작업에 걸쳐 {{MODEL_COUNT}}개의 컴파일된 `.dxnn` 모델을 제공하며, Python (4개 변형) 및 C++ 예제를 포함합니다.
+dx_app은 28개 AI 작업에 걸쳐 500개 model variant를 제공하며, Python (4개 변형) 및 C++ 예제를 포함합니다. 이 중 499개는 다운로드 가능한 `.dxnn`이 있고, `vit-l-p16_512x512_swag`는 선언되어 있으나 미공개입니다(manifest row에 `pending: true`).
 
 ## 응답 언어
 
@@ -514,9 +514,40 @@ Artifact Verification Gate는 각 artifact가 **어떻게** 검증되는지 정�
    낭비합니다. 시스템 프롬프트와 대화 이력에 있는 지식을 사용하세요.
 
 
-## {{TASK_COUNT}}개 지원 AI 작업
+## 28개 지원 AI 작업
 
-{{TASK_LIST}}
+| AI task | 변형 수 | 예제 경로 |
+|---|--:|---|
+| `object_detection` | 169 | `src/{python,cpp}_example/object_detection/` |
+| `image_classification` | 137 | `src/{python,cpp}_example/image_classification/` |
+| `instance_segmentation` | 53 | `src/{python,cpp}_example/instance_segmentation/` |
+| `pose_estimation` | 37 | `src/{python,cpp}_example/pose_estimation/` |
+| `semantic_segmentation` | 24 | `src/{python,cpp}_example/semantic_segmentation/` |
+| `face_detection` | 19 | `src/{python,cpp}_example/face_detection/` |
+| `depth_estimation` | 10 | `src/{python,cpp}_example/depth_estimation/` |
+| `super_resolution` | 6 | `src/{python,cpp}_example/super_resolution/` |
+| `image_denoising` | 5 | `src/{python,cpp}_example/image_denoising/` |
+| `oriented_object_detection` | 5 | `src/{python,cpp}_example/oriented_object_detection/` |
+| `zero_shot_image_classification` | 5 | `src/{python,cpp}_example/zero_shot_image_classification/` |
+| `anomaly_detection` | 4 | `src/{python,cpp}_example/anomaly_detection/` |
+| `face_recognition` | 4 | `src/{python,cpp}_example/face_recognition/` |
+| `visual_place_recognition` **(2_5_0 신규)** | 3 | `src/{python,cpp}_example/visual_place_recognition/` |
+| `face_landmark` | 2 | `src/{python,cpp}_example/face_landmark/` |
+| `image_matting` **(2_5_0 신규)** | 2 | `src/{python,cpp}_example/image_matting/` |
+| `image_retrieval` **(2_5_0 신규)** | 2 | `src/{python,cpp}_example/image_retrieval/` |
+| `low_light_enhancement` | 2 | `src/{python,cpp}_example/low_light_enhancement/` |
+| `person_attribute` | 2 | `src/{python,cpp}_example/person_attribute/` |
+| `3d_object_detection` | 1 | `src/{python,cpp}_example/3d_object_detection/` |
+| `face_attribute` | 1 | `src/{python,cpp}_example/face_attribute/` |
+| `hand_detection` | 1 | `src/{python,cpp}_example/hand_detection/` |
+| `hand_landmark` | 1 | `src/{python,cpp}_example/hand_landmark/` |
+| `keypoint_detection` | 1 | `src/{python,cpp}_example/keypoint_detection/` |
+| `object_pose_estimation` | 1 | `src/{python,cpp}_example/object_pose_estimation/` |
+| `panoptic_driving_perception` | 1 | `src/{python,cpp}_example/panoptic_driving_perception/` |
+| `person_reid` **(2_5_0 신규)** | 1 | `src/{python,cpp}_example/person_reid/` |
+| `zero_shot_instance_segmentation` | 1 | `src/{python,cpp}_example/zero_shot_instance_segmentation/` |
+
+이 수치는 `config/model_registry.json` 기준입니다. registry가 바뀌면 이 절도 함께 갱신하세요.
 
 ## 하드웨어
 

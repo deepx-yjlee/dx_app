@@ -1,0 +1,32 @@
+{
+  "name": "dms_clip",
+  "fuse": "dms",
+  "stages": [
+    {
+      "id": "face",
+      "task": "face_detection",
+      "family": "scrfd",
+      "variant": "scrfd-500m_640x640"
+    },
+    {
+      "id": "pose",
+      "task": "pose_estimation",
+      "family": "yolo11_pose",
+      "variant": "yolo11-n-pose_640x640"
+    },
+    {
+      "id": "clip",
+      "task": "zero_shot_image_classification",
+      "family": "clip",
+      "variant": "clip-img_vit-b32_256x256_datacomp-s34b-b86k",
+      "depends_on": ["face"],
+      "bind": {"op": "face_roi", "source": "face"}
+    },
+    {
+      "id": "headpose",
+      "kind": "cpu",
+      "op": "face_solvepnp",
+      "depends_on": ["face"]
+    }
+  ]
+}

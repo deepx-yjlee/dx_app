@@ -77,6 +77,20 @@ TASK_IMAGE_MAP: dict[str, str] = {
     "object_pose_estimation": _SAMPLE_DOPE,          # sample/dope/*.png (NOT sample/img)
     "panoptic_driving_perception": _SAMPLE_STREET,
     "3d_object_detection":    _SAMPLE_LIDAR_KITTI,   # sample/kitti/velodyne/*.bin (NOT sample/img)
+    "image_classification":   _SAMPLE_DOG,
+    "oriented_object_detection": _SAMPLE_DOTA,
+    "face_recognition":       _SAMPLE_FACE_PAIR_REF,
+    "face_attribute":         f"{_IMG}/sample_person_a1.jpg",
+    "face_landmark":          _SAMPLE_FACE_PAIR_REF,
+    "person_attribute":       f"{_IMG}/sample_person_a1.jpg",
+    "person_reid":            "sample/reid/queries/sample_person_a2.jpg",
+    "image_retrieval":        _SAMPLE_PERSON_A2,
+    "visual_place_recognition": "sample/vpr/queries/q1.jpg",
+    "image_matting":          f"{_IMG}/sample_person_b.jpg",
+    "low_light_enhancement":  _SAMPLE_LOWLIGHT,
+    "zero_shot_image_classification": _SAMPLE_DOG,
+    "zero_shot_instance_segmentation": _SAMPLE_STREET,
+    "anomaly_detection":      _SAMPLE_STREET,
 }
 
 # ======================================================================
@@ -127,8 +141,15 @@ IMAGE_ONLY_TASKS: frozenset = frozenset({
     "embedding",
     "reid",
     "attribute_recognition",
+    "face_recognition",
+    "person_attribute",
+    "face_attribute",
+    "person_reid",
+    "image_retrieval",
+    "visual_place_recognition",
     "object_pose_estimation",
     "3d_object_detection",
+    "anomaly_detection",
     # hand_detection / hand_landmark are NOT image-only: the single model runs
     # per frame on video/camera/RTSP (no palm-detector crop stage), so they are
     # exercised by the stream E2E tests like any other video-capable task.
@@ -160,6 +181,12 @@ STREAM_REJECTING_TASKS_CPP: frozenset = frozenset({
     "embedding",
     "reid",
     "attribute_recognition",
+    "face_recognition",
+    "person_attribute",
+    "face_attribute",
+    "person_reid",
+    "image_retrieval",
+    "visual_place_recognition",
     "object_pose_estimation",
 })
 STREAM_REJECTING_TASKS_PY: frozenset = frozenset({
@@ -167,125 +194,64 @@ STREAM_REJECTING_TASKS_PY: frozenset = frozenset({
     "embedding",
     "reid",
     "attribute_recognition",
+    "face_recognition",
+    "person_attribute",
+    "face_attribute",
+    "person_reid",
+    "image_retrieval",
+    "visual_place_recognition",
     "object_pose_estimation",
 })
 
 # ======================================================================
 # E2E short-list models  (used by ``--e2e-short`` / ``-m e2e_short``)
 #
-# Format: model directory names under src/{python,cpp}_example/<task>/
-#
-# Display name              → model_dir_name
-# --------------------------------------------------------
-# Object Detection
-#   YoloV5S-1               → yolov5s
-#   YoloV6n_0.2.1-1         → yolov6n_0_2_1
-#   YoloV7-1                → yolov7
-#   YoloV8S-1               → yolov8s
-#   YoloV9S-1               → yolov9s
-#   YOLOV10S-1              → yolov10s
-#   YOLOV11S-1              → yolov11s
-#   YoloXTiny-1             → yoloxtiny
-#   yolo26x-1               → yolo26x
-#   yolo26n-1               → yolo26n
-#   SSDMV2Lite-1            → ssdmv2lite
-#   NanoDet_RepVGG-2        → nanodet_repvgg
-# PPU
-#   YoloV5S_PPU-1           → yolov5s_ppu
-#   YoloV7_PPU-1            → yolov7_ppu
-#   YoloV8_PPU-1            → yolov8_ppu
-# Image Classification
-#   ResNet50-1              → resnet50
-#   MobileNetV3L-1          → mobilenetv3large
-#   EfficientNetV2S-1       → efficientnetv2s
-#   ViTBaseP32-1            → vitbasep32_384
-#   RegNetY800MF-1          → regnety800mf
-#   HarDNet39DS-1           → hardnet39ds
-# Face Detection
-#   YOLOV7_Face-1           → yolov7_face
-#   SCRFD10G-1              → scrfd10g
-#   SCRFD500M-1             → scrfd500m
-# Segmentation
-#   DeepLabV3Plus-1         → deeplabv3plusmobilenet
-#   BiSeNetV2-1             → bisenetv2
-# Instance Segmentation
-#   YOLOV8M_SEG-1           → yolov8m_seg
-# Pose Estimation
-#   YOLOV8M_POSE-1          → yolov8m_pose
-# Image De-noising
-#   DnCNN-2                 → dncnn_25
-# Super Resolution
-#   ESPCN_x4-1              → espcn_x4
-# Depth Estimation
-#   FastDepth-1             → fastdepth_1
-# ======================================================================
+# Format: variant directory names under src/{python,cpp}_example/<task>/<family>/
 E2E_SHORT_MODELS: set[str] = {
-    # Object Detection
-    "yolov5s",
-    "yolov6n_0_2_1",
-    "yolov7",
-    "yolov8s",
-    "yolov9s",
-    "yolov10s",
-    "yolov11s",
-    "yolo26n",
-    "yoloxtiny",
-    "yolo26x",
-    "ssdmv2lite",
-    "nanodet_repvgg",
-    # PPU
-    "yolov5s_ppu",
-    "yolov7_ppu",
-    "yolov8s_ppu",
-    # Image Classification
-    "resnet50",
-    "mobilenetv3large",
-    "efficientnetv2s",
-    "vitb32",
-    "regnety800mf",
-    "hardnet39ds",
-    # Face Detection
-    "yolov7_face",
-    "scrfd10g",
-    "scrfd500m",
-    # Segmentation
-    "deeplabv3plusmobilenet",
-    "bisenetv2",
-    # Instance Segmentation
-    "yolov8m_seg",
-    # Pose Estimation
-    "yolov8m_pose",
-    # Image De-noising
-    "dncnn_25",
-    # Super Resolution
-    "espcn_x2",
-    "realesrgan_x2",
-    # Depth Estimation
-    "fastdepth_1",
-    # OBB Detection
-    "yolo26n_obb",
-    # 3D Object Detection
+    "yolov5-s_640x640",
+    "yolov6-n0_640x640_v0.2.1",
+    "yolov7_640x640",
+    "yolov8-s_640x640",
+    "yolov9-s_640x640",
+    "yolov10-s_640x640",
+    "yolo11-s_640x640",
+    "yolo26-n_640x640",
+    "yolox-t_416x416",
+    "yolo26-x_640x640",
+    "ssd-mobilenetv2-lite_300x300",
+    "nanodet_224x224",
+    "yolov5-s_640x640_ppu",
+    "yolov7_640x640_ppu",
+    "yolov8-s_640x640_ppu",
+    "resnet50_224x224",
+    "mobilenetv3-large_224x224",
+    "efficientnetv2-s_384x384",
+    "vit-b-p32_224x224",
+    "regnet-y800mf_224x224",
+    "hardnet39ds_224x224",
+    "yolov7-face_640x640",
+    "scrfd-10g_640x640",
+    "scrfd-500m_640x640",
+    "deeplabv3plus_mobilenetv1_512x512",
+    "bisenetv2_1024x2048",
+    "yolov8-m-seg_640x640",
+    "yolov8-m-pose_640x640",
+    "dncnn-25_512x512",
+    "espcn-x2_17x17",
+    "realesrgan-x2_192x192",
+    "fastdepth_224x224",
+    "yolo26-n-obb_1024x1024",
     "sfa3d_608x608",
-    # Object Pose Estimation
-    "dope_hope_ketchup",
-    # Panoptic Driving Perception
-    "yolopv2",
-    # Keypoint Detection
-    "superpoint",
-    # Image Enhancement
-    "zero_dce",
-    # Face Alignment
-    "3ddfa_v2_mobilnetv1_120x120",
-    # Hand Detection
-    "mediapipe_hand_detector",
-    # Hand Landmark
-    "handlandmarklite_1",
-    # Embedding
-    "arcface_mobilefacenet",
-    # ReID
-    "casvit_t",
-    # Attribute Recognition
-    "deepmar_resnet50",
+    "dope-hope-ketchup_480x640",
+    "yolopv2_384x640",
+    "superpoint_480x640",
+    "zerodce_400x600",
+    "3ddfa-v2_mobilenetv1_120x120",
+    "mediapipe-hand-detector_192x192",
+    "mediapipe-hands-lite_224x224",
+    "arcface_mobilefacenet_112x112",
+    "casvit-t_224x224",
+    "deepmar_resnet50_224x224",
 }
 
 

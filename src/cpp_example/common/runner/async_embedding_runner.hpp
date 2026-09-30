@@ -83,12 +83,12 @@ public:
         // (do not auto-run inference on a default sample).
         std::string task = factory_->getTaskType();
         bool hasStreamInput = !args.videoFile.empty() || args.cameraIndex >= 0 || !args.rtspUrl.empty();
-        if ((task == "embedding" || task == "reid" || task == "attribute_recognition") && hasStreamInput) {
+        if (dxapp::isComparisonOnlyTask(task) && hasStreamInput) {
             dxapp::fatal_error("[DXAPP] [ERROR] Task '" + task + "' supports image input only (-i / --image_path). "
                 "Video/camera input requires a detection crop pipeline and is not supported in single-model examples. "
                 "Use -i (--image_path) to provide an image file or directory.");
         }
-        if ((task == "embedding" || task == "reid" || task == "attribute_recognition")
+        if (dxapp::isComparisonOnlyTask(task)
             && args.imageFilePath.empty()) {
             std::cout << "[DXAPP] [INFO] Task '" << task << "' takes image input only." << std::endl;
             std::cout << "        -> Provide an image with -i (--image_path), e.g. -i "
@@ -437,6 +437,17 @@ private:
         // the reorder buffer below can emit frames strictly in submit order.
         auto renderArgs = [&](AsyncEmbeddingDisplayArgs& args) {
             if (!args.original_frame || args.original_frame->empty()) return;
+            // Embedding has no DisplayPump; keep the same preview budget so a
+            // live window does not draw every comparison frame.
+            constexpr auto kPreviewInterval = std::chrono::milliseconds(16);
+            static auto next_preview = std::chrono::steady_clock::time_point{};
+            const char* env_save = std::getenv("DXAPP_SAVE_IMAGE");
+            const bool persist = !args.save_path.empty()
+                || (env_save != nullptr && *env_save != '\0');
+            const auto now = std::chrono::steady_clock::now();
+            const bool preview = !no_display && now >= next_preview;
+            if (!persist && !preview) return;
+            if (preview) next_preview = now + kPreviewInterval;
             auto t_render_start = std::chrono::high_resolution_clock::now();
             cv::Mat result_frame = visualizer.draw(*args.original_frame, *args.results, args.ctx);
             auto t_render_end = std::chrono::high_resolution_clock::now();

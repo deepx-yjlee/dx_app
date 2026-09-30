@@ -11,7 +11,6 @@
   "default_video": "assets/videos/dogs.mp4",
   "zoo_canonical": true,
   "published": true,
-  "legacy_model_name": "vit_small_p16_1",
   "config": {
     "top_k": 5
   },

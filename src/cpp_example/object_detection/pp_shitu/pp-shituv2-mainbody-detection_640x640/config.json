@@ -11,7 +11,6 @@
   "default_video": "assets/videos/snowboard.mp4",
   "zoo_canonical": false,
   "published": false,
-  "legacy_model_name": "pp_shituv2_mainbody_detection_640x640",
   "config": {
     "num_classes": 1,
     "conf_threshold": 0.4,

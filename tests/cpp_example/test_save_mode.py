@@ -107,7 +107,7 @@ def discover_sync_cases() -> List[tuple]:
 def _pick_representative(cases: list, max_count: int = 3) -> list:
     """Pick a small representative subset to keep tests fast."""
     # Prefer one detection, one classification, one other
-    priority_prefixes = ["yolov5s_sync", "yolov8n_sync", "fastdepth"]
+    priority_prefixes = ["yolov5-s_640x640_sync", "yolov8-n_640x640_sync", "fastdepth"]
     selected = []
     for exe, mp in cases:
         for p in priority_prefixes:
@@ -126,11 +126,11 @@ def _pick_representative(cases: list, max_count: int = 3) -> list:
 # ======================================================================
 # Task-specific save verification cases
 # ======================================================================
-# 태스크 카테고리마다 대표 sync 바이너리 1개를, 실제 빌드된 것 중에서 동적으로
-# 선택한다. 이전에는 exe/모델 이름을 하드코딩했는데(_TASK_EXE_IMAGE_MAP), 모델이
-# 재배포/개명되면 매칭이 전부 깨져 커버리지가 0이 되고 test_task_coverage 가
-# 하드 실패했다(run_tc_sonar red). 공용 discover_cpp_executables 를 써서
-# 빌드/모델 유무를 자동으로 따라가게 한다.
+# Pick one representative sync binary per task category from what is actually built.
+# The old map hardcoded exe and model names (_TASK_EXE_IMAGE_MAP). A republish or
+# rename then matched nothing, coverage dropped to zero, and test_task_coverage
+# failed hard (run_tc_sonar red). discover_cpp_executables follows the current
+# build and model set instead.
 def _build_task_save_cases() -> List[tuple]:
     """Return one ``(task, exe_name, model_path, image_path)`` per task category.
 
@@ -432,17 +432,17 @@ class TestSaveOutputFiles:
             f"STDERR: {result.stderr[-500:]}"
         )
 
-        # save_dir가 생성되었는지
+        # save_dir must exist.
         assert save_dir.exists(), f"[{task}] save_dir not created: {save_dir}"
 
-        # embedding/reid 등은 feature vector 출력이라 렌더된 이미지 파일이 없다.
-        # 실행(rc==0)과 run_dir 생성까지만 확인하고 이미지 파일 검증은 건너뛴다.
+        # embedding/reid write a feature vector, so there is no rendered image.
+        # Check only rc==0 and that the run directory exists, then skip the image check.
         if task in NO_VISUAL_OUTPUT_TASKS:
             run_infos = list(save_dir.rglob("run_info.txt"))
             assert len(run_infos) >= 1, f"[{task}] no run_info.txt produced under {save_dir}"
             pytest.skip(f"[{task}] produces a feature vector, no output image to verify")
 
-        # 실제 이미지 출력 파일 (jpg/png) 검증
+        # Verify a real image output (jpg/png).
         image_outputs = (
             list(save_dir.rglob("*.jpg"))
             + list(save_dir.rglob("*.jpeg"))
@@ -453,7 +453,7 @@ class TestSaveOutputFiles:
             f"All files: {[str(f.relative_to(save_dir)) for f in save_dir.rglob('*') if f.is_file()]}"
         )
 
-        # 파일 크기 > 0 확인
+        # File size must be greater than 0.
         for img_file in image_outputs:
             assert img_file.stat().st_size > 0, (
                 f"[{task}] Output image is empty (0 bytes): {img_file.name}"
@@ -498,7 +498,7 @@ class TestSaveOutputFiles:
             f"STDERR: {result.stderr[-500:]}"
         )
 
-        # 실제 비디오 출력 파일 (mp4/avi/mov) 검증
+        # Verify a real video output (mp4/avi/mov).
         video_outputs = (
             list(save_dir.rglob("*.mp4"))
             + list(save_dir.rglob("*.avi"))
@@ -509,7 +509,7 @@ class TestSaveOutputFiles:
             f"All files: {[str(f.relative_to(save_dir)) for f in save_dir.rglob('*') if f.is_file()]}"
         )
 
-        # 파일 크기 > 0 확인
+        # File size must be greater than 0.
         for vid_file in video_outputs:
             assert vid_file.stat().st_size > 0, (
                 f"[{task}] Output video is empty (0 bytes): {vid_file.name}"

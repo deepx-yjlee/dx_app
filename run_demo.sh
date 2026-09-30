@@ -19,7 +19,7 @@ source "${DX_APP_PATH}/scripts/color_env.sh"
 source "${DX_APP_PATH}/scripts/common_util.sh"
 
 # =============================================================================
-# Demo Registry (23 entries)
+# Demo Registry (27 entries)
 # =============================================================================
 DEMO_LABELS=(
     # ── Detection (4) ──
@@ -56,6 +56,11 @@ DEMO_LABELS=(
     "3D Object Detection      (SFA3D)"
     # ── Hand (1) ──
     "Hand Detection           (MediaPipe Palm)"
+    # ── Retrieval & Matting (4) ── DX Model Zoo 2_5_0 task categories
+    "Image Retrieval          (CLIP RN50)"
+    "Visual Place Recognition (EigenPlaces R18)"
+    "Person Re-ID             (RepVGG-A0)"
+    "Image Matting            (PP-Matting HRNet-W48)"
 )
 
 DEMO_GROUPS=(
@@ -70,6 +75,7 @@ DEMO_GROUPS=(
     "Keypoint & Pose" "Keypoint & Pose"
     "Driving & 3D" "Driving & 3D"
     "Hand Detection"
+    "Retrieval & Matting" "Retrieval & Matting" "Retrieval & Matting" "Retrieval & Matting"
 )
 
 DEMO_CPP_BASE=(
@@ -96,6 +102,10 @@ DEMO_CPP_BASE=(
     "yolopv2"
     "sfa3d"
     "mediapipe_hand_detector"
+    "clip-img_resnet50_224x224_openai"
+    "eigenplaces-resnet18_512x512"
+    "repvgg-a0-reid_256x128"
+    "ppmatting-hrnet-w48-composition_512x512"
 )
 
 DEMO_PY_DIR=(
@@ -122,6 +132,10 @@ DEMO_PY_DIR=(
     "panoptic_driving_perception/yolopv2"
     "3d_object_detection/sfa3d"
     "hand_detection/mediapipe_hand_detector"
+    "image_retrieval/clip_rn50"
+    "visual_place_recognition/eigenplaces"
+    "person_reid/repvgg_reid"
+    "image_matting/ppmatting"
 )
 
 DEMO_PY_BASE=(
@@ -148,6 +162,10 @@ DEMO_PY_BASE=(
     "yolopv2"
     "sfa3d"
     "mediapipe_hand_detector"
+    "clip-img_resnet50_224x224_openai"
+    "eigenplaces-resnet18_512x512"
+    "repvgg-a0-reid_256x128"
+    "ppmatting-hrnet-w48-composition_512x512"
 )
 
 DEMO_MODEL=(
@@ -162,6 +180,8 @@ DEMO_MODEL=(
     superpoint_480x640.dxnn dope-hope-ketchup_480x640.dxnn
     yolopv2_384x640.dxnn sfa3d_608x608.dxnn
     mediapipe-hand-detector_192x192.dxnn
+    clip-img_resnet50_224x224_openai.dxnn eigenplaces-resnet18_512x512.dxnn
+    repvgg-a0-reid_256x128.dxnn ppmatting-hrnet-w48-composition_512x512.dxnn
 )
 
 DEMO_VIDEO=(
@@ -183,11 +203,15 @@ DEMO_VIDEO=(
     "assets/videos/person-pair-hallway.mp4"
     "assets/videos/person-pair-hallway.mp4"
     "assets/videos/snowboard.mp4"
-    "assets/videos/dance-solo.mov"
+    "assets/videos/blackbox-city-road2.mov"
     "assets/videos/snowboard.mp4"
     "assets/videos/blackbox-city-road.mp4"
     "assets/videos/blackbox-city-road.mp4"
     "assets/videos/hand.mp4"
+    # The three retrieval tasks are image-only (DEMO_IMAGE_ONLY=1) so these are never
+    # read; matting is the one that does run on video.
+    "" "" ""
+    "assets/videos/person-pair-hallway.mp4"
 )
 
 DEMO_IMAGE=(
@@ -214,6 +238,12 @@ DEMO_IMAGE=(
     "sample/img/sample_parking.jpg"
     "sample/kitti/velodyne/000049.bin"
     "sample/img/sample_hand.jpg"
+    # Each retrieval query is held OUT of its own gallery -- a query that is also a
+    # gallery member scores a meaningless 1.0000 self-match.
+    "sample/img/sample_person_a2.jpg"
+    "sample/vpr/queries/q1.jpg"
+    "sample/reid/queries/sample_person_a2.jpg"
+    "sample/img/sample_person_b.jpg"
 )
 
 # "full" = all 6 modes, "no_py_async" = task ships no *_async.py variant
@@ -229,6 +259,7 @@ DEMO_PY_ASYNC=(
     full full
     full full
     full
+    full full full full
 )
 
 # 1 = image only (skip video selection), 0 = both image and video
@@ -244,6 +275,9 @@ DEMO_IMAGE_ONLY=(
     0 1
     0 1
     0
+    # Retrieval x3 compare against a gallery; matting measures 0.5 FPS (2036 ms/frame)
+    # so a video run is minutes long -- image only for the demo, --video still works.
+    1 1 1 1
 )
 
 DEMO_COUNT=${#DEMO_LABELS[@]}
@@ -266,7 +300,7 @@ OPTIONS:
     --help         Show this help message
 
 Interactive 3-stage menu:
-    Stage 1: Select AI task (17 options)
+    Stage 1: Select AI task ($DEMO_COUNT options)
     Stage 2: Select language + execution mode (up to 6 options)
     Stage 3: Select input type (video or image)
 
@@ -296,7 +330,7 @@ print_intro() {
     printf "    ./run_demo.sh --show-log                   Enable verbose logs\n"
     printf "    ./run_demo.sh --help                       Show help\n"
     echo ""
-    printf "  ${COLOR_YELLOW}TIP:${COLOR_RESET} To run ${COLOR_BOLD}all 130+ models${COLOR_RESET} (beyond the %d demo tasks),\n" "$DEMO_COUNT"
+    printf "  ${COLOR_YELLOW}TIP:${COLOR_RESET} To run ${COLOR_BOLD}all 499 model variants${COLOR_RESET} (beyond the %d demo tasks),\n" "$DEMO_COUNT"
     printf "       use the DX Model Tool:\n"
     printf "         ${COLOR_GREEN}./scripts/dx_tool.sh run${COLOR_RESET}    ← interactive category/model filter\n"
     printf "         ${COLOR_GREEN}./scripts/dx_tool.sh bench${COLOR_RESET}  ← benchmark with performance report\n"
@@ -344,7 +378,25 @@ if ! check_valid_dir_or_symlink "./assets/videos"; then
     ./setup_sample_videos.sh --output=./assets/videos
 fi
 
-# Ensure all 23 demo models are present; download any missing ones
+# assets/models first, then a parent checkout's workspace/res/models.
+resolve_model_path() {
+    local name="$1"
+    local d
+    if [ -f "$DX_APP_PATH/assets/models/$name" ]; then
+        echo "$DX_APP_PATH/assets/models/$name"
+        return
+    fi
+    d="$DX_APP_PATH"
+    while [ "$d" != "/" ]; do
+        if [ -f "$d/workspace/res/models/$name" ]; then
+            echo "$d/workspace/res/models/$name"
+            return
+        fi
+        d=$(dirname "$d")
+    done
+}
+
+# Ensure every demo model is present; download any missing ones
 MODELS_DIR="./assets/models"
 if [ -L "$MODELS_DIR" ]; then
     MODELS_REAL=$(readlink -f "$MODELS_DIR")
@@ -354,7 +406,7 @@ fi
 mkdir -p "$MODELS_REAL"
 MISSING_DEMO_MODELS=()
 for model_file in "${DEMO_MODEL[@]}"; do
-    if [ ! -f "${MODELS_REAL}/${model_file}" ]; then
+    if [ -z "$(resolve_model_path "${model_file}")" ]; then
         MISSING_DEMO_MODELS+=("${model_file%.dxnn}")
     fi
 done
@@ -544,30 +596,55 @@ fi
 # =============================================================================
 # Build and Execute Command
 # =============================================================================
-model_path="assets/models/${DEMO_MODEL[$task_sel]}"
-cpp_base="${DEMO_CPP_BASE[$task_sel]}"
+# Pick an interpreter that actually has dx_engine. A plain login shell resolves
+# python3 to /usr/bin/python3, which does NOT carry it, so every Python mode of every
+# task failed with "ModuleNotFoundError: No module named 'dx_engine'" unless the user
+# had already activated the runtime venv by hand -- four of the six offered modes, on a
+# script advertised as needing no manual setup. Same fallback order the generated
+# run.sh scripts are required to use: local venv, then the shared runtime venv, then
+# bare python3 with a warning.
+resolve_python() {
+    local candidate
+    for candidate in "$DX_APP_PATH/venv/bin/python3" \
+                     "$DX_APP_PATH/.venv/bin/python3" \
+                     "$DX_APP_PATH/../venv-dx-runtime/bin/python3"; do
+        if [ -x "$candidate" ] && "$candidate" -c "import dx_engine" 2>/dev/null; then
+            echo "$candidate"
+            return
+        fi
+    done
+    if ! python3 -c "import dx_engine" 2>/dev/null; then
+        print_colored "No interpreter with dx_engine found (tried ./venv, ./.venv, ../venv-dx-runtime)." "WARNING"
+        print_colored "  Python modes will fail. Build it with: ./install.sh && ./build.sh" "WARNING"
+    fi
+    echo "python3"
+}
+PY_EXE="$(resolve_python)"
+
+model_file="${DEMO_MODEL[$task_sel]}"
+model_stem="${model_file%.dxnn}"
+model_path="$(resolve_model_path "${model_file}")"
 py_dir="${DEMO_PY_DIR[$task_sel]}"
-py_base="${DEMO_PY_BASE[$task_sel]}"
 
 
 case "$selected_mode" in
     cpp_sync)
-        CMD="$WRC/bin/${cpp_base}_sync -m $model_path"
+        CMD="$WRC/bin/${model_stem}_sync -m $model_path"
         ;;
     cpp_async)
-        CMD="$WRC/bin/${cpp_base}_async -m $model_path"
+        CMD="$WRC/bin/${model_stem}_async -m $model_path"
         ;;
     py_sync)
-        CMD="python3 $WRC/src/python_example/${py_dir}/${py_base}_sync.py --model $model_path"
+        CMD="$PY_EXE $WRC/src/python_example/${py_dir}/${model_stem}/${model_stem}_sync.py --model $model_path"
         ;;
     py_async)
-        CMD="python3 $WRC/src/python_example/${py_dir}/${py_base}_async.py --model $model_path"
+        CMD="$PY_EXE $WRC/src/python_example/${py_dir}/${model_stem}/${model_stem}_async.py --model $model_path"
         ;;
     py_sync_cpp_postprocess)
-        CMD="python3 $WRC/src/python_example/${py_dir}/${py_base}_sync_cpp_postprocess.py --model $model_path"
+        CMD="$PY_EXE $WRC/src/python_example/${py_dir}/${model_stem}/${model_stem}_sync_cpp_postprocess.py --model $model_path"
         ;;
     py_async_cpp_postprocess)
-        CMD="python3 $WRC/src/python_example/${py_dir}/${py_base}_async_cpp_postprocess.py --model $model_path"
+        CMD="$PY_EXE $WRC/src/python_example/${py_dir}/${model_stem}/${model_stem}_async_cpp_postprocess.py --model $model_path"
         ;;
 esac
 

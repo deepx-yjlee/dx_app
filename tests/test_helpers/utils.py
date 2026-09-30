@@ -52,12 +52,53 @@ def family_dxnn_map() -> dict:
     return out
 
 
-def dxnn_for_exe(base_name: str) -> Optional[Path]:
-    """A representative existing ``.dxnn`` for an executable basename (the family)."""
-    for p in family_dxnn_map().get(base_name, []):
-        if p.exists():
-            return p
+@lru_cache(maxsize=1)
+def _variant_dxnn_name() -> dict:
+    """Map a variant directory / executable basename to its ``dxnn_file``."""
+    out: dict = {}
+    for entry in load_registry():
+        variant = entry.get("variant")
+        dxnn_file = entry.get("dxnn_file")
+        if variant and dxnn_file:
+            out.setdefault(variant, dxnn_file)
+    return out
+
+
+def _search_model_file(filename: str) -> Optional[Path]:
+    """Find ``filename`` under ``assets/models``, then ``workspace/res/models``.
+
+    ``filename`` may be a bare stem. The search walks parents of the project
+    root so a suite checkout and a standalone dx_app tree both resolve.
+    """
+    name = filename if filename.endswith(".dxnn") else f"{filename}.dxnn"
+    local = MODELS_DIR / name
+    if local.is_file():
+        return local
+    directory = PROJECT_ROOT
+    while directory != directory.parent:
+        candidate = directory / "workspace" / "res" / "models" / name
+        if candidate.is_file():
+            return candidate
+        directory = directory.parent
     return None
+
+
+def dxnn_for_exe(base_name: str) -> Optional[Path]:
+    """Existing ``.dxnn`` for an executable or script basename.
+
+    The basename is the variant directory (``alexnet_224x224``). A family name
+    still resolves to the first file of that family that is on disk.
+    """
+    variant_file = _variant_dxnn_name().get(base_name)
+    if variant_file:
+        found = _search_model_file(variant_file)
+        if found is not None:
+            return found
+    for path in family_dxnn_map().get(base_name, []):
+        found = _search_model_file(path.name)
+        if found is not None:
+            return found
+    return _search_model_file(base_name)
 
 
 def setup_environment(*, extra_lib_dirs: Optional[List[Path]] = None) -> dict:
@@ -277,15 +318,15 @@ def _cpp_exe_task_map_cached() -> dict:
 def _discover_scripts_in_dir(
     model_dir: Path, suffixes: Tuple[str, ...],
 ) -> Tuple[List[Path], List[Path]]:
-    """Return ``(sync_scripts, async_scripts)`` from a model directory.
+    """Return ``(sync_scripts, async_scripts)`` from one example directory.
 
-    Includes all ``*_sync*`` / ``*_async*`` scripts, including
-    ``*_sync_cpp_postprocess*`` / ``*_async_cpp_postprocess*`` variants.
+    Includes ``*_sync*`` / ``*_async*`` scripts, including cpp_postprocess.
+    ``ort_off`` scripts are local experiments and are not part of run_tc.
     """
     sync_scripts: List[Path] = []
     async_scripts: List[Path] = []
     for py in sorted(model_dir.glob("*.py")):
-        if py.name.startswith("__"):
+        if py.name.startswith("__") or "ort_off" in py.stem:
             continue
         if "_sync" in py.stem and "_sync" in suffixes:
             sync_scripts.append(py)
@@ -294,14 +335,26 @@ def _discover_scripts_in_dir(
     return sync_scripts, async_scripts
 
 
+def _variant_dirs(family_dir: Path) -> List[Path]:
+    """Child folders that are one compiled model (``config.json`` present)."""
+    found: List[Path] = []
+    for child in sorted(family_dir.iterdir()):
+        if not child.is_dir() or child.name in ("factory", "__pycache__"):
+            continue
+        if (child / "config.json").is_file():
+            found.append(child)
+    return found
+
+
 def discover_python_scripts(
     suffixes: Tuple[str, ...] = ("_sync", "_async"),
 ) -> List[Tuple[str, str, List[Path], List[Path], Optional[Path]]]:
-    """Discover Python example scripts organised by task/model.
+    """Discover Python example scripts organised by task and variant.
 
-    Returns ``(task, model_name, sync_scripts, async_scripts, model_path)``
-    where ``sync_scripts`` / ``async_scripts`` are lists that include all
-    ``*_sync*`` / ``*_async*`` variants (e.g. cpp_postprocess too).
+    Returns ``(task, variant, sync_scripts, async_scripts, model_path)``.
+    Scripts live in ``src/python_example/<task>/<family>/<variant>/``.
+    A family that still has entry scripts directly under it is kept for
+    layouts that have not been split yet.
     """
     src_py = PROJECT_ROOT / "src" / "python_example"
     cases: list = []
@@ -311,14 +364,29 @@ def discover_python_scripts(
             continue
         task = task_dir.name
 
-        for model_dir in sorted(task_dir.iterdir()):
-            if not model_dir.is_dir() or model_dir.name == "__pycache__":
+        for family_dir in sorted(task_dir.iterdir()):
+            if not family_dir.is_dir() or family_dir.name in ("__pycache__", "factory"):
                 continue
-            sync_scripts, async_scripts = _discover_scripts_in_dir(model_dir, suffixes)
+            variant_dirs = _variant_dirs(family_dir)
+            if variant_dirs:
+                for variant_dir in variant_dirs:
+                    sync_scripts, async_scripts = _discover_scripts_in_dir(
+                        variant_dir, suffixes,
+                    )
+                    if not sync_scripts and not async_scripts:
+                        continue
+                    model_path = _find_model_for_name(variant_dir.name)
+                    cases.append(
+                        (task, variant_dir.name, sync_scripts, async_scripts, model_path)
+                    )
+                continue
+            sync_scripts, async_scripts = _discover_scripts_in_dir(family_dir, suffixes)
             if not sync_scripts and not async_scripts:
                 continue
-            model_path = _find_model_for_name(model_dir.name)
-            cases.append((task, model_dir.name, sync_scripts, async_scripts, model_path))
+            model_path = _find_model_for_name(family_dir.name)
+            cases.append(
+                (task, family_dir.name, sync_scripts, async_scripts, model_path)
+            )
 
     return cases
 

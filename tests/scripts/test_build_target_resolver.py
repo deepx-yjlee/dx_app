@@ -24,26 +24,26 @@ def test_minimal_targets_include_sync_and_async_for_run_demo_entries():
 
     assert result.returncode == 0, result.stderr
     targets = result.stdout.split()
-    assert "yolov7_sync" in targets
-    assert "yolov7_async" in targets
-    assert "resnet50_sync" in targets
-    assert "resnet50_async" in targets
+    assert "yolov7_640x640_sync" in targets
+    assert "yolov7_640x640_async" in targets
+    assert "resnet50_224x224_sync" in targets
+    assert "resnet50_224x224_async" in targets
     assert len(targets) == len(set(targets))
 
 
 def test_category_targets_are_derived_from_cpp_sources():
     result = run_bash(
-        f"source {RESOLVER}; dxapp_resolve_category_targets classification"
+        f"source {RESOLVER}; dxapp_resolve_category_targets image_classification"
     )
 
     assert result.returncode == 0, result.stderr
     targets = result.stdout.split()
-    assert "alexnet_sync" in targets
-    assert "alexnet_async" in targets
-    assert "resnet50_sync" in targets
-    assert "resnet50_async" in targets
+    assert "alexnet_224x224_sync" in targets
+    assert "alexnet_224x224_async" in targets
+    assert "resnet50_224x224_sync" in targets
+    assert "resnet50_224x224_async" in targets
     assert all(target.endswith(("_sync", "_async")) for target in targets)
-    assert "yolov7_sync" not in targets
+    assert "yolov7_640x640_sync" not in targets
 
 
 def test_category_list_excludes_support_directories():
@@ -51,7 +51,7 @@ def test_category_list_excludes_support_directories():
 
     assert result.returncode == 0, result.stderr
     categories = result.stdout.split()
-    assert "classification" in categories
+    assert "image_classification" in categories
     assert "object_detection" in categories
     assert "common" not in categories
     assert "__pycache__" not in categories
@@ -79,7 +79,7 @@ def test_build_sh_rejects_conflicting_target_modes():
     combined = result.stdout + result.stderr
     assert result.returncode != 0
     assert "[DXAPP] [ERROR]" in combined
-    assert "Use only one of --target, --minimal, or --category." in combined
+    assert "Use only one of --all, --minimal, --target, or --category." in combined
 
 
 def test_build_sh_category_requires_value():
@@ -124,7 +124,7 @@ def test_build_sh_category_list_prints_without_configuring_cmake():
     )
 
     assert result.returncode == 0, result.stderr
-    assert "classification" in result.stdout
+    assert "image_classification" in result.stdout
     assert "object_detection" in result.stdout
     assert "cmake args" not in result.stdout
 

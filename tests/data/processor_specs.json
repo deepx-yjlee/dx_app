@@ -1198,16 +1198,16 @@
     "factory_bases": [
       "IEmbeddingFactory"
     ],
-    "factory_class": "ClipFactory",
-    "family": "clip",
+    "factory_class": "ClipRn50Factory",
+    "family": "clip_rn50",
     "imports": [
       "from common.base import IEmbeddingFactory",
-      "from common.processors import SimpleResizePreprocessor, CLIPImagePostprocessor",
-      "from common.visualizers import EmbeddingVisualizer"
+      "from common.processors import SimpleResizePreprocessor, GalleryRetrievalPostprocessor",
+      "from common.visualizers import RetrievalVisualizer"
     ],
     "model_name": "clip_img_resnet50_224x224_openai",
     "postprocessor": {
-      "class": "CLIPImagePostprocessor",
+      "class": "GalleryRetrievalPostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -1219,7 +1219,10 @@
           "token": "config"
         }
       ],
-      "kwargs": {},
+      "kwargs": {
+        "model_type": "image_embedding",
+        "model_name": "clip-img_resnet50_224x224_openai"
+      },
       "config_overrides": {}
     },
     "preprocessor": {
@@ -1232,28 +1235,21 @@
           "token": "input_height"
         }
       ],
-      "kwargs": {
-        "mean": [
-          122.7709383,
-          116.7460125,
-          104.09373615000001
-        ],
-        "std": [
-          68.5005327,
-          66.6321579,
-          70.32316304999999
-        ]
-      },
+      "kwargs": {},
       "config_overrides": {}
     },
     "registry_config": {},
-    "source_dir": "clip",
-    "source_task": "zero_shot_image_classification",
-    "task": "zero_shot_image_classification",
+    "source_dir": "clip_rn50",
+    "source_task": "image_retrieval",
+    "task": "image_retrieval",
     "variant": "clip-img_resnet50_224x224_openai",
     "visualizer": {
-      "class": "EmbeddingVisualizer",
-      "args": [],
+      "class": "RetrievalVisualizer",
+      "args": [
+        {
+          "token": "config"
+        }
+      ],
       "kwargs": {},
       "config_overrides": {}
     }
@@ -1589,8 +1585,8 @@
     "factory_bases": [
       "IEmbeddingFactory"
     ],
-    "factory_class": "ClipFactory",
-    "family": "clip",
+    "factory_class": "ClipRn50Factory",
+    "family": "clip_rn50",
     "imports": [
       "from common.base import IEmbeddingFactory",
       "from common.processors import SimpleResizePreprocessor, CLIPTextPostprocessor",
@@ -1627,9 +1623,9 @@
       "config_overrides": {}
     },
     "registry_config": {},
-    "source_dir": "clip",
-    "source_task": "zero_shot_image_classification",
-    "task": "zero_shot_image_classification",
+    "source_dir": "clip_rn50",
+    "source_task": "image_retrieval",
+    "task": "image_retrieval",
     "variant": "clip-text_resnet50_77x512_openai",
     "visualizer": {
       "class": "EmbeddingVisualizer",
@@ -5825,8 +5821,8 @@
     "family": "eigenplaces",
     "imports": [
       "from common.base import IEmbeddingFactory",
-      "from common.processors import ArcFacePostprocessor, SimpleResizePreprocessor",
-      "from common.visualizers import EmbeddingVisualizer"
+      "from common.processors import GalleryRetrievalPostprocessor, SimpleResizePreprocessor",
+      "from common.visualizers import RetrievalVisualizer"
     ],
     "model_name": "eigenplaces_resnet18_1",
     "postprocessor": {
@@ -5841,9 +5837,12 @@
           "token": "config"
         }
       ],
-      "class": "ArcFacePostprocessor",
+      "class": "GalleryRetrievalPostprocessor",
       "config_overrides": {},
-      "kwargs": {}
+      "kwargs": {
+        "model_type": "place_descriptor",
+        "model_name": "eigenplaces-resnet18_512x512"
+      }
     },
     "preprocessor": {
       "args": [
@@ -5861,11 +5860,15 @@
     "registry_config": {},
     "source_dir": "eigenplaces_resnet18",
     "source_task": "embedding",
-    "task": "super_resolution",
+    "task": "visual_place_recognition",
     "variant": "eigenplaces-resnet18_512x512",
     "visualizer": {
-      "args": [],
-      "class": "EmbeddingVisualizer",
+      "args": [
+        {
+          "token": "config"
+        }
+      ],
+      "class": "RetrievalVisualizer",
       "config_overrides": {},
       "kwargs": {}
     }
@@ -5885,8 +5888,8 @@
     "family": "eigenplaces",
     "imports": [
       "from common.base import IEmbeddingFactory",
-      "from common.processors import ArcFacePostprocessor, SimpleResizePreprocessor",
-      "from common.visualizers import EmbeddingVisualizer"
+      "from common.processors import GalleryRetrievalPostprocessor, SimpleResizePreprocessor",
+      "from common.visualizers import RetrievalVisualizer"
     ],
     "model_name": "eigenplaces_resnet50_1",
     "postprocessor": {
@@ -5901,9 +5904,12 @@
           "token": "config"
         }
       ],
-      "class": "ArcFacePostprocessor",
+      "class": "GalleryRetrievalPostprocessor",
       "config_overrides": {},
-      "kwargs": {}
+      "kwargs": {
+        "model_type": "place_descriptor",
+        "model_name": "eigenplaces-resnet50_512x512"
+      }
     },
     "preprocessor": {
       "args": [
@@ -5921,11 +5927,15 @@
     "registry_config": {},
     "source_dir": "eigenplaces_resnet50",
     "source_task": "embedding",
-    "task": "super_resolution",
+    "task": "visual_place_recognition",
     "variant": "eigenplaces-resnet50_512x512",
     "visualizer": {
-      "args": [],
-      "class": "EmbeddingVisualizer",
+      "args": [
+        {
+          "token": "config"
+        }
+      ],
+      "class": "RetrievalVisualizer",
       "config_overrides": {},
       "kwargs": {}
     }
@@ -8725,12 +8735,12 @@
     "family": "pp_shitu_rec",
     "imports": [
       "from common.base import IEmbeddingFactory",
-      "from common.processors import SimpleResizePreprocessor, GenericEmbeddingPostprocessor",
-      "from common.visualizers import EmbeddingVisualizer"
+      "from common.processors import SimpleResizePreprocessor, GalleryRetrievalPostprocessor",
+      "from common.visualizers import RetrievalVisualizer"
     ],
     "model_name": "pp_shituv2_feature_extraction_224x224",
     "postprocessor": {
-      "class": "GenericEmbeddingPostprocessor",
+      "class": "GalleryRetrievalPostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -8743,8 +8753,8 @@
         }
       ],
       "kwargs": {
-        "model_type": "retrieval_embedding",
-        "model_name": "pp_shituv2_rec"
+        "model_type": "place_descriptor",
+        "model_name": "pp-shituv2-feature-extraction_224x224"
       },
       "config_overrides": {}
     },
@@ -8763,12 +8773,16 @@
     },
     "registry_config": {},
     "source_dir": "pp_shitu_rec",
-    "source_task": "super_resolution",
-    "task": "super_resolution",
+    "source_task": "visual_place_recognition",
+    "task": "visual_place_recognition",
     "variant": "pp-shituv2-feature-extraction_224x224",
     "visualizer": {
-      "class": "EmbeddingVisualizer",
-      "args": [],
+      "class": "RetrievalVisualizer",
+      "args": [
+        {
+          "token": "config"
+        }
+      ],
       "kwargs": {},
       "config_overrides": {}
     }
@@ -9691,7 +9705,7 @@
     "imports": [
       "from common.base import ISegmentationFactory",
       "from common.processors import SimpleResizePreprocessor, PPMattingPostprocessor",
-      "from common.visualizers import SemanticSegmentationVisualizer"
+      "from common.visualizers import MattingVisualizer"
     ],
     "model_name": "ppmatting_hrnet_w48_composition_512x512",
     "postprocessor": {
@@ -9720,19 +9734,26 @@
           "token": "input_height"
         }
       ],
-      "kwargs": {},
+      "kwargs": {
+        "mean_target": 110,
+        "mean_target_above": 195
+      },
       "config_overrides": {}
     },
     "registry_config": {
       "alpha_threshold": 0.5
     },
     "source_dir": "ppmatting",
-    "source_task": "semantic_segmentation",
-    "task": "semantic_segmentation",
+    "source_task": "image_matting",
+    "task": "image_matting",
     "variant": "ppmatting-hrnet-w48-composition_512x512",
     "visualizer": {
-      "class": "SemanticSegmentationVisualizer",
-      "args": [],
+      "class": "MattingVisualizer",
+      "args": [
+        {
+          "token": "config"
+        }
+      ],
       "kwargs": {},
       "config_overrides": {}
     }
@@ -9755,7 +9776,7 @@
     "imports": [
       "from common.base import ISegmentationFactory",
       "from common.processors import SimpleResizePreprocessor, PPMattingPostprocessor",
-      "from common.visualizers import SemanticSegmentationVisualizer"
+      "from common.visualizers import MattingVisualizer"
     ],
     "model_name": "ppmatting_hrnet_w48_distinctions_512x512",
     "postprocessor": {
@@ -9784,19 +9805,26 @@
           "token": "input_height"
         }
       ],
-      "kwargs": {},
+      "kwargs": {
+        "mean_target": 110,
+        "mean_target_above": 195
+      },
       "config_overrides": {}
     },
     "registry_config": {
       "alpha_threshold": 0.5
     },
     "source_dir": "ppmatting",
-    "source_task": "semantic_segmentation",
-    "task": "semantic_segmentation",
+    "source_task": "image_matting",
+    "task": "image_matting",
     "variant": "ppmatting-hrnet-w48-distinctions_512x512",
     "visualizer": {
-      "class": "SemanticSegmentationVisualizer",
-      "args": [],
+      "class": "MattingVisualizer",
+      "args": [
+        {
+          "token": "config"
+        }
+      ],
       "kwargs": {},
       "config_overrides": {}
     }
@@ -11084,12 +11112,12 @@
     "family": "repvgg_reid",
     "imports": [
       "from common.base import IEmbeddingFactory",
-      "from common.processors import SimpleResizePreprocessor, GenericEmbeddingPostprocessor",
-      "from common.visualizers import EmbeddingVisualizer"
+      "from common.processors import SimpleResizePreprocessor, GalleryRetrievalPostprocessor",
+      "from common.visualizers import RetrievalVisualizer"
     ],
     "model_name": "repvgg_a0_reid_256x128",
     "postprocessor": {
-      "class": "GenericEmbeddingPostprocessor",
+      "class": "GalleryRetrievalPostprocessor",
       "args": [
         {
           "token": "input_width"
@@ -11103,7 +11131,7 @@
       ],
       "kwargs": {
         "model_type": "person_reid_embedding",
-        "model_name": "repvgg_a0_reid"
+        "model_name": "repvgg-a0-reid_256x128"
       },
       "config_overrides": {}
     },
@@ -11122,12 +11150,16 @@
     },
     "registry_config": {},
     "source_dir": "repvgg_reid",
-    "source_task": "image_classification",
-    "task": "image_classification",
+    "source_task": "person_reid",
+    "task": "person_reid",
     "variant": "repvgg-a0-reid_256x128",
     "visualizer": {
-      "class": "EmbeddingVisualizer",
-      "args": [],
+      "class": "RetrievalVisualizer",
+      "args": [
+        {
+          "token": "config"
+        }
+      ],
       "kwargs": {},
       "config_overrides": {}
     }
@@ -18603,6 +18635,326 @@
       "config_overrides": {}
     }
   },
+  "yolo26-cls-l_224x224": {
+    "cli": {
+      "include_kitti_paths": false,
+      "include_output": false,
+      "include_stream_inputs": true
+    },
+    "dir_config": {
+      "top_k": 5
+    },
+    "extra_methods": [],
+    "factory_bases": [
+      "IClassificationFactory"
+    ],
+    "factory_class": "Yolo26l_clsFactory",
+    "family": "yolo26_cls",
+    "imports": [
+      "from common.base import IClassificationFactory",
+      "from common.processors import SimpleResizePreprocessor, ClassificationPostprocessor",
+      "from common.visualizers import ClassificationVisualizer"
+    ],
+    "model_name": "yolo26l_cls",
+    "postprocessor": {
+      "args": [
+        {
+          "token": "input_width"
+        },
+        {
+          "token": "input_height"
+        },
+        {
+          "token": "config"
+        }
+      ],
+      "class": "ClassificationPostprocessor",
+      "config_overrides": {},
+      "kwargs": {}
+    },
+    "preprocessor": {
+      "args": [
+        {
+          "token": "input_width"
+        },
+        {
+          "token": "input_height"
+        }
+      ],
+      "class": "SimpleResizePreprocessor",
+      "config_overrides": {},
+      "kwargs": {}
+    },
+    "registry_config": {
+      "top_k": 5
+    },
+    "source_dir": "yolo26l_cls",
+    "source_task": "classification",
+    "task": "image_classification",
+    "variant": "yolo26-cls-l_224x224",
+    "visualizer": {
+      "args": [],
+      "class": "ClassificationVisualizer",
+      "config_overrides": {},
+      "kwargs": {}
+    }
+  },
+  "yolo26-cls-m_224x224": {
+    "cli": {
+      "include_kitti_paths": false,
+      "include_output": false,
+      "include_stream_inputs": true
+    },
+    "dir_config": {
+      "top_k": 5
+    },
+    "extra_methods": [],
+    "factory_bases": [
+      "IClassificationFactory"
+    ],
+    "factory_class": "Yolo26m_clsFactory",
+    "family": "yolo26_cls",
+    "imports": [
+      "from common.base import IClassificationFactory",
+      "from common.processors import SimpleResizePreprocessor, ClassificationPostprocessor",
+      "from common.visualizers import ClassificationVisualizer"
+    ],
+    "model_name": "yolo26m_cls",
+    "postprocessor": {
+      "args": [
+        {
+          "token": "input_width"
+        },
+        {
+          "token": "input_height"
+        },
+        {
+          "token": "config"
+        }
+      ],
+      "class": "ClassificationPostprocessor",
+      "config_overrides": {},
+      "kwargs": {}
+    },
+    "preprocessor": {
+      "args": [
+        {
+          "token": "input_width"
+        },
+        {
+          "token": "input_height"
+        }
+      ],
+      "class": "SimpleResizePreprocessor",
+      "config_overrides": {},
+      "kwargs": {}
+    },
+    "registry_config": {
+      "top_k": 5
+    },
+    "source_dir": "yolo26m_cls",
+    "source_task": "classification",
+    "task": "image_classification",
+    "variant": "yolo26-cls-m_224x224",
+    "visualizer": {
+      "args": [],
+      "class": "ClassificationVisualizer",
+      "config_overrides": {},
+      "kwargs": {}
+    }
+  },
+  "yolo26-cls-n_224x224": {
+    "cli": {
+      "include_kitti_paths": false,
+      "include_output": false,
+      "include_stream_inputs": true
+    },
+    "dir_config": {
+      "top_k": 5
+    },
+    "extra_methods": [],
+    "factory_bases": [
+      "IClassificationFactory"
+    ],
+    "factory_class": "Yolo26n_clsFactory",
+    "family": "yolo26_cls",
+    "imports": [
+      "from common.base import IClassificationFactory",
+      "from common.processors import SimpleResizePreprocessor, ClassificationPostprocessor",
+      "from common.visualizers import ClassificationVisualizer"
+    ],
+    "model_name": "yolo26n_cls",
+    "postprocessor": {
+      "args": [
+        {
+          "token": "input_width"
+        },
+        {
+          "token": "input_height"
+        },
+        {
+          "token": "config"
+        }
+      ],
+      "class": "ClassificationPostprocessor",
+      "config_overrides": {},
+      "kwargs": {}
+    },
+    "preprocessor": {
+      "args": [
+        {
+          "token": "input_width"
+        },
+        {
+          "token": "input_height"
+        }
+      ],
+      "class": "SimpleResizePreprocessor",
+      "config_overrides": {},
+      "kwargs": {}
+    },
+    "registry_config": {
+      "top_k": 5
+    },
+    "source_dir": "yolo26n_cls",
+    "source_task": "classification",
+    "task": "image_classification",
+    "variant": "yolo26-cls-n_224x224",
+    "visualizer": {
+      "args": [],
+      "class": "ClassificationVisualizer",
+      "config_overrides": {},
+      "kwargs": {}
+    }
+  },
+  "yolo26-cls-s_224x224": {
+    "cli": {
+      "include_kitti_paths": false,
+      "include_output": false,
+      "include_stream_inputs": true
+    },
+    "dir_config": {
+      "top_k": 5
+    },
+    "extra_methods": [],
+    "factory_bases": [
+      "IClassificationFactory"
+    ],
+    "factory_class": "Yolo26s_clsFactory",
+    "family": "yolo26_cls",
+    "imports": [
+      "from common.base import IClassificationFactory",
+      "from common.processors import SimpleResizePreprocessor, ClassificationPostprocessor",
+      "from common.visualizers import ClassificationVisualizer"
+    ],
+    "model_name": "yolo26s_cls",
+    "postprocessor": {
+      "args": [
+        {
+          "token": "input_width"
+        },
+        {
+          "token": "input_height"
+        },
+        {
+          "token": "config"
+        }
+      ],
+      "class": "ClassificationPostprocessor",
+      "config_overrides": {},
+      "kwargs": {}
+    },
+    "preprocessor": {
+      "args": [
+        {
+          "token": "input_width"
+        },
+        {
+          "token": "input_height"
+        }
+      ],
+      "class": "SimpleResizePreprocessor",
+      "config_overrides": {},
+      "kwargs": {}
+    },
+    "registry_config": {
+      "top_k": 5
+    },
+    "source_dir": "yolo26s_cls",
+    "source_task": "classification",
+    "task": "image_classification",
+    "variant": "yolo26-cls-s_224x224",
+    "visualizer": {
+      "args": [],
+      "class": "ClassificationVisualizer",
+      "config_overrides": {},
+      "kwargs": {}
+    }
+  },
+  "yolo26-cls-x_224x224": {
+    "cli": {
+      "include_kitti_paths": false,
+      "include_output": false,
+      "include_stream_inputs": true
+    },
+    "dir_config": {
+      "top_k": 5
+    },
+    "extra_methods": [],
+    "factory_bases": [
+      "IClassificationFactory"
+    ],
+    "factory_class": "Yolo26x_clsFactory",
+    "family": "yolo26_cls",
+    "imports": [
+      "from common.base import IClassificationFactory",
+      "from common.processors import SimpleResizePreprocessor, ClassificationPostprocessor",
+      "from common.visualizers import ClassificationVisualizer"
+    ],
+    "model_name": "yolo26x_cls",
+    "postprocessor": {
+      "args": [
+        {
+          "token": "input_width"
+        },
+        {
+          "token": "input_height"
+        },
+        {
+          "token": "config"
+        }
+      ],
+      "class": "ClassificationPostprocessor",
+      "config_overrides": {},
+      "kwargs": {}
+    },
+    "preprocessor": {
+      "args": [
+        {
+          "token": "input_width"
+        },
+        {
+          "token": "input_height"
+        }
+      ],
+      "class": "SimpleResizePreprocessor",
+      "config_overrides": {},
+      "kwargs": {}
+    },
+    "registry_config": {
+      "top_k": 5
+    },
+    "source_dir": "yolo26x_cls",
+    "source_task": "classification",
+    "task": "image_classification",
+    "variant": "yolo26-cls-x_224x224",
+    "visualizer": {
+      "args": [],
+      "class": "ClassificationVisualizer",
+      "config_overrides": {},
+      "kwargs": {}
+    }
+  },
   "yolo26-depth-l_768x768": {
     "cli": {
       "include_kitti_paths": false,
@@ -19173,70 +19525,6 @@
       "kwargs": {}
     }
   },
-  "yolo26-l_224x224": {
-    "cli": {
-      "include_kitti_paths": false,
-      "include_output": false,
-      "include_stream_inputs": true
-    },
-    "dir_config": {
-      "top_k": 5
-    },
-    "extra_methods": [],
-    "factory_bases": [
-      "IClassificationFactory"
-    ],
-    "factory_class": "Yolo26l_clsFactory",
-    "family": "yolo26_cls",
-    "imports": [
-      "from common.base import IClassificationFactory",
-      "from common.processors import SimpleResizePreprocessor, ClassificationPostprocessor",
-      "from common.visualizers import ClassificationVisualizer"
-    ],
-    "model_name": "yolo26l_cls",
-    "postprocessor": {
-      "args": [
-        {
-          "token": "input_width"
-        },
-        {
-          "token": "input_height"
-        },
-        {
-          "token": "config"
-        }
-      ],
-      "class": "ClassificationPostprocessor",
-      "config_overrides": {},
-      "kwargs": {}
-    },
-    "preprocessor": {
-      "args": [
-        {
-          "token": "input_width"
-        },
-        {
-          "token": "input_height"
-        }
-      ],
-      "class": "SimpleResizePreprocessor",
-      "config_overrides": {},
-      "kwargs": {}
-    },
-    "registry_config": {
-      "top_k": 5
-    },
-    "source_dir": "yolo26l_cls",
-    "source_task": "classification",
-    "task": "image_classification",
-    "variant": "yolo26-l_224x224",
-    "visualizer": {
-      "args": [],
-      "class": "ClassificationVisualizer",
-      "config_overrides": {},
-      "kwargs": {}
-    }
-  },
   "yolo26-l_640x640": {
     "cli": {
       "include_kitti_paths": false,
@@ -19637,70 +19925,6 @@
     "visualizer": {
       "args": [],
       "class": "InstanceSegVisualizer",
-      "config_overrides": {},
-      "kwargs": {}
-    }
-  },
-  "yolo26-m_224x224": {
-    "cli": {
-      "include_kitti_paths": false,
-      "include_output": false,
-      "include_stream_inputs": true
-    },
-    "dir_config": {
-      "top_k": 5
-    },
-    "extra_methods": [],
-    "factory_bases": [
-      "IClassificationFactory"
-    ],
-    "factory_class": "Yolo26m_clsFactory",
-    "family": "yolo26_cls",
-    "imports": [
-      "from common.base import IClassificationFactory",
-      "from common.processors import SimpleResizePreprocessor, ClassificationPostprocessor",
-      "from common.visualizers import ClassificationVisualizer"
-    ],
-    "model_name": "yolo26m_cls",
-    "postprocessor": {
-      "args": [
-        {
-          "token": "input_width"
-        },
-        {
-          "token": "input_height"
-        },
-        {
-          "token": "config"
-        }
-      ],
-      "class": "ClassificationPostprocessor",
-      "config_overrides": {},
-      "kwargs": {}
-    },
-    "preprocessor": {
-      "args": [
-        {
-          "token": "input_width"
-        },
-        {
-          "token": "input_height"
-        }
-      ],
-      "class": "SimpleResizePreprocessor",
-      "config_overrides": {},
-      "kwargs": {}
-    },
-    "registry_config": {
-      "top_k": 5
-    },
-    "source_dir": "yolo26m_cls",
-    "source_task": "classification",
-    "task": "image_classification",
-    "variant": "yolo26-m_224x224",
-    "visualizer": {
-      "args": [],
-      "class": "ClassificationVisualizer",
       "config_overrides": {},
       "kwargs": {}
     }
@@ -20109,70 +20333,6 @@
       "kwargs": {}
     }
   },
-  "yolo26-n_224x224": {
-    "cli": {
-      "include_kitti_paths": false,
-      "include_output": false,
-      "include_stream_inputs": true
-    },
-    "dir_config": {
-      "top_k": 5
-    },
-    "extra_methods": [],
-    "factory_bases": [
-      "IClassificationFactory"
-    ],
-    "factory_class": "Yolo26n_clsFactory",
-    "family": "yolo26_cls",
-    "imports": [
-      "from common.base import IClassificationFactory",
-      "from common.processors import SimpleResizePreprocessor, ClassificationPostprocessor",
-      "from common.visualizers import ClassificationVisualizer"
-    ],
-    "model_name": "yolo26n_cls",
-    "postprocessor": {
-      "args": [
-        {
-          "token": "input_width"
-        },
-        {
-          "token": "input_height"
-        },
-        {
-          "token": "config"
-        }
-      ],
-      "class": "ClassificationPostprocessor",
-      "config_overrides": {},
-      "kwargs": {}
-    },
-    "preprocessor": {
-      "args": [
-        {
-          "token": "input_width"
-        },
-        {
-          "token": "input_height"
-        }
-      ],
-      "class": "SimpleResizePreprocessor",
-      "config_overrides": {},
-      "kwargs": {}
-    },
-    "registry_config": {
-      "top_k": 5
-    },
-    "source_dir": "yolo26n_cls",
-    "source_task": "classification",
-    "task": "image_classification",
-    "variant": "yolo26-n_224x224",
-    "visualizer": {
-      "args": [],
-      "class": "ClassificationVisualizer",
-      "config_overrides": {},
-      "kwargs": {}
-    }
-  },
   "yolo26-n_640x640": {
     "cli": {
       "include_kitti_paths": false,
@@ -20577,70 +20737,6 @@
       "kwargs": {}
     }
   },
-  "yolo26-s_224x224": {
-    "cli": {
-      "include_kitti_paths": false,
-      "include_output": false,
-      "include_stream_inputs": true
-    },
-    "dir_config": {
-      "top_k": 5
-    },
-    "extra_methods": [],
-    "factory_bases": [
-      "IClassificationFactory"
-    ],
-    "factory_class": "Yolo26s_clsFactory",
-    "family": "yolo26_cls",
-    "imports": [
-      "from common.base import IClassificationFactory",
-      "from common.processors import SimpleResizePreprocessor, ClassificationPostprocessor",
-      "from common.visualizers import ClassificationVisualizer"
-    ],
-    "model_name": "yolo26s_cls",
-    "postprocessor": {
-      "args": [
-        {
-          "token": "input_width"
-        },
-        {
-          "token": "input_height"
-        },
-        {
-          "token": "config"
-        }
-      ],
-      "class": "ClassificationPostprocessor",
-      "config_overrides": {},
-      "kwargs": {}
-    },
-    "preprocessor": {
-      "args": [
-        {
-          "token": "input_width"
-        },
-        {
-          "token": "input_height"
-        }
-      ],
-      "class": "SimpleResizePreprocessor",
-      "config_overrides": {},
-      "kwargs": {}
-    },
-    "registry_config": {
-      "top_k": 5
-    },
-    "source_dir": "yolo26s_cls",
-    "source_task": "classification",
-    "task": "image_classification",
-    "variant": "yolo26-s_224x224",
-    "visualizer": {
-      "args": [],
-      "class": "ClassificationVisualizer",
-      "config_overrides": {},
-      "kwargs": {}
-    }
-  },
   "yolo26-s_640x640": {
     "cli": {
       "include_kitti_paths": false,
@@ -21041,70 +21137,6 @@
     "visualizer": {
       "args": [],
       "class": "InstanceSegVisualizer",
-      "config_overrides": {},
-      "kwargs": {}
-    }
-  },
-  "yolo26-x_224x224": {
-    "cli": {
-      "include_kitti_paths": false,
-      "include_output": false,
-      "include_stream_inputs": true
-    },
-    "dir_config": {
-      "top_k": 5
-    },
-    "extra_methods": [],
-    "factory_bases": [
-      "IClassificationFactory"
-    ],
-    "factory_class": "Yolo26x_clsFactory",
-    "family": "yolo26_cls",
-    "imports": [
-      "from common.base import IClassificationFactory",
-      "from common.processors import SimpleResizePreprocessor, ClassificationPostprocessor",
-      "from common.visualizers import ClassificationVisualizer"
-    ],
-    "model_name": "yolo26x_cls",
-    "postprocessor": {
-      "args": [
-        {
-          "token": "input_width"
-        },
-        {
-          "token": "input_height"
-        },
-        {
-          "token": "config"
-        }
-      ],
-      "class": "ClassificationPostprocessor",
-      "config_overrides": {},
-      "kwargs": {}
-    },
-    "preprocessor": {
-      "args": [
-        {
-          "token": "input_width"
-        },
-        {
-          "token": "input_height"
-        }
-      ],
-      "class": "SimpleResizePreprocessor",
-      "config_overrides": {},
-      "kwargs": {}
-    },
-    "registry_config": {
-      "top_k": 5
-    },
-    "source_dir": "yolo26x_cls",
-    "source_task": "classification",
-    "task": "image_classification",
-    "variant": "yolo26-x_224x224",
-    "visualizer": {
-      "args": [],
-      "class": "ClassificationVisualizer",
       "config_overrides": {},
       "kwargs": {}
     }

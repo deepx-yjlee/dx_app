@@ -17,6 +17,8 @@ despite sharing weights).
 from __future__ import annotations
 
 import json
+
+import pytest
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -64,7 +66,14 @@ def _unpublished_stems() -> set[str]:
 
 
 def test_provisional_section_holds_exactly_the_unpublished_stems():
-    """The provisional section must match new_modelzoo.txt plus the 4 q-master models."""
+    """The provisional section must match new_modelzoo.txt plus the 4 q-master models.
+
+    new_modelzoo.txt is the untracked list DEEPX supplied when the 147 additions were
+    declared; the committed table is what every other test here pins. Skip rather than
+    fail when the input file is not in the checkout.
+    """
+    if not NEW_LIST.is_file():
+        pytest.skip(f"{NEW_LIST.name} is not in this checkout")
     provisional = _snapshot()["provisional"]["variants"]
     expected = _unpublished_stems() | Q_MASTER_ONLY
     assert set(provisional) == expected
@@ -134,40 +143,49 @@ def test_registry_covers_every_provisional_variant():
 def test_published_means_the_url_serves_it_not_that_a_file_is_absent():
     """`published` is a fact about DX Model Zoo, not about this machine's disk.
 
-    The first version of this test asserted `published is False` implies "no file in
-    assets/models", and that premise turned out to be wrong: the 143 unpublished
-    models were obtained out of band (new_modelzoo.tar.gz) and extracted, while their
-    URLs still return 403 -- the 2_5_0 directory does not exist at all, not even for a
-    model that IS published at 2_4_0.
+    Two premises have now been retired here. The first asserted `published is False`
+    implies "no file in assets/models", which broke when the 143 unpublished models
+    were obtained out of band and extracted while their URLs still 403'd. The second
+    read the flag off the URL VERSION -- anything under /2_5_0/ was unpublished -- and
+    that held only until the zoo published 2_5_0 on 2026-09-30 and moved its whole
+    q-lite tier there. Probing every manifest URL that day: 498 -> 200, one -> 403.
 
-    Conflating the two would break both consumers in opposite directions. Flipping the
-    flag on extraction would make download_models.py treat the still-failing 403 as a
-    hard error; keeping the old assertion would fail the suite for a tree that is
-    simply more complete than the zoo.
-
-    So the flag pins the URL version and nothing else -- on-disk presence is what the
-    sweep checks, independently, when it decides whether it can run something.
+    So the flag is DECLARED, in exactly one place per consumer: `published` in the
+    registry and `pending` on the manifest row. On-disk presence is what the sweep
+    checks, independently, when it decides whether it can run something.
     """
     registry = json.loads(REGISTRY.read_text(encoding="utf-8"))
     manifest = {e["name"]: e for e in json.loads(MANIFEST.read_text(encoding="utf-8"))}
-    wrong = []
+    disagree = []
     for entry in registry:
         row = manifest.get(entry["model_name"])
         if row is None or not row.get("dxnn_url"):
             continue
-        at_2_5_0 = "/2_5_0/" in row["dxnn_url"]
-        if at_2_5_0 != (entry["published"] is False):
-            wrong.append((entry["variant"], entry["published"], row["dxnn_url"]))
-    assert wrong == [], f"published disagrees with the manifest URL version: {wrong}"
+        if bool(row.get("pending")) != (entry["published"] is False):
+            disagree.append((entry["variant"], entry["published"],
+                             bool(row.get("pending"))))
+    assert disagree == [], (
+        "registry.published and manifest.pending disagree: " + str(disagree))
 
 
 def test_the_four_q_master_models_are_marked_published():
-    """They are downloadable today (measured HTTP 200), unlike the other 143."""
+    """The q-master tier decides the URL, not the publication state.
+
+    These four carry a q-master .dxnn and no q-lite one (measured HTTP 200 at
+    q-master-dxnn/2_4_0/ on both 2026-09-22 and 2026-09-30). That used to be the same
+    set as "published", which is why one frozenset served both; after the 2_5_0 release
+    all but one model is published, so the two facts are now separate.
+    """
     registry = {e["variant"]: e for e in json.loads(REGISTRY.read_text(encoding="utf-8"))}
+    manifest = {Path(e["dxnn_url"]).name[: -len(".dxnn")]: e
+                for e in json.loads(MANIFEST.read_text(encoding="utf-8"))
+                if e.get("dxnn_url")}
     for variant in Q_MASTER_ONLY:
         assert registry[variant]["published"] is True, variant
+        assert "q-master-dxnn" in manifest[variant]["dxnn_url"], variant
     unpublished = [e["variant"] for e in registry.values() if e["published"] is False]
-    assert len(unpublished) == 143, f"expected 143 unpublished, got {len(unpublished)}"
+    assert unpublished == ["vit-l-p16_512x512_swag"], (
+        f"expected only the model DEEPX reported as failing to build, got {unpublished}")
 
 
 def test_specs_and_registry_agree_on_the_additions():
@@ -238,21 +256,6 @@ def test_manifest_has_no_duplicate_rows():
     expected = len({e["variant"] for e in registry if e["alias_of"] is None})
     assert len(entries) == expected, (
         f"manifest has {len(entries)} rows, expected {expected}")
-
-
-def test_unpublished_entries_point_at_2_5_0_and_published_ones_do_not():
-    """The URL version and the published flag are two views of one fact."""
-    registry = {e["variant"]: e for e in json.loads(REGISTRY.read_text(encoding="utf-8"))}
-    bad = []
-    for entry in json.loads(MANIFEST.read_text(encoding="utf-8")):
-        if not entry.get("dxnn_url"):
-            continue
-        reg_entry = registry.get(Path(entry["dxnn_url"]).name[: -len(".dxnn")])
-        if reg_entry is None or not entry.get("dxnn_url"):
-            continue
-        if ("/2_5_0/" in entry["dxnn_url"]) != (reg_entry["published"] is False):
-            bad.append((entry["name"], reg_entry["published"], entry["dxnn_url"]))
-    assert bad == [], f"URL version disagrees with the published flag: {bad}"
 
 
 def test_rerunning_the_emitter_is_idempotent():

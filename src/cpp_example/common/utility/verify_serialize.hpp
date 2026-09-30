@@ -250,6 +250,22 @@ inline json serializeEmbedding(const std::vector<EmbeddingResult>& items, int im
             {"l2_norm", l2_norm},
             {"has_nan", has_nan}
         };
+        // Retrieval variants also carry a ranking. Emitted with the same keys the
+        // Python tree's _ser_retrieval writes, so a cross-tree diff compares like
+        // with like: a matching descriptor with a different order means the two
+        // galleries differ, not the two models.
+        if (!e.matches.empty() || !e.gallery_name.empty()) {
+            result["gallery"] = {{"name", e.gallery_name},
+                                 {"size", e.gallery_size}};
+            json matches = json::array();
+            for (const auto& m : e.matches) {
+                matches.push_back({{"rank", m.rank},
+                                   {"score", m.score},
+                                   {"path", m.path},
+                                   {"label", m.label}});
+            }
+            result["matches"] = matches;
+        }
     }
     return result;
 }
