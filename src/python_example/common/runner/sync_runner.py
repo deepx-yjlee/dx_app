@@ -26,11 +26,13 @@ from typing import Any, Callable, Dict, List, Optional, Union
 import numpy as np
 import cv2
 
+from ..base.i_processor import SuperResolutionResult
 from ..config import load_config
 from ..utility import print_image_processing_summary, print_sync_performance_summary
 from ..utility.common_util import window_exists
 from ..utility.video_io import write_video_frame
 from ..utility.colorspace import bgr_to_y_limited, bgr_to_ycrcb_limited, ycrcb_limited_to_bgr
+from .interrupts import interrupt_scope
 from .run_dir import create_run_dir, write_run_info, dump_tensors, dump_tensors_on_exception
 from .sr_tiling import (
     assemble_tiles, plan_tiles, resolve_runner_halo, run_tiles_pipelined,
@@ -707,6 +709,7 @@ class SyncRunner:
         self._sr_halo: Optional[int] = None      # resolved once, then cached
         self._sr_tiling_logged = False           # tiles-per-frame line: once per run
         self._video_writer_size = None  # (w, h) the writer was opened with
+        self._verify_source = ""  # DXAPP_VERIFY "input_image" of a stream
 
     # ------------------------------------------------------------------
     # Public API
@@ -714,6 +717,14 @@ class SyncRunner:
 
     def run(self, args) -> None:
         """Main entry point."""
+        with interrupt_scope():
+            try:
+                self._run(args)
+            except KeyboardInterrupt:
+                # SIGINT/SIGTERM outside a stream loop (setup, image mode): end cleanly.
+                logger.info("\nInterrupted by user.")
+
+    def _run(self, args) -> None:
         _check_dxrt_version()
         _apply_default_input(args, self.factory)
         _reject_image_only_stream_input(args, self.factory)
@@ -1067,8 +1078,6 @@ class SyncRunner:
         """Dump numerical verification JSON if DXAPP_VERIFY=1."""
         if not is_verify_enabled():
             return
-        if self._cpp_postprocessor is not None:
-            return
         task = self.factory.get_task_type() \
             if hasattr(self.factory, "get_task_type") else ""
         dump_verify_json(
@@ -1266,6 +1275,7 @@ class SyncRunner:
 
             results = self.postprocess(outputs, ctx)
             t3 = time.perf_counter()
+            self._try_verify_dump(results, self._verify_source, frame)
             output_frame = self.visualize(frame, results) if do_render else None
             t4 = time.perf_counter()
         except Exception:
@@ -1325,6 +1335,8 @@ class SyncRunner:
         t2 = time.perf_counter()
 
         sr_bgr = self._merge_ycrcb(sr_y, frame, out_w, out_h)
+        self._try_verify_dump([SuperResolutionResult(output_image=sr_bgr, scale_factor=scale_x)],
+                              self._verify_source, frame)
         t3 = time.perf_counter()
 
         # Side-by-side canvas
@@ -1431,6 +1443,7 @@ class SyncRunner:
             raise RuntimeError(f"Failed to open source: {source}")
 
         is_live, source_label = self._classify_source(source)
+        self._verify_source = source_label
         if is_live:
             cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
@@ -1448,7 +1461,7 @@ class SyncRunner:
         metrics = _create_sync_metrics()
         frame_count = 0
         quit_requested = False
-        writer = self._init_video_writer_probed(cap, run_dir) if (save_enabled and run_dir) else None
+        writer = None
 
         # Detect if this model needs tiled super-resolution
         use_sr_tiled = self._is_sr_tiled()
@@ -1463,6 +1476,9 @@ class SyncRunner:
         env_save = os.environ.get("DXAPP_SAVE_IMAGE")
 
         try:
+            # Opened inside the try: an interrupt right after it still releases it.
+            if save_enabled and run_dir:
+                writer = self._init_video_writer_probed(cap, run_dir)
             while True:
                 t_read_start = time.perf_counter()
                 ret, frame = cap.read()
@@ -1496,6 +1512,8 @@ class SyncRunner:
                     break
         except KeyboardInterrupt:
             logger.info("\nInterrupted by user.")
+            # Stop the whole run: without this, --loop N starts the next pass.
+            quit_requested = True
         finally:
             self._release_capture(writer, cap)
 
@@ -1664,6 +1682,8 @@ class SyncRunner:
         t_i1 = time.perf_counter()
 
         sr_bgr = self._merge_ycrcb(sr_y, img, out_w, out_h)
+        self._try_verify_dump([SuperResolutionResult(output_image=sr_bgr, scale_factor=scale_x)],
+                              image_path, img)
         t3 = time.perf_counter()
 
         lr_up = cv2.resize(img, (out_w, out_h),

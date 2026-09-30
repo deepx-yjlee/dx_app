@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "common/base/i_factory.hpp"
+#include "common/processors/serialized_postprocessor.hpp"
 #include "common/utility/colorspace.hpp"
 #include "common/utility/common_util.hpp"
 #include "common/utility/display_pump.hpp"
@@ -39,6 +40,9 @@ struct AsyncRestorationDisplayArgs {
     std::shared_ptr<std::vector<RestorationResult>> results;
     std::shared_ptr<cv::Mat> original_frame;
     cv::Mat prerendered_frame;   // if non-empty, used directly (SR tiled path)
+    std::shared_ptr<std::vector<RestorationResult>> tiled_results;  // tiled SR: stitched output (dumped, not re-rendered)
+    int verify_height = 0;  // tiled SR: image size recorded by DXAPP_VERIFY
+    int verify_width = 0;
     std::string save_path;
     double t_read = 0.0;
     double t_preprocess = 0.0;
@@ -79,7 +83,6 @@ public:
             std::cout << "[DXAPP] [INFO] --show-log: This task produces image-based output. "
                          "Use --save or display mode to view results." << std::endl;
         }
-        bool save_output = args.saveMode;
         std::string save_dir = args.saveDir;
 
         // Apply default sample image if no input specified
@@ -122,10 +125,6 @@ public:
 
         // Detect if model expects float input (e.g. Zero-DCE)
         bool is_float_input = (ie.GetInputs().front().type() == dxrt::DataType::FLOAT);
-        int input_channels = 1;
-        if (input_shape.size() >= 4) {
-            input_channels = static_cast<int>(is_nhwc ? input_shape[3] : input_shape[1]);
-        }
 
         // Load model configuration if provided
         if (!args.configPath.empty()) {
@@ -143,10 +142,11 @@ public:
         }
 
         auto preprocessor = factory_->createPreprocessor(input_width, input_height);
-        // Use shared_ptr so the callback lambda can capture by value and extend lifetime
-        // past ie.Wait() which may return before the background callback thread completes.
-        auto postprocessor_uptr = factory_->createPostprocessor(input_width, input_height);
-        auto postprocessor = std::shared_ptr<typename decltype(postprocessor_uptr)::element_type>(std::move(postprocessor_uptr));
+        // One decoder for every completion callback. dxrt runs the callbacks on
+        // its worker pool, so Serialize() lets one process() run at a time
+        // (serialized_postprocessor.hpp). It is a shared_ptr: the lambda's copy
+        // outlives ie.Wait(), which can return before the last callback finishes.
+        auto postprocessor = Serialize(factory_->createPostprocessor(input_width, input_height));
         auto visualizer = factory_->createVisualizer();
 
         std::cout << "[DXAPP] [INFO] Task: " << factory_->getTaskType() << std::endl;
@@ -251,10 +251,6 @@ public:
             display_args.ctx = ud->ctx;
             display_args.save_path = std::move(ud->save_path);
             display_args.frame_index = ud->frame_index;
-            // --- Numerical verification dump (DXAPP_VERIFY=1) ---
-            verify::dumpVerifyJson(*display_args.results, model_path_,
-                "restoration", display_args.original_frame->rows, display_args.original_frame->cols);
-
             display_queue_.push(std::move(display_args));
             delete ud;
             return 0;
@@ -363,7 +359,7 @@ public:
             // For images: keep display alive until user closes window
             if (is_image && !args.no_display && display_pump_.guiAvailable()) {
                 // Drain remaining rendered frames
-                while (running_) {
+                while (running_ && !g_interrupted()) {  // one SIGINT/SIGTERM ends the wait
                     if (!running_) break;
                     std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 }
@@ -380,15 +376,21 @@ public:
                 int last_rendered = -1;
                 while (running_ && !g_interrupted()) {
                     int rendered;
+                    int received;
                     {
                         std::lock_guard<std::mutex> lock(metrics_.metrics_mutex);
                         rendered = metrics_.render_completed;
+                        received = metrics_.display_received;
                     }
-                    const bool pending = !display_queue_.empty() ||
+                    // received < processCount: a completion callback has not queued its
+                    // frame yet. Callbacks finish out of order and ie.Wait(last_job_id)
+                    // waits for the last job only, so without this the display thread
+                    // could stop before an earlier frame arrived (no render, no dump).
+                    const bool pending = !display_queue_.empty() || received < processCount ||
                                          (args.saveMode && rendered < processCount);
                     if (!pending) break;
-                    if (rendered != last_rendered) {
-                        last_rendered = rendered;
+                    if (rendered + received != last_rendered) {
+                        last_rendered = rendered + received;
                         last_progress = std::chrono::steady_clock::now();
                     } else if (std::chrono::steady_clock::now() - last_progress >
                                std::chrono::seconds(5)) {
@@ -593,6 +595,17 @@ private:
         AsyncRestorationDisplayArgs dargs;
         dargs.prerendered_frame = canvas;
         dargs.save_path = save_path;
+        // DXAPP_VERIFY: the stitched, label-free SR output at the input size, as
+        // the sync runner dumps it. The display thread dumps it in submit order.
+        {
+            RestorationResult sr_result;
+            sr_result.restored_image = sr_only;
+            sr_result.width = sr_only.cols;
+            sr_result.height = sr_only.rows;
+            dargs.tiled_results = std::make_shared<std::vector<RestorationResult>>(1, sr_result);
+            dargs.verify_height = orig_h;
+            dargs.verify_width = orig_w;
+        }
         // This path renders on the caller's thread and is already in submit order,
         // but the display thread keys its reorder buffer on frame_index, so the
         // index must still be unique and monotonic here.
@@ -869,6 +882,16 @@ private:
         // Render + save + hand one frame to the main-thread display. Extracted so
         // the reorder buffer below can emit frames strictly in submit order.
         auto renderArgs = [&](AsyncRestorationDisplayArgs& args) {
+            // DXAPP_VERIFY: here, where the reorder buffer releases the frame (one
+            // thread, input order), not in the dxrt completion callback. A tiled SR
+            // frame carries its stitched output in tiled_results instead.
+            const bool tiled = !args.results && args.tiled_results;
+            if (tiled || (args.results && args.original_frame)) {
+                verify::dumpVerifyJson(tiled ? *args.tiled_results : *args.results, model_path_,
+                                       "restoration",
+                                       tiled ? args.verify_height : args.original_frame->rows,
+                                       tiled ? args.verify_width : args.original_frame->cols);
+            }
             const bool need_render = mustRenderFrame(
                 no_display, save_on, args.save_path, display_pump_);
             cv::Mat result_frame;
@@ -927,6 +950,7 @@ private:
         while (running_ || !display_queue_.empty()) {
             AsyncRestorationDisplayArgs args;
             if (!display_queue_.try_pop(args, std::chrono::milliseconds(100))) continue;
+            { std::lock_guard<std::mutex> lock(metrics_.metrics_mutex); metrics_.display_received++; }
             reorder.push(std::move(args), renderArgs);
         }
         reorder.drain(renderArgs);

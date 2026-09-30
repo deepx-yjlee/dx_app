@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "common/base/i_factory.hpp"
+#include "common/processors/serialized_postprocessor.hpp"
 #include "common/utility/common_util.hpp"
 #include "common/utility/display_pump.hpp"
 #include "common/utility/frame_reorder.hpp"
@@ -108,10 +109,11 @@ public:
         }
 
         auto preprocessor = factory_->createPreprocessor(input_width, input_height);
-        // Use shared_ptr so the callback lambda can capture by value and extend lifetime
-        // past ie.Wait() which may return before the background callback thread completes.
-        auto postprocessor_uptr = factory_->createPostprocessor(input_width, input_height);
-        auto postprocessor = std::shared_ptr<typename decltype(postprocessor_uptr)::element_type>(std::move(postprocessor_uptr));
+        // One decoder for every completion callback. dxrt runs the callbacks on
+        // its worker pool, so Serialize() lets one process() run at a time
+        // (serialized_postprocessor.hpp). It is a shared_ptr: the lambda's copy
+        // outlives ie.Wait(), which can return before the last callback finishes.
+        auto postprocessor = Serialize(factory_->createPostprocessor(input_width, input_height));
         auto visualizer = factory_->createVisualizer();
 
         std::cout << "[DXAPP] [INFO] Task: " << factory_->getTaskType() << std::endl;
@@ -226,10 +228,6 @@ public:
             display_args.ctx = ud_ptr->ctx;
             display_args.save_path = ud_ptr->save_path;
             display_args.frame_index = ud_ptr->frame_index;
-            // --- Numerical verification dump (DXAPP_VERIFY=1) ---
-            verify::dumpVerifyJson(*display_args.detections, model_path_,
-                "hand_landmark", display_args.original_frame->rows, display_args.original_frame->cols);
-
             display_queue_.push(std::move(display_args));
             delete ud_ptr;
             return 0;
@@ -393,7 +391,7 @@ public:
             // For images: keep display alive until user closes window
             if (is_image && !args.no_display && display_pump_.guiAvailable()) {
                 // Drain remaining rendered frames
-                while (running_) {
+                while (running_ && !g_interrupted()) {  // one SIGINT/SIGTERM ends the wait
                     if (!running_) break;
                     std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 }
@@ -410,15 +408,21 @@ public:
                 int last_rendered = -1;
                 while (running_ && !g_interrupted()) {
                     int rendered;
+                    int received;
                     {
                         std::lock_guard<std::mutex> lock(metrics_.metrics_mutex);
                         rendered = metrics_.render_completed;
+                        received = metrics_.display_received;
                     }
-                    const bool pending = !display_queue_.empty() ||
+                    // received < processCount: a completion callback has not queued its
+                    // frame yet. Callbacks finish out of order and ie.Wait(last_job_id)
+                    // waits for the last job only, so without this the display thread
+                    // could stop before an earlier frame arrived (no render, no dump).
+                    const bool pending = !display_queue_.empty() || received < processCount ||
                                          (args.saveMode && rendered < processCount);
                     if (!pending) break;
-                    if (rendered != last_rendered) {
-                        last_rendered = rendered;
+                    if (rendered + received != last_rendered) {
+                        last_rendered = rendered + received;
                         last_progress = std::chrono::steady_clock::now();
                     } else if (std::chrono::steady_clock::now() - last_progress >
                                std::chrono::seconds(5)) {
@@ -556,6 +560,12 @@ private:
         // Render + save + hand one frame to the main-thread display. Extracted so
         // the reorder buffer below can emit frames strictly in submit order.
         auto renderArgs = [&](AsyncPoseDisplayArgs& args) {
+            // DXAPP_VERIFY: here, where the reorder buffer releases the frame (one
+            // thread, input order), not in the dxrt completion callback.
+            if (args.detections && args.original_frame) {
+                verify::dumpVerifyJson(*args.detections, model_path_, "hand_landmark",
+                                       args.original_frame->rows, args.original_frame->cols);
+            }
             if (!args.original_frame || args.original_frame->empty()) return;
             const bool need_render = mustRenderFrame(
                 no_display, save_on, args.save_path, display_pump_);
@@ -596,6 +606,7 @@ private:
         while (running_ || !display_queue_.empty()) {
             AsyncPoseDisplayArgs args;
             if (!display_queue_.try_pop(args, std::chrono::milliseconds(100))) continue;
+            { std::lock_guard<std::mutex> lock(metrics_.metrics_mutex); metrics_.display_received++; }
             reorder.push(std::move(args), renderArgs);
         }
         reorder.drain(renderArgs);
