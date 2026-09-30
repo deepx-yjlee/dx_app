@@ -15,6 +15,7 @@
 #include <string>
 #include <vector>
 
+#include <dxrt/dxrt_api.h>
 #include <opencv2/imgcodecs.hpp>
 
 #include "common/graph/graph_config.hpp"
@@ -168,12 +169,18 @@ void PrintUsage(const char* program) {
         "                        needs, without opening the NPU, then exit.\n"
         "                        Exit code reflects the graph itself; a"
         " missing\n"
-        "                        .dxnn is reported but is not an error here\n"
+        "                        .dxnn is reported but is not an error here;"
+        " a .dxnn\n"
+        "                        this DX-RT cannot load (v9 before 3.5.0) is"
+        " one\n"
+        "                        (exit 1)\n"
         "  --list-models         print every model this build can put in a"
         " graph, with\n"
         "                        its published flag and the container version"
         " of its\n"
-        "                        .dxnn in --model-dir (v8, v9, missing), then"
+        "                        .dxnn in --model-dir (v8, v9, missing; and"
+        " when this\n"
+        "                        DX-RT cannot load it, why), then"
         " the\n"
         "                        alias_of names of other models\n"
         "  --consumes <what>     with --list-models: roi | frame | either\n"
@@ -370,16 +377,24 @@ bool ValidateFilters(const GraphCliArgs& args, std::string* error) {
     return true;
 }
 
+/// This process's DX-RT version, the one every stage's engine would load on.
+const std::string& RuntimeVersion() {
+    static const std::string version = dxrt::Configuration::GetInstance().GetVersion();
+    return version;
+}
+
 /// The file column of --list-models: the container version of the model's
 /// .dxnn in model_dir ("v8", "v9"), "missing", or "invalid" for a file that
-/// is not a .dxnn.
+/// is not a .dxnn. A container this runtime cannot load says why:
+/// "v9 (needs DX-RT >= 3.5.0)" (R12).
 std::string ContainerColumn(const ModelInfo& info, const std::string& model_dir) {
     const std::string path = model_dir + "/" + info.dxnn_file;
     if (!FileExists(path)) return "missing";
     uint32_t version = 0;
     std::string error;
     if (!ReadDxnnContainerVersion(path, &version, &error)) return "invalid";
-    return "v" + std::to_string(version);
+    const std::string requirement = ContainerRequirement(version, RuntimeVersion());
+    return "v" + std::to_string(version) + (requirement.empty() ? "" : " (" + requirement + ")");
 }
 
 bool ListedByFilters(const ModelInfo& info, const GraphCliArgs& args) {
@@ -418,15 +433,24 @@ int PrintModels(const IModelRegistry& registry, const GraphCliArgs& args) {
     for (std::size_t a = 0; a < aliases.size(); ++a) {
         model_width = std::max(model_width, aliases[a].name.size() + 1);
     }
+    // The file column grows too, for "v9 (needs DX-RT >= 3.5.0)".
+    std::vector<std::string> files(models.size());
+    std::size_t file_width = 9;
+    for (std::size_t i = 0; i < models.size(); ++i) {
+        if (!ListedByFilters(models[i], args)) continue;
+        files[i] = ContainerColumn(models[i], args.model_dir);
+        file_width = std::max(file_width, files[i].size() + 1);
+    }
     const int model_w = static_cast<int>(model_width);
     const int task_w = static_cast<int>(task_width);
+    const int file_w = static_cast<int>(file_width);
 
     std::ostringstream out;
     out << std::left << std::setw(model_w) << "model" << std::setw(task_w) << "task"
         << std::setw(11) << "produces" << std::setw(11) << "consumes"
         << std::setw(11) << "input" << std::setw(10) << "published"
-        << std::setw(9) << "file" << "ready\n";
-    out << std::string(model_width + task_width + 11 * 3 + 10 + 9 + 5, '-') << "\n";
+        << std::setw(file_w) << "file" << "ready\n";
+    out << std::string(model_width + task_width + 11 * 3 + 10 + file_width + 5, '-') << "\n";
     for (std::size_t i = 0; i < models.size(); ++i) {
         const ModelInfo& info = models[i];
         if (!ListedByFilters(info, args)) continue;
@@ -438,7 +462,7 @@ int PrintModels(const IModelRegistry& registry, const GraphCliArgs& args) {
             << std::setw(11) << ToString(info.input_contract)
             << std::setw(11) << size.str()
             << std::setw(10) << (info.published ? "yes" : "no")
-            << std::setw(9) << ContainerColumn(info, args.model_dir)
+            << std::setw(file_w) << files[i]
             << (info.ready ? "yes" : "no  " + info.not_ready_reason)
             << (info.ports.empty() ? std::string() : "  ports: " + PortsText(info)) << "\n";
     }
@@ -549,11 +573,24 @@ void PrintCheckSummary(const GraphSpec& spec, const IModelRegistry& registry,
         const ModelInfo* info = registry.find(node.model);
         if (info == NULL) continue;
         const std::string path = model_dir + "/" + info->dxnn_file;
+        // A present file this runtime cannot load says why (R12); the
+        // error itself follows on stderr (UnloadableContainers).
+        std::string status = "[MISSING]";
+        if (FileExists(path)) {
+            uint32_t version = 0;
+            std::string error;
+            const std::string requirement =
+                ReadDxnnContainerVersion(path, &version, &error)
+                    ? ContainerRequirement(version, RuntimeVersion())
+                    : std::string();
+            status = requirement.empty() ? "[present]"
+                                         : "[present, v" + std::to_string(version) + " (" +
+                                               requirement + ")]";
+        }
         table << std::setw(model_w) << info->model_name
               << std::setw(11) << ToString(info->output_shape)
               << std::setw(11) << ToString(info->input_contract)
-              << info->dxnn_file
-              << (FileExists(path) ? "  [present]" : "  [MISSING]") << "\n";
+              << info->dxnn_file << "  " << status << "\n";
     }
     std::fputs(table.str().c_str(), stdout);
 
@@ -603,6 +640,35 @@ void PrintCheckSummary(const GraphSpec& spec, const IModelRegistry& registry,
                     MissingHeadline(missing.size(), model_dir).c_str());
         std::fputs(FormatMissingList(missing).c_str(), stdout);
     }
+}
+
+/**
+ * @brief R12: one MODEL_LOAD error per model node whose .dxnn is present
+ *        but a container this DX-RT cannot load (v9 before 3.5.0).
+ *
+ * --check exits 1 on any of them: unlike a missing file, which a download
+ * fixes, the graph cannot run here with these files, and a run would stop
+ * on the same text before opening an engine (detail::LoadableModelPath).
+ */
+std::vector<std::string> UnloadableContainers(const GraphSpec& spec,
+                                              const IModelRegistry& registry,
+                                              const std::string& model_dir) {
+    std::vector<std::string> errors;
+    for (std::size_t i = 0; i < spec.nodes.size(); ++i) {
+        const NodeSpec& node = spec.nodes[i];
+        if (node.is_source) continue;
+        const ModelInfo* info = registry.find(node.model);
+        if (info == NULL) continue;
+        const std::string error =
+            ContainerLoadError(model_dir + "/" + info->dxnn_file, RuntimeVersion());
+        if (error.empty()) continue;
+        errors.push_back(GraphError(GraphErrorCode::kModelLoad, "node \"" + node.id + "\"",
+                                    "model \"" + node.model + "\" (" + info->dxnn_file +
+                                        ") cannot be loaded here: " + error,
+                                    "")
+                             .what());
+    }
+    return errors;
 }
 
 // ---------------------------------------------------------------------
@@ -920,9 +986,16 @@ int Main(int argc, char** argv, ExecutorKind kind) {
             ValidateGraph(spec, registry);                      // T0
             // T1 is reported, not enforced: the exit code answers "is this
             // graph valid?", which is a question a checkout with no models
-            // downloaded must still be able to ask.
+            // downloaded must still be able to ask. A present file this
+            // DX-RT cannot load is the exception (R12): exit 1.
             PrintCheckSummary(spec, registry, args.graph_path, args.model_dir);
-            return 0;
+            std::fflush(stdout);
+            const std::vector<std::string> unloadable =
+                UnloadableContainers(spec, registry, args.model_dir);
+            for (std::size_t i = 0; i < unloadable.size(); ++i) {
+                std::fprintf(stderr, "%s\n", unloadable[i].c_str());
+            }
+            return unloadable.empty() ? 0 : 1;
         }
 
         // Usage errors that need the graph's uri or the environment, found

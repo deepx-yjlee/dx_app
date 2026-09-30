@@ -9,7 +9,8 @@ import pytest
 
 from conftest import PROJECT_ROOT, resolve_bin_dir
 from test_graph_cli import (GRAPHS, GRAPH_DIR, MODEL_DIR, MULTISTREAM, SAMPLE_GRAPHS, TWO_SR_GRAPH,
-                            _registry, missing_artifacts, read_in_turn, run, shifted_sample_frames,
+                            V9_MODELS, _registry, missing_artifacts, one_node_graph, read_in_turn,
+                            require_an_older_runtime, run, shifted_sample_frames, v9_model_dir,
                             write_moving_video, write_two_stream_videos)
 
 PY_DIR = os.environ.get("DX_GRAPH_PYTHONPATH") or str(resolve_bin_dir() / "python")
@@ -169,6 +170,24 @@ def test_graph_error_matches_cli(tmp_path):
     assert caught.value.code == "GRAPH_EDGE"
     assert str(caught.value) == cli.stderr.strip()
     assert isinstance(caught.value, ValueError)
+
+
+@pytest.mark.graph
+@pytest.mark.parametrize("model", V9_MODELS)
+def test_v9_model_on_an_older_runtime_raises_before_loading(tmp_path, model):
+    """R12 through dx_graph: the CLI's MODEL_LOAD message, word for word,
+    raised before any engine is created."""
+    require_an_older_runtime()
+    dx_graph = load_dx_graph()
+    model_dir, dxnn = v9_model_dir(tmp_path, model)
+    graph = one_node_graph(tmp_path, model)
+    cli = run("multi_model_graph_sync", "--graph", str(graph), "--model-dir", str(model_dir))
+    assert cli.returncode == 1
+    with pytest.raises(dx_graph.GraphError) as caught:
+        dx_graph.Graph(str(graph), model_dir=str(model_dir))
+    assert caught.value.code == "MODEL_LOAD"
+    assert str(caught.value) == cli.stderr.strip()
+    assert str(model_dir / dxnn) + ": .dxnn container v9 needs DX-RT >= 3.5.0" in str(caught.value)
 
 
 @pytest.mark.graph

@@ -83,11 +83,27 @@
 #include "common/graph/i_registry.hpp"
 #include "common/graph/result_to_shape.hpp"
 #include "common/utility/common_util.hpp"
+#include "common/utility/dxnn_container.hpp"
 
 namespace dxapp {
 namespace graph {
 
 namespace detail {
+
+/**
+ * @brief `model_path`, once its .dxnn container is one this DX-RT loads;
+ *        otherwise throws std::runtime_error with ContainerLoadError's text.
+ *
+ * Called on the path an engine is about to be created from (TypedStage,
+ * MakeRestorationStage), so a v9 file on DX-RT < 3.5.0 fails with one
+ * clear sentence before dxrt opens anything (spec section 4, R12).
+ */
+inline const std::string& LoadableModelPath(const std::string& model_path) {
+    const std::string error =
+        ContainerLoadError(model_path, dxrt::Configuration::GetInstance().GetVersion());
+    if (!error.empty()) throw std::runtime_error(error);
+    return model_path;
+}
 
 /**
  * @brief The config.json a stage reads: <task>/<family>/<variant>/config.json
@@ -455,7 +471,8 @@ class TypedStage : public IStage {
     TypedStage(std::unique_ptr<FactoryT> factory, const std::string& model_path,
                const ModelInfo& info, const StageParams& params)
         : TypedStage(std::move(factory),
-                     std::unique_ptr<dxrt::InferenceEngine>(new dxrt::InferenceEngine(model_path)),
+                     std::unique_ptr<dxrt::InferenceEngine>(
+                         new dxrt::InferenceEngine(detail::LoadableModelPath(model_path))),
                      info, params) {}
 
     /// Over an engine the caller already opened (MakeRestorationStage probes

@@ -2507,6 +2507,84 @@ def _registry_rows():
         return json.load(handle)
 
 
+def dxrt_version():
+    """(major, minor, patch) from ``dxrt-cli --version`` ("DXRT v3.4.1+baec914"),
+    or None when there is no dxrt-cli or it prints no version."""
+    try:
+        out = subprocess.run(["dxrt-cli", "--version"], stdout=subprocess.PIPE,
+                             stderr=subprocess.STDOUT, universal_newlines=True, timeout=60)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    match = re.search(r"DXRT v?(\d+)\.(\d+)\.(\d+)", out.stdout)
+    return tuple(int(part) for part in match.groups()) if match else None
+
+
+# A real q-lite-dxnn/2_5_0 (container v9) espcn-x2_17x17.dxnn, when a caller
+# has one: the directory that holds it. Without it the test writes a v9
+# header stub, which is all the check reads.
+V9_MODEL_DIR = os.environ.get("DXAPP_V9_MODEL_DIR", "")
+
+
+def v9_model_dir(tmp_path, model):
+    """(directory, file name) of a container-v9 .dxnn for `model`."""
+    dxnn = _registry()[model]["dxnn_file"]
+    if V9_MODEL_DIR and (Path(V9_MODEL_DIR) / dxnn).is_file():
+        return Path(V9_MODEL_DIR), dxnn
+    directory = tmp_path / "v9"
+    directory.mkdir(exist_ok=True)
+    (directory / dxnn).write_bytes(b"DXNN" + (9).to_bytes(4, "little") + b"{}")
+    return directory, dxnn
+
+
+def one_node_graph(tmp_path, model):
+    path = tmp_path / "one_node.json"
+    path.write_text(json.dumps({
+        "version": 1, "name": "one-node",
+        "nodes": [{"id": "cam", "type": "source", "uri": "sample/img/sample_people.jpg"},
+                  {"id": "m", "model": model}],
+        "edges": [{"from": "cam", "to": "m"}]}))
+    return path
+
+
+def require_an_older_runtime():
+    version = dxrt_version()
+    if version is None or version >= (3, 5, 0):
+        pytest.skip("needs DX-RT older than 3.5.0 (dxrt-cli --version: {})".format(version))
+
+
+# The tiled-SR maker (espcn-x2: one input channel) and a typed stage.
+V9_MODELS = ["espcn-x2_17x17", "yolov8-n_640x640"]
+
+
+@pytest.mark.graph
+@pytest.mark.parametrize("model", V9_MODELS)
+def test_v9_model_on_an_older_runtime_fails_before_loading(tmp_path, model):
+    """R12 / spec section 4: a container-v9 .dxnn on DX-RT < 3.5.0 is refused
+    by the graph paths, naming the file, before any engine is created -
+    --check exits 1, and a run fails with the same text before it builds the
+    graph (no "graph:" line) and before dxrt says anything."""
+    require_an_older_runtime()
+    model_dir, dxnn = v9_model_dir(tmp_path, model)
+    graph = one_node_graph(tmp_path, model)
+
+    for binary in BINARIES:
+        check = run(binary, "--graph", str(graph), "--check", "--model-dir", str(model_dir))
+        assert check.returncode == 1, check.stdout + check.stderr
+        assert "needs DX-RT >= 3.5.0" in check.stderr, check.stderr
+        assert str(model_dir / dxnn) + ": .dxnn container v9 needs DX-RT >= 3.5.0" in check.stderr
+        assert "Use the v8 file (dxnn/2_4_0) or upgrade DX-RT." in check.stderr
+        assert "{}  [present, v9 (needs DX-RT >= 3.5.0)]".format(dxnn) in check.stdout, check.stdout
+
+        result = run(binary, "--graph", str(graph), "--model-dir", str(model_dir))
+        assert result.returncode == 1, result.stdout + result.stderr
+        assert "graph:" not in result.stdout, result.stdout
+        assert "dxrt-exception" not in result.stderr, result.stderr  # dxrt never ran
+        first = result.stderr.splitlines()[0] if result.stderr else ""
+        assert first.startswith("ERROR [MODEL_LOAD] node \"m\""), result.stderr
+        assert (str(model_dir / dxnn) + ": .dxnn container v9 needs DX-RT >= 3.5.0, but this "
+                "runtime is ") in first, result.stderr
+
+
 @pytest.mark.graph
 def test_list_models_shows_published_and_container_version(tmp_path):
     """--list-models prints the registry's published flag and, per row, the
@@ -2528,6 +2606,11 @@ def test_list_models_shows_published_and_container_version(tmp_path):
     assert result.returncode == 0, result.stderr
     rows = _list_rows(result.stdout)
     assert rows["yolov8-n_640x640"].split()[6] == "v9"
+    older = dxrt_version()
+    if older is not None and older < (3, 5, 0):
+        # R12: a v9 file this runtime cannot load says so in the same column.
+        assert "v9 (needs DX-RT >= 3.5.0)" in rows["yolov8-n_640x640"], rows["yolov8-n_640x640"]
+        assert "needs DX-RT" not in rows["resnet50_224x224"]
     assert rows["resnet50_224x224"].split()[6] == "invalid"
     assert rows["yolov8-s-pose_640x640"].split()[6] == "missing"
     published = {e["variant"]: e.get("published") for e in _registry_rows()}

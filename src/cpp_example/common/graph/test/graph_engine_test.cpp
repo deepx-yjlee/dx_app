@@ -11140,15 +11140,76 @@ void TestReadDxnnContainerVersion() {
     std::remove(big.c_str());
     std::remove(magic.c_str());
     std::remove(short_file.c_str());
+}
 
-    // A shipped model, when the checkout has it (the v8 store: container 8
-    // or older).
-    const std::string real = ModelDir() + "/yolov8-n_640x640.dxnn";
-    if (!FileIsReadable(real)) {
-        Skip("TestReadDxnnContainerVersion", real + " not present");
-        return;
+// Spec section 4: the one text a v9 file on DX-RT < 3.5.0 gets, from bytes
+// 4-7 and the runtime's own version string, before any engine exists.
+void TestContainerSupportRefusesV9BelowDxrt350() {
+    const std::string v9_on_341 =
+        ".dxnn container v9 needs DX-RT >= 3.5.0, but this runtime is 3.4.1. "
+        "Use the v8 file (dxnn/2_4_0) or upgrade DX-RT.";
+    GRAPH_CHECK(ContainerSupportError(8, "v3.4.1").empty());
+    GRAPH_CHECK(ContainerSupportError(6, "3.4.1").empty());
+    GRAPH_CHECK(ContainerSupportError(9, "v3.4.1") == v9_on_341);
+    // dxrt::Configuration::GetVersion() prints "3.4.1"; dxrt-cli "v3.4.1+baec914".
+    GRAPH_CHECK(ContainerSupportError(9, "3.4.1") == v9_on_341);
+    GRAPH_CHECK(ContainerSupportError(9, "v3.4.1+baec914") == v9_on_341);
+    GRAPH_CHECK(ContainerSupportError(9, "3.4.9").find("needs DX-RT >= 3.5.0") != std::string::npos);
+    GRAPH_CHECK(ContainerSupportError(9, "2.9.0").find("needs DX-RT >= 3.5.0") != std::string::npos);
+    GRAPH_CHECK(ContainerSupportError(9, "v3.5.0").empty());
+    GRAPH_CHECK(ContainerSupportError(9, "3.10.0").empty());  // numeric, not text order
+    GRAPH_CHECK(ContainerSupportError(9, "4.0").empty());
+    const std::string newer = ContainerSupportError(10, "v3.5.0");
+    GRAPH_CHECK(newer.find(".dxnn container v10 ") == 0);
+    GRAPH_CHECK(newer.find("needs a DX-RT newer than v3.5.0") != std::string::npos);
+    GRAPH_CHECK(ContainerSupportError(10, "3.4.1").find("needs a DX-RT newer than v3.4.1") !=
+                std::string::npos);
+    // A runtime string this cannot read: no verdict; dxrt decides.
+    GRAPH_CHECK(ContainerSupportError(9, "").empty());
+    GRAPH_CHECK(ContainerSupportError(9, "unknown").empty());
+    GRAPH_CHECK(ContainerSupportError(9, "v3").empty());
+    GRAPH_CHECK(ContainerSupportError(9, "3.x.1").empty());
+
+    // The short form --list-models and --check print next to the file.
+    GRAPH_CHECK(ContainerRequirement(9, "3.4.1") == "needs DX-RT >= 3.5.0");
+    GRAPH_CHECK(ContainerRequirement(8, "3.4.1").empty());
+    GRAPH_CHECK(ContainerRequirement(9, "3.5.0").empty());
+
+    // On a file: "<file>: <text>"; a v8 file, or one the header reader
+    // refuses (dxrt names that problem itself), gives "".
+    const std::string v9 = WriteScratchBytes("support_v9.dxnn", ContainerHeader(9));
+    const std::string v8 = WriteScratchBytes("support_v8.dxnn", ContainerHeader(8));
+    GRAPH_CHECK(ContainerLoadError(v9, "3.4.1") == v9 + ": " + v9_on_341);
+    GRAPH_CHECK(ContainerLoadError(v9, "3.5.0").empty());
+    GRAPH_CHECK(ContainerLoadError(v8, "3.4.1").empty());
+    GRAPH_CHECK(ContainerLoadError(ScratchPath("support_absent.dxnn"), "3.4.1").empty());
+    std::remove(v9.c_str());
+    std::remove(v8.c_str());
+}
+
+// The stage makers refuse a v9 file on this runtime before they open an
+// engine: a typed stage (yolov8-n) and a restoration stage (espcn-x2, the
+// tiled-SR maker). The file is only a header, so no engine is ever created
+// on DX-RT < 3.5.0; on 3.5.0 dxrt rejects the stub with its own error.
+void TestAStageRefusesAV9FileBeforeOpeningAnEngine() {
+    const std::string runtime = dxrt::Configuration::GetInstance().GetVersion();
+    const std::string expected = ContainerSupportError(9, runtime);
+    const std::string v9 = WriteScratchBytes("stage_v9.dxnn", ContainerHeader(9));
+    StaticModelRegistry registry;
+    const char* models[] = {"yolov8-n_640x640", "espcn-x2_17x17"};
+    for (std::size_t m = 0; m < sizeof(models) / sizeof(models[0]); ++m) {
+        std::string message;
+        try {
+            registry.createStage(models[m], v9, StageParams());
+        } catch (const std::exception& error) {
+            message = error.what();
+        }
+        GRAPH_CHECK(!message.empty());
+        if (!expected.empty()) {
+            GRAPH_CHECK(message == v9 + ": " + expected);
+        }
     }
-    GRAPH_CHECK(ReadDxnnContainerVersion(real, &version, &error) && version >= 6 && version <= 9);
+    std::remove(v9.c_str());
 }
 
 // R6: the model key is the variant. A legacy model_name and an alias_of row
@@ -11672,6 +11733,8 @@ int main() {
     TestRealTiledSrHandOffMatchesSync();
 
     TestReadDxnnContainerVersion();
+    TestContainerSupportRefusesV9BelowDxrt350();
+    TestAStageRefusesAV9FileBeforeOpeningAnEngine();
     TestRegistryResolvesOldNamesAndAliasesToTheVariant();
     TestRegistryCarriesPublishedAndResources();
     TestStageConfigIsTheVariantsConfigJson();
