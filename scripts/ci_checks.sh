@@ -140,7 +140,10 @@ run_check() {
                      "(a tests/scripts test must not start the suite that runs it)" >&2
                 return 1
             fi
-            DXAPP_CI_CHECKS_ACTIVE=1 "$PYTHON" -m pytest tests/scripts -q -p no:cacheprovider ;;
+            # TARGET's known failures run as strict xfails: green while they
+            # fail, red the day one passes (tests/scripts/known_failures.py).
+            DXAPP_CI_CHECKS_ACTIVE=1 "$PYTHON" -m pytest tests/scripts -q -rfExX -p no:cacheprovider \
+                --known-failures tests/scripts/known_target_failures.txt ;;
     esac
 }
 

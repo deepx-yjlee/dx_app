@@ -11,6 +11,10 @@ from pathlib import Path
 import pytest
 
 import hermetic_guard
+# TARGET's known failures as strict xfails, when --known-failures names the
+# list (scripts/ci_checks.sh does); see known_failures.py.
+from known_failures import (  # noqa: F401 - pytest hooks
+    pytest_addoption, pytest_collection_modifyitems, pytest_configure)
 
 ROOT = Path(__file__).resolve().parents[2]
 

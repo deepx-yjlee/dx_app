@@ -1,0 +1,9 @@
+# tests/scripts failures that are TARGET's, not ours: every one is already red
+# at 8d0b748 (feat/per-model-example-dirs) and is reported to its owner.
+# scripts/ci_checks.sh runs tests/scripts with this list, and each test below
+# is xfail(strict=True) there (tests/scripts/known_failures.py): CI stays green
+# while it fails and goes red the day it passes - then delete its line.
+# A plain `pytest tests/scripts` ignores this file and shows them failing.
+#
+# <test id, relative to this directory> | <reason>
+test_generate_build_bat.py::test_run_bat_executes_bare_relative_filename | 8d0b748: a Windows cmd.exe regression test with no platform guard; on Linux /bin/sh cannot run the .bat (rc 126, Permission denied)

@@ -105,10 +105,10 @@ def test_a_git_checkout_listing_no_tracked_file_is_a_problem(tmp_path):
 
 def _fake_repo(pytester):
     """pytester's directory as a repository root: this suite's conftest and
-    guard under tests/scripts/, and a bin/ for a test to dirty."""
+    the modules it imports under tests/scripts/, and a bin/ for a test to dirty."""
     scripts = pytester.path / "tests" / "scripts"
     scripts.mkdir(parents=True)
-    for name in ("conftest.py", "hermetic_guard.py"):
+    for name in ("conftest.py", "hermetic_guard.py", "known_failures.py"):
         shutil.copy(HERE / name, scripts / name)
     (pytester.path / "bin").mkdir()
     (pytester.path / "bin" / "x").write_text("x")
