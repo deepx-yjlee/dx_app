@@ -26,8 +26,11 @@ namespace v_yolov5_s6_pose_640x640 {
 class Yolov5PoseFactory : public IPoseFactory {
 public:
 
-    Yolov5PoseFactory(float obj_threshold = 0.5f,
-                          float score_threshold = 0.5f,
+    // Python's YOLOv5PosePostprocessor defaults: this variant's config.json
+    // has an empty "config" object, so they are what the runner and a graph
+    // stage use.
+    Yolov5PoseFactory(float obj_threshold = 0.25f,
+                          float score_threshold = 0.3f,
                           float nms_threshold = 0.45f)
         : obj_threshold_(obj_threshold),
           score_threshold_(score_threshold),

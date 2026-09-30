@@ -134,6 +134,20 @@ struct DetectionResult {
 };
 
 /**
+ * @brief Panoptic driving perception result (YOLOPv2): ONE per frame.
+ *
+ * The frame's vehicle boxes and its own drivable/lane masks travel together,
+ * so an async runner can decode frame N+1 while it still draws frame N.
+ */
+struct PanopticResult {
+    std::vector<DetectionResult> detections;
+    cv::Mat drivable;  // CV_8UC1 at the original frame size; 1 = drivable area
+    cv::Mat lane;      // CV_8UC1 at the original frame size; 1 = lane line
+
+    PanopticResult() = default;
+};
+
+/**
  * @brief Segmentation result structure
  */
 struct SegmentationResult {

@@ -25,6 +25,7 @@
 
 #include "common/base/i_factory.hpp"
 #include "common/config/model_config.hpp"
+#include "common/runner/detection_runner_ops.hpp"
 #include "common/utility/common_util.hpp"
 #include "common/utility/display_pump.hpp"
 #include "common/utility/run_dir.hpp"
@@ -174,11 +175,15 @@ inline std::tuple<double, double, double, bool> renderSaveDisplay(
 
 /**
  * @brief Generic synchronous runner for detection-based models
- * @tparam FactoryT The factory type (must derive from IDetectionFactory)
+ * @tparam FactoryT The factory type: an IDetectionFactory for DetectionResult, an
+ *                  IPanopticDrivingFactory for PanopticResult (YOLOPv2)
+ * @tparam ResultT  The per-frame result: DetectionResult (default) or PanopticResult;
+ *                  DetectionRunnerOps<ResultT> picks the factory calls
  */
-template <typename FactoryT>
+template <typename FactoryT, typename ResultT = DetectionResult>
 class SyncDetectionRunner {
     bool verbose_ = false;
+    using Ops = DetectionRunnerOps<ResultT>;
 
 public:
     explicit SyncDetectionRunner(std::unique_ptr<FactoryT> factory)
@@ -242,8 +247,8 @@ public:
         }
 
         auto preprocessor = factory_->createPreprocessor(input_width, input_height);
-        auto postprocessor = factory_->createPostprocessor(input_width, input_height, ie.IsOrtConfigured());
-        auto visualizer = factory_->createVisualizer();
+        auto postprocessor = Ops::createPostprocessor(*factory_, input_width, input_height, ie.IsOrtConfigured());
+        auto visualizer = Ops::createVisualizer(*factory_);
         std::string scriptTag = factory_->getModelName() + "_sync";
 
         std::cout << "[DXAPP] [INFO] Task: " << factory_->getTaskType() << std::endl;
@@ -580,8 +585,8 @@ private:
         const cv::Mat& input_frame, cv::Mat& display_image,
         dxrt::InferenceEngine& ie,
         IPreprocessor& preprocessor,
-        IPostprocessor<DetectionResult>& postprocessor,
-        IVisualizer<DetectionResult>& visualizer,
+        IPostprocessor<ResultT>& postprocessor,
+        IVisualizer<ResultT>& visualizer,
         SyncProfilingMetrics& metrics,
         cv::VideoWriter& writer, bool no_display, bool saveMode, double t_read,
         bool is_float_input = false, bool is_nhwc = false,
@@ -639,7 +644,7 @@ private:
         }
 
         // Postprocess
-        std::vector<DetectionResult> detections;
+        std::vector<ResultT> detections;
         auto t_post_start = std::chrono::high_resolution_clock::now();
         try {
             detections = postprocessor.process(outputs, ctx);
@@ -665,7 +670,7 @@ private:
         double t_postprocess = std::chrono::duration<double, std::milli>(t3 - t_post_start).count();
 
         // Print detection results to stdout for pipeline parsing
-        printDetectionResults(detections, display_image.cols, display_image.rows, verbose_);
+        printDetectionResults(Ops::boxes(detections), display_image.cols, display_image.rows, verbose_);
 
 
         // --- Numerical verification dump (DXAPP_VERIFY=1) ---
@@ -703,8 +708,8 @@ private:
         int user_loop_count, cv::Mat& display_image, const cv::Mat& preprocessed_image,
         dxrt::InferenceEngine& ie,
         IPreprocessor& preprocessor,
-        IPostprocessor<DetectionResult>& postprocessor,
-        IVisualizer<DetectionResult>& visualizer,
+        IPostprocessor<ResultT>& postprocessor,
+        IVisualizer<ResultT>& visualizer,
         SyncProfilingMetrics& metrics,
         int& processCount, cv::VideoWriter& writer, bool no_display, bool saveMode,
         bool is_float_input, bool is_nhwc,
@@ -789,8 +794,8 @@ private:
         cv::VideoCapture& video, cv::Mat& display_image, const cv::Mat& /*preprocessed_image*/,
         dxrt::InferenceEngine& ie,
         IPreprocessor& preprocessor,
-        IPostprocessor<DetectionResult>& postprocessor,
-        IVisualizer<DetectionResult>& visualizer,
+        IPostprocessor<ResultT>& postprocessor,
+        IVisualizer<ResultT>& visualizer,
         SyncProfilingMetrics& metrics,
         int& processCount, cv::VideoWriter& writer,
         const CommandLineArgs& args, int loopTest,

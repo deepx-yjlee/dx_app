@@ -26,6 +26,7 @@
 
 #include "common/base/i_factory.hpp"
 #include "common/config/model_config.hpp"
+#include "common/runner/detection_runner_ops.hpp"
 #include "common/utility/common_util.hpp"
 #include "common/utility/display_pump.hpp"
 #include "common/utility/frame_reorder.hpp"
@@ -170,8 +171,9 @@ struct AsyncUserData {
 };
 
 // Display arguments for async processing
-struct AsyncDisplayArgs {
-    std::shared_ptr<std::vector<DetectionResult>> detections;
+template <typename ResultT>
+struct AsyncResultDisplayArgs {
+    std::shared_ptr<std::vector<ResultT>> detections;
     std::shared_ptr<cv::Mat> original_frame;
     std::string save_path;
     double t_read = 0.0;
@@ -180,20 +182,26 @@ struct AsyncDisplayArgs {
     double t_postprocess = 0.0;
     PreprocessContext ctx;
     uint64_t frame_index = 0;  // Monotonic submit order, for in-order display
-    AsyncDisplayArgs() = default;
-    AsyncDisplayArgs(const AsyncDisplayArgs&) = default;
-    AsyncDisplayArgs& operator=(const AsyncDisplayArgs&) = default;
-    AsyncDisplayArgs(AsyncDisplayArgs&&) noexcept = default;
-    AsyncDisplayArgs& operator=(AsyncDisplayArgs&&) noexcept = default;
+    AsyncResultDisplayArgs() = default;
+    AsyncResultDisplayArgs(const AsyncResultDisplayArgs&) = default;
+    AsyncResultDisplayArgs& operator=(const AsyncResultDisplayArgs&) = default;
+    AsyncResultDisplayArgs(AsyncResultDisplayArgs&&) noexcept = default;
+    AsyncResultDisplayArgs& operator=(AsyncResultDisplayArgs&&) noexcept = default;
 };
+using AsyncDisplayArgs = AsyncResultDisplayArgs<DetectionResult>;
 
 /**
  * @brief Generic asynchronous runner for detection-based models
- * @tparam FactoryT The factory type (must derive from IDetectionFactory)
+ * @tparam FactoryT The factory type: an IDetectionFactory for DetectionResult, an
+ *                  IPanopticDrivingFactory for PanopticResult (YOLOPv2)
+ * @tparam ResultT  The per-frame result: DetectionResult (default) or PanopticResult;
+ *                  DetectionRunnerOps<ResultT> picks the factory calls
  */
-template <typename FactoryT>
+template <typename FactoryT, typename ResultT = DetectionResult>
 class AsyncDetectionRunner {
     bool verbose_ = false;
+    using Ops = DetectionRunnerOps<ResultT>;
+    using DisplayArgs = AsyncResultDisplayArgs<ResultT>;
 
 public:
     explicit AsyncDetectionRunner(std::unique_ptr<FactoryT> factory)
@@ -263,9 +271,9 @@ public:
         auto preprocessor = factory_->createPreprocessor(input_width, input_height);
         // Use shared_ptr so the callback lambda can capture by value and extend lifetime
         // past ie.Wait() which returns before the background callback thread fires.
-        std::shared_ptr<IPostprocessor<DetectionResult>> postprocessor(
-            factory_->createPostprocessor(input_width, input_height, ie.IsOrtConfigured()));
-        auto visualizer = factory_->createVisualizer();
+        std::shared_ptr<IPostprocessor<ResultT>> postprocessor(
+            Ops::createPostprocessor(*factory_, input_width, input_height, ie.IsOrtConfigured()));
+        auto visualizer = Ops::createVisualizer(*factory_);
 
         std::cout << "[DXAPP] [INFO] Task: " << factory_->getTaskType() << std::endl;
         std::cout << "[DXAPP] [INFO] Model loaded: " << args.modelPath << std::endl;
@@ -616,7 +624,7 @@ private:
     std::unique_ptr<FactoryT> factory_;
     std::string model_path_;
     std::atomic<bool> running_{true};
-    SafeQueue<AsyncDisplayArgs> display_queue_;
+    SafeQueue<DisplayArgs> display_queue_;
     // Lossy, rate-limited display sink. It replaced a bounded BLOCKING
     // SafeQueue<cv::Mat> that was fed with result_frame.clone(): once the GUI fell
     // behind, push() blocked the render thread, display_queue_ filled behind it and the
@@ -629,7 +637,7 @@ private:
     /** Handle async inference completion: postprocess, log, update metrics, enqueue display. */
     int onAsyncInferenceComplete(
         dxrt::TensorPtrs& outputs, void* user_data,  // NOSONAR(cpp:S5008)
-        IPostprocessor<DetectionResult>& postprocessor) {
+        IPostprocessor<ResultT>& postprocessor) {
         auto* ud = static_cast<AsyncUserData*>(user_data);
         auto t_callback_start = std::chrono::high_resolution_clock::now();
 
@@ -642,14 +650,14 @@ private:
 
         auto t_post_start = std::chrono::high_resolution_clock::now();
 
-        std::vector<DetectionResult> detections;
+        std::vector<ResultT> detections;
         try {
             detections = postprocessor.process(outputs, ud->ctx);
         } catch (const std::exception& e) {
             std::cerr << "[DXAPP] [ERROR] Postprocess error: " << e.what() << std::endl;
         }
 
-        printDetectionResults(detections, ud->display_frame.cols, ud->display_frame.rows, verbose_);
+        printDetectionResults(Ops::boxes(detections), ud->display_frame.cols, ud->display_frame.rows, verbose_);
 
         auto t_post_end = std::chrono::high_resolution_clock::now();
         double t_postprocess = std::chrono::duration<double, std::milli>(t_post_end - t_post_start).count();
@@ -657,9 +665,9 @@ private:
 
         completeInflightMetrics();
 
-        AsyncDisplayArgs display_args;
+        DisplayArgs display_args;
         display_args.original_frame = std::make_shared<cv::Mat>(ud->display_frame);
-        display_args.detections = std::make_shared<std::vector<DetectionResult>>(std::move(detections));
+        display_args.detections = std::make_shared<std::vector<ResultT>>(std::move(detections));
         display_args.t_postprocess = t_postprocess;
         display_args.ctx = ud->ctx;
         display_args.save_path = std::move(ud->save_path);
@@ -868,11 +876,11 @@ private:
         return video.isOpened();
     }
 
-    void displayThread(IVisualizer<DetectionResult>& visualizer, bool no_display,
+    void displayThread(IVisualizer<ResultT>& visualizer, bool no_display,
                        bool save_on, cv::VideoWriter& writer) {
         // Render + save + hand one frame to the main-thread display. Extracted so
         // the reorder buffer below can emit frames strictly in submit order.
-        auto renderArgs = [&](AsyncDisplayArgs& args) {
+        auto renderArgs = [&](DisplayArgs& args) {
             if (!args.original_frame || args.original_frame->empty()) {
                 return;
             }
@@ -933,10 +941,10 @@ private:
 
         // In-order display: completion order is not submission order, and frames
         // are written to the VideoWriter as they are rendered. See frame_reorder.hpp.
-        FrameReorderBuffer<AsyncDisplayArgs> reorder(metrics_.max_inflight * 2);
+        FrameReorderBuffer<DisplayArgs> reorder(metrics_.max_inflight * 2);
 
         while (running_ || !display_queue_.empty()) {
-            AsyncDisplayArgs args;
+            DisplayArgs args;
             if (!display_queue_.try_pop(args, std::chrono::milliseconds(100))) {
                 continue;
             }

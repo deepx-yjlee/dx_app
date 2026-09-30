@@ -313,6 +313,14 @@ inline json serializeRestoration(const std::vector<RestorationResult>& items, in
     return result;
 }
 
+inline json serializePanoptic(const std::vector<PanopticResult>& items, int img_h, int img_w) {
+    if (items.empty()) return serializeDetection(std::vector<DetectionResult>(), img_h, img_w);
+    json result = serializeDetection(items.front().detections, img_h, img_w);
+    result["drivable_stats"] = matStats(items.front().drivable);
+    result["lane_stats"] = matStats(items.front().lane);
+    return result;
+}
+
 // ============================================================================
 // Internal write helper
 // ============================================================================
@@ -378,6 +386,7 @@ DXAPP_VERIFY_DUMP_IMPL(EmbeddingResult, serializeEmbedding)
 DXAPP_VERIFY_DUMP_IMPL(FaceAlignmentResult, serializeFaceAlignment)
 DXAPP_VERIFY_DUMP_IMPL(HandLandmarkResult, serializeHandLandmark)
 DXAPP_VERIFY_DUMP_IMPL(RestorationResult, serializeRestoration)
+DXAPP_VERIFY_DUMP_IMPL(PanopticResult, serializePanoptic)
 
 #undef DXAPP_VERIFY_DUMP_IMPL
 

@@ -440,6 +440,10 @@ public:
     virtual PostprocessorPtr<DetectionResult> createPostprocessor(
         int input_width, int input_height, bool is_ort_configured = false) = 0;
     virtual VisualizerPtr<DetectionResult> createVisualizer() = 0;
+    /// Runner path: one PanopticResult per frame (boxes + that frame's masks).
+    virtual PostprocessorPtr<PanopticResult> createPanopticPostprocessor(
+        int input_width, int input_height) = 0;
+    virtual VisualizerPtr<PanopticResult> createPanopticVisualizer() = 0;
     virtual std::string getModelName() const = 0;
     virtual std::string getTaskType() const = 0;
     virtual void loadConfig(const ModelConfig& /*config*/) {}
