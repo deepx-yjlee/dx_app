@@ -28,6 +28,7 @@ switching a class name.
 Usage:
     python3 scripts/generate_cpp_family_layout.py --out /tmp/stage_cpp
     python3 scripts/generate_cpp_family_layout.py --out /tmp/stage_cpp --orig /tmp/orig
+    python3 scripts/generate_cpp_family_layout.py --variant-scope src/cpp_example [--check]
 """
 from __future__ import annotations
 
@@ -102,14 +103,26 @@ def resolve_dir(model_name: str, table: dict[str, str]) -> str | None:
     return cand if cand in table else None
 
 
-def role_block(text: str, role: str) -> tuple[int, int, str] | None:
+def _role_match(text: str, role: str, start: int = 0) -> re.Match | None:
+    """The signature of the first ``role`` method at or after ``start``.
+
+    ``role`` is a regex: a method name, or ``(?P<name>create\\w*)`` for every create*
+    method. The parameter list is the ``params`` group.
+    """
+    return re.compile(role + r"\s*\((?P<params>[^)]*)\)\s*(?:override)?\s*\{",
+                      re.S).search(text, start)
+
+
+def role_block(text: str, role: str, start: int = 0) -> tuple[int, int, str] | None:
     """``(body_start, body_end, body)`` for one create* method, brace-matched.
 
     Index-based rather than string-based: reconstructing "signature + { + body + }" to
     search for loses the exact whitespace before the brace, so the splice silently
     matched nothing and every dispatch was dropped.
+
+    ``role`` may be a pattern (``create\\w*``), and ``start`` skips methods already seen.
     """
-    m = re.search(role + r"\s*\([^)]*\)\s*(?:override)?\s*\{", text, re.S)
+    m = _role_match(text, role, start)
     if not m:
         return None
     open_brace = m.end() - 1
@@ -231,10 +244,345 @@ def sync_configs(py_root: Path, cpp_root: Path) -> int:
     return 0
 
 
-def main() -> int:
+# --variant-scope ----------------------------------------------------------------------
+#
+# The per-variant tree defines ``dxapp::<Family>Factory`` (and any helper class) once per
+# VARIANT, inline in a header. Two variants of one family linked into one program are
+# then an ODR violation the linker resolves silently: it keeps one set of the weak inline
+# member functions, so yolo11-s ran yolo11-n's postprocessor. Wrapping each variant's
+# headers in ``dxapp::v_<variant>`` gives every copy its own mangled names. Nothing else
+# in a class body changes, so the only text differences are the two namespace lines,
+# the qualified name in the two entry points, a carried helper's include guard, and
+# ``/*name*/`` on create*() parameters the body never uses (-Wunused-parameter).
+
+VARIANT_SCOPE_FIX = "python3 scripts/generate_cpp_family_layout.py --variant-scope {root}"
+
+_DXAPP_OPEN = re.compile(r"\bnamespace\s+dxapp\s*\{")
+_DXAPP_OPEN_LINE = re.compile(r"namespace dxapp \{[ \t]*")
+_DXAPP_CLOSE_LINE = re.compile(r"\}[ \t]*//[ \t]*namespace[ \t]+dxapp[ \t]*")
+_ANY_VARIANT_NS_OPEN = re.compile(r"namespace (v_\w+) \{")
+_GUARD = re.compile(r"^#ifndef[ \t]+(\w+)[ \t]*\n#define[ \t]+\1\b", re.M)
+_FACTORY_CLASS = re.compile(r"\bclass\s+(\w*Factory)\b\s*[:{]")
+_COMMENT_OR_LITERAL = re.compile(
+    r"//[^\n]*|/\*.*?\*/|\"(?:\\.|[^\"\\\n])*\"|'(?:\\.|[^'\\\n])*'", re.S)
+_PARAM = re.compile(r"(?P<head>.*?[\s*&])(?P<name>[A-Za-z_]\w*)(?P<tail>\s*(?:=.*)?)",
+                    re.S)
+
+
+def variant_namespace(variant: str) -> str:
+    """``v_`` + the variant with every non-alphanumeric character replaced by ``_``."""
+    return "v_" + re.sub(r"[^0-9A-Za-z]", "_", variant)
+
+
+def variant_guard(variant: str) -> str:
+    """The variant part of an include guard, as the per-variant factory guards spell it.
+
+    A macro may not start with a digit, so a digit-leading variant gets ``DXAPP_``
+    (``DXAPP_3DDFA_V2_MOBILENETV1_120X120_FACTORY_HPP``).
+    """
+    g = re.sub(r"[^0-9A-Za-z]", "_", variant).upper()
+    return g if g[:1].isalpha() else "DXAPP_" + g
+
+
+def _code_only(text: str) -> str:
+    """``text`` with comments and literals blanked; newlines (line numbers) are kept."""
+    def blank(m: re.Match) -> str:
+        s = m.group(0)
+        return "\n" * s.count("\n") if s.startswith("/") else '""'
+    return _COMMENT_OR_LITERAL.sub(blank, text)
+
+
+def _split_params(params: str) -> list[str]:
+    parts, depth, cur = [], 0, []
+    for ch in params:
+        if ch in "<([{":
+            depth += 1
+        elif ch in ">)]}":
+            depth -= 1
+        if ch == "," and depth == 0:
+            parts.append("".join(cur))
+            cur = []
+        else:
+            cur.append(ch)
+    parts.append("".join(cur))
+    return parts
+
+
+def _create_methods(text: str) -> list[tuple[str, int, int, str]]:
+    """``(name, params_start, params_end, body)`` of every create*() method."""
+    out = []
+    pos = 0
+    role = r"\b(?P<name>create\w*)"
+    while True:
+        m = _role_match(text, role, pos)
+        blk = role_block(text, role, pos) if m else None
+        if blk is None:
+            return out
+        out.append((m.group("name"), m.start("params"), m.end("params"), blk[2]))
+        pos = blk[1] + 1
+
+
+def _comment_unused_params(text: str) -> tuple[str, list[tuple[str, str]]]:
+    """Comment each named create*() parameter its body never names.
+
+    ``int input_width`` -> ``int /*input_width*/``, keeping a default argument
+    (``bool /*is_ort_configured*/ = false``). A name that appears only in a comment or a
+    string is not a use: the compiler still warns about it. Returns the new text and the
+    ``(method, parameter)`` pairs that were commented.
+    """
+    edits = []
+    done = []
+    for name, p0, p1, body in _create_methods(text):
+        code = _code_only(body)
+        parts = _split_params(text[p0:p1])
+        changed = False
+        for i, part in enumerate(parts):
+            if "/*" in part:
+                continue
+            m = _PARAM.fullmatch(part)
+            if not m or not m.group("head").strip():
+                continue
+            pname = m.group("name")
+            if re.search(rf"\b{re.escape(pname)}\b", code):
+                continue
+            parts[i] = f"{m.group('head')}/*{pname}*/{m.group('tail')}"
+            done.append((name, pname))
+            changed = True
+        if changed:
+            edits.append((p0, p1, ",".join(parts)))
+    for p0, p1, new in reversed(edits):
+        text = text[:p0] + new + text[p1:]
+    return text, done
+
+
+def _variant_dirs(root: Path) -> list[tuple[str, Path]]:
+    """``(variant, <task>/<family>/<variant>)`` for each dir with its own factory."""
+    out = []
+    for fac in sorted(root.glob("*/*/*/factory/*_factory.hpp")):
+        vdir = fac.parent.parent
+        if vdir.parts[-3] == "common" or fac.name != f"{vdir.name}_factory.hpp":
+            continue
+        out.append((vdir.name, vdir))
+    return out
+
+
+def _read(path: Path) -> str:
+    return path.read_bytes().decode("utf-8")
+
+
+def _scope_header(text: str, ns: str, guard: str | None, rel: str):
+    """Analyse one header of a variant's ``factory/`` directory.
+
+    Returns ``(new_text, refusals, problems, commented, scoped, guard_renamed)``.
+    ``refusals`` are shapes the rewrite will not touch (the whole run stops);
+    ``problems`` are namespace problems in the CURRENT text (for ``--check``);
+    ``commented`` are the unused create*() parameters in the current text.
+    """
+    refusals: list[str] = []
+    problems: list[str] = []
+    code_lines = _code_only(text).split("\n")
+    raw_lines = text.split("\n")
+    opens = [i for i, l in enumerate(code_lines) if _DXAPP_OPEN.search(l)]
+    closes = [i for i, l in enumerate(raw_lines) if _DXAPP_CLOSE_LINE.fullmatch(l)]
+    if len(opens) != 1 or len(closes) != 1 or opens[0] > closes[0] \
+            or not _DXAPP_OPEN_LINE.fullmatch(raw_lines[opens[0]]):
+        refusals.append(
+            f"{rel}: needs exactly one 'namespace dxapp {{' line and one "
+            f"'}}  // namespace dxapp' line after it (found {len(opens)} and "
+            f"{len(closes)}); scope it by hand")
+        return text, refusals, problems, [], False, False
+    o, c = opens[0], closes[0]
+    ns_opens = [(i, m.group(1)) for i, l in enumerate(raw_lines)
+                for m in [_ANY_VARIANT_NS_OPEN.fullmatch(l)] if m]
+    foreign = sorted({n for _, n in ns_opens if n != ns})
+    if foreign:
+        refusals.append(f"{rel}: opens namespace {', '.join(foreign)}, but this "
+                        f"variant's namespace is {ns}")
+        return text, refusals, problems, [], False, False
+
+    new = text
+    scoped = False
+    if not ns_opens:
+        problems.append(f"{rel}: not scoped in namespace dxapp::{ns}")
+        lines = list(raw_lines)
+        lines.insert(c, f"}}  // namespace {ns}")
+        lines.insert(o + 1, f"namespace {ns} {{")
+        new = "\n".join(lines)
+        scoped = True
+    else:
+        ns_close = [i for i, l in enumerate(raw_lines) if l == f"}}  // namespace {ns}"]
+        if len(ns_opens) != 1 or len(ns_close) != 1 \
+                or not o < ns_opens[0][0] < ns_close[0] < c:
+            problems.append(f"{rel}: needs exactly one 'namespace {ns} {{' line and one "
+                            f"'}}  // namespace {ns}' line, inside namespace dxapp")
+        else:
+            inside = range(ns_opens[0][0], ns_close[0] + 1)
+            continued = False
+            for i, l in enumerate(code_lines):
+                s = l.strip()
+                was_continued, continued = continued, s.endswith("\\")
+                if i in inside or i in (o, c) or not s or was_continued \
+                        or s.startswith("#"):
+                    continue
+                problems.append(f"{rel}:{i + 1}: code outside namespace {ns} "
+                                f"(first: `{raw_lines[i].strip()}`); move it inside")
+                break
+
+    guard_renamed = False
+    if guard is not None:
+        m = _GUARD.search(new)
+        if m is None:
+            refusals.append(f"{rel}: carried helper header has no #ifndef/#define guard")
+        elif m.group(1) != guard:
+            problems.append(f"{rel}: include guard {m.group(1)} is not per-variant "
+                            f"({guard})")
+            old = m.group(1)
+            new = "\n".join(re.sub(rf"\b{old}\b", guard, l) if l.startswith("#") else l
+                            for l in new.split("\n"))
+            guard_renamed = True
+
+    new, _ = _comment_unused_params(new)
+    _, commented = _comment_unused_params(text)
+    return new, refusals, problems, commented, scoped, guard_renamed
+
+
+def _analyse_variant_scope(root: Path) -> dict:
+    """The whole mode as data: planned writes, refusals, problems, counts."""
+    res = {"writes": {}, "refusals": [], "ns_problems": [], "param_problems": [],
+           "variants": 0, "scoped": 0, "guards": 0, "entries": 0, "params": 0,
+           "param_headers": 0}
+    variants = _variant_dirs(root)
+    res["variants"] = len(variants)
+    by_ns: dict[str, list[str]] = collections.defaultdict(list)
+    for variant, _ in variants:
+        by_ns[variant_namespace(variant)].append(variant)
+    for ns, vs in sorted(by_ns.items()):
+        if len(vs) > 1:
+            res["refusals"].append(f"variants {', '.join(sorted(vs))} all map to "
+                                   f"namespace {ns}; rename one")
+    for variant, vdir in variants:
+        ns = variant_namespace(variant)
+        factory_name = f"{variant}_factory.hpp"
+        for h in sorted((vdir / "factory").glob("*.hpp")):
+            rel = h.relative_to(root).as_posix()
+            text = _read(h)
+            helper_guard = None if h.name == factory_name else (
+                f"{variant_guard(variant)}_{re.sub(r'[^0-9A-Za-z]', '_', h.stem).upper()}_HPP")
+            new, refusals, problems, commented, scoped, renamed = _scope_header(
+                text, ns, helper_guard, rel)
+            res["refusals"] += refusals
+            res["ns_problems"] += problems
+            res["param_problems"] += [
+                f"{rel}: {meth}(): parameter '{p}' is never used; write /*{p}*/"
+                for meth, p in commented]
+            if new != text:
+                res["writes"][h] = new
+            res["scoped"] += scoped
+            res["guards"] += renamed
+            res["params"] += len(commented)
+            res["param_headers"] += bool(commented)
+        classes = _FACTORY_CLASS.findall(_code_only(_read(vdir / "factory" / factory_name)))
+        if len(classes) != 1:
+            res["refusals"].append(f"{(vdir / 'factory' / factory_name).relative_to(root)}"
+                                   f": expected one *Factory class, found {classes}")
+            continue
+        cls = classes[0]
+        for kind in ("sync", "async"):
+            e = vdir / f"{variant}_{kind}.cpp"
+            if not e.is_file():
+                continue
+            rel = e.relative_to(root).as_posix()
+            text = _read(e)
+            wrong = sorted(set(re.findall(rf"\bdxapp::(v_\w+)::{cls}\b", text)) - {ns})
+            if wrong:
+                res["refusals"].append(f"{rel}: names {cls} in namespace "
+                                       f"{', '.join(wrong)}, not {ns}")
+                continue
+            new = re.sub(rf"\bdxapp::{cls}\b", f"dxapp::{ns}::{cls}", text)
+            if new != text:
+                res["ns_problems"].append(f"{rel}: names dxapp::{cls}, not "
+                                          f"dxapp::{ns}::{cls}")
+                res["writes"][e] = new
+                res["entries"] += 1
+    return res
+
+
+def namespace_problems(root: Path) -> list[str]:
+    """Everything that leaves a variant's C++ outside its own ``dxapp::v_<variant>``.
+
+    Headers not scoped, code outside the scope, carried helper guards shared between
+    variants, entry points naming the unscoped class, and shapes the rewrite refuses.
+    Empty means two variants can never collide at link time.
+    """
+    res = _analyse_variant_scope(Path(root))
+    return res["refusals"] + res["ns_problems"]
+
+
+def parameter_problems(root: Path) -> list[str]:
+    """create*() parameters their body never uses, not yet written as ``/*name*/``."""
+    return _analyse_variant_scope(Path(root))["param_problems"]
+
+
+def variant_scope(root: Path, check: bool) -> int:
+    root = Path(root)
+    fix = VARIANT_SCOPE_FIX.format(root=root)
+    if not (root / "common").is_dir():
+        print(f"ABORT: {root} has no common/. --variant-scope rewrites the per-variant "
+              "tree in place and is meant for src/cpp_example.")
+        return 2
+    res = _analyse_variant_scope(root)
+    if res["refusals"]:
+        print(f"ABORT: --variant-scope refuses {root} (nothing was written):")
+        for r in res["refusals"]:
+            print(f"  {r}")
+        return 2
+    if check:
+        ns_p, par_p = res["ns_problems"], res["param_problems"]
+        if not ns_p and not par_p:
+            print(f"variant-scope --check {root}: OK ({res['variants']} variants)")
+            return 0
+        if ns_p:
+            print(f"namespace problems ({len(ns_p)}):")
+            for p in ns_p:
+                print(f"  {p}")
+        if par_p:
+            print(f"parameter problems ({len(par_p)}):")
+            for p in par_p:
+                print(f"  {p}")
+        print(f"fix: {fix}  (code outside a variant namespace must be moved by hand)")
+        return 1
+    for path, text in res["writes"].items():
+        path.write_bytes(text.encode("utf-8"))
+    print(f"variant-scope {root}: {res['variants']} variants, "
+          f"{len(res['writes'])} changed")
+    print(f"  headers scoped         : {res['scoped']}")
+    print(f"  helper guards renamed  : {res['guards']}")
+    print(f"  entry points qualified : {res['entries']}")
+    print(f"  parameters commented   : {res['params']} in {res['param_headers']} headers")
+    left = namespace_problems(root) + parameter_problems(root)
+    if left:
+        print(f"still wrong after the rewrite ({len(left)}):")
+        for p in left:
+            print(f"  {p}")
+        return 1
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--out", required=True)
+    ap.add_argument("--out", default=None,
+                    help="staging directory for the family layout (required unless "
+                         "--variant-scope is given)")
+    ap.add_argument("--variant-scope", metavar="ROOT", default=None,
+                    help="Scope each variant's generated C++ headers in dxapp::v_<variant> "
+                         "so that any number of variants link into one program; comment "
+                         "create*() parameters their bodies do not use. ROOT is "
+                         "src/cpp_example; the per-variant tree is rewritten in place and "
+                         "a second run changes nothing.")
+    ap.add_argument("--check", action="store_true",
+                    help="with --variant-scope: write nothing, list what is not scoped "
+                         "and exit 1 if anything is")
     ap.add_argument("--orig", default=None,
                     help="root holding the ORIGINAL src/cpp_example, needed once the "
                          "restructure has replaced the working tree")
@@ -244,7 +592,13 @@ def main() -> int:
     ap.add_argument("--sync-configs", action="store_true",
                     help="only copy <variant>/config.json into --out and drop "
                          "variants/. Safe on src/cpp_example; does not rebuild sources.")
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
+    if a.variant_scope is not None:
+        return variant_scope(Path(a.variant_scope), a.check)
+    if a.check:
+        ap.error("--check needs --variant-scope")
+    if a.out is None:
+        ap.error("--out is required (or use --variant-scope ROOT)")
 
     src_root = (Path(a.orig) / "src" / "cpp_example") if a.orig else CPP_SRC
     py_root = Path(a.py_stage) if a.py_stage else (ROOT / "src" / "python_example")
