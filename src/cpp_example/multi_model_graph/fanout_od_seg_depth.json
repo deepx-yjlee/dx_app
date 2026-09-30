@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "name": "adas-fanout",
+  "nodes": [
+    { "id": "cam",   "type": "source", "uri": "sample/img/sample_street.jpg" },
+    { "id": "od",    "model": "yolov8n" },
+    { "id": "seg",   "model": "bisenetv2" },
+    { "id": "depth", "model": "fastdepth_1" }
+  ],
+  "edges": [
+    { "from": "cam", "to": "od" },
+    { "from": "cam", "to": "seg" },
+    { "from": "cam", "to": "depth" }
+  ]
+}

@@ -85,7 +85,7 @@ private:
 
     /** Build a side-by-side comparison canvas with a minimum display size. */
     cv::Mat makeComparisonCanvas(const cv::Mat& ref, const cv::Mat& cur,
-                                 float similarity, int dim) const {
+                                 float similarity, int /*dim*/) const {
         // Ensure minimum canvas size for readability
         static constexpr int MIN_W = 960;
         static constexpr int MIN_H = 640;

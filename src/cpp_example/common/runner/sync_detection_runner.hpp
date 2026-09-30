@@ -705,7 +705,7 @@ private:
 
     void processImageFrames(
         const std::vector<std::string>& imageFiles, bool is_dir_input,
-        int user_loop_count, cv::Mat& display_image, const cv::Mat& preprocessed_image,
+        int user_loop_count, cv::Mat& display_image, const cv::Mat& /*preprocessed_image*/,
         dxrt::InferenceEngine& ie,
         IPreprocessor& preprocessor,
         IPostprocessor<ResultT>& postprocessor,

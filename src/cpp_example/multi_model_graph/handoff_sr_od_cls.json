@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "name": "super-resolve-then-classify-people",
+  "nodes": [
+    { "id": "cam", "type": "source", "uri": "sample/img/sample_people.jpg" },
+    { "id": "sr",  "model": "realesrgan_x2" },
+    { "id": "od",  "model": "yolov8n", "params": { "score_threshold": 0.35 } },
+    { "id": "cls", "model": "resnet50" }
+  ],
+  "edges": [
+    { "from": "cam", "to": "sr" },
+    { "from": "sr",  "to": "od" },
+    { "from": "od",  "to": "cls", "roi": { "classes": ["person"], "pad": 0.05 } }
+  ]
+}

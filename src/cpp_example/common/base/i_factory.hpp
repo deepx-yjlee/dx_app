@@ -39,6 +39,21 @@ struct InputNormalizationParams {
 };
 
 /**
+ * @brief Which inputs a multi-model graph may feed a model (B7).
+ *
+ * A factory may override its interface's default with ONE line:
+ *     static constexpr GraphInput graphInput() { return GraphInput::kEither; }
+ * and may declare extra graph output ports the same way:
+ *     static constexpr const char* graphPorts() { return "descriptors"; }
+ * scripts/gen_model_registry.py parses both, and every generated registry
+ * row static_asserts that the parse matches the C++. Member FUNCTIONS, not
+ * constexpr static data: C++14 needs an out-of-class definition for an
+ * ODR-used static data member (design D4). kDefault means "the interface's
+ * default"; no factory returns it.
+ */
+enum class GraphInput { kDefault, kFullFrame, kRoi, kEither };
+
+/**
  * @brief Abstract Factory interface for object detection models
  * 
  * Creates matching sets of components for object detection models.

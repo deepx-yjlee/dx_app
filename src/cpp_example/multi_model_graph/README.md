@@ -1,0 +1,1072 @@
+# Multi-model graph example
+
+Run several models over one video stream — detection plus segmentation plus
+pose, or a detector feeding a re-identification model on each person it finds
+— by writing a **node-graph JSON file**. Which models run, how they are
+wired, which regions are cut out and handed on: all of it is data. There is
+no C++ to edit and nothing to rebuild.
+
+```bash
+./bin/multi_model_graph_async \
+    --graph src/cpp_example/multi_model_graph/fanout_od_seg_pose.json \
+    --output result.png
+```
+
+That command runs a detector, a semantic segmenter and a pose model over one
+image and composites all three onto one picture. To make it run a different
+detector, change one string:
+
+```diff
+-    { "id": "od",   "model": "yolov8n" },
++    { "id": "od",   "model": "yolo26s" },
+```
+
+```bash
+./setup.sh --models yolo26s        # fetch the .dxnn, once
+./bin/multi_model_graph_async --graph .../fanout_od_seg_pose.json --output result.png
+```
+
+No `cmake`, no `ninja`, no recompilation — the same binary, reading a
+different word out of a JSON file. The same edit works for the segmenter,
+the pose model, and every second-stage model in the cascade samples: any of
+the 348 entries in [`docs/graph_models.md`](../../../docs/graph_models.md)
+whose `produces` and `consumes` columns fit the slot. `--check` tells you
+before you run whether they fit.
+
+Two binaries are built from one engine and differ in exactly one value:
+
+| Binary | Executor |
+|---|---|
+| `multi_model_graph_sync` | one stage at a time, topological order. The reference: slower, and the first thing to try when a result looks wrong |
+| `multi_model_graph_async` | dispatch-on-ready. Every node whose inputs are ready is submitted before any of them is waited on |
+
+Both produce the same `FrameReport` for the same input — `--report` writes
+it as JSON, and `tests/cpp_example/test_graph_cli.py` compares the two files
+byte for byte on real hardware for **every one of the eight shipped sample graphs**,
+covering every payload shape they produce — `frame`,
+`boxes`, `obboxes`, `keypoints`, `labelmap`, `densemap`, `image`, `scores`
+and `vector`.
+
+(An earlier revision of this file claimed `cascade_obb_cls.json` could not
+be certified, because the C++ `FrameReport::operator==` is fail-closed for
+`obboxes`. That comparator has no non-shipping caller — it exists for the
+C++ unit suite. The certification that ships is the `--report` comparison
+above, and its serializer handles `obboxes` in full, angle included.)
+
+Shipped samples, next to the CLI sources in `src/cpp_example/multi_model_graph/`:
+
+| File | Shape | Models |
+|---|---|---|
+| `fanout_od_seg_pose.json` | one frame, three models in parallel | `yolov8n` + `bisenetv2` + `yolov8s_pose` |
+| `fanout_od_seg_depth.json` | same, with depth instead of pose | `yolov8n` + `bisenetv2` + `fastdepth_1` |
+| `cascade_od_reid_track.json` | detector → per-person crop → embedding, with tracking | `yolov8n` → `casvit_t` |
+| `cascade_od_attr.json` | detector → per-person crop → attributes | `yolov8n` → `deepmar_resnet50` |
+| `cascade_obb_cls.json` | oriented detector → un-rotated crop → classifier | `yolo26l_obb` → `resnet50` |
+| `handoff_denoise_od.json` | denoise, then detect on the denoised image (image hand-off on a plain edge) | `dncnn_color_blind` → `yolov5n` |
+| `handoff_sr_od_cls.json` | super-resolve ×2, then detect on the large image → per-person crop → classifier | `realesrgan_x2` → `yolov8n` → `resnet50` |
+| `multistream_od_two_sources.json` | two sources, each its own stream, through one shared tracked detector and one reid | `yolov8n` → `casvit_t` |
+
+---
+
+## The whole vocabulary: two node kinds, two edge kinds
+
+**Nodes**
+
+| Kind | Written as | Meaning |
+|---|---|---|
+| source | `{ "id": "cam", "type": "source", "uri": "..." }` | where frames come from: an image, a video file, `camera:0`, or an `rtsp://` URL. A relative `uri` is resolved against the repository root, so the samples run from any directory. `"source"` is the only `"type"` value the schema defines. A graph may have several source nodes; each one is its own stream (see *Several sources: one stream each*) |
+| model | `{ "id": "od", "model": "yolov8n" }` | one model from the registry — note there is **no `"type"`** on a model node. `--list-models` and [`docs/graph_models.md`](../../../docs/graph_models.md) say which names exist |
+
+**Edges**
+
+| Kind | Written as | Meaning |
+|---|---|---|
+| frame | `{ "from": "cam", "to": "od" }` | the consumer gets the whole frame: the source frame, or the image the producer made (see below) |
+| ROI | `{ "from": "od", "to": "reid", "roi": { ... } }` | the consumer gets one cropped region per box the producer found, and runs once per crop |
+| `port` | `{ "from": "drive", "to": "x", "port": "lane" }` | reads one named output of the producer; without it, the primary output (this example is refused today: no shipped port has an edge-carryable shape; see *Output ports*) |
+
+A model node accepts a frame edge only if it `consumes` `frame` or `either`,
+and a ROI edge only if it `consumes` `roi` or `either`. A ROI edge's producer
+must emit `boxes`, `obboxes` or `instances`. Both columns are in
+`docs/graph_models.md`.
+
+The `consumes` column is each model's **input contract**. It comes from the
+model's factory interface by default, and a factory may override it with one
+line (see *A model's graph contract*). `vit_pose_small_bn` does: it
+`consumes` `either`, so `yolov8n → roi person → vit_pose_small_bn` is a
+top-down pose cascade, one pose per person crop, and it still runs on a
+whole frame as its single-model example does.
+
+Structural rules that will reject an otherwise sensible-looking graph:
+
+* **A plain edge carries the source frame or the producer's image.** From a
+  source it carries the source frame. From a model node that produces
+  `image` — denoise, low-light enhancement, super-resolution
+  (`--list-models --produces image`) — it hands that model's output image
+  to the consumer, which runs on the image as produced (it is never resized
+  back to the source size). "Denoise, then detect" is `cam → denoise → od`
+  (`handoff_denoise_od.json`); "super-resolve, then detect and classify" is
+  `cam → sr → od`, then an ROI edge `od → cls` (`handoff_sr_od_cls.json`).
+  Everything else is **rejected** at `--check`, not quietly run on the raw
+  frame:
+  * a plain edge from a producer of anything but `image` —
+    `"seg" produces labelmap, and only an image can be handed off on a plain edge`.
+    A `boxes`/`obboxes`/`instances` producer keeps its own message
+    (`... "od"'s output would be discarded`) and is told to add `"roi": {}`;
+  * a plain edge out of a node that runs per crop (it has an ROI in-edge) —
+    `"sr" runs once per crop, so a plain edge would hand off one image per crop`;
+  * more than one full-frame image into one node in one stream —
+    `receives full-frame input from more than one image: "cam", "denoise"`
+    (with several sources the message names the stream:
+    `... more than one image in stream "cam1": "sr", "cam1"`).
+* **Two sources feeding one node are two streams**, not two inputs:
+  `cam1 → od` and `cam2 → od` run `od` once per frame of each;
+  `cam1 → sr → od` plus `cam2 → od` runs `od` on `sr`'s image in stream
+  `cam1` and on `cam2`'s frame in stream `cam2`. A node is full-frame or
+  per-crop in every stream: the frame-and-crops rule below still applies to
+  the node as a whole.
+* **A node may not receive both a full frame and ROI crops.** Split it into
+  two nodes — one for each input. A hand-off edge counts as a full frame.
+* **Two edges may not share the same `(from, to)` pair.** To feed one
+  producer's output into a consumer twice, add a second consumer node.
+
+### Coordinates after a hand-off
+
+A node's results are in the coordinates of the image it ran on. After a
+hand-off that is the producer's image, not the source frame, so every result
+carries `origin.inv_align` (emitted as `inv_align` in the `--report` JSON):
+the 2×3 affine that maps its coordinates back to the source frame. After ×2
+super-resolution a detector reports `inv_align` = `[0.5, 0, 0, 0, 0.5, 0]`;
+after `dncnn_color_blind` (512×512 out) on a 640×640 frame, `[1.25, 0, 0, 0,
+1.25, 0]`. Chains compose. The renderer applies it, so overlays land on the
+source frame.
+
+The size of the handed-off image depends on the model family, because each
+family's postprocessor decides it (the image is used as produced):
+
+| Family | Models | Handed-off image |
+|---|---|---|
+| Super-resolution (Real-ESRGAN) | `realesrgan_x2`, `_x4`, `_x8` | the input size × the factor: 640×480 → 1280×960 at ×2. Aspect ratio kept. |
+| Super-resolution (ESPCN) | `espcn_x2`, `_x3`, `_x4` | the input size × the factor (275×150 → 550×300 at ×2): tiled exactly like `espcn_x2_sync` (17×17 tiles, halo 4; `"params": {"sr_tile_halo": N}` overrides it). Aspect ratio kept. |
+| Denoising (DnCNN) | `dncnn_*` | always 512×512, the model resolution, whatever the input size. Aspect ratio not kept: a 640×480 frame gives `[1.25, 0, 0, 0, 0.9375, 0]`. |
+| Low-light enhancement (Zero-DCE) | `zero_dce`, `zero_dce_pp` | resized back to the input size, so the scale is 1 and `inv_align` is the identity. |
+
+ESPCN in a graph uses the runner's own tiling code, so its `sr` image equals
+`espcn_x2_sync`'s `_output_only` image pixel for pixel. The tile is the
+model's input (17×17). The halo is taken from the first of these that is
+set: the node's `"sr_tile_halo"`, the model's `config.json` `sr_tile_halo`,
+the environment variable `DXAPP_SR_TILE_HALO`, then 4. A bad halo fails
+when the model loads, as `MODEL_LOAD`: `"sr_tile_halo" must be a whole
+number, got 2.5`, or `SR tile halo 9 exceeds the maximum useful overlap`.
+DnCNN is not tiled and still hands off 512×512 (see *Not in this release*).
+
+"The input size" is the size of the image the model itself ran on - the
+source frame, or the previous image in a chain. A consumer's detectors run
+on the handed-off image at that size, so their boxes, and `roi.min_area`
+below, are in that image's pixels. Coordinates still map back to the
+source frame exactly, through `inv_align`, whatever the aspect ratio.
+
+ROI crops after a hand-off are cut from the **handed-off image**, so the
+detail super-resolution added reaches the crop. Each crop's `src_box` and
+`inv_align` still map to the source frame. Two `roi` options read
+differently there:
+
+* `min_area` is measured in the pixels of the image the producer ran on.
+  After ×2 super-resolution a threshold of 100 px² equals 25 source px².
+* `pad` is a ratio of the box size, so the scale does not change it.
+
+How a crop's *dense* results (mask, label map, depth, an `image` result, an
+instance's mask) land on the source canvas depends on the crop:
+
+* **Plain and scaled crops** - including every crop cut from a
+  super-resolved or denoised image - are placed as exact rectangles: the
+  crop's own rectangle mapped through `inv_align`.
+* **Rotated or aligned crops** - OBB (`obboxes`) and `align: "face5"`,
+  including after a hand-off - are warped through `inv_align` at source
+  scale, and colour lands only under the warped footprint of the crop, never
+  on the bounding rectangle around it.
+
+Boxes and keypoints always go through `inv_align`. An `instances` result is
+drawn with its box and label on top of its mask, as a `boxes` result is.
+
+### Output ports
+
+Most models have one output, their `produces` shape. Five also have named
+extra outputs, called **ports**. `docs/graph_models.md` shows them after a
+`+` in the `produces` column (`boxes + drivable, lane (labelmap)`), and
+`--list-models` ends their rows with `  ports: <name>=<shape> ...`:
+
+| Model | Port | Shape | What it holds |
+|---|---|---|---|
+| `yolopv2` | `drivable` | `labelmap` | the drivable-area mask: 0/1 per pixel, a binary mask, at the size of the image the model ran on |
+| `yolopv2` | `lane` | `labelmap` | the lane-line mask, likewise 0/1 and binary |
+| `superpoint` | `descriptors` | `densemap` | N×256 float32, row i = the descriptor of keypoint i across the frame's items, in order. Not spatial: no pixel meaning |
+| `3ddfa_v2_mobilnetv1_120x120`, `3ddfa_v2_mobilnet0_5_120x120` | `pose` | `vector` | yaw, pitch and roll in degrees, 3 floats per face, concatenated in item order |
+| `handlandmarklite_1` | `handedness` | `scores` | one item per hand: `class_name` `Left`/`Right`/`Unknown`, `class_id` 0/1/-1, `confidence` = the hand-presence score |
+
+The primary output keeps its own name: `yolopv2`'s is `boxes`,
+`superpoint`'s `keypoints`. It is unchanged by the ports.
+
+**Selecting a port on an edge.** An edge takes the primary output unless it
+has `"port": "<name>"`. The port is a separate key, not part of `"from"`,
+because node ids may contain dots, so `"from": "drive.lane"` would be
+ambiguous. Naming the primary (`"port": "boxes"` on `yolopv2`) is the same
+as leaving `"port"` out. Validation:
+
+* `"port"` must be a non-empty string (`GRAPH_SCHEMA`: `"port" must be a
+  non-empty string, got 5`).
+* A source has no ports: `"cam" is a source; "port" selects one of a
+  model's outputs` / `-> remove "port" from this edge`.
+* An unknown name lists the real ones: `"drive" has no output port "wings"`
+  / `-> its outputs: boxes, drivable, lane`.
+* Every shape rule applies to the selected port's shape. The message names
+  the port: `"drive" port "drivable" produces labelmap, not boxes` on a ROI
+  edge, and `"drive" port "lane" produces labelmap, and only an image can
+  be handed off on a plain edge` on a plain one. Without `"port"`, every
+  message is what it was before ports existed.
+* `"align": "face5"` on a non-primary port is `GRAPH_ALIGN`: the port
+  carries no landmarks, so crop from the primary boxes.
+* One edge per `(from, to)` pair still holds, so a consumer reads one output
+  of a producer.
+
+No shipped port has a shape an edge can carry today. A ROI edge needs
+`boxes`, `obboxes` or `instances` and a plain edge needs `image`, so the
+example `{ "from": "drive", "to": "x", "port": "lane" }` above is refused
+with the plain-edge message. Ports are read from `--report`, the render and
+`dx_graph`. An edge that selects a port of a shape it can carry is routed
+from that port by both executors. A stage that then leaves that port out of
+its result, or fills it with another shape (a plugin that breaks its ports
+contract), gives the consumer an empty result and the frame's report an
+error, in both executors: `node "cls": "drive" port "people" handed off no
+boxes` on a ROI edge, `node "x": "drive" handed off no image` on a plain one.
+
+**Tracking stays on the primary boxes.** `"track"` tracks a node's primary
+`boxes`. The tracked result keeps its ports, and crops cut from a
+non-primary box port would be untracked (`track_id` -1).
+
+**In `--report`**, a result with ports has a `"ports"` object next to its
+`"payload"`, one entry per port in the payload format of its shape. A
+result without ports has no `"ports"` key and is byte for byte what it was
+before. From `yolopv2` on a 768×576 image:
+
+```json
+"ports": {
+  "drivable": {"labels": {"cols": 768, "digest": "02aca4279247673d", "nonzero": 19962, "rows": 576, "type": 0}, "shape": "labelmap"},
+  "lane": {"labels": {"cols": 768, "digest": "27ed4ab36bdbc998", "nonzero": 4511, "rows": 576, "type": 0}, "shape": "labelmap"}
+}
+```
+
+**In the render**, each port is drawn in the pass of its shape, right after
+its result's primary payload, with the same `origin`. The `yolopv2` masks
+blend only their non-zero pixels at alpha 0.5, `drivable` in green and
+`lane` in red, the colours of the YOLOPv2 runner. A 3DDFA `pose` prints
+`vec[3]` at the face crop and `handedness` prints `Left: 97%` at the hand
+crop. SuperPoint's descriptors are not spatial and are never drawn, so its
+render is unchanged.
+
+**Memory.** A port lives in its frame's report, so every frame in flight
+(up to `--max-inflight`, default 16) holds its ports until its report is
+handed out. A `dx_graph` `Report` holds them for as long as you keep it.
+Per frame:
+
+* `yolopv2`: 2 × W × H bytes for its two masks, at the size of the image it
+  ran on (884,736 bytes for 768×576, about 4 MB for 1920×1080).
+* `superpoint`: N × 256 × 4 bytes. With its default `top_k` of 500
+  keypoints that is 512,000 bytes, about 0.5 MB.
+
+**SuperPoint tracks are not a port.** `superpoint_sync` also matches
+keypoints from frame to frame into tracks. A track needs a step applied to
+every frame in frame order. Graph stages decode in completion order, and the
+only frame-ordered state the engine keeps is the IoU tracker on box streams,
+so tracks would need a new engine concept. The `descriptors` port gives a
+`dx_graph` user what tracking needs.
+
+---
+
+## A complete graph file, annotated
+
+```jsonc
+{
+  "version": 1,                       // 1 is the only version this build runs
+  "name": "person-reid",              // free text (a string); in messages and --report
+
+  "nodes": [
+    { "id": "cam",  "type": "source",
+      "uri": "sample/img/sample_people.jpg" },   // --input overrides this
+
+    { "id": "od",   "model": "yolov8n",
+      "params": { "score_threshold": 0.35 },     // overrides the model's config.json
+      "track":  { "algo": "iou",                 // one id space for every consumer
+                  "iou": 0.3,                    // (0, 1]
+                  "max_age": 30 } },             // a whole number, 0 or more
+
+    { "id": "reid", "model": "casvit_t" }
+  ],
+
+  "edges": [
+    { "from": "cam", "to": "od" },               // frame edge
+
+    { "from": "od",  "to": "reid",               // ROI edge: one run per crop
+      "roi": { "classes": ["person"],
+               "pad": 0.05,                      // 0 to 1: 0.05 is 5 % per side
+               "max": 16 } }                     // a whole number, 1 or more
+  ]
+}
+```
+
+(The samples are strict JSON — the `//` comments above are for this document
+only. The parser does not accept comments.)
+
+**`track` is a node attribute, not an edge option.** Two edges leaving the
+same detector with independent trackers would hand the same boxes two
+different id spaces, so `reid`'s track 3 and `attr`'s track 3 would be
+different people. Tracking is a property of the detection stream, so it is
+declared once, on the producer.
+
+All three `track` keys are optional; `"track": {}` means the defaults.
+
+| Key | Meaning | Default |
+|---|---|---|
+| `algo` | the tracker. `"iou"` is the only one; any other value is `GRAPH_SCHEMA` (`unknown tracker "sort"`) | `"iou"` |
+| `iou` | the overlap a box needs to continue a track: greater than 0, at most 1 | `0.3` |
+| `max_age` | how many frames an unmatched track survives: a whole number, 0 or more. `0` drops a track the first frame it goes unmatched | `30` |
+
+---
+
+## `roi` options
+
+All six are optional; `"roi": {}` means "crop every box, unchanged".
+
+| Key | Meaning | Default |
+|---|---|---|
+| `classes` | keep only these class names | all classes |
+| `min_score` | confidence floor, 0 to 1, as the producer reports it (`0.35`, not `35`) | the producer's own threshold |
+| `min_area` | pixel-area floor, 0 or more, applied after clipping (in the pixels of the producer's input image — see *Coordinates after a hand-off*) | `0` |
+| `pad` | grow each box by this fraction of its size on every side before cropping, 0 to 1 (see below) | `0` |
+| `max` | keep at most this many boxes, highest score first: a whole number, 1 or more. Leave it out for no limit | no limit |
+| `align` | `"face5"` — similarity-transform alignment from five facial landmarks | none |
+
+A value outside these ranges, or a fraction where a whole number is
+required, is a `GRAPH_SCHEMA` error at `--check` (see *Error messages*).
+`1.0` counts as a whole number. The bound on `pad` is 1 because `pad` is
+added on **each** side: `pad: 1` already makes the crop three times the box
+in each direction, so the object is a ninth of the crop. Beyond that the
+crop is mostly background, and a value such as `5` is almost always a
+percentage typed as a whole number (5 % is `0.05`).
+
+`align: "face5"` is rejected at validation time when the producer does not
+emit landmarks, so a graph that asks a body detector for an aligned face
+crop fails before the NPU is opened rather than producing quietly wrong
+crops.
+
+### Operator order (normative)
+
+This order is part of the specification, not an implementation detail:
+applying `pad` after `align` produces different crops. Copied verbatim from
+`common/graph/roi_router.hpp`:
+
+```
+producer boxes
+  -> classes / min_score / min_area filter
+  -> max cut (descending score)
+  -> [track]      when declared on the node; frame-ordered
+  -> pad + clip to frame
+  -> [align:face5 | un-rotate(OBB)]   affine; inverse recorded in RoiRef
+  -> crop
+  -> second-stage model input
+```
+
+A crop that crosses the frame boundary is clipped. If what remains falls
+below `min_area` the ROI is dropped and counted in the frame report's
+`skipped_out_of_bounds`.
+
+Every second-stage result is restored to **source-frame coordinates** before
+it is reported or drawn, including the inverse of an `align` or OBB
+un-rotation, so overlays land where the object actually is.
+
+---
+
+## Parameter precedence
+
+```
+factory constructor defaults  <  <task>/<family>/<variant>/config.json  <  node "params"
+```
+
+A node's `"params"` overrides the model's `config.json` for that node only,
+so the same model can appear twice in one graph with two thresholds. Each
+value is a number, a string or an array of strings:
+
+* **A number** works for any key, as before.
+* **A string or an array of strings** works only for a key the model reads
+  as text. Today that is `class_names`, an array, read by 126 factories
+  (111 detectors and 15 instance segmenters). The kinds come
+  from a scan of each factory header at build time: `get<std::string>("k")`
+  is a string key, `get_string_list("k")` a list key. `--list-models` does
+  not show them; the error message for a wrong value names them. The kind
+  must match, too: `"class_names": "person"` is refused (`"class_names"
+  must be an array of strings for model "yolov8n", got "person"`).
+* **Anything else** (`true`, `null`, an object) is refused: `"use_x" must be
+  a number, a string or an array of strings, got true` / `-> write a switch
+  as 1 or 0`.
+
+`class_names` renames a model's classes for one node. It names class ids in
+order, so it can make an ROI filter read naturally:
+
+```jsonc
+{ "id": "od", "model": "yolov8n", "params": { "class_names": ["pedestrian"] } },
+...
+{ "from": "od", "to": "reid", "roi": { "classes": ["pedestrian"] } }
+```
+
+Class 0 (COCO's `person`) is now `pedestrian`. A class id past the end of
+the list is reported as `class_<id>` (a dog is `class_16`).
+
+A string or list entry may hold any character: the params reach the model's
+config parser as JSON, escapes included, so `"class_names": ["car \"sedan\"", "a[1]"]`
+arrives exactly as written. The same parser reads `config.json`.
+
+A node that sets any params keeps every list in the model's `config.json`
+that it does not name itself: overriding `score_threshold` does not wipe a
+`class_names` list from the file.
+
+---
+
+## Error messages
+
+Every failure names **where** (the node or edge), **what** (the fact) and
+**how** (the command or edit that fixes it):
+
+```
+ERROR [CODE] <where>: <what>
+  -> <how>
+```
+
+There are twelve codes. `GRAPH_EDGE` and `GRAPH_SCHEMA` have a second row
+each, for edge ports and node params. Each example below is real output from
+`--check`, except the four marked otherwise.
+
+| Code | When | Example |
+|---|---|---|
+| `GRAPH_VERSION` | `"version"` is a whole number other than 1 | `ERROR [GRAPH_VERSION] g.json: graph version 2 is not supported by this build`<br>`  -> supports: 1` |
+| `GRAPH_SCHEMA` | malformed JSON, a wrong type, a missing or duplicate key, an unreadable file, a value out of range or not a whole number | `ERROR [GRAPH_SCHEMA] edge "od"->"cls": duplicate edge "od" -> "cls"`<br>`  -> declare the connection once; add a second consumer node instead of a second edge`<br>`ERROR [GRAPH_SCHEMA] g.json: "version" must be a whole number, got 1.5`<br>`  -> add "version": 1` |
+| `GRAPH_EDGE` | shapes or input contracts do not meet across an edge | `ERROR [GRAPH_EDGE] edge "seg"->"cls": "seg" produces labelmap, not boxes`<br>`  -> remove "roi" from this edge, or use a detector as the source` |
+| `GRAPH_EDGE` | an edge's `"port"` names no output of the producer, or is on an edge from a source (see *Output ports*) | `ERROR [GRAPH_EDGE] edge "drive"->"x": "drive" has no output port "wings"`<br>`  -> its outputs: boxes, drivable, lane`<br>`ERROR [GRAPH_EDGE] edge "cam"->"drive": "cam" is a source; "port" selects one of a model's outputs`<br>`  -> remove "port" from this edge` |
+| `GRAPH_SCHEMA` | a `params` value the model cannot read: text for a numeric key, or the wrong kind for a text key (see *Parameter precedence*) | `ERROR [GRAPH_SCHEMA] node "od" "params": "score_threshold" must be a number, got "0.5"`<br>`  -> model "yolov8n" reads text only for: class_names`<br>`ERROR [GRAPH_SCHEMA] node "od" "params": "class_names" must be an array of strings for model "yolov8n", got "person"`<br>`ERROR [GRAPH_SCHEMA] node "c" "params": "label" must be a number, got "x"`<br>`  -> model "resnet50" reads only numbers` |
+| `GRAPH_ALIGN` | `align: "face5"` from a producer without landmarks | `ERROR [GRAPH_ALIGN] edge "od"->"emb": "align": "face5" needs five facial landmarks, and model "yolov8n" produces no landmarks`<br>`  -> remove "align", or use a face detector as the source` |
+| `GRAPH_CYCLE` | the nodes do not form a DAG | `ERROR [GRAPH_CYCLE] graph: cycle detected among: a, b`<br>`  -> a graph must be acyclic` |
+| `GRAPH_ORPHAN` | a node no source can reach, or a graph with no source | `ERROR [GRAPH_ORPHAN] node "lost": unreachable from any source`<br>`  -> connect it with an edge, or remove it` |
+| `GRAPH_RESERVED` | a key held back for a later release | `ERROR [GRAPH_RESERVED] g.json node[1]: "prompt" is reserved for text-conditioned models and is not supported in this release`<br>`  -> remove "prompt"; see README.md for the models this build runs` |
+| `MODEL_UNKNOWN` | the name is not in the registry | `ERROR [MODEL_UNKNOWN] node "od": unknown model "YoloV8N" - not in config/model_registry.json`<br>`  -> did you mean "yolov8n"? run --list-models, or see docs/graph_models.md` |
+| `MODEL_NO_TASK` | registered without a task *(no model this build ships is in this state)* | `ERROR [MODEL_NO_TASK] node "od": model "X" has no task registered`<br>`  -> ./scripts/add_model.sh --model X --task <task>` |
+| `MODEL_NOT_READY` | registered, but with no factory or no postprocessor *(likewise)* | `ERROR [MODEL_NOT_READY] node "det": model "X" is registered but cannot run: no postprocessor`<br>`  -> see docs/graph_models.md for models usable in graphs` |
+| `MODEL_MISSING` | the `.dxnn` is not in `--model-dir` | *(from a run: `--check` lists the same files and the same command without failing)*<br>`ERROR [MODEL_MISSING] graph "person-reid": 2 model files are not in ./no_models`<br>`  node "od"  model yolov8n  ->  ./no_models/yolov8-n_640x640.dxnn`<br>`  -> ./setup.sh --models YoloV8N casvit_t` |
+| `MODEL_LOAD` | the `.dxnn` is present but the runtime cannot load it (device memory, device state, an incompatible file) | *(real output on DX-M1, from a run, not from `--check`; the runtime's source path is shortened to `...`)*<br>`ERROR [MODEL_LOAD] node "sr2": model "realesrgan_x2" (realesrgan-x2_192x192.dxnn) could not be loaded: [dxrt-exception] Invalid model exception {"failed to register task":.../task.cpp:115:Task}`<br>`  -> the NPU's device memory may be full: this graph loaded 3 model(s) before this one, and every node loads its own copy, even of the same model (another process on the NPU uses memory too); remove a node or use a smaller model - DX-M1 cannot hold a second realesrgan_x2 next to yolov8n and resnet50` |
+
+`MODEL_LOAD` names the node and keeps the runtime's own reason whole. Its
+hint depends on how far loading got: after other models loaded, it is the
+device-memory hint above (see *Device memory*); for the first model of the
+graph it is `check the NPU with dxrt-cli -s, and that <file> was compiled
+for this DX-RT version; to download it again: ./setup.sh --models <name>`.
+
+Note the download command in `MODEL_MISSING`: the name it prints is the
+**model zoo's** spelling, which is not always the registry's (`yolov8n` is
+`YoloV8N` there, `yolo26l_obb` is `yolo26l-obb`). 119 of the 348 registered
+models differ this way. `setup.sh --models` accepts either spelling (and
+the `.dxnn` file name), in any letter case, but the zoo's name is the
+manifest's own spelling, so that is the one the CLI prints. It is compiled into
+the binary from `scripts/modelzoo_manifest.json` at build time, so a binary
+deployed without a source tree prints the same name.
+
+**Every bad value in one object is reported at once**, as unknown keys are
+(below): one `roi`, `track` or `params` object with three bad values gives
+one message with all three, and one recovery line that covers each:
+
+```console
+$ multi_model_graph_sync --check g.json
+ERROR [GRAPH_SCHEMA] g.json edge[1] "od"->"reid": 3 invalid values: "min_score" must be between 0 and 1, got 35; "pad" must be between 0 and 1, got 5; "max" must be a whole number of at least 1, got 0
+  -> "min_score" is a confidence as the producer reports it (0.35, not 35); "pad" grows each box by this fraction of its size on every side (0.05 = 5 %); "max" keeps at most this many boxes; leave it out for no limit
+```
+
+A bad `"version"` is reported alone, because the version decides how the
+rest of the file is read, and unknown keys are reported before bad values,
+so a mistyped key is answered as a typo.
+
+---
+
+## Finding out what a graph needs: `--check`
+
+`--check` parses and validates a graph, lists every node with its shape and
+its artifact, and names any `.dxnn` that is absent — **without opening the
+NPU**. It is the fast loop while writing a graph, and it matters more here
+than it did for a single-model example, because one graph now names three to
+five models.
+
+```console
+$ ./bin/multi_model_graph_sync --check src/cpp_example/multi_model_graph/cascade_od_reid_track.json
+OK: graph "person-reid" is valid (3 nodes, 2 edges, 2 models)
+
+node      model                         produces   consumes   artifact
+cam       (source)                      frame      -          sample/img/sample_people.jpg
+od        yolov8n                       boxes      full_frame yolov8-n_640x640.dxnn  [present]
+reid      casvit_t                      vector     either     casvit-t_224x224.dxnn  [present]
+```
+
+A graph with several sources gets a `streams:` block after the node table,
+naming the nodes each stream runs (a one-source graph prints none):
+
+```console
+$ ./bin/multi_model_graph_sync --check src/cpp_example/multi_model_graph/multistream_od_two_sources.json
+OK: graph "two-cameras-reid" is valid (4 nodes, 3 edges, 2 models)
+
+node      model                         produces   consumes   artifact
+cam1      (source)                      frame      -          sample/img/sample_people.jpg
+cam2      (source)                      frame      -          sample/img/sample_person_a1.jpg
+od        yolov8n                       boxes      full_frame yolov8-n_640x640.dxnn  [present]
+reid      casvit_t                      vector     either     casvit-t_224x224.dxnn  [present]
+
+streams: 2 - one per source node, read in turn, one frame from each
+  cam1      -> od, reid
+  cam2      -> od, reid
+```
+
+The exit code answers *is this graph valid?* — a question a fresh checkout
+with nothing downloaded must still be able to ask — so a missing `.dxnn` is
+reported here but does not make `--check` fail. A real run does fail on it,
+with the same list and the same recovery command.
+
+Because it never opens the NPU, `--check` cannot tell whether the device
+can hold every model of the graph at once: that is found out when the
+models load (`MODEL_LOAD`, see *Device memory*).
+
+## Finding a model: `--list-models`
+
+```console
+$ ./bin/multi_model_graph_async --list-models --consumes roi --produces scores
+```
+
+`--consumes` takes `roi`, `frame` or `either`; `--produces` takes a shape
+name (`boxes`, `obboxes`, `instances`, `keypoints`, `labelmap`, `densemap`,
+`image`, `scores`, `vector`, `boxes3d`). Together they answer the question a
+task name cannot: *which model can I put in the second stage?*
+
+Three sources, in order of authority:
+
+1. **`--check <graph.json>`** — what this graph needs, right now.
+2. **`--list-models`** — what this binary can run. Authoritative after you
+   add your own model.
+3. **[`docs/graph_models.md`](../../../docs/graph_models.md)** — the same
+   table, generated from the same registry. The build writes its own copy
+   (`build_x86_64/generated/graph_models.md`) and never rewrites the tracked
+   file; after a registry change, update it with
+   `python3 scripts/gen_model_registry.py --docs-only`. The guard
+   `python3 scripts/check_graph_models_doc.py` fails, naming that command,
+   when the tracked file is stale.
+
+---
+
+## Reserved keys
+
+The design reserves grammar for three features this release does not
+implement. Two of them have a spelling in the schema and are rejected by
+name with `GRAPH_RESERVED`, so a graph written against a future release
+fails loudly instead of being silently misread:
+
+| Reserved | Why it is rejected rather than ignored |
+|---|---|
+| `"prompt"` on a node | Text-conditioned models need a tokenizer, which this build does not have. Ignoring the key would run the model unconditioned and quietly return the wrong thing |
+| `"type": "fuse"` on a node | Multi-model fusion formulas are model-specific and must be designed against a real model spec. A `fuse` node that silently became a pass-through would change results without saying so |
+
+The third — a condition/rule expression grammar on edges — has **no key in
+v1**: an expression language is a small language, permanently bound by
+backward compatibility once shipped, so none was chosen.
+
+## Unknown keys are an error
+
+Every other key the schema does not define is rejected too, with the key
+named, its location named, and — when something close exists — the key you
+probably meant:
+
+```console
+$ multi_model_graph_sync --check typo.json
+ERROR [GRAPH_SCHEMA] typo.json edge[1] "od"->"reid" "roi": 2 unknown keys: "classez", "paddng"
+  -> did you mean "classes" for "classez", "pad" for "paddng"? accepted keys: classes, min_score, min_area, pad, max, align
+```
+
+This holds at every level — top level, node, `track`, edge and `roi` — and
+it matters more here than in most configuration formats: a dropped key does
+not stop the graph, it runs it with the option missing, and nothing prompts
+you to look. Three details worth knowing:
+
+* **Every unknown key in one object is reported at once**, so fixing a file
+  with several typos takes one round trip, not one per typo.
+* **A mistyped *required* key is answered as a typo**, not as a missing
+  key: `{"form": "cam"}` gives `unknown key "form" -> did you mean "from"?`.
+* **The accepted keys are always listed**, even when nothing is close
+  enough to guess — a wrong suggestion is worse than none.
+
+A key that is genuinely absent rather than mistyped gets the location and a
+recovery line of its own:
+
+```console
+ERROR [GRAPH_SCHEMA] g.json node[1] (model "yolov8n"): missing required key "id"
+  -> add "id": a name unique within this graph
+```
+
+Node `"type"` values are checked the same way. `"source"` is the only type;
+a model node carries a `"model"` name and no `"type"` at all. In
+particular `{"type": "model", "model": "yolov8n"}` — a natural thing to
+write — is **rejected**, because it used to be accepted only by accident.
+
+Two deliberate exceptions to the key rule:
+
+* **`params` keys are open; values are numbers unless the model reads that
+  key as text.** Its keys are model parameter names, not schema keys, so
+  any key with a number is accepted and passed through to the model (see
+  *Parameter precedence* for text).
+* **`$schema` is accepted and ignored** at the top level, so an editor can
+  attach a JSON-schema reference for completion and inline validation.
+  Nothing else in this schema is within two edits of it, so tolerating it
+  cannot hide a typo for a real key. The tolerance stops there — a
+  `"_comment"` key is rejected; `"name"` already carries intent, and every
+  extra tolerated key is somewhere a typo can hide.
+
+And one ordering rule: **a version this build does not support wins
+first.** A graph marked `"version": 2` is answered with `GRAPH_VERSION`,
+not with a list of unknown keys, because a later release's keys are unknown
+to this build by definition.
+
+---
+
+## When a run produces nothing, it says so
+
+Some mistakes only exist at run time. A class name that matches nothing —
+`"classes": ["persons"]` when the detector emits `person` — passes
+`--check`, runs, exits 0, and hands the second stage zero crops. Nothing
+about that is distinguishable from a frame in which the detector genuinely
+found no people, so the run says which it was:
+
+```console
+warning: edge "od"->"reid" produced no crops, although "od" found 3 boxes
+  the "roi" filter on this edge sets: "classes": ["persons"] "max"
+  "od" emitted these classes: dog, person
+  -> check the class names against that list, or relax "min_score"/"min_area"/"max"
+```
+
+The typo is printed next to the truth. The warning goes to stderr, fires
+at most once per edge per run, and never changes the exit code — a
+detector that legitimately finds nothing stays silent, because the warning
+is raised only when the producer *did* emit boxes and the filter kept none
+of them.
+
+---
+
+## Platforms
+
+- **Linux x86_64** is built and tested (the unit binaries, the graph tests,
+  the CLI).
+- **aarch64** is compile-checked only: `scripts/check_cross_compile.sh`
+  compiles the engine and the CLI with the cross compiler
+  (`-fsyntax-only`); nothing is linked or run on aarch64. Concurrency and
+  `--max-inflight` were validated with x86_64 dxrt.
+- **Windows** is **not built on Windows here**. The graph targets get MSVC
+  flags (`/bigobj`, C5038 and C4062 as errors), and Ctrl-C goes through
+  `SetConsoleCtrlHandler`: repeats within 200 ms are one request, a later
+  press terminates, and Ctrl-Break terminates at once. `tests\windows\run_tests.bat
+  graph` runs the CLI smoke tests. All of it was checked on Linux only; see
+  *Graph engine on Windows* in `docs/source/docs/02_DX-APP_Installation_and_Build.md`.
+
+## Not in this release
+
+| Wanted | Status |
+|---|---|
+| **Multi-model fusion** (`"type": "fuse"`) | Grammar reserved, rejected with `GRAPH_RESERVED` |
+| **Text-conditioned models** (`"prompt"`) | Grammar reserved, rejected with `GRAPH_RESERVED` |
+| **Condition / rule expressions on edges** | No key in v1; an expression language is a small language and permanently binding once shipped |
+| **3D / LiDAR models** (`boxes3d`) | Rejected in a camera graph: the input is not a camera frame |
+| **SuperPoint tracks in a graph** | Needs an ordered per-stream step; the descriptors port is available |
+| **DnCNN resized back to the input size** | Hand-off hands off as produced: DnCNN's image stays 512×512 |
+
+---
+
+## Several sources: one stream each
+
+A graph may declare more than one source node
+(`multistream_od_two_sources.json` has two, `cam1` and `cam2`). **Each
+source is its own stream**: the source and every node reachable from it.
+
+**Models are shared, frames are not.** A model node has one engine on the
+NPU, loaded once, and that engine carries the jobs of every stream that
+reaches the node: four cameras through three models are three engines, not
+twelve. Everything about frames is per stream. Each stream has its own
+frame sequence and its own reports, and a node that declares `track` keeps
+one tracker per stream, so track ids never cross streams: track 3 in `cam1`
+and track 3 in `cam2` are unrelated objects. A frame runs only the nodes of
+its own stream, on that stream's frame or hand-off, and never waits for a
+node that only another stream reaches. A frame that fails, fails in its own
+stream; the other streams run on. (The async executor's
+`node "x" never completed`, a scheduler defect that a validated graph never
+produces, likewise only ever names a node of the frame's own stream.)
+
+**Reports.** With several sources every frame in `--report` carries
+`"stream": "<source_id>"`, and its `"index"` counts the frames of that
+stream (0, 1, ... in each). A one-source report has no `"stream"` key: it
+is byte for byte what it was before streams existed.
+
+**Order.** The streams are read in turn: one frame from each stream still
+reading, in source declaration order, round after round. Both executors
+emit reports in the order frames were read, so `multi_model_graph_sync` and
+`multi_model_graph_async` write the same bytes, the two-source sample
+included. Two videos of 8 frames (`cam1`) and 5 frames (`cam2`) give this
+`(stream, index)` sequence:
+
+```
+cam1 0, cam2 0, cam1 1, cam2 1, cam1 2, cam2 2, cam1 3, cam2 3,
+cam1 4, cam2 4, cam1 5, cam1 6, cam1 7
+```
+
+**Ends.** Each stream ends on its own, when its source gives no more
+frames; the run ends when every stream has ended. `--frames N` is per
+stream: N frames of each, and a stream that has given N is never read
+again (a camera does not grab an N+1-th frame). Live and file sources mix:
+`--input cam1=camera:0 --input cam2=clip.mp4 --frames 100` reads 100 camera
+frames even when the clip is shorter. Because the streams are read in turn,
+a file stream next to a camera is read at the camera's pace.
+
+**Back-pressure.** `--max-inflight` is one window shared by every stream,
+not a window per stream: it bounds the frames in flight across all of them.
+Because frames are admitted in turn, while k streams are reading, any M
+consecutive admissions hold at most ⌈M/k⌉ frames of one stream: a fast
+stream cannot take the slots of a slow one. The cost is head-of-line
+blocking: reports leave in admission order, so a slow stream - a slow
+camera, or frames that take long to finish - holds back the others, never
+the reverse.
+
+**Inputs.** `--input <source_id>=<uri>` replaces one source's `uri`; repeat
+it once per source, and a source you do not name reads its own `uri`. The
+named form works on a one-source graph too (`--input cam=clip.mp4`). A bare
+`--input <uri>` names the only source of a one-source graph; with several
+sources it is a usage error, exit 2, before any model loads:
+
+```console
+$ ./bin/multi_model_graph_async --graph src/cpp_example/multi_model_graph/multistream_od_two_sources.json --input clip.mp4
+--input "clip.mp4" does not say which source it replaces: graph "two-cameras-reid" has 2 source nodes (cam1, cam2); write --input <source_id>=<uri>, e.g. --input cam1=clip.mp4
+```
+
+The other `--input` usage errors, each exit 2 before any model loads:
+
+* the same source twice (`--input cam1=a.mp4 --input cam1=b.mp4`, or two
+  bare values on a one-source graph): `--input names source "cam1" twice`;
+* `<source_id>=` with no uri after it: `--input cam2= has no uri after "="`;
+* an empty value (`--input ""`): `--input needs a value`;
+* a misspelled id on a graph with several sources:
+  `--input "camX=a.mp4" does not say which source it replaces: "camX" is not a source node of graph "two-cameras-reid"; its source nodes: cam1, cam2`.
+
+`<id>=` is read as a source name only when `<id>` is the id of a source
+node, so a uri that contains `=` stays a uri:
+`--input 'rtsp://host/stream?user=a'` replaces the source of a one-source
+graph. On a graph with several sources, a prefix that has a `/`, `\` or
+`:` in it, and so could begin a path or a URL, gets the "does not say which
+source" message above rather than the misspelled-id one.
+
+**Outputs.** `--output` writes one set of files per stream:
+
+* a video extension (`.mp4`, `.avi`, `.mkv`): one video per stream,
+  `<stem>_<source_id><ext>` (`--output run.mkv` writes `run_cam1.mkv` and
+  `run_cam2.mkv`), each at its own stream's frame rate and frame size;
+* any other extension: `<stem>_<source_id>_<index><ext>` for every frame,
+  `<index>` in six digits (`run_cam1_000000.png`), even from a source that is
+  a single image - with several sources images are always numbered. No
+  extension means `.png`, as with one source.
+
+The live-source refusal (image output from `camera:` or `rtsp://` without
+`--frames`) is checked for each stream's own uri, and the missing-directory
+check names the first file a stream would write:
+`could not write out/run_cam1.mkv: directory out does not exist` (exit 1).
+`--display` opens one window per stream, titled
+`multi_model_graph: <source_id>`; `q` or ESC in any of them stops the whole
+run, as Ctrl-C does. A stop request stops
+reading every stream, finishes the frames in flight in every stream, and
+finalizes `--report` and every output file.
+
+**Messages.** With several sources the `input:` lines name their streams,
+a failed frame is reported on stderr as `stream cam1 frame 3: <error>`, and
+the summary gives one `stream <source_id>: N frames, F failed` line per
+stream before the total (lines from the runtime left out):
+
+```console
+$ ./bin/multi_model_graph_sync --graph src/cpp_example/multi_model_graph/multistream_od_two_sources.json --input cam1=clip.avi --report report.json
+graph:  two-cameras-reid (4 nodes, 3 edges)
+input:  cam1: Video file: clip.avi
+input:  cam2: Image file: sample/img/sample_person_a1.jpg
+report: report.json
+stream cam1: 8 frames, 0 failed
+stream cam2: 1 frame, 0 failed
+9 frames, 0 failed
+```
+
+`--check` lists the streams, and the nodes each one runs, after the node table
+(see *Finding out what a graph needs: `--check`*). A stream whose source gives
+no frame at all does not stop the others: they run to their end, then the run
+prints `ERROR [GRAPH_SCHEMA] source "<uri>": produced no frames` for each
+empty stream and exits 1. `--report` and `--output` hold every frame the other
+streams gave, and the `output:`, `report:` and per-stream summary lines are
+printed as in any finished run (the empty stream's own is `0 frames`). A stop
+request that arrives while the models load prints `interrupted before the
+first frame` and blames no stream (exit 0), as with one source.
+
+---
+
+## Tracking costs latency
+
+An IoU tracker is stateful and strictly frame-ordered: feeding it frame 3
+before frame 2 breaks the ids. The design (spec §4.5) keeps detection
+inference parallel and makes only the tracking step wait for frame order.
+**Every asynchronous graph pays reorder latency** — a frame that finishes
+early waits until every earlier frame has been handed out — **and a graph that
+declares `track` additionally serializes its tracking step at a gate per node and stream**,
+so one slow frame holds back the tracking of every later one of its stream. Throughput is
+unaffected: inference for later frames keeps running.
+
+This build does that. The asynchronous executor keeps up to `--max-inflight`
+frames in flight (default 16). A tracked node's results are applied in frame
+order through a gate per node and stream: frame N+1 of a stream waits at it
+until frame N of the same stream has run, frames of other streams never touch
+it, and inference for later frames keeps running on the NPU. Finished
+reports pass through a reorder buffer and come out in the order the frames
+were read (frame order, with one source), each equal to what the synchronous
+executor produces for that frame. A finished frame
+still waiting in that buffer counts toward `--max-inflight`, so a frame that is
+slow to finish stops the sources from being read further ahead rather than
+letting the buffer grow without bound.
+
+---
+
+## Device memory
+
+Every model node opens its own engine on the NPU, even two nodes that name
+the same model, and each engine holds its own device memory; other
+processes using the NPU draw on the same memory. A graph whose engines do
+not fit fails while it loads, with `MODEL_LOAD` on the first node that does
+not fit. On DX-M1, a second `realesrgan_x2` next to `yolov8n`, `resnet50`
+and a first `realesrgan_x2` cannot load (the example under *Error
+messages*).
+
+`--check` cannot predict this: it never opens the NPU, and the runtime
+exposes no reliable per-model device-memory figure to add up. When it
+happens, remove a node or use a smaller model.
+
+---
+
+## Options
+
+| Option | Default | Notes |
+|---|---|---|
+| `--graph <file>` | — | the graph to run |
+| `--input [<source>=]<uri>` | each source node's `uri` | image, video, `camera:<N>`, `rtsp://...`. Repeatable, once per source: `<source>=` names the source node it replaces, and a graph with several sources needs it (see *Several sources: one stream each*) |
+| `--output <file>` | none | the rendered result. `.mp4`, `.avi` or `.mkv` (any letter case): one video (codec `mp4v` for `.mp4`/`.mkv`, `MJPG` for `.avi`; the source's fps when it is between 1 and 240, else 30). Any other extension, or none: images, exactly `<file>` for a single image, `<stem>_<index><ext>` for each frame of a multi-frame source. Images from a live source (`camera:`, `rtsp://`, from `--input` or the graph's `uri`) never end, so they need `--frames N`; without it the run is refused (exit 2) before any model loads. A directory that does not exist fails before any model loads too (`could not write <file>: directory <dir> does not exist`, exit 1). With several sources, one file set per stream: one video `<stem>_<source_id><ext>` each, or images `<stem>_<source_id>_<index><ext>`, always numbered; both checks apply to each stream |
+| `--display` | off | show each rendered frame in a window. `q` or ESC stops the run gracefully, as Ctrl-C does; closing the window does not stop it (the next frame reopens it). Needs a window system: with none of `DISPLAY`, `WAYLAND_DISPLAY`, `QT_QPA_PLATFORM` set it is refused (exit 2). One that is set but does not answer (`DISPLAY=:99` with no server there, `QT_QPA_PLATFORM=xcb` without `DISPLAY`) is refused the same way, before any model loads: a window is opened once in a child process first, because Qt aborts the process that cannot connect. With several sources, one window per stream, `multi_model_graph: <source_id>`; `q` or ESC in any of them stops the run |
+| `--report <file>` | none | every `FrameReport` as JSON, ordered by `(node, parent_index, roi_index)`. Written frame by frame and finalized on every exit short of a kill (see *`--report`* below) |
+| `--model-dir <dir>` | `assets/models` | where the `.dxnn` files are |
+| `--max-inflight <N>` | `16` | frames in flight at once; at least 1. Async only: `multi_model_graph_sync` refuses it (exit 2) |
+| `--max-jobs-per-stage <N>` | `0` | jobs one stage may have outstanding across frames; 0 = no limit. Async only: `multi_model_graph_sync` refuses it (exit 2) |
+| `--stall-timeout-ms <N>` | `0` | fail with `ERROR: AsyncExecutor stalled: …` (exit 1) when work is outstanding and nothing completes for N ms; 0 = wait forever. Async only: `multi_model_graph_sync` refuses it (exit 2) |
+| `--frames <N>` | all | stop after N frames; with several sources, after N frames of each stream |
+| `--check [<file>]` | — | validate and report, then exit |
+| `--list-models` | — | with `--consumes` / `--produces` |
+| `--help` | — | |
+
+`--max-jobs-per-stage` and `--stall-timeout-ms` are `dx_graph`'s
+`max_jobs_per_stage` and `stall_timeout_ms`: non-negative whole numbers, so
+`-1`, `1.5` or a missing value is a usage error naming the option. Every
+numeric option (`--frames` too) takes at most 2147483647; a larger value is
+a usage error as well. The sync
+binary runs one frame at a time and would ignore all three async-only
+options, so it refuses them instead:
+
+```console
+$ ./bin/multi_model_graph_sync --graph g.json --max-inflight 4
+--max-inflight applies to multi_model_graph_async only: this binary runs one frame at a time
+```
+
+The live-source and `--display` refusals, word for word:
+
+```console
+$ ./bin/multi_model_graph_async --graph g.json --input camera:0 --output out.png
+--output out.png writes one image per frame, and "camera:0" is a live source that never ends: write a video instead (--output <stem>.mkv, .avi or .mp4) or stop after N frames (--frames N)
+$ ./bin/multi_model_graph_async --graph g.json --display      # no window system
+--display needs a window system, and neither DISPLAY nor WAYLAND_DISPLAY is set: run it in a desktop session, or save the result with --output
+$ DISPLAY=:99 ./bin/multi_model_graph_async --graph g.json --display   # nothing on :99
+--display could not open a window with DISPLAY=:99: no window system answered there; run it in a desktop session, or save the result with --output
+```
+
+Exit codes: `0` success, `1` a `GraphError` (the graph or its models cannot
+run) or a failed frame, `2` a usage error.
+
+Ctrl-C **and SIGTERM** are graceful: the input loop stops reading, the
+frames already in flight finish (in every stream) and `--report` / `--output`
+are finalized;
+the exit code is the run's own (`0` when every frame succeeded). A stop
+request that arrives while the models load ends the run before the first
+frame: `interrupted before the first frame`, `0 frames, 0 failed`, exit 0.
+A later
+Ctrl-C, more than 200 ms after the first request, terminates at once, for a
+wind-down that is itself stuck; repeats within 200 ms (a wrapper such as
+`timeout` forwarding the same keypress) count as the same request. SIGTERM
+never escalates (`timeout` may deliver it twice). To force an end, follow it
+with SIGKILL: `timeout` does that only when given `-k`, as in
+`timeout -k 10 60 ./bin/...`. `q` or ESC in the `--display` window is the
+same graceful stop, so a Ctrl-C more than 200 ms after it terminates too.
+
+A run that is terminated that way, or killed, finalizes nothing. `--report`
+then holds every finished frame and needs its closing lines (below). A
+video is left without its closing index: an `.mp4` has no `moov` atom and
+OpenCV and most players cannot open it at all, while an `.mkv` or `.avi`
+still plays up to about the last frames written. So after the first stop
+request, let the run finish; if you may have to kill it, write `.mkv` or
+`.avi`.
+
+### `--report`
+
+- **Written as each frame finishes**, not held until the input ends, so
+  memory stays bounded on a camera or RTSP source that runs for hours. The
+  file is opened when the source opens, before the first frame: a path that
+  cannot be written fails at once (`could not write <path>`, exit 1).
+- **The bytes are those of a whole-file dump**: `{"frames": [...],
+  "graph": "<name>"}`, indented by two spaces, with a trailing newline. The
+  sync and async binaries write byte-identical files.
+- **Every exit short of a kill finalizes it**: the normal end; Ctrl-C,
+  SIGTERM, `q`/ESC; a frame whose `--output` cannot be written; an error that
+  stops the run, such as `--stall-timeout-ms`; a source that produced no
+  frames (exit 1; `"frames": []` with one source, every frame of the other
+  streams with several); and a stop request before the first frame
+  (`"frames": []`, exit 0).
+- **After a SIGKILL** (or a terminating second Ctrl-C) the file holds every
+  frame finished so far and ends with that frame's closing `    }`, so a JSON
+  parser rejects it. Each frame goes out in one write, so appending the
+  closing lines repairs it (the graph's `"name"`, `""` when it has none):
+
+  ```bash
+  printf '\n  ],\n  "graph": "%s"\n}\n' person-reid >> report.json
+  ```
+
+  If no frame had finished, the file ends with `[`: then the format is
+  `'],\n  "graph": "%s"\n}\n'` instead. In the rare case the kill lands
+  inside a frame's write, that frame is cut short: delete back to the
+  previous frame's closing `    }` first.
+- **NaN and infinities** are written as the strings `"NaN"`, `"Infinity"`
+  and `"-Infinity"`. JSON has no such numbers, and strict parsers
+  (JavaScript's `JSON.parse`, `jq`, nlohmann's own `json::parse`) reject
+  bare `NaN`/`Infinity` tokens; a string is valid everywhere, and Python's
+  `float()` and JavaScript's `Number()` turn it back into the number. Finite
+  values are unchanged, and no report contains `null`. Two report files with
+  NaN in the same place compare equal as text, while the C++
+  `FrameReport::operator==` treats NaN as never equal, so an in-memory
+  comparison of a NaN-bearing report fails by design.
+
+---
+
+## A model's graph contract
+
+What a model `consumes` and which ports it has come from its factory
+interface (`IPoseFactory`, `IDetectionFactory`, ...), through the table in
+`scripts/gen_model_registry.py`. A factory overrides either one with a
+single line in its header:
+
+```cpp
+static constexpr GraphInput graphInput() { return GraphInput::kEither; }   // kFullFrame, kRoi or kEither
+static constexpr const char* graphPorts() { return "descriptors"; }       // comma-separated port names
+```
+
+`vit_pose_small_bn` declares `graphInput()` (`kEither`) and `superpoint`
+declares `graphPorts()`. The build's code generator parses those lines out of
+the header, so no factory is instantiated to learn its contract. Every
+generated registry row also carries a `static_assert` that the factory's own
+declaration equals what the generator parsed. A declaration the generator
+misread or missed, such as one inherited from another factory, then fails
+the build (`graphInput() and gen_model_registry.py disagree`) instead of
+shipping the interface default.
+
+A factory header that mentions `graphInput` or `graphPorts` anywhere, in a
+comment too, must hold exactly one declaration in the form above, or
+generation fails with `UNPARSEABLE TRAIT <header>`. So a comment that names
+a trait in a header that declares none, or that quotes the declaration a
+second time, stops the build. A port name must also be one the generator
+knows for the factory's result type (`UNKNOWN PORT`).
+
+`vit_pose_small_bn` also decodes its output as the 17 VitPose heatmaps it
+is, as the Python example does, where it used to run a YOLOv8-pose decoder.
+Its C++ and Python keypoints agree to within 2e-5. It no longer reads
+`score_threshold` or `nms_threshold`.
+
+## Your own registry (`IModelRegistry`)
+
+The engine reads models only through `IModelRegistry`
+(`common/graph/i_registry.hpp`). A registry of your own, such as a plugin,
+implements that interface. This release added fields to the structs it
+passes, so code built against an earlier `i_registry.hpp` (or the
+`shape.hpp` it includes) must be rebuilt:
+
+* `StageResult::ports` (in `shape.hpp`): a stage's extra outputs, by name.
+  The PORTS CONTRACT in `i_registry.hpp` says what a stage must put there.
+* `ModelInfo::ports`, a list of `PortInfo {name, shape}`: the extra outputs
+  a model declares.
+* `ModelInfo::text_params`, a list of `ParamInfo {name, kind}` with `kind`
+  `kText` or `kTextList`: the params keys the model reads as a string or a
+  list of strings. Every other key is a number.
+* `StageParams::text` and `StageParams::lists`: a node's string and
+  string-array params, next to the existing `numeric`.
+
+Leaving them empty gives the old behaviour: no ports, and numbers only.
+
+---
+
+## From Python
+
+The same graphs run from Python through the `dx_graph` module, which is built
+by the same CMake build and links this engine — not a copy of it:
+
+```python
+import dx_graph
+
+with dx_graph.Graph("src/cpp_example/multi_model_graph/cascade_od_reid_track.json") as g:
+    for report in g.stream(source="my_video.mp4"):   # --input; pipelined as the async CLI
+        d = report.to_dict()                         # this frame's --report entry
+        canvas = g.render(report)                    # this frame's --output image
+```
+
+Reports, renderings and error messages are the CLI's own, checked on hardware
+by `tests/cpp_example/test_graph_python.py`. Every `run()` and `stream()`
+starts with the graph's trackers reset, as the CLI starts on its input, so a
+reused Graph gives what a fresh one gives; track ids follow objects across
+the frames of one stream. A graph with several sources reads them all with
+`g.stream()` or `g.stream(sources={"cam1": a, "cam2": b})` (the CLI's
+`--input cam1=a --input cam2=b`); each report's `.stream` names its source.
+`to_dict()` holds the same `"NaN"` / `"Infinity"`
+/ `"-Infinity"` strings as the `--report` file, a model the device cannot
+load raises `dx_graph.GraphError` with `.code == "MODEL_LOAD"`, and the
+executor options are the constructor's `max_frames_in_flight`,
+`max_jobs_per_stage` and `stall_timeout_ms`. One difference: the CLI stops
+gracefully on SIGTERM, while a Python program keeps Python's default SIGTERM
+action (the process ends at once); `dx_graph` installs no signal handler.
+`./build.sh --all --python_exec <your python>` builds the module for that
+interpreter and ships it as `bin/python/dx_graph` (the default `./build.sh`,
+`--minimal`, does not). Build, API, threading and limits:
+[`src/bindings/python/dx_graph/README.md`](../../bindings/python/dx_graph/README.md).
+
+---
+
+## Retargeting a sample without rebuilding
+
+This is the claim the example exists to make, so it is worth trying:
+
+```bash
+# edit cascade_od_reid_track.json: "model": "yolov8n" -> "yolo26s"
+./setup.sh --models yolo26s
+./bin/multi_model_graph_async \
+    --graph src/cpp_example/multi_model_graph/cascade_od_reid_track.json \
+    --output /tmp/swapped.png
+```
+
+No rebuild, no recompilation, no code change. The same holds for swapping
+`bisenetv2` for any other model whose `produces` column says `labelmap`, or
+`casvit_t` for anything that `consumes` `roi` or `either`.

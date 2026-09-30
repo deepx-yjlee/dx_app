@@ -69,7 +69,7 @@ public:
                             float score_threshold = 0.3f,
                             float nms_threshold = 0.45f,
                             int num_keypoints = 17,
-                            bool is_ort_configured = false)
+                            bool /*is_ort_configured*/ = false)
         : input_width_(input_width), input_height_(input_height),
           score_threshold_(score_threshold), nms_threshold_(nms_threshold),
           num_keypoints_(num_keypoints) {}

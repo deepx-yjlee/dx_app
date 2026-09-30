@@ -38,7 +38,10 @@
 #include <stdexcept>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
+
+#include "common/utility/colorspace.hpp"
 
 namespace dxapp {
 namespace srtiling {
@@ -228,12 +231,18 @@ inline void runTilesBlocking(dxrt::InferenceEngine& ie, const cv::Mat& lr_plane,
  *
  * Outputs come back in tile order; an entry is empty if that tile failed. The
  * tile buffer must outlive its job, so each clone is held until its Wait().
+ * If RunAsync throws, every job already submitted is waited for before the
+ * exception leaves this function.
  *
  * @warning Only valid when NO callback is registered on @p ie. With a callback
  * installed the engine routes outputs there and Wait() returns nothing, so every
  * tile would come back empty — use runTilesBlocking() instead.
+ *
+ * @tparam Engine dxrt::InferenceEngine, or anything with `int RunAsync(void*)`
+ *         and `dxrt::TensorPtrs Wait(int)` (the unit tests' fake engine).
  */
-inline void runTilesPipelined(dxrt::InferenceEngine& ie, const cv::Mat& lr_plane,
+template <typename Engine>
+inline void runTilesPipelined(Engine& ie, const cv::Mat& lr_plane,
                               const std::vector<TilePlan>& plans,
                               int tile_h, int tile_w,
                               std::vector<dxrt::TensorPtrs>& outputs,
@@ -254,12 +263,27 @@ inline void runTilesPipelined(dxrt::InferenceEngine& ie, const cv::Mat& lr_plane
         }
     };
 
-    for (size_t i = 0; i < plans.size(); ++i) {
-        const TilePlan& p = plans[i];
-        cv::Mat tile = lr_plane(cv::Rect(p.win_x, p.win_y, tile_w, tile_h)).clone();
-        const int job_id = ie.RunAsync(tile.data);
-        queue.emplace_back(i, job_id, tile);
-        if (static_cast<int>(queue.size()) >= inflight) drain_one();
+    try {
+        for (size_t i = 0; i < plans.size(); ++i) {
+            const TilePlan& p = plans[i];
+            cv::Mat tile = lr_plane(cv::Rect(p.win_x, p.win_y, tile_w, tile_h)).clone();
+            // The queue slot first: once RunAsync has submitted the job,
+            // nothing that can throw stands between it and the queue, so
+            // every submitted job is waited for below.
+            queue.emplace_back(i, -1, tile);
+            try {
+                std::get<1>(queue.back()) = ie.RunAsync(std::get<2>(queue.back()).data);
+            } catch (...) {
+                queue.pop_back();  // never submitted
+                throw;
+            }
+            if (static_cast<int>(queue.size()) >= inflight) drain_one();
+        }
+    } catch (...) {
+        // A submit failed: the jobs already in flight still read their tile
+        // buffers, so wait for every one before `queue` frees them.
+        while (!queue.empty()) drain_one();
+        throw;
     }
     while (!queue.empty()) drain_one();
 }
@@ -305,6 +329,48 @@ inline int assembleTiles(const std::vector<TilePlan>& plans,
         ++tiles_done;
     }
     return tiles_done;
+}
+
+/** Compute output scale factors by probing once.
+ *  Only the output *shape* matters, so a zero tile is enough.
+ *  @return (scale_x, scale_y), each >= 1. */
+inline std::pair<int, int> probeOutputScale(dxrt::InferenceEngine& ie, int tile_w, int tile_h) {
+    cv::Mat probe_tile = cv::Mat::zeros(tile_h, tile_w, CV_8UC1);
+    dxrt::TensorPtrs probe_out = ie.Run(probe_tile.data, nullptr, nullptr);
+    int out_tile_h = tile_h, out_tile_w = tile_w;
+    if (!probe_out.empty()) {
+        auto shape = probe_out[0]->shape();
+        if (shape.size() == 4)      { out_tile_h = static_cast<int>(shape[2]); out_tile_w = static_cast<int>(shape[3]); }
+        else if (shape.size() == 3) { out_tile_h = static_cast<int>(shape[1]); out_tile_w = static_cast<int>(shape[2]); }
+        else if (shape.size() == 2) { out_tile_h = static_cast<int>(shape[0]); out_tile_w = static_cast<int>(shape[1]); }
+    }
+    return {std::max(1, out_tile_w / tile_w), std::max(1, out_tile_h / tile_h)};
+}
+
+/// Replicate-pad `bgr` to padded_h x padded_w and take its limited-range Y
+/// (ESPCN is trained on MATLAB rgb2ycbcr Y), exactly as the runner does.
+inline void prepareLowRes(const cv::Mat& bgr, int padded_h, int padded_w,
+                          cv::Mat& lr_bgr, cv::Mat& lr_gray) {
+    cv::copyMakeBorder(bgr, lr_bgr, 0, padded_h - bgr.rows, 0, padded_w - bgr.cols,
+                       cv::BORDER_REPLICATE);
+    dxapp::colorspace::bgrToYLimited(lr_bgr, lr_gray);
+}
+
+/// The super-resolved luma `sr_y` plus `orig_bgr`'s chroma, bicubic-resized
+/// to sr_y's size, back to BGR in the limited-range convention.
+inline cv::Mat mergeSrLuma(const cv::Mat& orig_bgr, const cv::Mat& sr_y) {
+    cv::Mat lr_ycrcb;
+    dxapp::colorspace::bgrToYCrCbLimited(orig_bgr, lr_ycrcb);
+    std::vector<cv::Mat> ch;
+    cv::split(lr_ycrcb, ch);
+    cv::Mat cr_up, cb_up;
+    cv::resize(ch[1], cr_up, sr_y.size(), 0, 0, cv::INTER_CUBIC);
+    cv::resize(ch[2], cb_up, sr_y.size(), 0, 0, cv::INTER_CUBIC);
+    cv::Mat merged;
+    cv::merge(std::vector<cv::Mat>{sr_y, cr_up, cb_up}, merged);
+    cv::Mat bgr;
+    dxapp::colorspace::ycrcbLimitedToBgr(merged, bgr);
+    return bgr;
 }
 
 }  // namespace srtiling

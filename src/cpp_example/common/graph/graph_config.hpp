@@ -1,0 +1,100 @@
+/**
+ * @file graph_config.hpp
+ * @brief Graph file structs, parsing and validation.
+ *
+ * Two node kinds (source, model) and two edge kinds (frame, ROI) express
+ * every pipeline this example supports. Keeping that surface small is the
+ * point: the schema is the only interface a customer sees.
+ */
+#ifndef DXAPP_GRAPH_GRAPH_CONFIG_HPP
+#define DXAPP_GRAPH_GRAPH_CONFIG_HPP
+
+#include <string>
+#include <vector>
+
+#include "common/graph/graph_error.hpp"
+#include "common/graph/i_registry.hpp"
+
+namespace dxapp {
+namespace graph {
+
+/// Options on an edge that carries cropped regions. All optional.
+struct RoiSpec {
+    bool present;
+    std::vector<std::string> classes;
+    float min_score;  ///< < 0 means "inherit the producer's threshold"
+    float min_area;
+    float pad;
+    int max;          ///< < 0 means unlimited
+    std::string align;  ///< "" or "face5"
+
+    RoiSpec() : present(false), min_score(-1.f), min_area(0.f), pad(0.f), max(-1) {}
+};
+
+/// Tracking declared on a producer node, so every consumer shares one id space.
+struct TrackSpec {
+    bool present;
+    std::string algo;
+    float iou;
+    int max_age;
+
+    TrackSpec() : present(false), algo("iou"), iou(0.3f), max_age(30) {}
+};
+
+struct NodeSpec {
+    std::string id;
+    bool is_source;
+    std::string uri;    ///< source only
+    std::string model;  ///< model only
+    StageParams params;
+    TrackSpec track;
+
+    NodeSpec() : is_source(false) {}
+};
+
+struct EdgeSpec {
+    std::string from;
+    std::string to;
+    RoiSpec roi;
+    std::string port;  ///< "" = primary
+};
+
+struct GraphSpec {
+    int version;
+    std::string name;
+    std::vector<NodeSpec> nodes;
+    std::vector<EdgeSpec> edges;
+
+    GraphSpec() : version(0) {}
+
+    /// NULL when no node carries this id.
+    const NodeSpec* FindNode(const std::string& id) const;
+};
+
+/// One stream (SP2): a source node and every node reachable from it.
+struct StreamSpec {
+    std::string source;              ///< the source node's id
+    std::vector<std::string> nodes;  ///< its members, in node declaration order; `source` is one
+};
+
+/// One stream per source node, in node declaration order. Edges whose
+/// endpoints name no node are ignored, so the result is meaningful once
+/// ValidateGraph's step 2 has passed, and on every validated spec. The only
+/// reachability the stream model uses: ValidateGraph, --check and
+/// StageGraph::Build all call it.
+std::vector<StreamSpec> ListStreams(const GraphSpec& spec);
+
+/// Syntax only. Throws GraphError with kGraphSchema, kGraphVersion or
+/// kGraphReserved. origin appears in the message so the reader knows the file.
+GraphSpec ParseGraphText(const std::string& json_text, const std::string& origin);
+
+/// Reads the file, then ParseGraphText. Throws kGraphSchema when unreadable.
+GraphSpec ParseGraphFile(const std::string& path);
+
+/// Semantics. Throws GraphError. Implemented in Task 7.
+void ValidateGraph(const GraphSpec& spec, const IModelRegistry& registry);
+
+}  // namespace graph
+}  // namespace dxapp
+
+#endif  // DXAPP_GRAPH_GRAPH_CONFIG_HPP

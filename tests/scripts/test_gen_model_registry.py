@@ -403,6 +403,39 @@ def test_an_unsafe_manifest_name_is_dropped_not_fatal(tmp_path):
     assert emitted.count("info.download_name") == 1  # widget: the registry name
 
 
+def test_configure_shows_generator_warnings_on_success(tmp_path):
+    """Final review M1: configure captures the generator's stderr in
+    GRAPH_CODEGEN_STDERR, which was printed only on failure, so a warning from
+    a successful run (an unsafe manifest name, an unreadable manifest) was
+    never seen. The real execute_process block, run by cmake -P against a
+    stand-in generator that warns and succeeds."""
+    import re
+    import shutil
+    cmake = shutil.which("cmake")
+    assert cmake is not None, "cmake is needed to build this project"
+    text = (ROOT / "src" / "cpp_example" / "CMakeLists.txt").read_text()
+    block = re.search(r"execute_process\(\s*COMMAND \$\{Python3_EXECUTABLE\} "
+                      r"\$\{PROJECT_ROOT\}/scripts/gen_model_registry\.py.*?\nendif\(\)\n",
+                      text, re.S)
+    assert block is not None, "the codegen execute_process block moved"
+    fake_root = tmp_path / "root"
+    (fake_root / "scripts").mkdir(parents=True)
+    (fake_root / "scripts" / "gen_model_registry.py").write_text(
+        "import sys\nprint('WARNING stand-in generator note', file=sys.stderr)\n"
+        "print('a.cpp')\n", encoding="utf-8")
+    script = tmp_path / "codegen.cmake"
+    script.write_text(
+        'set(Python3_EXECUTABLE "{}")\nset(PROJECT_ROOT "{}")\n'
+        'set(GRAPH_GENERATED_DIR "{}")\n'.format(sys.executable, fake_root, tmp_path / "gen")
+        + block.group(0), encoding="utf-8")
+    completed = subprocess.run([cmake, "-P", str(script)], text=True,
+                               stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                               check=False, timeout=120)
+    assert completed.returncode == 0, completed.stdout
+    assert "WARNING stand-in generator note" in completed.stdout, completed.stdout
+    assert "CMake Warning" in completed.stdout, completed.stdout
+
+
 def test_check_docs_passes_on_a_fresh_doc_and_fails_on_a_stale_one(tmp_path):
     cpp_root, registry = write_tree(
         tmp_path, {("object_detection", "widget"): GOOD_HEADER},
@@ -451,6 +484,13 @@ def test_the_tracked_graph_models_doc_is_fresh():
         cwd=str(ROOT), text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
         check=False, timeout=300)
     assert completed.returncode == 0, completed.stdout
+
+
+def test_configure_writes_the_doc_into_the_build_tree():
+    text = (ROOT / "src" / "cpp_example" / "CMakeLists.txt").read_text()
+    assert "--docs ${GRAPH_GENERATED_DIR}/graph_models.md" in text
+    assert "${PROJECT_ROOT}/docs/graph_models.md" not in text
+    assert "${PROJECT_ROOT}/scripts/modelzoo_manifest.json" in text
 
 
 TRAIT_HEADER = """\
@@ -824,6 +864,37 @@ def test_gallery_and_companion_resources(tmp_path):
     note = re.search(r'ResourceInfo\(ResourceInfo::kNote, "([^"]*)"\)', clip_unit)
     assert note and "Python-only" in note.group(1) and "embedding" in note.group(1)
     assert "info.resources" not in unit(tmp_path, "image_retrieval")
+
+
+SEGMENTATION_HEADER = GOOD_HEADER.replace("IDetectionFactory", "ISegmentationFactory")
+
+
+def test_matting_alpha_and_gallery_matches_are_ports(tmp_path):
+    """PP-Matting's soft alpha matte and a gallery row's ranking reach a graph
+    as named ports: "alpha" (densemap) for the ppmatting family, from
+    GRAPH_TRAITS, and "matches" (scores) on every embedding row that has a
+    gallery. An embedding row without a gallery declares no port."""
+    matting = ("image_matting", "ppmatting", "ppmatting-hrnet-w48-composition_512x512")
+    vpr = ("visual_place_recognition", "eigenplaces", "eigenplaces-resnet18_512x512")
+    plain = ("image_retrieval", "clip_rn50", "clip-text_resnet50_77x512_openai")
+    cpp_root, registry = write_tree(
+        tmp_path, {matting: SEGMENTATION_HEADER, vpr: EMBEDDING_HEADER, plain: EMBEDDING_HEADER},
+        [entry(v, t, f) for (t, f, v) in (matting, vpr, plain)],
+        configs={vpr: {"config": {"gallery": "sample/gallery/vpr_eigenplaces-resnet18_512x512.bin"}},
+                 plain: {"config": {}}})
+    result = run_generator(tmp_path, cpp_root, registry, "--strict")
+    assert result.returncode == 0, result.stdout
+
+    assert ('info.ports.push_back(PortInfo("alpha", Shape::kDenseMap));'
+            in unit(tmp_path, "image_matting"))
+    assert ('info.ports.push_back(PortInfo("matches", Shape::kScores));'
+            in unit(tmp_path, "visual_place_recognition"))
+    assert "info.ports" not in unit(tmp_path, "image_retrieval")
+    doc = (tmp_path / "graph_models.md").read_text()
+    assert ("| `ppmatting-hrnet-w48-composition_512x512` | image_matting | "
+            "labelmap + alpha (densemap) |") in doc
+    assert ("| `eigenplaces-resnet18_512x512` | visual_place_recognition | "
+            "vector + matches (scores) |") in doc
 
 
 def test_anomaly_interface_is_not_ready_not_an_error(tmp_path):

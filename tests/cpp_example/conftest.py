@@ -35,7 +35,13 @@ from test_helpers.pytest_support import (  # noqa: E402,F401
     wait_for_temperature,
 )
 
+from test_helpers.proc import apply_headless_display  # noqa: E402
+
 configure_stdio_errors()
+
+# No display: OpenCV's Qt backend aborts (rc 134) on a window it cannot show.
+# offscreen lets every example run the same code path as with a display.
+apply_headless_display(os.environ)
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +75,12 @@ def is_executable(path: Path) -> bool:
 
 # Path to bin directory
 BIN_DIR = resolve_bin_dir()
+
+#: bin/ executables that are plain-assert unit-test binaries, not example apps:
+#: they run their checks whatever the arguments, so the CLI-argument tests
+#: (--help, invalid option, no arguments) do not apply. test_graph_engine.py
+#: and test_common_unit.py run them.
+UNIT_TEST_BINARIES = frozenset({"graph_engine_test", "common_unit_test"})
 BUILD_DIR = PROJECT_ROOT / "build"
 
 

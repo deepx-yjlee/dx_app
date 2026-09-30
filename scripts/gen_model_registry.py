@@ -137,6 +137,8 @@ PORT_SHAPES = {
     ("PoseResult", "descriptors"): "kDenseMap",
     ("HandLandmarkResult", "handedness"): "kScores",
     ("FaceAlignmentResult", "pose"): "kVector",
+    ("SegmentationResult", "alpha"): "kDenseMap",
+    ("EmbeddingResult", "matches"): "kScores",
 }
 
 # Graph traits per family (R5), in place of lines in the teammate's generated
@@ -146,7 +148,12 @@ GRAPH_TRAITS = {
     "vitpose":    {"input": "kEither"},        # top-down pose: an ROI consumer
     "dark_hrnet": {"input": "kEither"},
     "superpoint": {"ports": ("descriptors",)},  # per-keypoint descriptors
+    "ppmatting":  {"ports": ("alpha",)},        # the soft alpha matte
 }
+
+# An embedding row with a gallery ranks against it (GalleryRetrievalPostprocessor):
+# its ranking is this extra port (R9).
+GALLERY_PORT = ("EmbeddingResult", "matches")
 
 # Interfaces registered but not graph-ready in this release, with the reason.
 NOT_READY_INTERFACES = {
@@ -526,7 +533,11 @@ def build_entries(registry_path, cpp_root, strict, download_names):
         if contract_override:
             contract = contract_override
         port_rows = []
-        for port in (declared if declared is not None else default_ports):
+        ports = list(declared if declared is not None else default_ports)
+        has_gallery = any(kind == "kGallery" for kind, _ in row["resources"])
+        if has_gallery and result == GALLERY_PORT[0] and GALLERY_PORT[1] not in ports:
+            ports.append(GALLERY_PORT[1])
+        for port in ports:
             port_shape = PORT_SHAPES.get((result, port))
             if port_shape is None:
                 known = sorted(n for r, n in PORT_SHAPES if r == result)

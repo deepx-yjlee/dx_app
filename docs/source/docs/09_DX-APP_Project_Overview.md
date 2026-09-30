@@ -403,7 +403,7 @@ If no input source (`--image`, `--video`, `--camera`, `--rtsp`) is provided, the
 
 **Signal Handling**  
 
-All runners register SIGINT/SIGTERM handlers for graceful shutdown. Pressing Ctrl+C during inference prints `"Interrupted by user"` and cleanly exits, releasing all resources.  
+C++ runners and the `multi_model_graph_*` CLI register SIGINT/SIGTERM handlers for graceful shutdown. Pressing Ctrl+C during inference cleanly exits, releasing all resources: a runner prints `"Interrupted by user"`, and the graph CLI finishes the frames in flight in every stream and finalizes `--report`/`--output`. A later Ctrl+C, more than 200 ms after the first, terminates the process at once (for a shutdown that is itself stuck); repeats within 200 ms count as the same request. SIGTERM is always graceful, however often it arrives.  
 
 **Run Directory** (`--save` / `--save-dir`)  
 

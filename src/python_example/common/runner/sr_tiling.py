@@ -248,12 +248,20 @@ def run_tiles_pipelined(ie, prep: Callable[[np.ndarray], np.ndarray],
         except Exception:
             results[idx] = None
 
-    for i, p in enumerate(plans):
-        tile = lr_plane[p.win_y:p.win_y + tile_h, p.win_x:p.win_x + tile_w]
-        tensor = prep(np.ascontiguousarray(tile)[:, :, np.newaxis])
-        queue.append((i, ie.run_async([tensor]), tensor))
-        if len(queue) >= inflight:
+    try:
+        for i, p in enumerate(plans):
+            tile = lr_plane[p.win_y:p.win_y + tile_h, p.win_x:p.win_x + tile_w]
+            tensor = prep(np.ascontiguousarray(tile)[:, :, np.newaxis])
+            queue.append((i, ie.run_async([tensor]), tensor))
+            if len(queue) >= inflight:
+                drain_one()
+    except BaseException:
+        # A submit failed: the jobs already in flight still read their
+        # tensors, so wait for every one before `queue` lets them go, as the
+        # C++ runTilesPipelined does.
+        while queue:
             drain_one()
+        raise
 
     while queue:
         drain_one()

@@ -433,7 +433,9 @@ private:
             }
         }
 
-        // Verification dump for 3D detection is not wired yet.
+        // --- Numerical verification dump (DXAPP_VERIFY=1) ---
+        verify::dumpVerifyJson(results, model_path_, "3d_object_detection",
+                               display_image.rows, display_image.cols);
 
         auto& preview_pump = syncPreviewPump();
         const auto render_plan = planFrameRender(

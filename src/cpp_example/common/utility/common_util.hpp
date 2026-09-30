@@ -22,6 +22,9 @@
 #include <atomic>
 #include <array>
 #include <cstring>
+#include <utility>
+
+#include "common/utility/interrupt_flag.hpp"
 
 #if __cplusplus >= 201703L || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
 #include <filesystem>
@@ -257,16 +260,18 @@ inline bool& _displayClosed() {
  * @brief Handle window events and check whether the display window was closed or user requested quit.
  *
  * - Pressing 'q' sets the global interrupt flag and returns true.
+ * - A pending interrupt (g_interrupted(), e.g. from SIGINT/SIGTERM) returns true.
  * - If the window named `winname` is closed (getWindowProperty <= 0), this returns true
  *   to signal the caller to stop displaying and proceed to next model.
  */
-// Forward declaration: g_interrupted is defined in run_dir.hpp. Provide a
-// declaration here to avoid build ordering issues when this header is
-// included without run_dir.hpp.
-inline std::atomic<bool>& g_interrupted();
-
 inline bool windowShouldClose(const std::string& winname = "Output") {
     if (_displayClosed()) return true;
+    // SIGINT/SIGTERM (run_dir.hpp's handler) end the wait too: the image-mode
+    // "hold the window open" loop in every sync runner is
+    //     while (!windowShouldClose("Output")) sleep;
+    // and a window nobody can close (QT_QPA_PLATFORM=offscreen, a remote
+    // session) otherwise kept the process alive after the signal.
+    if (g_interrupted().load()) return true;
     try {
         int key = cv::waitKey(1);
         if (key == 'q' || key == 27) {
@@ -431,9 +436,9 @@ inline void showOutput(const cv::Mat& frame) {
     window_ever_opened = true;
 
     if (!window_sized && !frame.empty()) {
-        auto [screen_w, screen_h] = getScreenResolution();
-        int target_w = screen_w / 2;
-        int target_h = screen_h / 2;
+        const std::pair<int, int> screen_res = getScreenResolution();
+        int target_w = screen_res.first / 2;
+        int target_h = screen_res.second / 2;
 
         // Fit frame aspect ratio within target_w × target_h
         double scale = std::min(
