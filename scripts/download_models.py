@@ -24,11 +24,14 @@ Requirements:
 
 import argparse
 import json
+import os
 import shutil
+import ssl
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+from typing import Iterable
 from urllib.parse import urlparse
 
 # ── Constants ──────────────────────────────────────────────────────────────────
@@ -36,6 +39,29 @@ from urllib.parse import urlparse
 SCRIPT_DIR            = Path(__file__).parent
 DEFAULT_OUTPUT        = SCRIPT_DIR.parent / "assets" / "models"
 DEFAULT_MANIFEST      = SCRIPT_DIR / "modelzoo_manifest.json"
+DEFAULT_REGISTRY      = SCRIPT_DIR.parent / "config" / "model_registry.json"
+# OS trust stores, tried after the environment variables (Debian/Ubuntu, then
+# RHEL/Fedora). Behind a TLS-inspecting proxy the corporate root is usually
+# installed here but missing from the certifi bundle requests ships with.
+SYSTEM_CA_BUNDLES     = (
+    "/etc/ssl/certs/ca-certificates.crt",
+    "/etc/pki/tls/certs/ca-bundle.crt",
+)
+CA_BUNDLE_ENV_VARS    = ("REQUESTS_CA_BUNDLE", "CURL_CA_BUNDLE", "SSL_CERT_FILE")
+# U-76. Python 3.13+ - and urllib3 2.3+ running on it - verify TLS with
+# VERIFY_X509_STRICT, which rejects a certificate missing an extension RFC
+# 5280 requires. A TLS-inspecting proxy's CA often lacks an Authority Key
+# Identifier. $DXAPP_TLS_RELAX_X509_STRICT=1 clears that one flag; the
+# chain, the host name and the certificate requirement stay as they are.
+RELAX_X509_STRICT_ENV = "DXAPP_TLS_RELAX_X509_STRICT"
+# OpenSSL's messages (crypto/x509/x509_txt.c) for checks that only strict
+# mode makes, and that a proxy CA typically fails. Not exhaustive.
+X509_STRICT_ONLY_ERRORS = (
+    "Missing Authority Key Identifier",
+    "Missing Subject Key Identifier",
+    "Basic Constraints of CA cert not marked critical",
+    "CA cert does not include key usage extension",
+)
 DEFAULT_INTERNAL_PATH = Path("/mnt/regression_storage/atd/models_v3.2.0")
 
 # ANSI colors
@@ -66,6 +92,70 @@ def load_manifest(manifest_path: Path) -> list[dict]:
 
     info(f"Loaded manifest: {manifest_path.name} ({len(data)} models)")
     return data
+
+
+def _dxnn_filename(model: dict) -> str:
+    """The .dxnn file name a manifest entry downloads to."""
+    return Path(urlparse(model["dxnn_url"]).path).name
+
+
+def load_registry_aliases(registry_path: Path = DEFAULT_REGISTRY) -> dict[str, str]:
+    """Map each registry model_name (lower case) to its dxnn_file (lower case).
+
+    Best effort: the registry only adds aliases, so a missing or malformed
+    file (or entry) just means fewer names match.
+    """
+    try:
+        data = json.loads(Path(registry_path).read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    if not isinstance(data, list):
+        return {}
+    aliases: dict[str, str] = {}
+    for entry in data:
+        if not isinstance(entry, dict):
+            continue
+        name, dxnn = entry.get("model_name"), entry.get("dxnn_file")
+        if isinstance(name, str) and isinstance(dxnn, str) and name and dxnn:
+            aliases[name.lower()] = dxnn.lower()
+    return aliases
+
+
+def select_models(models: list[dict], requested: list[str],
+                  aliases: dict[str, str]) -> tuple[list[dict], list[str]]:
+    """Select the manifest entries named by `requested` (case-insensitive).
+
+    A name matches, in this order: the manifest name; the .dxnn file name,
+    with or without the extension; a registry model_name, through its
+    dxnn_file. Tokens may be comma-separated. Returns the selection in
+    manifest order, each entry once, and the names that matched nothing.
+    """
+    by_key: dict[str, dict] = {}
+    for m in models:
+        by_key.setdefault(m["name"].lower(), m)
+    for m in models:
+        fname = _dxnn_filename(m).lower()
+        by_key.setdefault(fname, m)
+        if fname.endswith(".dxnn"):
+            by_key.setdefault(fname[:-len(".dxnn")], m)
+    by_file = {_dxnn_filename(m).lower(): m for m in models}
+    for alias, dxnn in aliases.items():
+        if dxnn in by_file:
+            by_key.setdefault(alias, by_file[dxnn])
+
+    chosen: set[int] = set()
+    missing: list[str] = []
+    for raw in requested:
+        for token in raw.split(","):
+            token = token.strip()
+            if not token:
+                continue
+            m = by_key.get(token.lower())
+            if m is None:
+                missing.append(token)
+            else:
+                chosen.add(id(m))
+    return [m for m in models if id(m) in chosen], missing
 
 
 def get_run_demo_model_filenames() -> set[str]:
@@ -111,7 +201,7 @@ def _print_category_table(cat_names: list, cats: dict, output_dir: Path):
     total_new = total_exists = 0
     for i, cat in enumerate(cat_names, 1):
         mlist = cats[cat]
-        new = sum(1 for m in mlist if not (output_dir / Path(urlparse(m["dxnn_url"]).path).name).exists())
+        new = sum(1 for m in mlist if not (output_dir / _dxnn_filename(m)).exists())
         exists = len(mlist) - new
         total_new += new
         total_exists += exists
@@ -149,7 +239,7 @@ def _print_model_table(models: list[dict], output_dir: Path):
     print(f"  {'#':>4}  {'Model':<35}  {'Category':<25}  Status")
     print(f"  {'─'*4}  {'─'*35}  {'─'*25}  {'─'*10}")
     for i, m in enumerate(models, 1):
-        fname = Path(urlparse(m["dxnn_url"]).path).name
+        fname = _dxnn_filename(m)
         exists = (output_dir / fname).exists()
         status = f"{_Y}exists{_RST}" if exists else f"{_G}new{_RST}"
         print(f"  {i:>4}  {m['name']:<35}  {m['category']:<25}  {status}")
@@ -222,28 +312,75 @@ def is_pending(row: dict) -> bool:
     return bool(row.get("pending")) if isinstance(row, dict) else False
 
 
+def _expected_length(response) -> int | None:
+    """Content-Length of an unencoded response, else None (nothing to check)."""
+    headers = getattr(response, "headers", None) or {}
+    encoding = (headers.get("Content-Encoding") or "identity").strip().lower()
+    if encoding != "identity":
+        return None  # iter_content() yields decoded bytes: the header counts encoded ones
+    try:
+        return int(headers.get("Content-Length"))
+    except (TypeError, ValueError):
+        return None
+
+
+def _verify_download(size: int, expected: int | None) -> str | None:
+    """Why a finished download is not usable, or None when it is."""
+    if size == 0:
+        return "empty file"
+    if expected is not None and size != expected:
+        return f"incomplete download: expected {expected} bytes, got {size}"
+    return None
+
+
+def _remove_quietly(path: Path):
+    try:
+        path.unlink()
+    except OSError:
+        pass
+
+
 def download_file(url: str, dest: Path, session, force: bool = False,
                   pending: bool = False) -> dict:
-    """Download a single file. Skips if already exists, unless force=True."""
+    """Download a single file. Skips if already exists, unless force=True.
+
+    Downloads to `<dest>.part` and moves it into place only once verified
+    (non-empty, and as long as Content-Length says), so a failed download
+    leaves neither a truncated file nor a clobbered earlier copy behind.
+    """
     filename = dest.name
     if dest.exists() and not force:
         return {"status": "skip", "file": filename, "size": dest.stat().st_size}
 
     dest.parent.mkdir(parents=True, exist_ok=True)
+    part = dest.with_name(dest.name + ".part")
     try:
-        with session.get(url, stream=True, timeout=60) as r:
+        # verify passed explicitly: requests would otherwise let
+        # $REQUESTS_CA_BUNDLE / $CURL_CA_BUNDLE override session.verify at
+        # request time, and the bundle logged by _setup_session() would not
+        # be the one used.
+        with session.get(url, stream=True, timeout=60,
+                         verify=getattr(session, "verify", True)) as r:
             if r.status_code != 200:
                 if pending and r.status_code in (403, 404):
                     return {"status": "pending", "file": filename,
                             "code": r.status_code, "url": url}
                 return {"status": "error", "file": filename, "code": r.status_code, "url": url}
+            expected = _expected_length(r)
             downloaded = 0
-            with open(dest, "wb") as f:
+            with open(part, "wb") as f:
                 for chunk in r.iter_content(chunk_size=1024 * 256):
-                    f.write(chunk)
-                    downloaded += len(chunk)
+                    if chunk:
+                        f.write(chunk)
+                        downloaded += len(chunk)
+        problem = _verify_download(downloaded, expected)
+        if problem:
+            _remove_quietly(part)
+            return {"status": "error", "file": filename, "error": problem, "url": url}
+        os.replace(part, dest)
         return {"status": "ok", "file": filename, "size": downloaded}
     except Exception as e:
+        _remove_quietly(part)
         return {"status": "error", "file": filename, "error": str(e), "url": url}
 
 
@@ -266,6 +403,8 @@ def _handle_download_result(res: dict, name: str, kind: str, bar: str, pct: int,
     # error
     counters["err"] += 1
     detail = res.get("error") or f"HTTP {res.get('code', '?')}"
+    counters["failures"].append({"name": name, "kind": kind, "file": res.get("file", ""),
+                                 "detail": detail})
     print(f"  [{bar}] {pct:3d}%  {_R}✗{_RST} {name} ({kind}) — {detail}")
     if res.get("code") == 403:
         counters["err_403"] += 1
@@ -273,18 +412,34 @@ def _handle_download_result(res: dict, name: str, kind: str, bar: str, pct: int,
             counters["first_err_url"] = res.get("url", "")
 
 
+def _prepare_output_dir(output_dir: Path):
+    """Create the output directory if it does not exist.
+
+    An existing one - a real directory or a symlink to one - is used in
+    place and never removed. A symlink that does not resolve to a directory
+    (dangling) is an error: it is left alone for the user to fix.
+    """
+    if output_dir.is_dir():
+        return
+    if output_dir.is_symlink():
+        error(f"Output path {output_dir} is a dangling symlink (-> {os.readlink(output_dir)}).")
+        error("Fix the link or remove it, then re-run.")
+        raise SystemExit(1)
+    if output_dir.exists():
+        error(f"Output path {output_dir} exists and is not a directory.")
+        raise SystemExit(1)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+
 def download_all(models: list[dict], output_dir: Path, session,
-                 workers: int = 4, force: bool = False, with_json: bool = True):
-    """Download all models in parallel."""
-    if not output_dir.is_dir():
-        if output_dir.is_symlink():
-            output_dir.unlink()
-        output_dir.mkdir(parents=True, exist_ok=True)
+                 workers: int = 4, force: bool = False, with_json: bool = True) -> dict:
+    """Download all models in parallel. Returns the counters, failures included."""
+    _prepare_output_dir(output_dir)
 
     # Build download task list
     tasks = []
     for m in models:
-        fname = Path(urlparse(m["dxnn_url"]).path).name
+        fname = _dxnn_filename(m)
         pending = is_pending(m)
         tasks.append(("dxnn", m["name"], m["dxnn_url"], output_dir / fname, pending))
         if with_json and m.get("json_url"):
@@ -298,7 +453,7 @@ def download_all(models: list[dict], output_dir: Path, session,
     head(f"{'─'*60}")
 
     counters = {"ok": 0, "skip": 0, "err": 0, "err_403": 0, "pending": 0,
-                "first_err_url": None}
+                "first_err_url": None, "failures": [], "total": total}
     t0 = time.time()
 
     with ThreadPoolExecutor(max_workers=workers) as pool:
@@ -330,6 +485,7 @@ def download_all(models: list[dict], output_dir: Path, session,
         if counters["first_err_url"]:
             warn(f"Example URL: {counters['first_err_url']}")
     head(f"{'─'*60}\n")
+    return counters
 
 
 # ── Internal (local copy) ─────────────────────────────────────────────────────
@@ -351,20 +507,17 @@ def copy_file(src: Path, dest: Path, force: bool = False) -> dict:
 
 
 def copy_all(models: list[dict], output_dir: Path, internal_path: Path,
-             workers: int = 4, force: bool = False, with_json: bool = True):
-    """Copy all models in parallel from a local directory."""
+             workers: int = 4, force: bool = False, with_json: bool = True) -> dict:
+    """Copy all models in parallel from a local directory. Returns the counters."""
     if not internal_path.is_dir():
         error(f"Internal path not found or not a directory: {internal_path}")
         sys.exit(1)
 
-    if not output_dir.is_dir():
-        if output_dir.is_symlink():
-            output_dir.unlink()
-        output_dir.mkdir(parents=True, exist_ok=True)
+    _prepare_output_dir(output_dir)
 
     tasks = []
     for m in models:
-        fname = Path(urlparse(m["dxnn_url"]).path).name
+        fname = _dxnn_filename(m)
         tasks.append(("dxnn", m["name"], internal_path / fname, output_dir / fname))
         if with_json and m.get("json_url"):
             jname = Path(urlparse(m["json_url"]).path).name
@@ -378,7 +531,7 @@ def copy_all(models: list[dict], output_dir: Path, internal_path: Path,
     head(f"{'─'*60}")
 
     counters = {"ok": 0, "skip": 0, "err": 0, "err_403": 0, "pending": 0,
-                "first_err_url": None}
+                "first_err_url": None, "failures": [], "total": total}
     t0 = time.time()
 
     with ThreadPoolExecutor(max_workers=workers) as pool:
@@ -400,6 +553,26 @@ def copy_all(models: list[dict], output_dir: Path, internal_path: Path,
     head(f"  Done: {counters['ok']} copied, {counters['skip']} skipped, {counters['err']} errors  ({elapsed:.1f}s)")
     head(f"  Saved to: {output_dir.resolve()}")
     head(f"{'─'*60}\n")
+    return counters
+
+
+def _report_failures(counters: dict | None, missing: list[str]) -> bool:
+    """Print a summary of what the run could not provide; True if anything failed."""
+    failures = (counters or {}).get("failures", [])
+    if not failures and not missing:
+        return False
+    if missing:
+        error(f"{len(missing)} requested model(s) not found in manifest: {', '.join(missing)}")
+    if failures:
+        error(f"{len(failures)} of {counters['total']} file(s) failed:")
+        for f in failures:
+            error(f"  {f['name']} ({f['kind']}, {f['file']}): {f['detail']}")
+        hint = x509_strict_hint((f["detail"] for f in failures),
+                                relaxed=os.environ.get(RELAX_X509_STRICT_ENV) == "1")
+        if hint:
+            for line in hint.splitlines():
+                error(line)
+    return True
 
 
 # ── CLI ───────────────────────────────────────────────────────────────────────
@@ -433,6 +606,16 @@ examples:
 
   # use a custom manifest
   python3 scripts/download_models.py --manifest /path/to/custom_manifest.json --all
+
+environment:
+  REQUESTS_CA_BUNDLE, CURL_CA_BUNDLE, SSL_CERT_FILE
+      the CA bundle to verify TLS with (else the OS trust store, else certifi)
+  DXAPP_TLS_RELAX_X509_STRICT=1
+      Python 3.13+ verifies TLS in X.509 strict mode; a TLS-inspecting proxy
+      whose CA lacks e.g. an Authority Key Identifier then fails. This turns
+      off only strict mode: the chain and the host name are still verified.
+      It covers the connection to the model server (also when tunnelled);
+      TLS to an https:// proxy itself stays strict.
         """,
     )
     dl = parser.add_argument_group("download")
@@ -448,9 +631,13 @@ examples:
                     help="download all parsed models non-interactively")
     dl.add_argument("--category", type=str, default=None,
                     help="download only a specific category (e.g. 'Object Detection')")
-    dl.add_argument("--models",   type=str, default=None, nargs="+", metavar="MODEL",
-                    help="whitelist: download only the specified model name(s) "
-                         "(e.g. --models YoloV8N ResNet50). Case-insensitive.")
+    dl.add_argument("--models",   type=str, default=None, nargs="+", action="extend",
+                    metavar="MODEL",
+                    help="whitelist: download only the specified model(s), by manifest "
+                         "name, .dxnn file name or config/model_registry.json model_name "
+                         "(e.g. --models YoloV8N resnet50 yolov7-w6_1280x1280.dxnn). "
+                         "Case-insensitive; commas also separate names; the option may "
+                         "repeat. Exits non-zero if a name matches nothing.")
     dl.add_argument("--demo-models", action="store_true",
                     help="download only models required by run_demo.py/run_demo.bat")
 
@@ -471,21 +658,126 @@ examples:
     return parser.parse_args()
 
 
+def _resolve_ca_bundle(environ=None, system_bundles=None) -> str | None:
+    """The CA bundle to verify TLS with: the first existing file among
+    $REQUESTS_CA_BUNDLE, $CURL_CA_BUNDLE, $SSL_CERT_FILE and the OS trust
+    stores. None means requests' own default (certifi). Verification itself
+    is never turned off."""
+    environ = os.environ if environ is None else environ
+    system_bundles = SYSTEM_CA_BUNDLES if system_bundles is None else system_bundles
+    for var in CA_BUNDLE_ENV_VARS:
+        value = environ.get(var)
+        if not value:
+            continue
+        if Path(value).is_file():
+            return value
+        warn(f"${var} is set to '{value}', which is not a file; ignoring it")
+    for candidate in system_bundles:
+        if Path(candidate).is_file():
+            return str(candidate)
+    return None
+
+
+def relax_x509_strict_requested(environ=None) -> bool:
+    """True when $DXAPP_TLS_RELAX_X509_STRICT is exactly "1" (U-76, opt-in)."""
+    environ = os.environ if environ is None else environ
+    value = environ.get(RELAX_X509_STRICT_ENV, "")
+    if value in ("", "0"):
+        return False
+    if value == "1":
+        return True
+    warn(f"${RELAX_X509_STRICT_ENV}={value!r} is not 1; X.509 strict mode stays as Python sets it")
+    return False
+
+
+def build_ssl_context(ca_bundle: str | None, relax_x509_strict: bool,
+                      make_context=ssl.create_default_context) -> ssl.SSLContext:
+    """The TLS context for downloads with X.509 strict mode relaxed (U-76).
+
+    make_context is ssl.create_default_context: the server's certificate is
+    required, its chain is verified against `ca_bundle` (None: the OS default
+    store) and the host name is checked. The protocol floor is TLS 1.2, as
+    in urllib3's own context (Debian/Ubuntu's Python 3.12 leaves it at
+    MINIMUM_SUPPORTED). relax_x509_strict clears VERIFY_X509_STRICT from
+    verify_flags and changes nothing else.
+    """
+    context = make_context(cafile=ca_bundle)
+    context.minimum_version = max(context.minimum_version, ssl.TLSVersion.TLSv1_2)
+    if relax_x509_strict:
+        context.verify_flags &= ~ssl.VERIFY_X509_STRICT
+    return context
+
+
+def _ssl_context_adapter(http_adapter_class, context):
+    """A requests HTTPAdapter whose every HTTPS connection to a model server -
+    direct, or tunnelled through $HTTPS_PROXY - is made with `context`.
+    requests still adds the session's CA bundle and CERT_REQUIRED on top.
+    The TLS connection to an https:// proxy itself is not made with it: it
+    keeps urllib3's own context (proxy_ssl_context), strict where Python is."""
+    class _ContextAdapter(http_adapter_class):
+        def init_poolmanager(self, *args, **kwargs):
+            kwargs["ssl_context"] = context
+            return super().init_poolmanager(*args, **kwargs)
+
+        def proxy_manager_for(self, proxy, **proxy_kwargs):
+            proxy_kwargs["ssl_context"] = context
+            return super().proxy_manager_for(proxy, **proxy_kwargs)
+
+    return _ContextAdapter()
+
+
+def x509_strict_hint(details: Iterable[str], relaxed: bool) -> str | None:
+    """How to get past a download that failed only on an X.509 strict-mode
+    check; None when no failure looks like that, or when relaxed already."""
+    if relaxed:
+        return None
+    for detail in details:
+        for marker in X509_STRICT_ONLY_ERRORS:
+            if marker in detail:
+                return (
+                    f"TLS verification failed a strict-mode check ({marker}): "
+                    f"{sys.executable} (Python {sys.version.split()[0]}, {ssl.OPENSSL_VERSION}) "
+                    "verifies in X.509 strict mode, and the certificate chain presented here - "
+                    "typically a TLS-inspecting proxy's - does not meet it.\n"
+                    "Either run the downloader with a Python 3.12 or older: activate a "
+                    "Python 3.12-or-older virtualenv, or DXAPP_SETUP_PYTHON=<python> ./setup.sh "
+                    "(e.g. /usr/bin/python3 on Ubuntu 24.04);\n"
+                    f"or opt in with {RELAX_X509_STRICT_ENV}=1 ./setup.sh, which turns off only "
+                    "X.509 strict mode: the certificate chain and the host name are still verified.")
+    return None
+
+
 def _setup_session():
     """Create a requests Session for downloading."""
     try:
         import requests as _requests
+        from requests import adapters as _adapters, certs as _certs
     except ImportError as exc:
         print("[DXAPP] [ERROR] Missing dependency: requests", file=sys.stderr, flush=True)
         print("[DXAPP] [ERROR] Install it with: python3 -m pip install requests", file=sys.stderr, flush=True)
         raise SystemExit(1) from exc
     session = _requests.Session()
     session.headers.update({"User-Agent": "DEEPX-ModelZoo-Downloader/1.0"})
+    bundle = _resolve_ca_bundle()
+    if bundle:
+        session.verify = bundle
+        info(f"TLS CA bundle: {bundle}")
+    else:
+        info("TLS CA bundle: requests default (certifi)")
+    if relax_x509_strict_requested():
+        # No bundle found: keep requests' own default, certifi.
+        context = build_ssl_context(bundle or _certs.where(), relax_x509_strict=True)
+        session.mount("https://", _ssl_context_adapter(_adapters.HTTPAdapter, context))
+        warn(f"${RELAX_X509_STRICT_ENV}=1: X.509 strict mode is off for these downloads; "
+             "the certificate chain and the host name are still verified")
     return session
 
 
-def _apply_filters(models: list[dict], args) -> list[dict]:
-    """Apply category and model whitelist filters from CLI args."""
+def _apply_filters(models: list[dict], args) -> tuple[list[dict], list[str]]:
+    """Apply category and model whitelist filters from CLI args.
+
+    Returns the selected models and the requested --models names that
+    matched nothing."""
     if args.demo_models and (args.models or args.category or args.all):
         error("Use only one of --demo-models, --models, --category, or --all.")
         raise SystemExit(1)
@@ -493,26 +785,24 @@ def _apply_filters(models: list[dict], args) -> list[dict]:
     if args.category:
         models = [m for m in models if args.category.lower() in m["category"].lower()]
         info(f"Category filter '{args.category}': {len(models)} model(s)")
+    missing: list[str] = []
     if args.models:
-        whitelist = {name.lower() for name in args.models}
-        models = [m for m in models if m["name"].lower() in whitelist]
-        matched = {m["name"].lower() for m in models}
-        missing = [name for name in args.models if name.lower() not in matched]
+        models, missing = select_models(models, args.models, load_registry_aliases())
         if missing:
-            warn(f"Model(s) not found in page: {', '.join(missing)}")
+            warn(f"Model(s) not found in manifest: {', '.join(missing)}")
         info(f"Model whitelist: {len(models)} model(s) selected")
     if args.demo_models:
         demo_filenames = get_run_demo_model_filenames()
         models = [
             m for m in models
-            if Path(urlparse(m["dxnn_url"]).path).name in demo_filenames
+            if _dxnn_filename(m) in demo_filenames
         ]
-        matched = {Path(urlparse(m["dxnn_url"]).path).name for m in models}
+        matched = {_dxnn_filename(m) for m in models}
         missing = sorted(demo_filenames - matched)
         if missing:
             warn(f"Run demo model file(s) not found in manifest: {', '.join(missing)}")
         info(f"Run demo model filter: {len(models)} model(s) selected")
-    return models
+    return models, missing
 
 
 def _print_filtered_model_list(models: list[dict], output_dir: Path):
@@ -527,7 +817,7 @@ def _print_filtered_model_list(models: list[dict], output_dir: Path):
     for cat, mlist in cats.items():
         print(f"  {_C}{cat}{_RST} ({len(mlist)})")
         for m in mlist:
-            fname = Path(urlparse(m["dxnn_url"]).path).name
+            fname = _dxnn_filename(m)
             if (output_dir / fname).exists():
                 skip_count += 1
                 print(f"    {_Y}–{_RST} {m['name']}  {_Y}[already exists]{_RST}")
@@ -588,7 +878,7 @@ def main():
     print()
 
     models = load_manifest(manifest_path)
-    models = _apply_filters(models, args)
+    models, missing = _apply_filters(models, args)
 
     if (
         not args.all
@@ -609,10 +899,12 @@ def main():
 
     if args.dry_run or args.list:
         info("--dry-run/--list mode: skipping download.")
+        if _report_failures(None, missing):
+            sys.exit(1)
         return
 
     if args.internal:
-        copy_all(
+        counters = copy_all(
             models=models,
             output_dir=output_dir,
             internal_path=Path(args.internal_path),
@@ -622,7 +914,7 @@ def main():
         )
     else:
         session = _setup_session()
-        download_all(
+        counters = download_all(
             models=models,
             output_dir=output_dir,
             session=session,
@@ -630,6 +922,9 @@ def main():
             force=args.force,
             with_json=not args.no_json,
         )
+
+    if _report_failures(counters, missing):
+        sys.exit(1)
 
 
 if __name__ == "__main__":

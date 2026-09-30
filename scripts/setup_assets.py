@@ -307,7 +307,7 @@ examples:
                     help="download models of a specific category only")
     dl.add_argument("--demo-models", action="store_true",
                     help="download only models required by run_demo.py/run_demo.bat")
-    dl.add_argument("--models",   type=str, default=None, nargs="+",
+    dl.add_argument("--models",   type=str, default=None, nargs="+", action="extend",
                     metavar="MODEL",
                     help="download specific models by name")
     dl.add_argument("--verbose",  action="store_true",
@@ -334,10 +334,15 @@ def main():
     # Models
     if not args.videos_only:
         info("--- Setting up models ---")
+        # On failure remove only a model directory this run created: one that
+        # was already there (a symlink, or models downloaded earlier) stays,
+        # since one failed file now fails the whole step.
+        model_output_existed = MODEL_OUTPUT.exists() or MODEL_OUTPUT.is_symlink()
         rc = setup_models(args)
         if rc != 0:
             error("Model setup failed.")
-            if MODEL_OUTPUT.exists() and not args.list and not args.dry_run:
+            if (MODEL_OUTPUT.exists() and not model_output_existed
+                    and not args.list and not args.dry_run):
                 shutil.rmtree(MODEL_OUTPUT, ignore_errors=True)
             sys.exit(rc)
 
