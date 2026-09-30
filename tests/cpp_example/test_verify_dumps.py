@@ -67,6 +67,7 @@ def test_restoration_dumps_output_stats_at_the_input_size(executable, tmp_path):
 @pytest.mark.parametrize("executable", ["sfa3d_608x608_sync", "sfa3d_608x608_async"])
 def test_3d_detection_dumps_its_boxes(executable, tmp_path):
     data = _dump(executable, tmp_path)
+    assert data["task"] == "3d_object_detection"
     assert data["detections"] and {"bev", "center", "dims", "yaw"} <= set(data["detections"][0])
 
 

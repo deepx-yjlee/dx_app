@@ -9,6 +9,8 @@ from pathlib import Path
 
 import pytest
 
+from test_helpers.proc import example_python, run_bounded
+
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -27,15 +29,23 @@ def test_super_resolution_stream_path_does_not_use_fixed_20_tiles_width():
 
 def test_super_resolution_paths_use_padding_not_resize_for_tile_alignment():
     """Tile-boundary alignment should pad/crop, not geometrically resize frames."""
+    # The C++ sync runner pads through srtiling::prepareLowRes, which the graph's
+    # tiled-SR stage shares; the other three pad in place.
     expected_markers = {
         "src/python_example/common/runner/sync_runner.py": "cv2.copyMakeBorder",
         "src/python_example/common/runner/async_runner.py": "cv2.copyMakeBorder",
-        "src/cpp_example/common/runner/sync_restoration_runner.hpp": "cv::copyMakeBorder",
+        "src/cpp_example/common/runner/sync_restoration_runner.hpp": "srtiling::prepareLowRes(",
         "src/cpp_example/common/runner/async_restoration_runner.hpp": "cv::copyMakeBorder",
     }
 
     for relpath, marker in expected_markers.items():
         assert marker in _read(relpath), f"{relpath} should use padding for SR tiles"
+
+    helper = re.search(r"inline void prepareLowRes\(.*?\n\}",
+                       _read("src/cpp_example/common/utility/sr_tiling.hpp"), re.S)
+    assert helper, "sr_tiling.hpp should define prepareLowRes"
+    assert "cv::copyMakeBorder" in helper.group(0), "prepareLowRes should pad the LR frame"
+    assert "resize" not in helper.group(0), "prepareLowRes should pad, not resize"
 
 
 def test_cpp_async_sr_stream_path_warns_for_large_tile_count():
@@ -83,13 +93,14 @@ def test_python_image_only_help_hides_stream_options():
         "src/python_example/image_classification/casvit/casvit-t_224x224/casvit-t_224x224_sync.py",
     ]
     for relpath in scripts:
-        result = subprocess.run(
-            [sys.executable, str(ROOT / relpath), "-h"],
+        result = run_bounded(
+            [example_python(), str(ROOT / relpath), "-h"],
             cwd=ROOT,
             text=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             check=False,
+            timeout=120,
         )
         assert result.returncode == 0, result.stderr
         assert "--image" in result.stdout, f"{relpath} help must expose --image"
@@ -104,9 +115,9 @@ def test_python_image_only_stream_input_rejected_by_argparse():
     is an unknown option: argparse exits with code 2 and reports
     "unrecognized arguments" — inference is never reached.
     """
-    result = subprocess.run(
+    result = run_bounded(
         [
-            sys.executable,
+            example_python(),
             str(ROOT / "src/python_example/face_recognition/arcface/arcface_mobilefacenet_112x112/arcface_mobilefacenet_112x112_sync.py"),
             "-m",
             "assets/models/arcface_mobilefacenet_112x112.dxnn",
@@ -118,6 +129,7 @@ def test_python_image_only_stream_input_rejected_by_argparse():
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         check=False,
+        timeout=120,
     )
 
     assert result.returncode == 2, result.stderr
@@ -169,9 +181,9 @@ def test_python_image_only_runners_reject_stream_before_no_input_hint(monkeypatc
 
 def test_python_image_only_no_input_prints_hint_before_engine_init():
     """Image-only Python examples should print no-input hint before importing dx_engine."""
-    result = subprocess.run(
+    result = run_bounded(
         [
-            sys.executable,
+            example_python(),
             str(ROOT / "src/python_example/face_recognition/arcface/arcface_mobilefacenet_112x112/arcface_mobilefacenet_112x112_sync.py"),
             "-m",
             "assets/models/arcface_mobilefacenet_112x112.dxnn",
@@ -181,6 +193,7 @@ def test_python_image_only_no_input_prints_hint_before_engine_init():
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         check=False,
+        timeout=120,
     )
 
     output = result.stdout + result.stderr

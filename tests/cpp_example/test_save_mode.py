@@ -19,9 +19,11 @@ from typing import List, Optional
 import pytest
 
 # conftest.py puts tests/ on sys.path; hence the noqa: E402 imports below.
+from test_helpers.proc import run_bounded  # noqa: E402
 from test_helpers.utils import (  # noqa: E402
     setup_environment,
     discover_cpp_executables,
+    discover_cpp_model_cases,
     cpp_exe_task_map,
     resolve_cpp_exe_input,
     stream_rejecting_cpp_cases,
@@ -29,6 +31,7 @@ from test_helpers.utils import (  # noqa: E402
 from test_helpers.constants import (  # noqa: E402
     IMAGE_ONLY_TASKS,
     STREAM_REJECTING_TASKS_CPP,
+    video_too_slow,
 )
 
 from conftest import resolve_bin_dir
@@ -85,23 +88,9 @@ def artifacts_dir(request):
 # ======================================================================
 # Discovery — reuse same logic as test_e2e.py
 # ======================================================================
-def _normalize_model_to_exe(stem: str) -> str:
-    return stem.lower().replace(".", "_")
-
-
 def discover_sync_cases() -> List[tuple]:
     """Discover (executable_name, model_path) pairs for sync executables."""
-    cases = []
-    seen = set()
-    for model_path in sorted(MODELS_DIR.glob("*.dxnn")):
-        prefix = _normalize_model_to_exe(model_path.stem)
-        exe_name = f"{prefix}_sync"
-        if exe_name in seen:
-            continue
-        if (BIN_DIR / exe_name).exists():
-            cases.append((exe_name, model_path))
-            seen.add(exe_name)
-    return sorted(cases, key=lambda x: x[0])
+    return discover_cpp_model_cases("_sync", BIN_DIR)
 
 
 def _pick_representative(cases: list, max_count: int = 3) -> list:
@@ -223,7 +212,7 @@ class TestSaveMode:
         ]
 
         env = setup_environment()
-        result = subprocess.run(
+        result = run_bounded(
             cmd, capture_output=True, text=True, timeout=120,
             env=env, cwd=str(PROJECT_ROOT),
         )
@@ -264,9 +253,9 @@ class TestSaveMode:
         if not TEST_VIDEO.exists():
             pytest.skip(f"Test video not found: {TEST_VIDEO}")
 
-        # Skip face models (too slow for video)
-        if "face" in executable.lower():
-            pytest.skip(f"{executable}: face model too slow for video save test")
+        # Skip the W6 face detectors (too slow for video)
+        if video_too_slow(executable):
+            pytest.skip(f"{executable}: too slow for the video save test")
 
         save_dir = artifacts_dir / "video_save"
         cmd = [
@@ -279,7 +268,7 @@ class TestSaveMode:
         ]
 
         env = setup_environment()
-        result = subprocess.run(
+        result = run_bounded(
             cmd, capture_output=True, text=True, timeout=600,
             env=env, cwd=str(PROJECT_ROOT),
         )
@@ -322,7 +311,7 @@ class TestSaveMode:
         ]
 
         env = setup_environment()
-        result = subprocess.run(
+        result = run_bounded(
             cmd, capture_output=True, text=True, timeout=120,
             env=env, cwd=str(PROJECT_ROOT),
         )
@@ -361,7 +350,7 @@ class TestSaveMode:
         ]
 
         env = setup_environment()
-        result = subprocess.run(
+        result = run_bounded(
             cmd, capture_output=True, text=True, timeout=60,
             env=env, cwd=str(PROJECT_ROOT),
         )
@@ -422,7 +411,7 @@ class TestSaveOutputFiles:
         ]
 
         env = setup_environment()
-        result = subprocess.run(
+        result = run_bounded(
             cmd, capture_output=True, text=True, timeout=120,
             env=env, cwd=str(PROJECT_ROOT),
         )
@@ -470,12 +459,13 @@ class TestSaveOutputFiles:
             pytest.skip(f"Binary not found: {executable}")
         if not TEST_VIDEO.exists():
             pytest.skip(f"Test video not found: {TEST_VIDEO}")
-        # Image-only task categories have no video/stream save path; face models
-        # are too slow for a video save run (mirrors TestSaveMode.test_video_save).
+        # Image-only task categories have no video/stream save path; the W6 face
+        # detectors are too slow for a video save run (mirrors
+        # TestSaveMode.test_video_save).
         if task in IMAGE_ONLY_TASKS:
             pytest.skip(f"[{task}] image-only task; no video save path")
-        if "face" in task.lower() or "face" in executable.lower():
-            pytest.skip(f"[{task}] {executable}: face model too slow for video save test")
+        if video_too_slow(executable):
+            pytest.skip(f"[{task}] {executable}: too slow for the video save test")
 
         save_dir = artifacts_dir / f"save_{task}_video"
         cmd = [
@@ -488,7 +478,7 @@ class TestSaveOutputFiles:
         ]
 
         env = setup_environment()
-        result = subprocess.run(
+        result = run_bounded(
             cmd, capture_output=True, text=True, timeout=600,
             env=env, cwd=str(PROJECT_ROOT),
         )

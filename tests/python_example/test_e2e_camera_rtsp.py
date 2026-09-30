@@ -31,6 +31,7 @@ from typing import Optional
 import pytest
 
 # conftest.py puts tests/ on sys.path; hence the noqa: E402 imports below.
+from test_helpers.proc import example_python  # noqa: E402
 from test_helpers.constants import (  # noqa: E402
     E2E_SHORT_MODELS,
     PROJECT_ROOT,
@@ -135,7 +136,7 @@ def test_camera_inference(script: Path, model_path: Optional[Path],
         pytest.skip(f"Model not found for {script.stem}")
 
     env = setup_environment()
-    cmd = [sys.executable, str(script),
+    cmd = [example_python(), str(script),
            "--model", str(model_path),
            "--camera", str(camera_index),
            "--no-display"]
@@ -157,7 +158,7 @@ def test_rtsp_inference(script: Path, model_path: Optional[Path],
         pytest.skip(f"Model not found for {script.stem}")
 
     env = setup_environment()
-    cmd = [sys.executable, str(script),
+    cmd = [example_python(), str(script),
            "--model", str(model_path),
            "--rtsp", rtsp_url,
            "--no-display"]

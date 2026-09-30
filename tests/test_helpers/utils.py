@@ -21,6 +21,8 @@ from .constants import (
     TASK_IMAGE_MAP,
     MODEL_IMAGE_OVERRIDE,
 )
+from .platform_paths import binary_path, exe_filename, resolve_bin_dir  # noqa: F401 (re-exported)
+from .proc import apply_headless_display
 
 
 # ======================================================================
@@ -113,6 +115,9 @@ def setup_environment(*, extra_lib_dirs: Optional[List[Path]] = None) -> dict:
     ----------
     extra_lib_dirs : list[Path], optional
         Additional directories to prepend (e.g. ``dx_rt/build_x86_64/lib``).
+
+    Without a display, ``QT_QPA_PLATFORM`` defaults to ``offscreen``
+    (see :func:`test_helpers.proc.apply_headless_display`).
     """
     env = os.environ.copy()
     dirs = []
@@ -124,6 +129,7 @@ def setup_environment(*, extra_lib_dirs: Optional[List[Path]] = None) -> dict:
     if existing:
         dirs.append(existing)
     env["LD_LIBRARY_PATH"] = ":".join(dirs) if dirs else ""
+    apply_headless_display(env)
     return env
 
 
@@ -210,7 +216,7 @@ def _resolve_cpp_candidate(
     """Resolve a single C++ candidate to test case tuple, or None."""
     if not any(stem.endswith(s) for s in suffixes):
         return None
-    if not (BIN_DIR / stem).exists():
+    if not binary_path(BIN_DIR, stem).exists():
         return None
     base_name = stem.rsplit("_", 1)[0]
     multi_args = _build_multi_model_args(base_name)
@@ -248,6 +254,30 @@ def discover_cpp_executables(
     return cases
 
 
+def discover_cpp_model_cases(
+    suffix: str,
+    bin_dir: Path,
+) -> List[Tuple[str, Path]]:
+    """Sorted ``(exe_name, model_path)`` for every single-model C++ example
+    ending in *suffix* whose binary is in *bin_dir* and whose ``.dxnn`` is present.
+
+    Executables come from the ``src/cpp_example/<task>/`` source tree
+    (:func:`cpp_exe_task_map`). Under the family/variant layout an executable is
+    ``<variant><suffix>`` and its model is :func:`dxnn_for_exe` of the variant
+    (``yolov5-s_640x640_sync`` -> ``yolov5-s_640x640.dxnn``). Multi-model
+    executables are skipped because callers launch ``-m <model>``.
+    """
+    out: dict = {}
+    for exe in cpp_exe_task_map((suffix,)):
+        base = exe[: -len(suffix)]
+        if base in MULTI_MODEL_EXECUTABLES or not binary_path(bin_dir, exe).exists():
+            continue
+        model = dxnn_for_exe(base)
+        if model is not None:
+            out[exe] = model
+    return sorted(out.items(), key=lambda c: c[0])
+
+
 def stream_rejecting_cpp_cases(
     tasks: frozenset,
     bin_dir: Path,
@@ -272,7 +302,7 @@ def stream_rejecting_cpp_cases(
             continue
         if task not in tasks or task in seen:
             continue
-        if not (bin_dir / exe).exists():
+        if not binary_path(bin_dir, exe).exists():
             continue
         out.append((exe, Path(model_args[1])))
         seen.add(task)

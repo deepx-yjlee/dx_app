@@ -17,7 +17,13 @@ from typing import List
 import pytest
 
 # conftest.py puts tests/ on sys.path; hence the noqa: E402 imports below.
-from test_helpers.utils import setup_environment, cpp_exe_task_map  # noqa: E402
+from test_helpers.proc import run_bounded  # noqa: E402
+from test_helpers.utils import (  # noqa: E402
+    binary_path,
+    setup_environment,
+    cpp_exe_task_map,
+    discover_cpp_model_cases,
+)
 from test_helpers.constants import IMAGE_ONLY_TASKS  # noqa: E402
 
 from conftest import resolve_bin_dir
@@ -38,10 +44,6 @@ TEST_VIDEO = ASSETS_DIR / "videos" / "dance-group.mov"
 # ======================================================================
 # Discovery
 # ======================================================================
-def _normalize_model_to_exe(stem: str) -> str:
-    return stem.lower().replace(".", "_")
-
-
 # exe_name → task category, to exclude image-only tasks (they reject -v).
 _EXE_TASK_MAP = cpp_exe_task_map(suffixes=("_sync",))
 
@@ -49,11 +51,8 @@ _EXE_TASK_MAP = cpp_exe_task_map(suffixes=("_sync",))
 def discover_fast_sync_cases() -> List[tuple]:
     """Discover fast sync executables (no face/tta/w6, no image-only tasks)."""
     cases = []
-    seen = set()
     skip_patterns = ["face", "tta", "w6"]
-    for model_path in sorted(MODELS_DIR.glob("*.dxnn")):
-        prefix = _normalize_model_to_exe(model_path.stem)
-        exe_name = f"{prefix}_sync"
+    for exe_name, model_path in discover_cpp_model_cases("_sync", BIN_DIR):
         if any(s in exe_name for s in skip_patterns):
             continue
         # Loop test runs VIDEO inference; image-only tasks (3d_object_detection,
@@ -61,12 +60,8 @@ def discover_fast_sync_cases() -> List[tuple]:
         # from stream inference), so keep them out of the candidate pool.
         if _EXE_TASK_MAP.get(exe_name) in IMAGE_ONLY_TASKS:
             continue
-        if exe_name in seen:
-            continue
-        if (BIN_DIR / exe_name).exists():
-            cases.append((exe_name, model_path))
-            seen.add(exe_name)
-    return sorted(cases, key=lambda x: x[0])
+        cases.append((exe_name, model_path))
+    return cases
 
 
 def _pick_one(cases: list) -> list:
@@ -97,7 +92,7 @@ class TestMultiLoop:
     @pytest.mark.parametrize("executable,model_path", LOOP_PARAMS)
     def test_video_loop_2_doubles_frames(self, executable, model_path):
         """Run with -l 2 on video and verify Total Frames ≈ 2x."""
-        exe_path = BIN_DIR / executable
+        exe_path = binary_path(BIN_DIR, executable)
         if not exe_path.exists():
             pytest.skip(f"Binary not found: {executable}")
         if not TEST_VIDEO.exists():
@@ -113,7 +108,7 @@ class TestMultiLoop:
             "--no-display",
             "-l", "1",
         ]
-        result_1 = subprocess.run(
+        result_1 = run_bounded(
             cmd_1, capture_output=True, text=True, timeout=600,
             env=env, cwd=str(PROJECT_ROOT),
         )
@@ -130,8 +125,9 @@ class TestMultiLoop:
             "-v", str(TEST_VIDEO),
             "--no-display",
             "-l", "2",
+            "--show-log",  # the "Loop N/M" banner is printed only in verbose mode
         ]
-        result_2 = subprocess.run(
+        result_2 = run_bounded(
             cmd_2, capture_output=True, text=True, timeout=1200,
             env=env, cwd=str(PROJECT_ROOT),
         )
@@ -162,7 +158,7 @@ class TestMultiLoop:
     def test_image_loop_count(self, executable, model_path):
         """Run with -l N on image and verify correct iteration count."""
         loop_count = 5
-        exe_path = BIN_DIR / executable
+        exe_path = binary_path(BIN_DIR, executable)
         if not exe_path.exists():
             pytest.skip(f"Binary not found: {executable}")
 
@@ -178,7 +174,7 @@ class TestMultiLoop:
             "--no-display",
             "-l", str(loop_count),
         ]
-        result = subprocess.run(
+        result = run_bounded(
             cmd, capture_output=True, text=True, timeout=120,
             env=env, cwd=str(PROJECT_ROOT),
         )
@@ -204,9 +200,13 @@ class TestMultiLoop:
 # Helpers
 # ======================================================================
 def _parse_total_frames(output: str):
-    """Parse 'Total Frames : N' from performance summary."""
-    match = re.search(r"Total\s+Frames\s*:?\s*(\d+)", output, re.IGNORECASE)
-    return int(match.group(1)) if match else None
+    """Parse 'Total Frames : N' from the performance summary.
+
+    The summary comes last; verbose runs (--show-log) also print the clip
+    length ("Total frames: 478") before inference, so take the last match.
+    """
+    matches = re.findall(r"Total\s+Frames\s*:?\s*(\d+)", output, re.IGNORECASE)
+    return int(matches[-1]) if matches else None
 
 
 if __name__ == "__main__":

@@ -25,6 +25,7 @@ import pytest
 
 # -- common module ---------------------------------------------------------
 # conftest.py puts tests/ on sys.path; hence the noqa: E402 imports below.
+from test_helpers.proc import example_python, run_bounded  # noqa: E402
 from test_helpers.constants import (  # noqa: E402
     PROJECT_ROOT,
     TASK_IMAGE_MAP,
@@ -68,6 +69,12 @@ def _build_vis_params():
 
 DISCOVERED = _build_vis_params()
 
+# Tasks whose output is a feature vector, not a rendered image. Their
+# EmbeddingVisualizer keeps the first image as its reference and draws nothing
+# for it, so a single --image never produces a picture: the run is still
+# checked (rc 0), the image check is skipped (as in the C++ suite).
+NO_VISUAL_OUTPUT_TASKS = {"embedding", "reid"}
+
 VIS_PARAMS = [
     pytest.param(task, name, script, model, mode, img, id=script.stem)
     for task, name, script, model, mode, img in DISCOVERED
@@ -96,7 +103,7 @@ class TestPythonVisualization:
         env["DXAPP_SAVE_IMAGE"] = str(output_image)
 
         cmd = [
-            sys.executable,
+            example_python(),
             str(script_path),
             "--model", str(model_path),
             "--image", str(PROJECT_ROOT / image_rel),
@@ -107,7 +114,7 @@ class TestPythonVisualization:
         timeout = 120
 
         try:
-            result = subprocess.run(
+            result = run_bounded(
                 cmd,
                 capture_output=True,
                 text=True,
@@ -124,6 +131,9 @@ class TestPythonVisualization:
             f"STDOUT: {result.stdout[-500:]}\n"
             f"STDERR: {result.stderr[-500:]}"
         )
+
+        if task in NO_VISUAL_OUTPUT_TASKS:
+            pytest.skip(f"[{task}] produces a feature vector, no output image to verify")
 
         assert output_image.exists(), (
             f"Visualization image not saved: {output_image}\n"
@@ -151,7 +161,7 @@ def _run_single_py_vis(cmd, output_image, timeout, run_env):
     """Execute one Python visualization and return (status, message, elapsed)."""
     t0 = time.time()
     try:
-        result = subprocess.run(
+        result = run_bounded(
             cmd, capture_output=True, text=True,
             timeout=timeout, env=run_env, cwd=str(PROJECT_ROOT),
         )
@@ -210,7 +220,7 @@ def main():
     print(f"{'='*70}\n")
 
     env = setup_environment(extra_lib_dirs=[_DX_RT_LIB])
-    python_exe = sys.executable
+    python_exe = example_python()
 
     for i, (task, model_name, script_path, model_path, mode, image_rel) in enumerate(params, 1):
         label = f"[{i:3d}/{n}] {mode}/{task}/{model_name}"

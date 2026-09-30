@@ -9,11 +9,13 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Optional
 
+from .platform_paths import resolve_bin_dir
+
 # ======================================================================
 # Paths (relative to ``dx_app/`` project root)
 # ======================================================================
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent  # dx_app/
-BIN_DIR = PROJECT_ROOT / "bin"
+BIN_DIR = resolve_bin_dir(PROJECT_ROOT)  # bin/ on Linux; see platform_paths
 LIB_DIR = PROJECT_ROOT / "lib"
 ASSETS_DIR = PROJECT_ROOT / "assets"
 MODELS_DIR = ASSETS_DIR / "models"
@@ -155,9 +157,32 @@ IMAGE_ONLY_TASKS: frozenset = frozenset({
     # exercised by the stream E2E tests like any other video-capable task.
     # super_resolution: a video/stream path exists (see SR-stream regression
     # tests), but the harness exercises it image-only — upscaled stream output
-    # is large/slow and not meaningful for E2E regression.
+    # is large/slow and not meaningful for E2E regression. The stream path
+    # itself is exercised on a small clip by test_super_resolution_stream_e2e
+    # (C++ and Python test_e2e.py).
     "super_resolution",
 })
+
+# ======================================================================
+# Video E2E skips only these models (U-32): the W6 face detectors run at
+# ~3-20 s/frame (TTA ~125 s/frame) on aarch64, so the 478-frame clip cannot
+# finish inside the 900 s bound. Every other face model runs the video
+# tests like any detector.
+# ======================================================================
+VIDEO_TOO_SLOW_MODELS: frozenset = frozenset({"yolov7-w6-face_960x960", "yolov7-w6-face_1280x1280_tta"})
+
+
+def video_too_slow(name: str) -> bool:
+    """True for an executable, script stem or model name of a model in
+    VIDEO_TOO_SLOW_MODELS (a _sync / _async suffix, and the Python
+    _cpp_postprocess variant's suffix after it, is ignored)."""
+    if name.endswith("_cpp_postprocess"):
+        name = name[: -len("_cpp_postprocess")]
+    for suffix in ("_sync", "_async"):
+        if name.endswith(suffix):
+            name = name[: -len(suffix)]
+            break
+    return name in VIDEO_TOO_SLOW_MODELS
 
 # ======================================================================
 # Tasks whose SINGLE-MODEL example runners HARD-REJECT stream input

@@ -16,6 +16,7 @@ from typing import List
 import pytest
 
 # conftest.py puts tests/ on sys.path; hence the noqa: E402 imports below.
+from test_helpers.proc import example_python, run_bounded  # noqa: E402
 from test_helpers.constants import (  # noqa: E402
     ASSETS_DIR,
     IMAGE_ONLY_TASKS,
@@ -120,7 +121,7 @@ class TestDumpTensors:
 
         save_dir = tmp_path / "dump_img"
         cmd = [
-            sys.executable, str(script),
+            example_python(), str(script),
             "--model", str(model_path),
             "--image", str(TEST_IMAGE),
             "--no-display",
@@ -131,7 +132,7 @@ class TestDumpTensors:
         ]
 
         env = setup_environment()
-        result = subprocess.run(
+        result = run_bounded(
             cmd, capture_output=True, text=True, timeout=120,
             env=env, cwd=str(PROJECT_ROOT),
         )
@@ -176,7 +177,7 @@ class TestDumpTensors:
 
         save_dir = tmp_path / "dump_vid"
         cmd = [
-            sys.executable, str(script),
+            example_python(), str(script),
             "--model", str(model_path),
             "--video", str(TEST_VIDEO),
             "--no-display",
@@ -186,7 +187,7 @@ class TestDumpTensors:
         ]
 
         env = setup_environment()
-        result = subprocess.run(
+        result = run_bounded(
             cmd, capture_output=True, text=True, timeout=600,
             env=env, cwd=str(PROJECT_ROOT),
         )
@@ -211,14 +212,14 @@ class TestDumpTensors:
         runtime guard nor argparse needs an NPU (both run before engine init).
         """
         cmd = [
-            sys.executable, str(script),
+            example_python(), str(script),
             "--model", str(model_path),
             "--video", str(TEST_VIDEO),
             "--no-display",
         ]
 
         env = setup_environment()
-        result = subprocess.run(
+        result = run_bounded(
             cmd, capture_output=True, text=True, timeout=60,
             env=env, cwd=str(PROJECT_ROOT),
         )

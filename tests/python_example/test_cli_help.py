@@ -15,6 +15,7 @@ from typing import List
 import pytest
 
 # conftest.py puts tests/ on sys.path; hence the noqa: E402 imports below.
+from test_helpers.proc import example_python, run_bounded  # noqa: E402
 from test_helpers.constants import PROJECT_ROOT  # noqa: E402
 from test_helpers.utils import discover_python_scripts, setup_environment  # noqa: E402
 
@@ -37,7 +38,7 @@ SCRIPT_PARAMS = _discover_all_scripts()
 
 
 def _run(cmd: List[str], timeout: int = 10) -> subprocess.CompletedProcess:
-    return subprocess.run(
+    return run_bounded(
         cmd,
         capture_output=True,
         text=True,
@@ -57,7 +58,7 @@ def _run(cmd: List[str], timeout: int = 10) -> subprocess.CompletedProcess:
 def test_help_option(script: Path):
     """--help should exit 0 and print usage information."""
     try:
-        result = _run([sys.executable, str(script), "--help"])
+        result = _run([example_python(), str(script), "--help"])
     except subprocess.TimeoutExpired:
         pytest.fail(f"{script.name} --help timed out")
 
@@ -81,7 +82,7 @@ def test_help_option(script: Path):
 def test_help_option_shows_usage(script: Path):
     """--help should show 'usage' or the script name in output."""
     try:
-        result = _run([sys.executable, str(script), "--help"])
+        result = _run([example_python(), str(script), "--help"])
     except subprocess.TimeoutExpired:
         pytest.fail(f"{script.name} --help timed out")
 

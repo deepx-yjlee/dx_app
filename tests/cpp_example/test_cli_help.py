@@ -5,9 +5,15 @@ import os
 import subprocess
 from pathlib import Path
 
+import sys
+
 import pytest
 
-from conftest import is_executable, resolve_bin_dir
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from test_helpers.proc import run_bounded  # noqa: E402
+from test_helpers.utils import binary_path  # noqa: E402
+
+from conftest import UNIT_TEST_BINARIES, is_executable, resolve_bin_dir
 
 
 # Get all executables from bin directory
@@ -23,8 +29,11 @@ def get_executables():
     
     executables = []
     for file in BIN_DIR.iterdir():
-        if file.is_file() and file.stat().st_mode & 0o111:  # Check if executable
-            executables.append(file.name)
+        if not (file.is_file() and file.stat().st_mode & 0o111):  # Check if executable
+            continue
+        if file.name in UNIT_TEST_BINARIES:  # no CLI: they just run their checks
+            continue
+        executables.append(file.name)
     
     return sorted(executables)
 
@@ -55,7 +64,7 @@ def test_help_option(executable, bin_dir):
         executable: Name of the executable to test
         bin_dir: Path to bin directory (from fixture)
     """
-    executable_path = bin_dir / executable
+    executable_path = binary_path(bin_dir, executable)
     
     # Skip if executable doesn't exist
     if not executable_path.exists():
@@ -66,7 +75,7 @@ def test_help_option(executable, bin_dir):
     
     # Run executable with --help
     try:
-        result = subprocess.run(
+        result = run_bounded(
             [str(executable_path), "--help"],
             capture_output=True,
             text=True,
@@ -129,7 +138,7 @@ def test_help_option_shows_usage(executable, bin_dir):
     
     More specific test checking for "Usage:" or similar patterns
     """
-    executable_path = bin_dir / executable
+    executable_path = binary_path(bin_dir, executable)
     
     if not executable_path.exists():
         pytest.skip(f"Executable not found: {executable_path}")
@@ -138,7 +147,7 @@ def test_help_option_shows_usage(executable, bin_dir):
     env = build_environment()
     
     try:
-        result = subprocess.run(
+        result = run_bounded(
             [str(executable_path), "--help"],
             capture_output=True,
             text=True,

@@ -7,6 +7,7 @@ see ``tests/README.md``.
 """
 import importlib.util
 import logging
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -37,6 +38,20 @@ from test_helpers.pytest_support import (  # noqa: E402,F401
 )
 
 configure_stdio_errors()
+
+from test_helpers.proc import (  # noqa: E402
+    TEST_PYTHON_ENV,
+    apply_headless_display,
+    example_python,
+)
+
+# No display: Qt-backed OpenCV windows go offscreen instead of aborting.
+apply_headless_display(os.environ)
+
+
+def pytest_report_header(config):
+    return "example python ({}): {}".format(TEST_PYTHON_ENV, example_python())
+
 
 _rng = np.random.default_rng(42)
 logger = logging.getLogger(__name__)

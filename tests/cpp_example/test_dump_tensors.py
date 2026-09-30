@@ -16,9 +16,12 @@ from typing import List
 import pytest
 
 # conftest.py puts tests/ on sys.path; hence the noqa: E402 imports below.
+from test_helpers.proc import run_bounded  # noqa: E402
 from test_helpers.utils import (  # noqa: E402
+    binary_path,
     setup_environment,
     cpp_exe_task_map,
+    discover_cpp_model_cases,
     resolve_cpp_exe_input,
     stream_rejecting_cpp_cases,
 )
@@ -55,23 +58,9 @@ def _test_input_for(executable: str) -> Path:
 # ======================================================================
 # Discovery
 # ======================================================================
-def _normalize_model_to_exe(stem: str) -> str:
-    return stem.lower().replace(".", "_")
-
-
 def discover_sync_cases() -> List[tuple]:
     """Discover sync executables with their model paths."""
-    cases = []
-    seen = set()
-    for model_path in sorted(MODELS_DIR.glob("*.dxnn")):
-        prefix = _normalize_model_to_exe(model_path.stem)
-        exe_name = f"{prefix}_sync"
-        if exe_name in seen:
-            continue
-        if (BIN_DIR / exe_name).exists():
-            cases.append((exe_name, model_path))
-            seen.add(exe_name)
-    return sorted(cases, key=lambda x: x[0])
+    return discover_cpp_model_cases("_sync", BIN_DIR)
 
 
 def _pick_representative(cases: list, max_count: int = 3) -> list:
@@ -129,7 +118,7 @@ class TestDumpTensors:
     @pytest.mark.parametrize("executable,model_path", IMAGE_DUMP_PARAMS)
     def test_dump_tensors_image(self, executable, model_path, tmp_path):
         """Run with --dump-tensors on image, verify .bin files produced."""
-        exe_path = BIN_DIR / executable
+        exe_path = binary_path(BIN_DIR, executable)
         if not exe_path.exists():
             pytest.skip(f"Binary not found: {executable}")
         test_input = _test_input_for(executable)
@@ -149,7 +138,7 @@ class TestDumpTensors:
         ]
 
         env = setup_environment()
-        result = subprocess.run(
+        result = run_bounded(
             cmd, capture_output=True, text=True, timeout=120,
             env=env, cwd=str(PROJECT_ROOT),
         )
@@ -185,7 +174,7 @@ class TestDumpTensors:
         up-front, so this only ever runs on stream-capable models. That they
         reject ``-v`` is asserted separately by ``test_image_only_rejects_video``.
         """
-        exe_path = BIN_DIR / executable
+        exe_path = binary_path(BIN_DIR, executable)
         if not exe_path.exists():
             pytest.skip(f"Binary not found: {executable}")
         if not TEST_VIDEO.exists():
@@ -207,7 +196,7 @@ class TestDumpTensors:
         ]
 
         env = setup_environment()
-        result = subprocess.run(
+        result = run_bounded(
             cmd, capture_output=True, text=True, timeout=600,
             env=env, cwd=str(PROJECT_ROOT),
         )
@@ -234,7 +223,7 @@ class TestDumpTensors:
         inference engine is constructed, so this needs no NPU (and the video
         file need not exist — a non-empty ``-v`` path is enough to trip it).
         """
-        exe_path = BIN_DIR / executable
+        exe_path = binary_path(BIN_DIR, executable)
         if not exe_path.exists():
             pytest.skip(f"Binary not found: {executable}")
 
@@ -246,7 +235,7 @@ class TestDumpTensors:
         ]
 
         env = setup_environment()
-        result = subprocess.run(
+        result = run_bounded(
             cmd, capture_output=True, text=True, timeout=60,
             env=env, cwd=str(PROJECT_ROOT),
         )

@@ -7,7 +7,6 @@ These tests run actual inference on real images/videos to verify:
 - It processes the expected number of frames
 - FPS metrics are reasonable
 """
-import os
 import re
 import subprocess
 import sys
@@ -21,6 +20,7 @@ from performance_collector import get_collector, PerformanceMetrics
 
 # -- common module ---------------------------------------------------------
 # conftest.py puts tests/ on sys.path; hence the noqa: E402 imports below.
+from test_helpers.proc import run_bounded  # noqa: E402
 from test_helpers.constants import (  # noqa: E402
     ASSETS_DIR,
     E2E_SHORT_MODELS,
@@ -30,8 +30,11 @@ from test_helpers.constants import (  # noqa: E402
     PROJECT_ROOT,
     SAMPLE_DIR,
     e2e_effective_loop,
+    video_too_slow,
 )
+from test_helpers import platform_paths  # noqa: E402
 from test_helpers.utils import (  # noqa: E402
+    binary_path,
     dxnn_for_exe,
     resolve_cpp_exe_input,
     setup_environment,
@@ -97,6 +100,8 @@ def discover_test_cases() -> List[tuple]:
         if not exe_path.is_file():
             continue
         exe_name = exe_path.name
+        if platform_paths.current_os_name() == "nt" and exe_name.lower().endswith(".exe"):
+            exe_name = exe_name[:-4]  # the case names and command lines stay bare
         if not (exe_name.endswith("_sync") or exe_name.endswith("_async")):
             continue
         if exe_name in seen_exes:
@@ -265,9 +270,7 @@ def test_image_inference_e2e(executable, model_path, bin_dir, loop_count):
     Executables and models are discovered automatically from ``bin/`` and
     ``assets/models/`` — no manual mapping maintenance required.
     """
-    executable_path = bin_dir / executable
-    if os.name == "nt":
-        executable_path = executable_path.with_suffix(".exe")
+    executable_path = binary_path(bin_dir, executable)
 
     if not executable_path.exists():
         pytest.skip(f"Executable not found: {executable_path}")
@@ -318,7 +321,7 @@ def test_image_inference_e2e(executable, model_path, bin_dir, loop_count):
     image_timeout = 300 if "tta" in exe_lower else 100
 
     try:
-        result = subprocess.run(
+        result = run_bounded(
             cmd,
             capture_output=True,
             text=True,
@@ -384,18 +387,16 @@ def test_stream_inference_e2e(executable, model_path, bin_dir):
     Executables and models are discovered automatically from ``bin/`` and
     ``assets/models/``.
     """
-    executable_path = bin_dir / executable
-    if os.name == "nt":
-        executable_path = executable_path.with_suffix(".exe")
+    executable_path = binary_path(bin_dir, executable)
 
     if not executable_path.exists():
         pytest.skip(f"Executable not found: {executable_path}")
 
-    # Face models are too slow for full video processing in CI
-    # (e.g. W6 face ~3-20s/frame, TTA ~125s/frame on aarch64).
+    # The W6 face detectors are too slow for full video processing in CI
+    # (~3-20s/frame, TTA ~125s/frame on aarch64); every other face model runs.
     # Image tests with reduced loop counts already verify correctness.
-    if "face" in executable.lower():
-        pytest.skip(f"{executable}: face model too slow for video test in CI")
+    if video_too_slow(executable):
+        pytest.skip(f"{executable}: too slow for the video test")
 
     # Image-only tasks (embedding/reid/attribute/object_pose/3d_det/hand_*) do
     # not support video/stream input — skip by the model's task category.
@@ -421,7 +422,7 @@ def test_stream_inference_e2e(executable, model_path, bin_dir):
     cmd = _build_video_cmd(executable_path, executable, model_path)
 
     try:
-        result = subprocess.run(
+        result = run_bounded(
             cmd,
             capture_output=True,
             text=True,
@@ -507,6 +508,45 @@ def test_e2e_prerequisites():
     print(f"\nFound {len(model_files)} model files")
     print(f"Test image: {TEST_IMAGE}")
     print(f"Test video: {TEST_VIDEO}")
+
+
+SR_STREAM_FRAMES = 6
+SR_STREAM_PARAMS = [p for p in EXECUTABLE_PARAMS
+                    if _EXE_TASK_MAP.get(p.values[0].rsplit("_", 1)[0]) == "super_resolution"]
+
+
+@pytest.fixture(scope="module")
+def sr_stream_clip(tmp_path_factory):
+    """A 6-frame MJPG .avi of the 165x90 low-res sample: small enough that
+    ESPCN's 17x17 tiling is a few hundred tiles per frame (U-33)."""
+    import cv2
+    image = cv2.imread(str(SAMPLE_DIR / "img" / "sample_lowres165x90.png"))
+    assert image is not None
+    path = tmp_path_factory.mktemp("sr_stream") / "lowres.avi"
+    writer = cv2.VideoWriter(str(path), cv2.VideoWriter_fourcc(*"MJPG"), 10,
+                             (image.shape[1], image.shape[0]))
+    for _ in range(SR_STREAM_FRAMES):
+        writer.write(image)
+    writer.release()
+    return path
+
+
+@pytest.mark.e2e
+@pytest.mark.e2e_stream
+@pytest.mark.parametrize("executable,model_path", SR_STREAM_PARAMS)
+def test_super_resolution_stream_e2e(executable, model_path, bin_dir, sr_stream_clip):
+    """The SR video path, which the 1080p stream test leaves out (U-33)."""
+    executable_path = binary_path(bin_dir, executable)
+    if not executable_path.exists():
+        pytest.skip(f"Executable not found: {executable_path}")
+    if model_path is None:
+        pytest.skip(f"Model .dxnn not found for {executable}")
+    cmd = [str(executable_path), "-m", str(model_path), "-v", str(sr_stream_clip), "--no-display"]
+    result = run_bounded(cmd, capture_output=True, text=True, timeout=300,
+                         env=setup_environment(), cwd=PROJECT_ROOT)
+    output = result.stdout + result.stderr
+    assert result.returncode == 0, f"{' '.join(cmd)}\n{output[-2000:]}"
+    assert parse_detailed_fps(output).get("total_frames") == SR_STREAM_FRAMES, output[-2000:]
 
 
 if __name__ == "__main__":

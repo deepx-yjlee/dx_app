@@ -23,6 +23,7 @@ import pytest
 
 # -- common module ---------------------------------------------------------
 # conftest.py puts tests/ on sys.path; hence the noqa: E402 imports below.
+from test_helpers.proc import run_bounded  # noqa: E402
 from test_helpers.constants import (  # noqa: E402
     BIN_DIR,
     MODELS_DIR,
@@ -41,6 +42,12 @@ from test_helpers.utils import (  # noqa: E402
 # Output root
 # ======================================================================
 CPP_VIS_DIR = VIS_RESULT_DIR / "cpp_example"
+
+# Tasks whose output is a feature vector, not a rendered image: the run is
+# still checked (rc 0), the image check is skipped - as in test_save_mode.py.
+# (EmbeddingVisualizer keeps the first image as its reference and draws
+# nothing for it, so a single -i image never produces a picture.)
+NO_VISUAL_OUTPUT_TASKS = {"embedding", "reid"}
 
 
 # ======================================================================
@@ -90,7 +97,7 @@ class TestCppVisualization:
         timeout = 300 if ("tta" in base_name or "w6" in base_name) else 120
 
         try:
-            result = subprocess.run(
+            result = run_bounded(
                 cmd,
                 capture_output=True,
                 text=True,
@@ -107,6 +114,9 @@ class TestCppVisualization:
             f"STDOUT: {result.stdout[-500:]}\n"
             f"STDERR: {result.stderr[-500:]}"
         )
+
+        if task in NO_VISUAL_OUTPUT_TASKS:
+            pytest.skip(f"[{task}] produces a feature vector, no output image to verify")
 
         assert output_image.exists(), (
             f"Visualization image not saved: {output_image}\n"
@@ -139,7 +149,7 @@ def _run_single_vis(cmd, output_image, timeout, run_env, label):
     status: 'ok', 'fail', or 'skip'.
     """
     try:
-        result = subprocess.run(
+        result = run_bounded(
             cmd, capture_output=True, text=True,
             timeout=timeout, env=run_env, cwd=str(PROJECT_ROOT),
         )
