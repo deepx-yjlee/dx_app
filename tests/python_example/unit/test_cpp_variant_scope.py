@@ -32,7 +32,7 @@ FACTORY = """\
 #define {guard}_FACTORY_HPP
 
 #include "common/base/i_factory.hpp"
-{helper_include}
+{helper_include}{pre}
 namespace dxapp {{
 
 class FamFactory : public IDetectionFactory {{
@@ -49,7 +49,7 @@ public:
     VisualizerPtr<DetectionResult> createVisualizer() override {{
         return std::make_unique<DetectionVisualizer>();
     }}
-
+{extra}
     std::string getModelName() const override {{ return "{variant}"; }}
 }};
 
@@ -99,13 +99,14 @@ def _guard(variant: str) -> str:
 
 
 def add_variant(cpp: Path, variant: str, post_body: str = POST_USES_ALL,
-                helper: str | None = None) -> Path:
-    vdir = cpp / "object_detection" / "fam" / variant
+                helper: str | None = None, extra: str = "", pre: str = "",
+                vdir: Path | None = None) -> Path:
+    vdir = vdir or cpp / "object_detection" / "fam" / variant
     (vdir / "factory").mkdir(parents=True)
     include = f'#include "{helper}.hpp"\n' if helper else ""
     (vdir / "factory" / f"{variant}_factory.hpp").write_text(
         FACTORY.format(variant=variant, guard=_guard(variant), helper_include=include,
-                       post_body=post_body), encoding="utf-8")
+                       post_body=post_body, extra=extra, pre=pre), encoding="utf-8")
     if helper:
         (vdir / "factory" / f"{helper}.hpp").write_text(
             HELPER.format(old_guard=helper.upper() + "_HPP"), encoding="utf-8")
@@ -273,3 +274,127 @@ def test_an_unused_parameter_is_reported_apart_from_namespace_problems(cpp, caps
     assert "b_2_64x64_factory.hpp" in problems[0] and "input_height" in problems[0]
     assert "createPostprocessor" in problems[0]
     assert "namespace problems" not in out and "parameter problems" in out
+
+
+def test_a_factory_header_named_for_another_variant_fails_check(cpp, capsys):
+    """A copied variant dir that kept its old header is no variant: it must not pass."""
+    assert run(cpp) == 0
+    add_variant(cpp, "a-1_64x64", vdir=cpp / "object_detection" / "fam" / "a-1_64x64_copy")
+    capsys.readouterr()
+    assert run(cpp, "--check") == 1
+    out = capsys.readouterr().out
+    assert "a-1_64x64_copy/factory/a-1_64x64_factory.hpp" in out
+    problems = gen.namespace_problems(cpp)
+    assert len(problems) == 1 and "a-1_64x64_copy" in problems[0]
+    assert run(cpp) == 1, "the rewrite cannot place it and must say so"
+
+
+def test_factory_headers_at_other_depths_fail_check(cpp):
+    assert run(cpp) == 0
+    add_variant(cpp, "fam", vdir=cpp / "object_detection" / "fam")
+    add_variant(cpp, "deep_64x64", vdir=cpp / "object_detection" / "fam" / "x" / "deep_64x64")
+    (cpp / "common" / "factory").mkdir()
+    (cpp / "common" / "factory" / "shared_factory.hpp").write_text(
+        "namespace dxapp {\n}  // namespace dxapp\n", encoding="utf-8")
+    problems = gen.namespace_problems(cpp)
+    assert len(problems) == 2, problems
+    assert any("object_detection/fam/factory/fam_factory.hpp" in p for p in problems)
+    assert any("fam/x/deep_64x64/factory/deep_64x64_factory.hpp" in p for p in problems)
+    assert run(cpp, "--check") == 1
+
+
+def test_digit_separators_are_not_character_literals(tmp_path):
+    root = tmp_path / "src" / "cpp_example"
+    (root / "common").mkdir(parents=True)
+    add_variant(root, "a_64x64", post_body=(
+        "        return std::make_unique<Post>(1'000, input_height, 2'000, input_width,"
+        " is_ort_configured);"))
+    assert gen.parameter_problems(root) == []
+    assert run(root) == 0
+    assert "/*" not in header(root, "a_64x64").split("createPostprocessor(")[1].split(")")[0]
+
+
+def test_unnamed_parameters_are_left_alone(tmp_path):
+    root = tmp_path / "src" / "cpp_example"
+    (root / "common").mkdir(parents=True)
+    extra = ("\n    int createExtra(int input_width, long long, const int, const Foo,"
+             " unsigned, struct Bar*) override {\n        return input_width;\n    }\n")
+    add_variant(root, "a_64x64", extra=extra)
+    assert gen.parameter_problems(root) == []
+    assert run(root) == 0
+    assert "createExtra(int input_width, long long, const int, const Foo, unsigned, " \
+           "struct Bar*) override" in header(root, "a_64x64")
+
+
+def test_specifiers_and_parentheses_in_the_parameter_list_are_still_checked(tmp_path):
+    root = tmp_path / "src" / "cpp_example"
+    (root / "common").mkdir(parents=True)
+    extra = ("\n    int createExtra(std::function<void(int)> cb, int input_width) const noexcept"
+             " override {\n        return 0;\n    }\n"
+             "\n    int createMore(int input_height) final {\n        return 1;\n    }\n")
+    add_variant(root, "a_64x64", extra=extra)
+    problems = gen.parameter_problems(root)
+    assert sorted(p.split(": ", 1)[1].split("'")[1] for p in problems) == \
+        ["cb", "input_height", "input_width"], problems
+    assert run(root) == 0
+    text = header(root, "a_64x64")
+    assert "createExtra(std::function<void(int)> /*cb*/, int /*input_width*/) const noexcept" \
+           " override {" in text
+    assert "createMore(int /*input_height*/) final {" in text
+
+
+def test_a_use_through_a_macro_counts_as_a_use(tmp_path):
+    root = tmp_path / "src" / "cpp_example"
+    (root / "common").mkdir(parents=True)
+    add_variant(root, "a_64x64",
+                pre="#define FAM_ARGS \\\n    input_width, input_height\n",
+                post_body="        return std::make_unique<Post>(FAM_ARGS, is_ort_configured);")
+    assert gen.parameter_problems(root) == []
+    assert run(root) == 0
+    assert "int input_width, int input_height, bool is_ort_configured = false" in \
+        header(root, "a_64x64")
+
+
+def _refused(root: Path, capsys) -> str:
+    before = snapshot(root)
+    capsys.readouterr()
+    assert run(root) == 2
+    assert snapshot(root) == before, "a refused run wrote files"
+    return capsys.readouterr().out
+
+
+def test_a_dxapp_line_of_another_shape_is_named(cpp, capsys):
+    f = cpp / "object_detection" / "fam" / "b_2_64x64" / "factory" / "b_2_64x64_factory.hpp"
+    f.write_text(f.read_text(encoding="utf-8").replace("namespace dxapp {", "namespace dxapp{"),
+                 encoding="utf-8")
+    out = _refused(cpp, capsys)
+    assert "b_2_64x64_factory.hpp" in out and "'namespace dxapp{'" in out
+    assert "found 1 and 1" not in out
+
+
+def test_a_header_without_a_dxapp_namespace_is_refused(cpp, capsys):
+    f = cpp / "object_detection" / "fam" / "b_2_64x64" / "factory" / "b_2_64x64_factory.hpp"
+    t = f.read_text(encoding="utf-8")
+    f.write_text(t.replace("namespace dxapp {\n", "").replace("}  // namespace dxapp\n", ""),
+                 encoding="utf-8")
+    out = _refused(cpp, capsys)
+    assert "b_2_64x64_factory.hpp" in out and "found 0" in out
+
+
+def test_a_header_in_another_variants_namespace_is_refused(cpp, capsys):
+    f = cpp / "object_detection" / "fam" / "b_2_64x64" / "factory" / "b_2_64x64_factory.hpp"
+    t = f.read_text(encoding="utf-8")
+    f.write_text(t.replace("namespace dxapp {\n", "namespace dxapp {\nnamespace v_a_1_64x64 {\n")
+                 .replace("}  // namespace dxapp\n",
+                          "}  // namespace v_a_1_64x64\n}  // namespace dxapp\n"),
+                 encoding="utf-8")
+    out = _refused(cpp, capsys)
+    assert "b_2_64x64_factory.hpp" in out and "v_a_1_64x64" in out and "v_b_2_64x64" in out
+
+
+def test_an_entry_point_naming_a_sibling_variants_factory_is_refused(cpp, capsys):
+    e = cpp / "object_detection" / "fam" / "b_2_64x64" / "b_2_64x64_sync.cpp"
+    e.write_text(e.read_text(encoding="utf-8").replace(
+        "dxapp::FamFactory", "dxapp::v_a_1_64x64::FamFactory"), encoding="utf-8")
+    out = _refused(cpp, capsys)
+    assert "b_2_64x64_sync.cpp" in out and "v_a_1_64x64" in out and "v_b_2_64x64" in out

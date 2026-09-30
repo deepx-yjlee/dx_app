@@ -103,26 +103,14 @@ def resolve_dir(model_name: str, table: dict[str, str]) -> str | None:
     return cand if cand in table else None
 
 
-def _role_match(text: str, role: str, start: int = 0) -> re.Match | None:
-    """The signature of the first ``role`` method at or after ``start``.
-
-    ``role`` is a regex: a method name, or ``(?P<name>create\\w*)`` for every create*
-    method. The parameter list is the ``params`` group.
-    """
-    return re.compile(role + r"\s*\((?P<params>[^)]*)\)\s*(?:override)?\s*\{",
-                      re.S).search(text, start)
-
-
-def role_block(text: str, role: str, start: int = 0) -> tuple[int, int, str] | None:
+def role_block(text: str, role: str) -> tuple[int, int, str] | None:
     """``(body_start, body_end, body)`` for one create* method, brace-matched.
 
     Index-based rather than string-based: reconstructing "signature + { + body + }" to
     search for loses the exact whitespace before the brace, so the splice silently
     matched nothing and every dispatch was dropped.
-
-    ``role`` may be a pattern (``create\\w*``), and ``start`` skips methods already seen.
     """
-    m = _role_match(text, role, start)
+    m = re.search(role + r"\s*\([^)]*\)\s*(?:override)?\s*\{", text, re.S)
     if not m:
         return None
     open_brace = m.end() - 1
@@ -263,10 +251,25 @@ _DXAPP_CLOSE_LINE = re.compile(r"\}[ \t]*//[ \t]*namespace[ \t]+dxapp[ \t]*")
 _ANY_VARIANT_NS_OPEN = re.compile(r"namespace (v_\w+) \{")
 _GUARD = re.compile(r"^#ifndef[ \t]+(\w+)[ \t]*\n#define[ \t]+\1\b", re.M)
 _FACTORY_CLASS = re.compile(r"\bclass\s+(\w*Factory)\b\s*[:{]")
+# A quote right after a hex digit is a C++14 digit separator (1'000, 0xFF'FF), not the
+# start of a character literal; an L/u/U prefix is not a hex digit and still opens one.
 _COMMENT_OR_LITERAL = re.compile(
-    r"//[^\n]*|/\*.*?\*/|\"(?:\\.|[^\"\\\n])*\"|'(?:\\.|[^'\\\n])*'", re.S)
+    r"//[^\n]*|/\*.*?\*/|\"(?:\\.|[^\"\\\n])*\"|(?<![0-9A-Fa-f])'(?:\\.|[^'\\\n])*'",
+    re.S)
 _PARAM = re.compile(r"(?P<head>.*?[\s*&])(?P<name>[A-Za-z_]\w*)(?P<tail>\s*(?:=.*)?)",
                     re.S)
+# ``long long``, ``const int``, ``unsigned``: the last word is part of the type, and an
+# unnamed parameter has nothing to comment.
+_TYPE_WORDS = frozenset(
+    "auto bool char char16_t char32_t class const double enum float int long short signed "
+    "struct typename union unsigned void volatile wchar_t".split())
+# Words that cannot be a whole type: ``const Foo`` is an unnamed Foo, not a Foo called Foo.
+_QUALIFIERS = frozenset("class const enum register struct typename union volatile".split())
+_CREATE_NAME = re.compile(r"\b(create\w*)\s*\(")
+# Between a create*() parameter list and its body.
+_SPECIFIERS = re.compile(
+    r"(?:\s+|\bconst\b|\bvolatile\b|\boverride\b|\bfinal\b|&&?"
+    r"|\bnoexcept\b(?:\s*\([^()]*\))?|->[^{;=]*)*")
 
 
 def variant_namespace(variant: str) -> str:
@@ -285,41 +288,87 @@ def variant_guard(variant: str) -> str:
 
 
 def _code_only(text: str) -> str:
-    """``text`` with comments and literals blanked; newlines (line numbers) are kept."""
+    """``text`` with comments and literals blanked to spaces.
+
+    Same length and same newlines, so an offset or a line number in the result is one in
+    ``text``. A literal keeps its quotes.
+    """
     def blank(m: re.Match) -> str:
         s = m.group(0)
-        return "\n" * s.count("\n") if s.startswith("/") else '""'
+        if s.startswith("/"):
+            return re.sub(r"[^\n]", " ", s)
+        return s[0] + " " * (len(s) - 2) + s[-1]
     return _COMMENT_OR_LITERAL.sub(blank, text)
 
 
-def _split_params(params: str) -> list[str]:
-    parts, depth, cur = [], 0, []
-    for ch in params:
+def _closing(code: str, i: int, open_ch: str, close_ch: str) -> int | None:
+    """Offset of the bracket that closes ``code[i]``."""
+    depth = 0
+    for k in range(i, len(code)):
+        if code[k] == open_ch:
+            depth += 1
+        elif code[k] == close_ch:
+            depth -= 1
+            if depth == 0:
+                return k
+    return None
+
+
+def _param_spans(code: str, p0: int, p1: int) -> list[tuple[int, int]]:
+    """``[start, end)`` of each parameter in ``code[p0:p1]``, split at top-level commas."""
+    spans, depth, start = [], 0, p0
+    for k in range(p0, p1):
+        ch = code[k]
         if ch in "<([{":
             depth += 1
         elif ch in ">)]}":
             depth -= 1
-        if ch == "," and depth == 0:
-            parts.append("".join(cur))
-            cur = []
-        else:
-            cur.append(ch)
-    parts.append("".join(cur))
-    return parts
+        elif ch == "," and depth == 0:
+            spans.append((start, k))
+            start = k + 1
+    spans.append((start, p1))
+    return spans
 
 
 def _create_methods(text: str) -> list[tuple[str, int, int, str]]:
-    """``(name, params_start, params_end, body)`` of every create*() method."""
+    """``(name, params_start, params_end, body)`` of every create*() definition.
+
+    The same brace matching as ``role_block``, but over the comment- and literal-free
+    text and with a balanced parameter list, so ``std::function<void(int)>`` parameters
+    and ``const`` / ``noexcept`` / ``final`` before the body are covered too. ``body``
+    is comment- and literal-free.
+    """
+    code = _code_only(text)
     out = []
     pos = 0
-    role = r"\b(?P<name>create\w*)"
     while True:
-        m = _role_match(text, role, pos)
-        blk = role_block(text, role, pos) if m else None
-        if blk is None:
+        m = _CREATE_NAME.search(code, pos)
+        if m is None:
             return out
-        out.append((m.group("name"), m.start("params"), m.end("params"), blk[2]))
-        pos = blk[1] + 1
+        p0 = m.end()
+        p1 = _closing(code, p0 - 1, "(", ")")
+        if p1 is None:
+            return out
+        b0 = _SPECIFIERS.match(code, p1 + 1).end()
+        if not code.startswith("{", b0):
+            pos = p1 + 1          # a call or a declaration, not a definition
+            continue
+        b1 = _closing(code, b0, "{", "}")
+        if b1 is None:
+            return out
+        out.append((m.group(1), p0, p1, code[b0 + 1:b1]))
+        pos = b1 + 1
+
+
+def _macro_text(code: str) -> str:
+    """Every ``#define`` in ``code``, continuation lines included."""
+    out, cont = [], False
+    for line in code.split("\n"):
+        s = line.strip()
+        if cont or re.match(r"#\s*define\b", s):
+            out.append(s)
+            cont = s.endswith("\\")
+    return "\n".join(out)
 
 
 def _comment_unused_params(text: str) -> tuple[str, list[tuple[str, str]]]:
@@ -327,31 +376,33 @@ def _comment_unused_params(text: str) -> tuple[str, list[tuple[str, str]]]:
 
     ``int input_width`` -> ``int /*input_width*/``, keeping a default argument
     (``bool /*is_ort_configured*/ = false``). A name that appears only in a comment or a
-    string is not a use: the compiler still warns about it. Returns the new text and the
+    string is not a use: the compiler still warns about it. A name that a ``#define`` in
+    the header mentions may be used through that macro, so it is left alone. So is an
+    unnamed parameter (``long long``, ``const Foo``). Returns the new text and the
     ``(method, parameter)`` pairs that were commented.
     """
+    code = _code_only(text)
+    macros = _macro_text(code)
     edits = []
     done = []
     for name, p0, p1, body in _create_methods(text):
-        code = _code_only(body)
-        parts = _split_params(text[p0:p1])
-        changed = False
-        for i, part in enumerate(parts):
-            if "/*" in part:
+        for s0, s1 in _param_spans(code, p0, p1):
+            if "/*" in text[s0:s1]:
                 continue
-            m = _PARAM.fullmatch(part)
+            m = _PARAM.fullmatch(code, s0, s1)
             if not m or not m.group("head").strip():
                 continue
             pname = m.group("name")
-            if re.search(rf"\b{re.escape(pname)}\b", code):
+            if pname in _TYPE_WORDS \
+                    or set(re.findall(r"\w+", m.group("head"))) <= _QUALIFIERS:
                 continue
-            parts[i] = f"{m.group('head')}/*{pname}*/{m.group('tail')}"
+            used = rf"\b{re.escape(pname)}\b"
+            if re.search(used, body) or re.search(used, macros):
+                continue
+            edits.append((m.start("name"), m.end("name"), f"/*{pname}*/"))
             done.append((name, pname))
-            changed = True
-        if changed:
-            edits.append((p0, p1, ",".join(parts)))
-    for p0, p1, new in reversed(edits):
-        text = text[:p0] + new + text[p1:]
+    for n0, n1, new in reversed(edits):
+        text = text[:n0] + new + text[n1:]
     return text, done
 
 
@@ -360,7 +411,8 @@ def _variant_dirs(root: Path) -> list[tuple[str, Path]]:
     out = []
     for fac in sorted(root.glob("*/*/*/factory/*_factory.hpp")):
         vdir = fac.parent.parent
-        if vdir.parts[-3] == "common" or fac.name != f"{vdir.name}_factory.hpp":
+        if vdir.relative_to(root).parts[0] == "common" \
+                or fac.name != f"{vdir.name}_factory.hpp":
             continue
         out.append((vdir.name, vdir))
     return out
@@ -384,12 +436,19 @@ def _scope_header(text: str, ns: str, guard: str | None, rel: str):
     raw_lines = text.split("\n")
     opens = [i for i, l in enumerate(code_lines) if _DXAPP_OPEN.search(l)]
     closes = [i for i, l in enumerate(raw_lines) if _DXAPP_CLOSE_LINE.fullmatch(l)]
-    if len(opens) != 1 or len(closes) != 1 or opens[0] > closes[0] \
-            or not _DXAPP_OPEN_LINE.fullmatch(raw_lines[opens[0]]):
-        refusals.append(
-            f"{rel}: needs exactly one 'namespace dxapp {{' line and one "
-            f"'}}  // namespace dxapp' line after it (found {len(opens)} and "
-            f"{len(closes)}); scope it by hand")
+    shape = None
+    if len(opens) != 1 or len(closes) != 1:
+        shape = (f"needs exactly one 'namespace dxapp {{' line and one "
+                 f"'}}  // namespace dxapp' line (found {len(opens)} opening and "
+                 f"{len(closes)} closing)")
+    elif opens[0] > closes[0]:
+        shape = (f"its '}}  // namespace dxapp' line ({closes[0] + 1}) comes before "
+                 f"'namespace dxapp {{' ({opens[0] + 1})")
+    elif not _DXAPP_OPEN_LINE.fullmatch(raw_lines[opens[0]]):
+        shape = (f"line {opens[0] + 1} reads '{raw_lines[opens[0]].strip()}'; the rewrite "
+                 f"needs the line to be exactly 'namespace dxapp {{'")
+    if shape:
+        refusals.append(f"{rel}: {shape}; scope it by hand")
         return text, refusals, problems, [], False, False
     o, c = opens[0], closes[0]
     ns_opens = [(i, m.group(1)) for i, l in enumerate(raw_lines)
@@ -504,6 +563,18 @@ def _analyse_variant_scope(root: Path) -> dict:
                                           f"dxapp::{ns}::{cls}")
                 res["writes"][e] = new
                 res["entries"] += 1
+    # Every other factory header, at any depth, is one this mode cannot place: a copied
+    # variant dir that kept its old header, a family-level factory/, a deeper tree. It
+    # would be linked unscoped, so it is a problem rather than silently skipped.
+    placed = {vdir / "factory" for _, vdir in variants}
+    for h in sorted(root.rglob("*.hpp")):
+        rel_parts = h.relative_to(root).parts
+        if h.parent.name != "factory" or rel_parts[0] == "common" or h.parent in placed:
+            continue
+        res["ns_problems"].append(
+            f"{h.relative_to(root).as_posix()}: factory header outside a variant dir "
+            f"(<task>/<family>/<variant>/factory/<variant>_factory.hpp), so it cannot be "
+            f"scoped; move or rename it")
     return res
 
 
