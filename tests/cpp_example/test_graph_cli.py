@@ -53,6 +53,8 @@ SAMPLE_GRAPHS = [
     "handoff_denoise_od.json",
     "handoff_sr_od_cls.json",
     MULTISTREAM,
+    "chain_zerodce_od_pose_emb.json",
+    "chain_sr_od_pose.json",
 ]
 ONE_SOURCE_SAMPLES = [g for g in SAMPLE_GRAPHS if g != MULTISTREAM]
 
@@ -2220,6 +2222,145 @@ def test_top_down_pose_cascade_restores_keypoints_inside_each_crop(tmp_path):
         for p in points:
             sx, sy = m[0] * p["x"] + m[1] * p["y"] + m[2], m[3] * p["x"] + m[4] * p["y"] + m[5]
             assert x - 1 <= sx <= x + w + 1 and y - 1 <= sy <= y + h + 1
+
+
+# Payload-edge chains: a model's output image feeds the detector, and the
+# detector's boxes feed ROI stages. Every coordinate a report carries must
+# come back to the source frame through its `origin.inv_align`.
+ENHANCE_CHAIN = "chain_zerodce_od_pose_emb.json"
+SR_CHAIN = "chain_sr_od_pose.json"
+
+
+def to_source(inv_align, x, y):
+    """A point of the image a stage ran on (or of its crop), in source-frame
+    coordinates."""
+    m = inv_align
+    return m[0] * x + m[1] * y + m[2], m[3] * x + m[4] * y + m[5]
+
+
+def box_to_source(inv_align, box):
+    """An axis-aligned [x, y, w, h] box, in source-frame coordinates."""
+    x0, y0 = to_source(inv_align, box[0], box[1])
+    x1, y1 = to_source(inv_align, box[0] + box[2], box[1] + box[3])
+    return [x0, y0, x1 - x0, y1 - y0]
+
+
+def box_inside(box, width, height):
+    x, y, w, h = box
+    return 0 <= x and 0 <= y and x + w <= width and y + h <= height
+
+
+def point_near_box(x, y, box, margin):
+    bx, by, bw, bh = box
+    return bx - margin <= x <= bx + bw + margin and by - margin <= y <= by + bh + margin
+
+
+def iou(a, b):
+    ix = max(0.0, min(a[0] + a[2], b[0] + b[2]) - max(a[0], b[0]))
+    iy = max(0.0, min(a[1] + a[3], b[1] + b[3]) - max(a[1], b[1]))
+    inter = ix * iy
+    union = a[2] * a[3] + b[2] * b[3] - inter
+    return inter / union if union > 0 else 0.0
+
+
+def model_output_width(model):
+    """The width of a model's output tensor, as the runtime reads it from
+    the .dxnn. A subprocess: some conftests replace dx_engine with a Mock."""
+    dxnn = MODEL_DIR / _registry()[model]["dxnn_file"]
+    code = ("import sys\nfrom dx_engine import InferenceEngine\n"
+            "shape = InferenceEngine(sys.argv[1]).get_output_tensors_info()[0]['shape']\n"
+            "width = 1\nfor n in shape[1:]:\n    width *= n\nprint(width)")
+    done = run_bounded([sys.executable, "-c", code, str(dxnn)], capture_output=True,
+                       text=True, cwd=str(PROJECT_ROOT), timeout=RUN_TIMEOUT_S)
+    assert done.returncode == 0, done.stdout + done.stderr
+    return int(done.stdout.split()[-1])
+
+
+def sync_equals_async(tmp_path, graph):
+    """Frame 0 of a shipped graph's --report, once both executors have
+    written it byte for byte the same."""
+    reports = []
+    for binary in BINARIES:
+        path = tmp_path / (binary + ".json")
+        result = run(binary, "--graph", "{}/{}".format(GRAPHS, graph), "--report", str(path))
+        assert result.returncode == 0, result.stdout + result.stderr
+        reports.append(path.read_bytes())
+    assert reports[0] == reports[1], graph
+    return json.loads(reports[0].decode("utf-8"))["frames"][0]
+
+
+@pytest.mark.graph_parity
+def test_enhance_detect_roi_chain_keeps_source_coordinates(tmp_path):
+    """cam -> enh (image hand-off) -> od -> {kp, emb} (ROI). The detector
+    sees the enhanced image and the ROI stages see crops of it, yet every
+    box, crop and keypoint must land on the cam frame."""
+    absent = missing_artifacts(ENHANCE_CHAIN)
+    if absent:
+        pytest.skip(absent)
+    frame = sync_equals_async(tmp_path, ENHANCE_CHAIN)
+    cam = frame["nodes"]["cam"]["payload"]["image"]
+    width, height = cam["cols"], cam["rows"]
+
+    od = frame["nodes"]["od"]
+    assert any(item["class_name"] == "person" for item in od["payload"]["items"]), od
+    for item in od["payload"]["items"]:
+        box = box_to_source(od["origin"]["inv_align"], item["box"])
+        assert box_inside(box, width, height), (item, box, width, height)
+
+    crops = frame["roi_nodes"]
+    assert crops.get("kp") and crops.get("emb"), sorted(crops)
+    for node in ("kp", "emb"):
+        for crop in crops[node]:
+            assert box_inside(crop["origin"]["src_box"], width, height), \
+                (node, crop["origin"], width, height)
+
+    confident = 0
+    for crop in crops["kp"]:
+        origin = crop["origin"]
+        for item in crop["payload"]["items"]:
+            for point in item["keypoints"]:
+                if point["confidence"] > 0.3:
+                    x, y = to_source(origin["inv_align"], point["x"], point["y"])
+                    assert point_near_box(x, y, origin["src_box"], 2), (point, x, y, origin)
+                    confident += 1
+    assert confident > 0, "no keypoint above 0.3 to check"
+
+    spec = json.loads((GRAPH_DIR / ENHANCE_CHAIN).read_text(encoding="utf-8"))
+    emb_model = next(node["model"] for node in spec["nodes"] if node["id"] == "emb")
+    width_of_model = model_output_width(emb_model)
+    for crop in crops["emb"]:
+        assert len(crop["payload"]["values"]) == width_of_model, crop["origin"]
+
+
+@pytest.mark.graph_e2e
+def test_sr_chain_boxes_map_back_to_the_frame(tmp_path):
+    """cam -> sr (x2 hand-off) -> od -> roi -> kp. The detector runs on the
+    doubled image; mapped back, its top-3 persons must be the boxes the same
+    detector finds on the raw frame."""
+    absent = missing_artifacts(SR_CHAIN)
+    if absent:
+        pytest.skip(absent)
+    spec = json.loads((GRAPH_DIR / SR_CHAIN).read_text(encoding="utf-8"))
+    nodes = {node["id"]: node for node in spec["nodes"]}
+    raw_graph = tmp_path / "raw_od.json"
+    raw_graph.write_text(json.dumps({
+        "version": 1, "name": "raw-od", "nodes": [nodes["cam"], nodes["od"]],
+        "edges": [{"from": "cam", "to": "od"}]}), encoding="utf-8")
+
+    def persons(graph, report):
+        result = run(BINARIES[0], "--graph", str(graph), "--report", str(report))
+        assert result.returncode == 0, result.stdout + result.stderr
+        od = json.loads(report.read_text(encoding="utf-8"))["frames"][0]["nodes"]["od"]
+        items = [item for item in od["payload"]["items"] if item["class_name"] == "person"]
+        items.sort(key=lambda item: -item["score"])
+        return [box_to_source(od["origin"]["inv_align"], item["box"]) for item in items]
+
+    on_sr = persons("{}/{}".format(GRAPHS, SR_CHAIN), tmp_path / "sr.json")[:3]
+    on_raw = persons(raw_graph, tmp_path / "raw.json")
+    assert on_sr and on_raw, (on_sr, on_raw)
+    for box in on_sr:
+        best = max(iou(box, raw) for raw in on_raw)
+        assert best >= 0.5, (box, on_raw, best)
 
 
 @pytest.mark.graph_parity
