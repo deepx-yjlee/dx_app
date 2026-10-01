@@ -344,6 +344,14 @@ void StageGraph::Build(const GraphSpec& spec, const IModelRegistry& registry,
         }
 
         const std::string path = model_dir + "/" + info->dxnn_file;
+        if (require_artifacts && !FileExists(path) && !info->published) {
+            // The model zoo has no file for it yet: setup.sh cannot help.
+            throw GraphError(GraphErrorCode::kModelMissing, "node \"" + node.id + "\"",
+                             info->dxnn_file + " not found in " + model_dir,
+                             info->model_name +
+                                 " is not published by the model zoo yet; setup.sh "
+                                 "cannot download it");
+        }
         if (require_artifacts && !FileExists(path)) {
             throw GraphError(
                 GraphErrorCode::kModelMissing, "node \"" + node.id + "\"",

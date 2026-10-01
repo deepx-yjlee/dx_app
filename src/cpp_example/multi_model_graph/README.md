@@ -556,7 +556,11 @@ name, the `.dxnn` file name with or without `.dxnn` (which is the variant),
 or the old registry name, in any letter case, but the zoo's name is the
 manifest's own spelling, so that is the one the CLI prints. It is compiled into
 the binary from `scripts/modelzoo_manifest.json` at build time, so a binary
-deployed without a source tree prints the same name.
+deployed without a source tree prints the same name. A model the zoo does not
+publish yet (`published` is `no` in `--list-models`, such as
+`vit-l-p16_512x512_swag`) is left out of the command, which could not fetch
+it, and gets its own line instead: `node "cls": vit-l-p16_512x512_swag is
+not published by the model zoo yet; setup.sh cannot download it`.
 
 **Every bad value in one object is reported at once**, as unknown keys are
 (below): one `roi`, `track` or `params` object with three bad values gives

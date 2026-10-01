@@ -922,6 +922,34 @@ def test_missing_models_are_named_as_the_model_zoo_spells_them(tmp_path):
     assert "  -> ./setup.sh --models YoloV8N casvit_t\n" in result.stdout, result.stdout
 
 
+UNPUBLISHED_LINE = ('  node "cls": vit-l-p16_512x512_swag is not published by the model zoo '
+                    'yet; setup.sh cannot download it\n')
+
+
+@pytest.mark.graph
+def test_missing_unpublished_models_are_not_offered_a_download(tmp_path):
+    """M1: an unpublished model (registry "published": false, manifest
+    "pending") is left out of the setup.sh command, which could not fetch
+    it, and gets a line of its own - in --check and in a run alike."""
+    graph = _write_graph(tmp_path, [{"id": "od", "model": "yolov8n"},
+                                    {"id": "cls", "model": "vit-l-p16_512x512_swag"}])
+    empty = tmp_path / "models"
+    empty.mkdir()
+    check = run(BINARIES[0], "--check", str(graph), "--model-dir", str(empty))
+    assert check.returncode == 0, check.stdout + check.stderr
+    assert UNPUBLISHED_LINE + "  -> ./setup.sh --models YoloV8N\n" in check.stdout, check.stdout
+    for binary in BINARIES:
+        result = run(binary, "--graph", str(graph), "--model-dir", str(empty))
+        assert result.returncode == 1, result.stdout + result.stderr
+        assert result.stderr.endswith(UNPUBLISHED_LINE + "  -> ./setup.sh --models YoloV8N\n"), \
+            result.stderr
+
+    alone = _write_graph(tmp_path, [{"id": "cls", "model": "vit-l-p16_512x512_swag"}])
+    check = run(BINARIES[0], "--check", str(alone), "--model-dir", str(empty))
+    assert check.stdout.endswith(UNPUBLISHED_LINE), check.stdout
+    assert "setup.sh --models" not in check.stdout
+
+
 @pytest.mark.graph
 def test_check_is_not_fatal_when_only_artifacts_are_missing(tmp_path):
     """T0 decides the exit code; T1 reports. A user with no models

@@ -1523,6 +1523,7 @@ FakeModelRegistry BuildCascadeRegistry() {
     detector.input_width = 640;
     detector.input_height = 640;
     detector.ready = true;
+    detector.published = true;  // the MODEL_MISSING tests expect a download line
 
     // Scores deliberately reversed relative to parent_index (item 0 scores
     // lower than item 1): RouteRois's max-cut step sorts by descending
@@ -1700,6 +1701,7 @@ void TestBuildFallbackPrintsTheModelZooName() {
     obb.task = "obb_detection";
     obb.dxnn_file = "yolo26-l-obb_1024x1024.dxnn";
     obb.download_name = "yolo26l-obb";
+    obb.published = true;  // an unpublished model gets no setup.sh line (M1)
     obb.output_shape = Shape::kObBoxes;
     obb.input_contract = InputContract::kFullFrame;
     obb.ready = true;
@@ -11339,6 +11341,38 @@ void TestRegistryCarriesPublishedAndResources() {
     GRAPH_CHECK(plain != NULL && plain->resources.empty());
 }
 
+// M1: Build's MODEL_MISSING fallback offers setup.sh only for a model the
+// zoo publishes; an unpublished one says that setup.sh cannot fetch it.
+void TestBuildDoesNotOfferADownloadOfAnUnpublishedModel() {
+    StaticModelRegistry registry;
+    const ModelInfo* swag = registry.find("vit-l-p16_512x512_swag");
+    GRAPH_CHECK(swag != NULL && !swag->published);
+    const char* models[] = {"vit-l-p16_512x512_swag", "yolov8n"};
+    for (std::size_t m = 0; m < 2; ++m) {
+        const GraphSpec spec = ParseGraphText(
+            std::string("{\"version\":1,\"name\":\"m\",\"nodes\":["
+                        "{\"id\":\"cam\",\"type\":\"source\",\"uri\":\"x.jpg\"},"
+                        "{\"id\":\"n\",\"model\":\"") +
+                models[m] + "\"}],\"edges\":[{\"from\":\"cam\",\"to\":\"n\"}]}",
+            "m.json");
+        std::string message;
+        try {
+            StageGraph graph;
+            graph.Build(spec, registry, "/nonexistent_model_dir");
+        } catch (const GraphError& error) {
+            GRAPH_CHECK(error.code() == GraphErrorCode::kModelMissing);
+            message = error.what();
+        }
+        if (m == 0) {
+            GRAPH_CHECK(message.find("\n  -> vit-l-p16_512x512_swag is not published by the model "
+                                     "zoo yet; setup.sh cannot download it") != std::string::npos);
+            GRAPH_CHECK(message.find("./setup.sh --models") == std::string::npos);
+        } else {
+            GRAPH_CHECK(message.find("\n  -> ./setup.sh --models YoloV8N") != std::string::npos);
+        }
+    }
+}
+
 // TypedStage and TiledSrStage read <task>/<family>/<variant>/config.json,
 // through C3's nested "config" overlay.
 void TestStageConfigIsTheVariantsConfigJson() {
@@ -11843,6 +11877,7 @@ int main() {
     TestAStageRefusesAV9FileBeforeOpeningAnEngine();
     TestRegistryResolvesOldNamesAndAliasesToTheVariant();
     TestRegistryCarriesPublishedAndResources();
+    TestBuildDoesNotOfferADownloadOfAnUnpublishedModel();
     TestStageConfigIsTheVariantsConfigJson();
     TestARelativeGalleryIsReadAgainstTheRepository();
     TestMattingAlphaBecomesADenseMapPort();

@@ -316,6 +316,8 @@ std::vector<MissingArtifact> CollectMissing(const GraphSpec& spec,
         entry.path = path;
         entry.download_name =
             info->download_name.empty() ? node.model : info->download_name;
+        entry.variant = info->model_name;
+        entry.published = info->published;
         missing.push_back(entry);
     }
     return missing;
@@ -329,16 +331,28 @@ std::vector<MissingArtifact> CollectMissing(const GraphSpec& spec,
 // the CLI and dx_graph still agree; what follows the NUL is lost in both.
 std::string FormatMissingList(const std::vector<MissingArtifact>& missing) {
     std::string text;
+    std::string unpublished;
     std::string command = "./setup.sh --models";
+    bool downloadable = false;
     for (std::size_t i = 0; i < missing.size(); ++i) {
         text += "  node \"" + missing[i].node + "\"  model " +
                 missing[i].model + "  ->  " + missing[i].path + "\n";
+        if (!missing[i].published) {
+            // The manifest has no file for it ("pending"): setup.sh would
+            // download nothing, so it is not in the command.
+            unpublished += "  node \"" + missing[i].node + "\": " + missing[i].variant +
+                           " is not published by the model zoo yet; setup.sh cannot "
+                           "download it\n";
+            continue;
+        }
         command += " " + missing[i].download_name;
+        downloadable = true;
     }
+    text += unpublished;
     // The space form, so several names follow one option. setup.sh takes
     // "--models a b" and "--models=a,b" alike; the space form is the one
     // StageGraph::Build's fallback line and the docs print too.
-    text += "  -> " + command + "\n";
+    if (downloadable) text += "  -> " + command + "\n";
     return text;
 }
 

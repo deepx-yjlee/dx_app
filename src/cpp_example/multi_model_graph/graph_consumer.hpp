@@ -202,15 +202,20 @@ struct MissingArtifact {
     std::string model;
     std::string path;
     std::string download_name;
+    std::string variant;     ///< the registry key the node resolved to
+    bool published;          ///< false: the model zoo has no file for it yet
+
+    MissingArtifact() : published(true) {}
 };
 
 std::vector<MissingArtifact> CollectMissing(const GraphSpec& spec,
                                             const IModelRegistry& registry,
                                             const std::string& model_dir);
 
-/// One line per absent artifact, then the one command that fetches them
-/// all. Each caller prints its own header line first, because --check
-/// reports this and a real run fails on it.
+/// One line per absent artifact, one line per unpublished model (which
+/// setup.sh cannot fetch), then the one command that fetches the rest.
+/// Each caller prints its own header line first, because --check reports
+/// this and a real run fails on it.
 std::string FormatMissingList(const std::vector<MissingArtifact>& missing);
 
 /// "2 model files are not in <model_dir>".
