@@ -511,8 +511,8 @@ def _example_key_from_argv0() -> str:
     """Derive the example key from the entry script name (SDKREQ-529).
 
     Entry scripts are named ``<example>_sync.py`` / ``<example>_async.py``
-    (optionally ``_cpp_postprocess``), and ``<example>`` matches the
-    ``model_name`` key in config/model_registry.json.
+    (optionally ``_cpp_postprocess``). For a per-model script ``<example>``
+    is the registry ``variant``; ``model_name`` is accepted too.
     """
     name = Path(sys.argv[0]).stem  # drops ".py"
     for suf in ("_async_cpp_postprocess", "_sync_cpp_postprocess",
@@ -542,9 +542,15 @@ def _resolve_default_model_path() -> Optional[str]:
             entries = json.load(f)
     except Exception:
         return None
-    for e in entries:
-        if e.get("model_name") == key and e.get("dxnn_file"):
-            return f"assets/models/{e['dxnn_file']}"
+    rows = [e for e in entries if isinstance(e, dict) and e.get("dxnn_file")]
+    # Per-model scripts are named after the registry variant; a model_name
+    # still resolves. An alias_of row shares its target's variant, so the
+    # canonical row wins.
+    for field in ("variant", "model_name"):
+        matches = [e for e in rows if e.get(field) == key]
+        if matches:
+            canonical = [e for e in matches if not e.get("alias_of")]
+            return f"assets/models/{(canonical or matches)[0]['dxnn_file']}"
     return None
 
 
