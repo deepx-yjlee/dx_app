@@ -25,8 +25,10 @@ from test_helpers.utils import (  # noqa: E402
     discover_cpp_executables,
     discover_cpp_model_cases,
     cpp_exe_task_map,
+    cpp_variant_image_only,
     resolve_cpp_exe_input,
     stream_rejecting_cpp_cases,
+    strip_variant_suffix,
 )
 from test_helpers.constants import (  # noqa: E402
     IMAGE_ONLY_TASKS,
@@ -66,7 +68,26 @@ ARTIFACTS_ROOT = PROJECT_ROOT / ".test_artifacts" / "cpp_save_mode"
 # Tasks whose --save output is a feature vector / embedding rather than a
 # rendered image or video: there is no image/video file to verify (the run
 # still produces run_info.txt). Keep the run assertion, skip the file check.
-NO_VISUAL_OUTPUT_TASKS = {"embedding", "reid"}
+#
+# These were the legacy "embedding" and "reid" tasks. The registry keeps that
+# name as ``task_legacy`` while ``task`` now carries the zoo task
+# (face_recognition, person_reid, image_retrieval, ...). The check is per
+# variant, not per task: image_classification holds the casvit-t/-m reid
+# encoders next to 135 classifiers whose save does render an image, and the
+# per-task representative can be either.
+_FEATURE_VECTOR_LEGACY_TASKS = {"embedding", "reid"}
+
+
+def _no_visual_output_variants() -> set:
+    import json
+
+    rows = json.loads((PROJECT_ROOT / "config" / "model_registry.json")
+                      .read_text(encoding="utf-8"))
+    return {row["variant"] for row in rows
+            if row["task_legacy"] in _FEATURE_VECTOR_LEGACY_TASKS}
+
+
+NO_VISUAL_OUTPUT_VARIANTS = _no_visual_output_variants()
 
 
 @pytest.fixture
@@ -174,6 +195,7 @@ VIDEO_SAVE_PARAMS = [
     pytest.param(name, mp, id=name, marks=pytest.mark.sync_exec)
     for name, mp in REPRESENTATIVE_CASES
     if EXE_TASK_MAP.get(name) not in IMAGE_ONLY_TASKS
+    and not cpp_variant_image_only(name)
 ]
 # Negative test: one model per task whose runner HARD-REJECTS stream input, to
 # assert the SDKREQ-517 exclusion is actually enforced (not merely skipped).
@@ -426,10 +448,11 @@ class TestSaveOutputFiles:
 
         # embedding/reid write a feature vector, so there is no rendered image.
         # Check only rc==0 and that the run directory exists, then skip the image check.
-        if task in NO_VISUAL_OUTPUT_TASKS:
+        if strip_variant_suffix(executable) in NO_VISUAL_OUTPUT_VARIANTS:
             run_infos = list(save_dir.rglob("run_info.txt"))
             assert len(run_infos) >= 1, f"[{task}] no run_info.txt produced under {save_dir}"
-            pytest.skip(f"[{task}] produces a feature vector, no output image to verify")
+            pytest.skip(f"[{task}] {executable}: produces a feature vector (registry "
+                        "task_legacy embedding/reid), no output image to verify")
 
         # Verify a real image output (jpg/png).
         image_outputs = (
@@ -464,6 +487,9 @@ class TestSaveOutputFiles:
         # TestSaveMode.test_video_save).
         if task in IMAGE_ONLY_TASKS:
             pytest.skip(f"[{task}] image-only task; no video save path")
+        if cpp_variant_image_only(executable):
+            pytest.skip(f"[{task}] {executable}: image-only variant (config.json); "
+                        "no video save path")
         if video_too_slow(executable):
             pytest.skip(f"[{task}] {executable}: too slow for the video save test")
 

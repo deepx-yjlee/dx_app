@@ -86,11 +86,12 @@ def _channel_values(tensor: np.ndarray) -> np.ndarray:
     return tensor[:, 0, 0] if tensor.shape[0] == 3 else tensor[0, 0, :]
 
 
-# CLIP image encoders now live in one family directory and are selected by variant,
-# so the test addresses them by their .dxnn stem rather than by a per-model package.
-# ``model`` here is the legacy example-dir name the parametrisation still uses; it is
-# mapped to its variant through the registry.
-_CLIP_FAMILY = PROJECT_ROOT / "src/python_example/zero_shot_image_classification/clip"
+# CLIP image encoders live under the task/family/variant tree
+# (``src/python_example/<task>/<family>/<variant>/``), each variant with its own
+# ``factory/<variant>_factory.py`` and ``custom_ops.py``. ``model`` here is the legacy
+# example-dir name the parametrisation still uses; the registry maps it to its row,
+# whose ``task``, ``family`` and ``variant`` give the directory.
+_PY_EXAMPLES = PROJECT_ROOT / "src/python_example"
 
 
 def _variant_for(model: str) -> str:
@@ -99,30 +100,39 @@ def _variant_for(model: str) -> str:
     return resolve_variant(model).variant
 
 
-def _custom_ops():
-    """Load the clip family's custom_ops.py by path."""
-    spec = importlib.util.spec_from_file_location(
-        "clip_custom_ops", _CLIP_FAMILY / "custom_ops.py")
+def _variant_dir(model: str) -> Path:
+    from common.variants import resolve_variant
+
+    row = resolve_variant(model)
+    return _PY_EXAMPLES / row.task / row.family / row.variant
+
+
+def _load(name: str, path: Path):
+    spec = importlib.util.spec_from_file_location(name, path)
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
 
 
-def _factory_cls():
-    """Load the family factory by path -- the family dir is not an importable package."""
-    path = next((_CLIP_FAMILY / "factory").glob("*_factory.py"))
-    spec = importlib.util.spec_from_file_location("clip_family_factory", path)
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
+def _custom_ops(model: str):
+    """Load the variant's custom_ops.py by path."""
+    variant = _variant_for(model)
+    return _load(f"clip_custom_ops_{variant}", _variant_dir(model) / "custom_ops.py")
+
+
+def _factory_cls(model: str):
+    """Load the variant factory by path -- the variant dir is not an importable package."""
+    variant = _variant_for(model)
+    path = _variant_dir(model) / "factory" / f"{variant}_factory.py"
+    module = _load(f"clip_variant_factory_{variant}", path)
     return next(o for n, o in vars(module).items()
                 if isinstance(o, type) and n.endswith("Factory") and n != "Factory"
                 and o.__module__ == module.__name__)
 
 
 def _preprocessor(model: str, edge: int, config=None):
-    return _factory_cls()(config or {}, variant=_variant_for(model)) \
+    return _factory_cls(model)(config or {}, variant=_variant_for(model)) \
         .create_preprocessor(edge, edge)
 
 
@@ -139,8 +149,8 @@ def _process(model: str, edge: int, config=None) -> np.ndarray:
 @pytest.mark.parametrize("model,edge", FLOAT32_ENCODERS)
 def test_factory_constants_are_the_open_clip_canonical_values(model, edge):
     # The CLIP constants are computed rather than literal, so they stay as code in the
-    # family's custom_ops.py -- the escape hatch a variant config cannot cover.
-    module = _custom_ops()
+    # variant's custom_ops.py -- the escape hatch a variant config cannot cover.
+    module = _custom_ops(model)
     np.testing.assert_allclose(
         np.array(module.CLIP_MEAN, dtype=np.float32), OPEN_CLIP_MEAN, rtol=0, atol=1e-7,
     )

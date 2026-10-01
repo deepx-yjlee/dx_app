@@ -52,13 +52,13 @@ CONVERTERS = CPP_ROOT / "common" / "processors" / "result_converters.hpp"
 # means its coordinates now go through the per-axis branch -- confirm that is
 # intended before updating this set.
 EXPECTED_PREPROCESSOR_USERS = {
-    "keypoint_detection/superpoint",
-    "image_denoising/dncnn_15",
-    "image_denoising/dncnn_25",
-    "image_denoising/dncnn_50",
-    "image_denoising/dncnn_gray_blind",
-    "super_resolution/espcn_x3",
-    "super_resolution/espcn_x4",
+    "superpoint/superpoint_480x640",
+    "dncnn/dncnn-15_512x512",
+    "dncnn/dncnn-25_512x512",
+    "dncnn/dncnn-50_512x512",
+    "dncnn/dncnn-gray_512x512",
+    "espcn/espcn-x3_17x17",
+    "espcn/espcn-x4_17x17",
 }
 
 # Files that READ ctx.scale_x / ctx.scale_y.
@@ -69,12 +69,16 @@ EXPECTED_PREPROCESSOR_USERS = {
 #                              which has always set the pair
 #   utility/preprocessing.hpp  scaleToOriginal / scaleBoxToOriginal -- no external
 #                              caller (YOLACT has its own scaleBoxToOriginal_)
+#   rtdetr_postprocessor       live (decodePaddle); every RT-DETR / mask-RT-DETR
+#                              factory runs SimpleResizePreprocessor, which sets
+#                              the pair, so the uniform fallback is never taken
 #
 # A new entry means some model's coordinates now depend on the per-axis pair.
 # Check whether that model's preprocessor actually sets it before accepting.
 EXPECTED_SCALE_XY_READERS = {
     "common/processors/result_converters.hpp",
     "common/processors/retinaface_postprocessor.hpp",
+    "common/processors/rtdetr_postprocessor.hpp",
     "common/utility/preprocessing.hpp",
 }
 
@@ -149,7 +153,8 @@ def test_grayscale_preprocessor_user_set_is_pinned():
     found = set()
     for path in CPP_ROOT.rglob("*factory*.hpp"):
         if "GrayscaleResizePreprocessor" in path.read_text(encoding="utf-8"):
-            # .../<task>/<model>/factory/<model>_factory.hpp -> "<task>/<model>"
+            # .../<task>/<family>/<variant>/factory/<variant>_factory.hpp
+            #   -> "<family>/<variant>"
             model_dir = path.parent.parent
             found.add(f"{model_dir.parent.name}/{model_dir.name}")
 
@@ -272,8 +277,8 @@ STD_TOL = 1.0
 
 
 def _run_and_load(model: str, spec: dict, tmp_path: Path):
-    """Run <model>_sync with --save and return the decoded output image."""
-    exe = resolve_bin_dir() / f"{model}_sync"
+    """Run the model's <dxnn stem>_sync with --save and return the decoded output image."""
+    exe = resolve_bin_dir() / f"{Path(spec['dxnn']).stem}_sync"
     if not exe.exists():
         pytest.skip(f"{exe.name} not built")
     dxnn = PROJECT_ROOT / "assets" / "models" / spec["dxnn"]
@@ -289,11 +294,11 @@ def _run_and_load(model: str, spec: dict, tmp_path: Path):
         capture_output=True, text=True, timeout=300, cwd=str(PROJECT_ROOT),
     )
     assert result.returncode == 0, (
-        f"{model}_sync exited {result.returncode}\n{result.stdout[-1500:]}\n{result.stderr[-1500:]}"
+        f"{exe.name} exited {result.returncode}\n{result.stdout[-1500:]}\n{result.stderr[-1500:]}"
     )
 
     saved = sorted(p for p in tmp_path.rglob("*") if p.suffix.lower() in (".jpg", ".png"))
-    assert saved, f"{model}_sync --save produced no image under {tmp_path}"
+    assert saved, f"{exe.name} --save produced no image under {tmp_path}"
     img = cv2.imread(str(saved[0]), cv2.IMREAD_UNCHANGED)
     assert img is not None, f"could not decode {saved[0]}"
     return img
@@ -354,9 +359,9 @@ def test_superpoint_keypoints_land_on_corners(tmp_path):
     keypoints score 1.3x a random-position control on Shi-Tomasi corner response
     -- i.e. no better than chance. With the per-axis factors they score >20x.
     """
-    exe = resolve_bin_dir() / "superpoint_sync"
+    exe = resolve_bin_dir() / "superpoint_480x640_sync"
     if not exe.exists():
-        pytest.skip("superpoint_sync not built")
+        pytest.skip("superpoint_480x640_sync not built")
     dxnn = PROJECT_ROOT / "assets" / "models" / "superpoint_480x640.dxnn"
     if not dxnn.exists():
         pytest.skip("superpoint_480x640.dxnn not downloaded")
@@ -369,9 +374,9 @@ def test_superpoint_keypoints_land_on_corners(tmp_path):
          "--no-display", "-s", "--save-dir", str(tmp_path)],
         capture_output=True, text=True, timeout=300, cwd=str(PROJECT_ROOT),
     )
-    assert result.returncode == 0, f"superpoint_sync exited {result.returncode}\n{result.stderr[-1500:]}"
+    assert result.returncode == 0, f"{exe.name} exited {result.returncode}\n{result.stderr[-1500:]}"
     saved = sorted(p for p in tmp_path.rglob("*") if p.suffix.lower() in (".jpg", ".png"))
-    assert saved, "superpoint_sync --save produced no image"
+    assert saved, f"{exe.name} --save produced no image"
 
     out = cv2.imread(str(saved[0]))
     src = cv2.imread(str(image))
