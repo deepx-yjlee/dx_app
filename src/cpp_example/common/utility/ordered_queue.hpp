@@ -3,11 +3,14 @@
  * @brief Hand-over queue that delivers items in submit (ticket) order even
  *        though producers hand them over in any order.
  *
- * WHY. Every async runner submits frames from one thread but gets them back
+ * WHY. An async pipeline submits frames from one thread but gets them back
  * on dxrt's pool of completion threads (4 on x86), so frame N+1 can finish
- * before frame N. Display, save, DXAPP_VERIFY and every stateful step (the
- * SuperPoint tracker, the instance-seg colour tracker, the embedding
- * reference) must see frames in input order, as the sync runner does.
+ * before frame N, while display, save, DXAPP_VERIFY and any stateful step
+ * must see frames in input order. This queue solves that with ticketed,
+ * blocking hand-over. No runner uses it at present: the async runners
+ * reorder with FrameReorderBuffer (frame_reorder.hpp) instead. It is kept
+ * as a tested utility (common_unit_test) and is one of the headers
+ * scripts/check_cxx14.sh compiles standalone.
  *
  * CONTRACT.
  *   - issueTicket() is called once per submitted frame, in submit order

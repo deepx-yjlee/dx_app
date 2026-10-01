@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# C++14 conformance guard (spec B1/B2): the three headers that own the shared
-# g_interrupted() flag must each compile standalone under -std=gnu++14 with
-# -Werror. This catches:
+# C++14 conformance guard (spec B1/B2): the four headers in HEADERS - the
+# three that own the shared g_interrupted() flag, plus ordered_queue.hpp -
+# must each compile standalone under -std=gnu++14 with -Werror. This catches:
 #   - a C++17 extension (e.g. a structured binding) sneaking back into any of
 #     them, since -Werror=c++17-extensions would fail;
 #   - a broken forward-declaration/definition split of g_interrupted() (the
