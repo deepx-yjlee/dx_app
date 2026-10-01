@@ -24,7 +24,7 @@ The suite is organized into tiered categories based on execution speed and scope
      : Auto-discovers all (executable, model) pairs from `bin/` and `assets/models/`.  
      : Assets: Uses real models from `assets/models/` and test data from `sample/img/` and `assets/videos/`.  
      : Parameters: Default loop count configurable via `--loop`.  
-     : Timeouts: 100 seconds for image inference (300s for TTA models), 15 minutes for video inference.  
+     : Timeouts: 100 seconds for image inference (300s for TTA models), 2000 seconds (about 33 minutes) for video inference.  
      : Video E2E and `--save` video tests run every stream-capable model except the W6 face detectors (`VIDEO_TOO_SLOW_MODELS` in `tests/test_helpers/constants.py`). Super-resolution's stream path runs on a 6-frame low-resolution clip (`test_super_resolution_stream_e2e`).  
 
 **Specialized Tests**  
@@ -338,7 +338,7 @@ bash scripts/ci_checks.sh --require-dxrt   # a check skipped for want of the dxr
 | `workflow-yaml` | every `.github/workflows/*.yml` parses and has a `jobs:` mapping | PyYAML |
 | `tests-scripts` | `pytest tests/scripts` (hermetic, see `tests/README.md`) with `--known-failures tests/scripts/known_target_failures.txt` | pytest, PyYAML, requests (cmake and g++ for the tests that use them; the others skip) |
 
-**Known TARGET failures.** `tests/scripts/known_target_failures.txt` lists the `tests/scripts` tests that already fail on the release base (`feat/per-model-example-dirs` at 8d0b748), one `<test id> | <reason>` per line. `tests-scripts` runs each of them as `xfail(strict=True)` (`tests/scripts/known_failures.py`): the check stays green while they fail, and turns red (XPASS(strict)) the day one passes, until its line is deleted. A malformed line, a test listed twice or a missing list file is a usage error (exit 4). A plain `pytest tests/scripts` reads no list and shows those tests failing. The list today holds only its header, which is accepted: `test_generate_build_bat.py::test_run_bat_executes_bare_relative_filename` now skips outside Windows (`skipif(os.name != "nt")`, it runs a `.bat` through `cmd.exe`), and the `test_setup_demo_models.py` tests take the expected count from `run_demo.py`'s `DEMOS`.
+**Known TARGET failures.** `tests/scripts/known_target_failures.txt` lists the `tests/scripts` tests that already fail on the release base (`feat/per-model-example-dirs` at 2eb1350e), one `<test id> | <reason>` per line. `tests-scripts` runs each of them as `xfail(strict=True)` (`tests/scripts/known_failures.py`): the check stays green while they fail, and turns red (XPASS(strict)) the day one passes, until its line is deleted. A malformed line, a test listed twice or a missing list file is a usage error (exit 4). A plain `pytest tests/scripts` reads no list and shows those tests failing. The list today holds only its header, which is accepted: `test_generate_build_bat.py::test_run_bat_executes_bare_relative_filename` now skips outside Windows (`skipif(os.name != "nt")`, it runs a `.bat` through `cmd.exe`), and the `test_setup_demo_models.py` tests take the expected count from `run_demo.py`'s `DEMOS`.
 
 **SKIP versus FAIL.** A check whose prerequisite is missing on this machine prints `SKIP` with the reason, and the run still exits 0; only a `FAIL` makes it exit 1. `--require-dxrt` turns the missing dxrt headers of `header-odr`, `cxx14-headers` and `cross-compile` into a `FAIL`. A missing cross compiler is still a `SKIP`. `--only` runs the named checks (an unknown name exits 2).
 
