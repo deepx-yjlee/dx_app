@@ -58,6 +58,7 @@ from .verify_serialize import is_verify_enabled, dump_verify_json
 from .sync_runner import (
     _check_dxrt_version, _validate_inputs, _apply_default_input, _has_display,
     _resolve_config_path, _parse_loop_value, _window_should_close,
+    _create_sync_metrics, _add_sync_metrics,
     _DEFAULT_SAMPLE_IMAGE, _IMG_STREET, _IMAGE_ONLY_TASKS,
     _show_image_only_no_input_hint, _reject_image_only_stream_input,
     resolve_companion_models,
@@ -1002,7 +1003,12 @@ class AsyncRunner:
                 "t_post": t3 - t2, "t_render": t4 - t3}
 
     def _run_stream_sr(self, source, display: bool) -> None:
-        """SR fallback: synchronous tiled loop (like C++ async SR path)."""
+        """SR fallback: synchronous tiled loop (like C++ async SR path).
+
+        Honours ``--loop`` like ``_run_stream``: the source is reopened for
+        each loop, only loop 0 is saved, and an interrupt or a closed window
+        ends all loops. One summary covers every processed frame.
+        """
         source_label = (f"camera:{source}" if isinstance(source, int)
                         else str(source))
         self._input_path = source_label
@@ -1015,31 +1021,59 @@ class AsyncRunner:
             self._run_stream(source, display)
             return
 
+        metrics = _create_sync_metrics()
+        frame_count = 0
+        elapsed = 0.0
+        processed_loops = 0
+        for loop_idx in range(self._loop):
+            if self._loop > 1 and self._verbose:
+                logger.info(f"\n{'='*40}\n Loop [{loop_idx + 1}/{self._loop}]\n{'='*40}")
+            save_enabled = self._save and (loop_idx == 0)
+            result = self._run_stream_sr_once(source, source_label, display,
+                                              save_enabled)
+            if result is None:
+                break
+            _add_sync_metrics(metrics, result["metrics"])
+            frame_count += result["count"]
+            elapsed += result["elapsed"]
+            processed_loops += 1
+            if result["quit_requested"]:
+                break
+
+        if frame_count > 0:
+            if self._loop > 1 and self._verbose:
+                logger.info(f"\nAverage performance over {processed_loops}"
+                            f"/{self._loop} loops")
+            print_sync_performance_summary(
+                metrics, frame_count, elapsed,
+                display or self._save)
+
+    def _run_stream_sr_once(self, source, source_label: str, display: bool,
+                            save_enabled: bool) -> Optional[dict]:
+        """One pass over the SR stream. None when the source cannot be opened."""
         cap = cv2.VideoCapture(source)
         if not cap.isOpened():
             logger.error(f"Cannot open {source_label}")
-            return
+            return None
 
         fps = cap.get(cv2.CAP_PROP_FPS)
-        need_run_dir = self._save or self._dump_tensors
         run_dir = None
         writer = None
 
-        if need_run_dir:
+        if save_enabled or self._dump_tensors:
             src_name = (f"camera{source}" if isinstance(source, int)
                         else os.path.splitext(
                             os.path.basename(str(source)))[0] or "stream")
             run_dir = create_run_dir("stream", src_name, self._save_dir)
             write_run_info(run_dir, self._model_path, source)
 
-        metrics = {"sum_preprocess": 0.0, "sum_inference": 0.0,
-                   "sum_postprocess": 0.0, "sum_render": 0.0,
-                   "sum_read": 0.0, "sum_save": 0.0, "sum_display": 0.0}
+        metrics = _create_sync_metrics()
         frame_count = 0
+        quit_requested = False
         start = time.perf_counter()
         try:
             # Opened inside the try: an interrupt right after it still releases it.
-            if self._save and run_dir:
+            if save_enabled and run_dir:
                 dw, dh = self._display_size
                 writer = self._init_video_writer(run_dir, dw, dh,
                                                  fps if fps > 0 else 30.0)
@@ -1073,9 +1107,11 @@ class AsyncRunner:
                     self._show_output(canvas)
                     metrics["sum_display"] += time.perf_counter() - t_d0
                     if _window_should_close("Output"):
+                        quit_requested = True
                         break
         except KeyboardInterrupt:
             logger.info("\nInterrupted by user.")
+            quit_requested = True
         finally:
             cap.release()
             if writer is not None:
@@ -1083,11 +1119,9 @@ class AsyncRunner:
             if _has_display():
                 cv2.destroyAllWindows()
 
-        elapsed = time.perf_counter() - start
-        if frame_count > 0:
-            print_sync_performance_summary(
-                metrics, frame_count, elapsed,
-                display or self._save)
+        return {"metrics": metrics, "count": frame_count,
+                "elapsed": time.perf_counter() - start,
+                "quit_requested": quit_requested}
 
     def _run_image_sr(self, image_path: str, display: bool) -> None:
         """SR tiled path for a single image (mirrors sync runner _run_image_sr_tiled)."""
