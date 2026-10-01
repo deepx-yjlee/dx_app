@@ -16,6 +16,7 @@
 #define RETRIEVAL_VISUALIZER_HPP
 
 #include "common/base/i_visualizer.hpp"
+#include "common/utility/repo_path.hpp"
 
 #include <algorithm>
 #include <cstdio>
@@ -27,11 +28,16 @@ namespace dxapp {
 
 namespace retrieval_vis_detail {
 
-/// Resolve a repo-relative gallery path: as given, then from successive parents of the
-/// working directory. Plain ifstream probing rather than <filesystem>, because this
-/// tree still builds as C++14 on some targets.
+/// Resolve a repo-relative gallery path: as given, then under the repository
+/// (PROJECT_ROOT_DIR, as resolveGalleryFile opens the gallery itself), then from
+/// successive parents of the working directory. Plain ifstream probing rather than
+/// <filesystem>, because this tree still builds as C++14 on some targets.
 inline std::string resolvePath(const std::string& path) {
     if (std::ifstream(path).good()) return path;
+#if defined(PROJECT_ROOT_DIR)
+    const std::string rooted = ResolveRepoRelative(path);
+    if (!rooted.empty() && std::ifstream(rooted).good()) return rooted;
+#endif
     std::string prefix = "../";
     for (int depth = 0; depth < 8; ++depth) {
         const std::string candidate = prefix + path;

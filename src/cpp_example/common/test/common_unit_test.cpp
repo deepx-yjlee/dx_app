@@ -38,6 +38,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <system_error>
 #include <thread>
 #include <vector>
 
@@ -75,6 +76,7 @@
 #include "common/utility/run_dir.hpp"
 #include "common/utility/sr_tiling.hpp"
 #include "common/utility/verify_serialize.hpp"
+#include "common/visualizers/retrieval_visualizer.hpp"
 // header-only so this binary tests the CLI's own handler (see its file comment)
 #include "multi_model_graph/graph_cli_interrupt.hpp"
 #include "panoptic_driving_perception/yolopv2/yolopv2_384x640/factory/yolopv2_384x640_factory.hpp"
@@ -1114,6 +1116,48 @@ std::string MakeTempDir(const std::string& tag) {
     fs::remove_all(dir);
     fs::create_directories(dir);
     return dir.string();
+}
+
+/// Changes the working directory for one scope and restores it on exit.
+class ScopedCurrentPath {
+public:
+    explicit ScopedCurrentPath(const std::string& dir) : saved_(fs::current_path()) {
+        fs::current_path(dir);
+    }
+    ~ScopedCurrentPath() {
+        std::error_code ignored;
+        fs::current_path(saved_, ignored);
+    }
+    ScopedCurrentPath(const ScopedCurrentPath&) = delete;
+    ScopedCurrentPath& operator=(const ScopedCurrentPath&) = delete;
+
+private:
+    fs::path saved_;
+};
+
+// N6: a gallery names its images repo-relative ("sample/reid/gallery/...").
+// The retrieval visualizer opens them as resolveGalleryFile opens the gallery:
+// as given, else under PROJECT_ROOT_DIR, so a run from outside the
+// repository still shows its thumbnails.
+void TestRetrievalThumbnailsResolveAgainstTheRepository() {
+    const std::string image = "sample/img/sample_dog.jpg";
+    const std::string root = PROJECT_ROOT_DIR;
+    COMMON_CHECK(std::ifstream(root + "/" + image).good());
+    const std::string elsewhere = MakeTempDir("retrieval_cwd");
+    {
+        ScopedCurrentPath cwd(elsewhere);
+        COMMON_CHECK(!std::ifstream(image).good());
+        COMMON_CHECK(dxapp::retrieval_vis_detail::resolvePath(image) == root + "/" + image);
+        // Absent everywhere: returned as given, for the "missing" tile.
+        COMMON_CHECK(dxapp::retrieval_vis_detail::resolvePath("sample/no_such.jpg") ==
+                     "sample/no_such.jpg");
+    }
+    {
+        // Found as given: kept as given.
+        ScopedCurrentPath cwd(root);
+        COMMON_CHECK(dxapp::retrieval_vis_detail::resolvePath(image) == image);
+    }
+    fs::remove_all(elsewhere);
 }
 
 // U-75: a graph stage's config.json is optional; without one the factory's
@@ -2188,6 +2232,7 @@ int main() {
     TestModelConfigAgreesWithAJsonParserOnEveryShape();
     TestModelConfigAgreesWithAJsonParserOnEveryShippedConfig();
     TestLoadOptionalConfigIsSilentWithoutAFile();
+    TestRetrievalThumbnailsResolveAgainstTheRepository();
     TestLoadOptionalConfigWarnsOnAnUnreadableFile();
 
     std::printf("%d checks, %d failures, %d skipped\n",
