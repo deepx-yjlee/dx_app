@@ -166,7 +166,7 @@ IMAGE_ONLY_TASKS: frozenset = frozenset({
 # ======================================================================
 # Video E2E skips only these models (U-32): the W6 face detectors run at
 # ~3-20 s/frame (TTA ~125 s/frame) on aarch64, so the 478-frame clip cannot
-# finish inside the 900 s bound. Every other face model runs the video
+# finish inside VIDEO_RUN_TIMEOUT_S (2000 s). Every other face model runs the video
 # tests like any detector.
 # ======================================================================
 VIDEO_TOO_SLOW_MODELS: frozenset = frozenset({"yolov7-w6-face_960x960", "yolov7-w6-face_1280x1280_tta"})

@@ -9,11 +9,13 @@ import ast
 import json
 import re
 import subprocess
-import sys
 
 import pytest
 
 from conftest import PROJECT_ROOT, resolve_bin_dir
+
+# conftest.py puts tests/ on sys.path.
+from test_helpers.proc import example_python, run_bounded  # noqa: E402
 
 MODEL_DIR = PROJECT_ROOT / "assets" / "models"
 CPP_PIPELINE = PROJECT_ROOT / "src" / "cpp_example" / "multi_model" / "dms_clip" / "pipeline.json"
@@ -43,16 +45,16 @@ def test_dms_head_pose_matches_the_python_runtime(tmp_path):
         pytest.skip("{} not downloaded".format(model))
     args = ["--pipeline", str(pipeline), "--image", str(IMAGE), "--models-dir", str(MODEL_DIR)]
 
-    cpp = subprocess.run([str(binary)] + args, cwd=str(PROJECT_ROOT), stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE, universal_newlines=True, timeout=120)
+    cpp = run_bounded([str(binary)] + args, cwd=str(PROJECT_ROOT), capture_output=True,
+                      universal_newlines=True, timeout=120)
     assert cpp.returncode == 0, cpp.stdout + cpp.stderr
     found = re.search(r"faces=(\d+).*headpose=pitch=(\S+),yaw=(\S+),roll=(\S+)", cpp.stdout)
     assert found, cpp.stdout
     assert int(found.group(1)) > 0, cpp.stdout
     theirs = tuple(float(value) for value in found.groups()[1:])
 
-    python = subprocess.run(
-        [sys.executable, "multi_model/run_pipeline.py"] + args, cwd=str(PY_EXAMPLE),
+    python = run_bounded(
+        [example_python(), "multi_model/run_pipeline.py"] + args, cwd=str(PY_EXAMPLE),
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, timeout=120)
     assert python.returncode == 0, python.stdout
     line = re.search(r"face_headpose (\{.*\})", python.stdout)
