@@ -43,11 +43,12 @@ from test_helpers.utils import (  # noqa: E402
 # ======================================================================
 CPP_VIS_DIR = VIS_RESULT_DIR / "cpp_example"
 
-# Tasks whose output is a feature vector, not a rendered image: the run is
-# still checked (rc 0), the image check is skipped - as in test_save_mode.py.
-# (EmbeddingVisualizer keeps the first image as its reference and draws
-# nothing for it, so a single -i image never produces a picture.)
-NO_VISUAL_OUTPUT_TASKS = {"embedding", "reid"}
+# A comparison visualizer (EmbeddingVisualizer: ArcFace, CasViT Re-ID, ...)
+# keeps the first image as its reference and draws nothing for it, so a single
+# -i image never produces a picture. The embedding runners say so on stderr
+# (sync_embedding_runner.hpp / async_embedding_runner.hpp), and only then is a
+# missing image expected; the run itself is still checked (rc 0).
+REFERENCE_FRAME_WARNING = "this task compares against a reference"
 
 
 # ======================================================================
@@ -115,8 +116,11 @@ class TestCppVisualization:
             f"STDERR: {result.stderr[-500:]}"
         )
 
-        if task in NO_VISUAL_OUTPUT_TASKS:
-            pytest.skip(f"[{task}] produces a feature vector, no output image to verify")
+        if not output_image.exists() and REFERENCE_FRAME_WARNING in result.stderr:
+            pytest.skip(
+                "the runner reports a reference-frame visualizer: a single -i image "
+                "becomes the reference, nothing is rendered"
+            )
 
         assert output_image.exists(), (
             f"Visualization image not saved: {output_image}\n"
@@ -125,6 +129,13 @@ class TestCppVisualization:
         assert output_image.stat().st_size > 0, (
             f"Visualization image is empty: {output_image}"
         )
+
+    def test_embedding_runners_print_the_reference_frame_warning(self):
+        """The skip above keys on this stderr line; both embedding runners print it."""
+        runner_dir = PROJECT_ROOT / "src" / "cpp_example" / "common" / "runner"
+        for name in ("sync_embedding_runner.hpp", "async_embedding_runner.hpp"):
+            text = (runner_dir / name).read_text(encoding="utf-8")
+            assert REFERENCE_FRAME_WARNING in text, name
 
     def test_visualization_prerequisites(self):
         """Sanity: required directories and registry exist."""

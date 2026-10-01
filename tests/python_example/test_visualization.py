@@ -14,6 +14,7 @@ Output directory (pytest):
 Standalone mode (``python test_visualization.py``):
   Same output structure, inline progress report.
 """
+import ast
 import os
 import subprocess
 import sys
@@ -69,11 +70,50 @@ def _build_vis_params():
 
 DISCOVERED = _build_vis_params()
 
-# Tasks whose output is a feature vector, not a rendered image. Their
-# EmbeddingVisualizer keeps the first image as its reference and draws nothing
-# for it, so a single --image never produces a picture: the run is still
-# checked (rc 0), the image check is skipped (as in the C++ suite).
-NO_VISUAL_OUTPUT_TASKS = {"embedding", "reid"}
+# A comparison visualizer (``NEEDS_REFERENCE``, e.g. EmbeddingVisualizer for
+# ArcFace / CasViT Re-ID) keeps the first image as its reference and draws
+# nothing for it, so a single --image never produces a picture. Which variants
+# do that is read from the variant's own factory, in a child process (every
+# variant ships a package named ``factory``), the way its entry script builds
+# it: ``<Factory>(variant=<dir>).create_visualizer()``.
+_REFERENCE_PROBE = """
+import sys
+from pathlib import Path
+script = Path(sys.argv[1]).resolve()
+for cursor in (script.parent, *script.parents):
+    if (cursor / "common" / "runner" / "entry.py").is_file():
+        sys.path.insert(0, str(cursor))
+        break
+from common.runner.entry import install_import_paths
+install_import_paths(script)
+import factory
+vis = getattr(factory, sys.argv[2])(variant=script.parent.name).create_visualizer()
+print(type(vis).__name__ if getattr(vis, "NEEDS_REFERENCE", False) else "")
+"""
+
+
+def _factory_class_name(script_path: Path) -> Optional[str]:
+    """``X`` of the entry script's ``from factory import X``."""
+    tree = ast.parse(Path(script_path).read_text(encoding="utf-8"))
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and node.module == "factory":
+            return node.names[0].name
+    return None
+
+
+def reference_visualizer(script_path: Path, env: dict) -> Optional[str]:
+    """Name of the script's visualizer class if it needs a reference image, else None."""
+    factory_cls = _factory_class_name(script_path)
+    if factory_cls is None:
+        return None
+    probe = subprocess.run(
+        [example_python(), "-c", _REFERENCE_PROBE, str(script_path), factory_cls],
+        capture_output=True, text=True, timeout=60, env=env, cwd=str(PROJECT_ROOT),
+    )
+    assert probe.returncode == 0, (
+        f"cannot build the visualizer of {script_path.name}: {probe.stderr[-500:]}"
+    )
+    return probe.stdout.strip() or None
 
 VIS_PARAMS = [
     pytest.param(task, name, script, model, mode, img, id=script.stem)
@@ -132,8 +172,13 @@ class TestPythonVisualization:
             f"STDERR: {result.stderr[-500:]}"
         )
 
-        if task in NO_VISUAL_OUTPUT_TASKS:
-            pytest.skip(f"[{task}] produces a feature vector, no output image to verify")
+        if not output_image.exists():
+            ref_vis = reference_visualizer(script_path, env)
+            if ref_vis:
+                pytest.skip(
+                    f"{ref_vis}.NEEDS_REFERENCE (factory create_visualizer()): "
+                    f"a single --image becomes the reference, nothing is rendered"
+                )
 
         assert output_image.exists(), (
             f"Visualization image not saved: {output_image}\n"
@@ -142,6 +187,19 @@ class TestPythonVisualization:
         assert output_image.stat().st_size > 0, (
             f"Visualization image is empty: {output_image}"
         )
+
+    def test_reference_visualizer_is_read_from_the_factory(self):
+        """No model, no NPU: the skip above is derived from each variant's factory."""
+        py = PROJECT_ROOT / "src" / "python_example"
+        env = setup_environment(extra_lib_dirs=[_DX_RT_LIB])
+        arcface = py / "face_recognition/arcface/arcface_mobilefacenet_112x112"
+        casvit = py / "image_classification/casvit/casvit-t_224x224"
+        resnet = py / "image_classification/resnet/resnet101_224x224"
+        assert reference_visualizer(
+            arcface / "arcface_mobilefacenet_112x112_sync.py", env) == "EmbeddingVisualizer"
+        assert reference_visualizer(
+            casvit / "casvit-t_224x224_async_cpp_postprocess.py", env) == "EmbeddingVisualizer"
+        assert reference_visualizer(resnet / "resnet101_224x224_sync.py", env) is None
 
     def test_visualization_prerequisites(self):
         """Sanity: count discoverable Python models."""
