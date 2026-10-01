@@ -16,6 +16,7 @@
 - Fixed the example tests looking up a model's task on the old flat layout; they read it from the task/family/variant tree
 - Fixed examples run without `-m` not finding their own model (C++ and Python, [SDKREQ-529](https://deepx.atlassian.net/browse/SDKREQ-529))
 - Fixed retrieval/re-id thumbnails and `--check` gallery paths depending on the working directory; both resolve against the repository
+- Fixed the Python `run_pipeline.py` head pose of `dms_clip` pairing the face landmarks with the wrong points of its 3D face model (for example pitch -101.8°, roll 122.0° for a turned head); it now takes the landmarks in the face result's order (left eye, right eye, nose, left mouth, right mouth), as `multi_model_run` does, and both report the same pitch, yaw and roll
 ### 3. Added
 - Multi-model graph engine: a node-graph JSON of registry models wired by frame, ROI and image hand-off edges; CLI `multi_model_graph_sync` / `multi_model_graph_async` (`--check` without the NPU, `--list-models`, `--report`) and the Python module `dx_graph`; sync and async reports are byte-identical
 - Shipped sample graphs, including `hand_cascade.json` and `worker_safety.json` (worker_safety as structure only, see Known issues)

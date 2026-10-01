@@ -13,12 +13,15 @@ import numpy as np
 
 from .binds import largest_box_result
 
-# Nose, left eye, right eye, left mouth, right mouth, in millimetres.
+# A face model in millimetres, in the order of a FaceResult's 5 keypoints:
+# left eye, right eye, nose, left mouth, right mouth (the C++ multi_model_run
+# uses the same points in the same order). solvePnP pairs the i-th model
+# point with the i-th keypoint.
 _FACE_MODEL_POINTS = np.array(
     [
-        [0.0, 0.0, 0.0],
         [-30.0, -30.0, -30.0],
         [30.0, -30.0, -30.0],
+        [0.0, 0.0, 0.0],
         [-25.0, 30.0, -20.0],
         [25.0, 30.0, -20.0],
     ],
