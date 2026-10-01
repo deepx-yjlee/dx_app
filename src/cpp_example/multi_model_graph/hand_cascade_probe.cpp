@@ -48,6 +48,19 @@
 
 namespace {
 
+// Sends std::cout to std::cerr for its lifetime, so stdout carries the JSON
+// report only. The runner and the stages print progress lines on stdout.
+class StdoutToStderr {
+public:
+    StdoutToStderr() : saved_(std::cout.rdbuf(std::cerr.rdbuf())) {}
+    ~StdoutToStderr() { std::cout.rdbuf(saved_); }
+    StdoutToStderr(const StdoutToStderr&) = delete;
+    StdoutToStderr& operator=(const StdoutToStderr&) = delete;
+
+private:
+    std::streambuf* saved_;
+};
+
 struct Options {
     std::string pipeline;
     std::string image;
@@ -254,15 +267,9 @@ int main(int argc, char** argv) {
         //    go to stdout, so they are sent to stderr to keep stdout JSON only.
         std::string countLine;
         {
-            std::streambuf* saved = std::cout.rdbuf(std::cerr.rdbuf());
-            try {
-                dxapp::MultiModelRunner runner(options.pipeline, options.modelsDir);
-                countLine = runner.runFrame(frame);
-            } catch (...) {
-                std::cout.rdbuf(saved);
-                throw;
-            }
-            std::cout.rdbuf(saved);
+            const StdoutToStderr quiet;
+            dxapp::MultiModelRunner runner(options.pipeline, options.modelsDir);
+            countLine = runner.runFrame(frame);
         }
         int runnerPalms = -1;
         int runnerHands = -1;
@@ -280,12 +287,18 @@ int main(int argc, char** argv) {
                       << std::endl;
             return 1;
         }
-        const std::unique_ptr<dxapp::IStage> palmStage = dxapp::createRegisteredStage(
-            palmSpec.task, palmSpec.family, palmSpec.variant, palmSpec.id,
-            joinPath(options.modelsDir, palmSpec.model));
-        const std::unique_ptr<dxapp::IStage> landmarkStage = dxapp::createRegisteredStage(
-            landmarkSpec.task, landmarkSpec.family, landmarkSpec.variant, landmarkSpec.id,
-            joinPath(options.modelsDir, landmarkSpec.model));
+        // Each stage loads its variant's config.json, which reports on stdout.
+        std::unique_ptr<dxapp::IStage> palmStage;
+        std::unique_ptr<dxapp::IStage> landmarkStage;
+        {
+            const StdoutToStderr quiet;
+            palmStage = dxapp::createRegisteredStage(
+                palmSpec.task, palmSpec.family, palmSpec.variant, palmSpec.id,
+                joinPath(options.modelsDir, palmSpec.model));
+            landmarkStage = dxapp::createRegisteredStage(
+                landmarkSpec.task, landmarkSpec.family, landmarkSpec.variant, landmarkSpec.id,
+                joinPath(options.modelsDir, landmarkSpec.model));
+        }
 
         const dxapp::StageOutput palms = palmStage->run(frame);
         int palmCount = 0;
