@@ -42,10 +42,13 @@ line per node (`note: node "od": "yolov8n" is the old name of
 stderr, and the table at the end of `docs/graph_models.md` lists every old
 name. The shipped samples use variant names.
 
-**Model files**: `./setup.sh --models` downloads the model zoo's current
-release, `q-lite-dxnn/2_5_0`, for 493 of the 499 models. Those files are
-`.dxnn` container **v9**; this release needs DX-RT 3.5.0 or later, the first
-runtime that loads them. Every graph path checks the container before it
+**Model files**: `./setup.sh --models` downloads 498 of the 499 models: 492
+from the model zoo's current release, `q-lite-dxnn/2_5_0`, and 6 that 2_5_0
+does not publish from `2_4_0` (`SCRFD500M_PPU`, `YOLOV5Pose_PPU`,
+`beit-l-p16_384x384`, `levit-128s_224x224`, `vit-b-p16_384x384`,
+`vit-t-p16_224x224`); `vit-l-p16_512x512_swag` is not published yet. The
+2_5_0 files are `.dxnn` container **v9**; this release needs DX-RT 3.5.0 or
+later, the first runtime that loads them. Every graph path checks the container before it
 creates an engine, so on an older DX-RT it stops with
 
 ```text
@@ -522,7 +525,7 @@ ERROR [CODE] <where>: <what>
 
 There are twelve codes. `GRAPH_EDGE` and `GRAPH_SCHEMA` have a second row
 each, for edge ports and node params. Each example below is real output from
-`--check`, except the four marked otherwise.
+`--check`, except the three marked otherwise.
 
 | Code | When | Example |
 |---|---|---|
@@ -1148,10 +1151,10 @@ knows for the factory's result type (`UNKNOWN PORT`).
 
 `vitpose-s_256x192` also decodes its output as the 17 VitPose heatmaps it
 is, as the Python example does, where it used to run a YOLOv8-pose decoder.
-Its C++ and Python keypoints agree to within 2e-5. It no longer reads
+Its C++ and Python keypoints agree to within 2.1e-5 px. It no longer reads
 `score_threshold` or `nms_threshold`. `dark-hrnet-w32_256x192` got the same
-decoder fix; it is covered by a unit test on a synthetic heatmap only,
-because no `.dxnn` of it could be run here.
+decoder fix, and its C++ and Python keypoints agree to the same 2.1e-5 px
+on its v9 `.dxnn`.
 
 ## Your own registry (`IModelRegistry`)
 
