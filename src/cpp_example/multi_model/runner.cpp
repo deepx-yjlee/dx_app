@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cmath>
+#include <map>
 #include <sstream>
 
 namespace dxapp {
@@ -54,10 +55,14 @@ std::string baseName(const std::string& path) {
     return path.substr(slash + 1);
 }
 
+// The stage's .dxnn path. A miss names the stage, its variant, every path
+// tried, and how to get the file: ./setup.sh --models <the .dxnn stem> for
+// the variant's model-zoo file, --models-dir for any other file.
 std::string resolveModelFile(
-    const std::string& filename,
+    const StageSpec& spec,
     const std::string& pipelinePath,
     const std::string& modelsDir) {
+    const std::string& filename = spec.model;
     if (!filename.empty() && filename[0] == '/' && fileExists(filename)) {
         return filename;
     }
@@ -89,11 +94,19 @@ std::string resolveModelFile(
             return candidates[i];
         }
     }
-    std::ostringstream searched;
+    std::ostringstream message;
+    message << "stage '" << spec.id << "' (variant " << spec.variant << "): model '"
+            << filename << "' was not found. Searched:";
     for (std::size_t i = 0; i < candidates.size(); ++i) {
-        searched << "\n  " << candidates[i];
+        message << "\n  " << candidates[i];
     }
-    throw PipelineError("model '" + filename + "' was not found. Searched:" + searched.str());
+    if (filename == spec.variant + ".dxnn") {
+        message << "\n  -> Download: ./setup.sh --models " << spec.variant;
+    } else {
+        message << "\n  -> '" << filename << "' is not the variant's model-zoo file;"
+                << " put it in --models-dir";
+    }
+    throw PipelineError(message.str());
 }
 
 double boxArea(const std::vector<float>& box) {
@@ -575,12 +588,21 @@ std::string fuseOutputs(
 
 MultiModelRunner::MultiModelRunner(const std::string& pipelinePath, const std::string& modelsDir)
     : pipeline_(loadPipeline(pipelinePath)) {
+    // Every model is found before any engine opens, so a missing file fails
+    // fast, whichever stage it belongs to.
+    std::map<std::string, std::string> modelPaths;
+    for (std::size_t i = 0; i < pipeline_.stages.size(); ++i) {
+        const StageSpec& spec = pipeline_.stages[i];
+        if (spec.kind == "npu") {
+            modelPaths[spec.id] = resolveModelFile(spec, pipelinePath, modelsDir);
+        }
+    }
     for (std::size_t i = 0; i < pipeline_.stages.size(); ++i) {
         const StageSpec& spec = pipeline_.stages[i];
         if (spec.kind != "npu") {
             continue;
         }
-        const std::string modelPath = resolveModelFile(spec.model, pipelinePath, modelsDir);
+        const std::string& modelPath = modelPaths[spec.id];
         stages_[spec.id] = createRegisteredStage(spec.task, spec.family, spec.variant, spec.id, modelPath);
         std::cout << "[DXAPP] [INFO] stage ready: " << spec.id
                   << " variant=" << spec.variant
