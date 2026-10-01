@@ -99,10 +99,13 @@ namespace detail {
  * Called on the path an engine is about to be created from (TypedStage,
  * MakeRestorationStage), so a v9 file on DX-RT < 3.5.0 fails with one
  * clear sentence before dxrt opens anything (spec section 4, R12).
+ *
+ * `runtime` is the DX-RT version to check against; the one-argument form
+ * passes the running one (dxrt::Configuration::GetVersion()).
  */
-inline const std::string& LoadableModelPath(const std::string& model_path) {
-    const std::string error =
-        ContainerLoadError(model_path, dxrt::Configuration::GetInstance().GetVersion());
+inline const std::string& LoadableModelPath(const std::string& model_path,
+                                            const std::string& runtime) {
+    const std::string error = ContainerLoadError(model_path, runtime);
     if (!error.empty()) {
         uint32_t version = 0;
         std::string unread;
@@ -110,6 +113,10 @@ inline const std::string& LoadableModelPath(const std::string& model_path) {
         throw ModelContainerError(error, ContainerSupportHint(version));
     }
     return model_path;
+}
+
+inline const std::string& LoadableModelPath(const std::string& model_path) {
+    return LoadableModelPath(model_path, dxrt::Configuration::GetInstance().GetVersion());
 }
 
 /**

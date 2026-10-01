@@ -11195,41 +11195,86 @@ void TestContainerSupportRefusesV9BelowDxrt350() {
     std::remove(v8.c_str());
 }
 
-// The stage makers refuse a v9 file on this runtime before they open an
-// engine: a typed stage (yolov8-n) and a restoration stage (espcn-x2, the
-// tiled-SR maker). The file is only a header, so no engine is ever created
-// on DX-RT < 3.5.0; on 3.5.0 dxrt rejects the stub with its own error.
+// A registry whose stages check the .dxnn container against a fixed DX-RT
+// version ("3.4.1") instead of the running one, before the real registry
+// makes the stage: Build's MODEL_LOAD path for a v9 file is then the same on
+// every runtime, and no engine is opened on the header-only stub.
+namespace {
+class PinnedRuntimeRegistry : public IModelRegistry {
+ public:
+    PinnedRuntimeRegistry(const IModelRegistry& inner, const std::string& runtime)
+        : inner_(inner), runtime_(runtime) {}
+    const ModelInfo* find(const std::string& model_name) const override {
+        return inner_.find(model_name);
+    }
+    std::vector<ModelInfo> list() const override { return inner_.list(); }
+    std::vector<ModelAlias> aliases() const override { return inner_.aliases(); }
+    std::unique_ptr<IStage> createStage(const std::string& model_name,
+                                        const std::string& model_path,
+                                        const StageParams& params) const override {
+        return inner_.createStage(
+            model_name, dxapp::graph::detail::LoadableModelPath(model_path, runtime_), params);
+    }
+
+ private:
+    const IModelRegistry& inner_;
+    std::string runtime_;
+};
+}  // namespace
+
+// A v9 file is refused before an engine is opened (spec section 4, R12).
+// LoadableModelPath is checked against DX-RT 3.4.1 on every runtime; the
+// real stage makers - a typed stage (yolov8-n) and a restoration stage
+// (espcn-x2, the tiled-SR maker) - only where the running DX-RT refuses v9
+// itself, since on 3.5.0 they would open an engine on the header-only stub.
 void TestAStageRefusesAV9FileBeforeOpeningAnEngine() {
-    const std::string runtime = dxrt::Configuration::GetInstance().GetVersion();
-    const std::string expected = ContainerSupportError(9, runtime);
+    const std::string pinned = "3.4.1";
+    const std::string v9_on_341 = ContainerSupportError(9, pinned);
+    const std::string v9_hint = "use the v8 file (dxnn/2_4_0) or upgrade DX-RT to >= 3.5.0";
+    GRAPH_CHECK(!v9_on_341.empty());
     const std::string v9 = WriteScratchBytes("stage_v9.dxnn", ContainerHeader(9));
-    StaticModelRegistry registry;
-    const char* models[] = {"yolov8-n_640x640", "espcn-x2_17x17"};
-    for (std::size_t m = 0; m < sizeof(models) / sizeof(models[0]); ++m) {
+    const std::string v8 = WriteScratchBytes("stage_v8.dxnn", ContainerHeader(8));
+    {
         std::string message;
-        std::string container_message;
         std::string hint;
         try {
-            registry.createStage(models[m], v9, StageParams());
+            dxapp::graph::detail::LoadableModelPath(v9, pinned);
         } catch (const ModelContainerError& error) {
-            // I3: the registry passes the container refusal through as its
-            // own type, so Build can tell it from a device failure.
-            message = container_message = error.what();
-            hint = error.hint();
-        } catch (const std::exception& error) {
             message = error.what();
+            hint = error.hint();
         }
-        GRAPH_CHECK(!message.empty());
-        if (!expected.empty()) {
+        GRAPH_CHECK(message == v9 + ": " + v9_on_341);
+        GRAPH_CHECK(hint == v9_hint);
+        GRAPH_CHECK(dxapp::graph::detail::LoadableModelPath(v9, "3.5.0") == v9);
+        GRAPH_CHECK(dxapp::graph::detail::LoadableModelPath(v8, pinned) == v8);
+    }
+    std::remove(v8.c_str());
+
+    StaticModelRegistry registry;
+    const std::string running = dxrt::Configuration::GetInstance().GetVersion();
+    const std::string expected = ContainerSupportError(9, running);
+    if (!expected.empty()) {
+        const char* models[] = {"yolov8-n_640x640", "espcn-x2_17x17"};
+        for (std::size_t m = 0; m < sizeof(models) / sizeof(models[0]); ++m) {
+            std::string container_message;
+            std::string hint;
+            try {
+                registry.createStage(models[m], v9, StageParams());
+            } catch (const ModelContainerError& error) {
+                // I3: the registry passes the container refusal through as
+                // its own type, so Build can tell it from a device failure.
+                container_message = error.what();
+                hint = error.hint();
+            } catch (const std::exception&) {
+            }
             GRAPH_CHECK(container_message == v9 + ": " + expected);
-            GRAPH_CHECK(hint == "use the v8 file (dxnn/2_4_0) or upgrade DX-RT to >= 3.5.0");
+            GRAPH_CHECK(hint == v9_hint);
         }
     }
     std::remove(v9.c_str());
 
     // StageGraph::Build turns it into MODEL_LOAD with that hint and no
     // download line: ./setup.sh --models would fetch the same v9 file.
-    if (expected.empty()) return;
     const std::string dir = ScratchPath("v9_models");
     ::mkdir(dir.c_str(), 0700);
     const std::string file = dir + "/yolov8-n_640x640.dxnn";
@@ -11244,11 +11289,12 @@ void TestAStageRefusesAV9FileBeforeOpeningAnEngine() {
         "{\"id\":\"od\",\"model\":\"yolov8n\"}],"
         "\"edges\":[{\"from\":\"cam\",\"to\":\"od\"}]}",
         "v9.json");
+    const PinnedRuntimeRegistry on_341(registry, pinned);
     std::string built;
     GraphErrorCode code = GraphErrorCode::kGraphSchema;
     try {
         StageGraph graph;
-        graph.Build(spec, registry, dir);
+        graph.Build(spec, on_341, dir);
     } catch (const GraphError& error) {
         built = error.what();
         code = error.code();
@@ -11256,9 +11302,8 @@ void TestAStageRefusesAV9FileBeforeOpeningAnEngine() {
     GRAPH_CHECK(code == GraphErrorCode::kModelLoad);
     GRAPH_CHECK(built.find("ERROR [MODEL_LOAD] node \"od\": model \"yolov8n\" "
                            "(yolov8-n_640x640.dxnn) could not be loaded: " + file + ": " +
-                           expected) == 0);
-    GRAPH_CHECK(built.find("\n  -> use the v8 file (dxnn/2_4_0) or upgrade DX-RT to >= 3.5.0") !=
-                std::string::npos);
+                           v9_on_341) == 0);
+    GRAPH_CHECK(built.find("\n  -> " + v9_hint) != std::string::npos);
     GRAPH_CHECK(built.find("setup.sh") == std::string::npos);
     GRAPH_CHECK(built.find("dxrt-cli -s") == std::string::npos);
     std::remove(file.c_str());
