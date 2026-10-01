@@ -70,6 +70,7 @@
 #include "common/processors/serialized_postprocessor.hpp"
 #include "common/third_party/nlohmann_json.hpp"
 #include "common/utility/common_util.hpp"
+#include "common/utility/frame_reorder.hpp"
 #include "common/utility/labels.hpp"
 #include "common/utility/ordered_queue.hpp"
 #include "common/utility/roi_crop.hpp"
@@ -1659,6 +1660,36 @@ void TestOrderedQueueHoldsMoveOnlyItems() {
     COMMON_CHECK(q.try_pop(out, Ms(10)) && out && *out == 7);
 }
 
+struct ReorderItem {
+    uint64_t frame_index;
+};
+
+// I23: an index that arrives after the cap force-flushed past it is emitted
+// at once, and it does not stay at begin() holding every later frame back
+// until drain() (2eb1350e's frame_reorder.hpp fix).
+void TestFrameReorderEmitsALateIndexAfterAGapFlush() {
+    dxapp::FrameReorderBuffer<ReorderItem> reorder(2);
+    std::vector<uint64_t> emitted;
+    auto emit = [&emitted](ReorderItem& item) { emitted.push_back(item.frame_index); };
+
+    // Index 0 is late: 1, 2 wait for it; 3 exceeds the cap and flushes 1..3.
+    for (uint64_t i = 1; i <= 3; ++i) reorder.push(ReorderItem{i}, emit);
+    COMMON_CHECK((emitted == std::vector<uint64_t>{1, 2, 3}));
+
+    // The late 0 is emitted at once.
+    reorder.push(ReorderItem{0}, emit);
+    COMMON_CHECK((emitted == std::vector<uint64_t>{1, 2, 3, 0}));
+
+    // begin() is not pinned by it: the next in-order index flows straight out.
+    reorder.push(ReorderItem{4}, emit);
+    COMMON_CHECK((emitted == std::vector<uint64_t>{1, 2, 3, 0, 4}));
+
+    // Nothing is left behind for drain().
+    std::size_t drained = 0;
+    reorder.drain([&drained](ReorderItem&) { ++drained; });
+    COMMON_CHECK(drained == 0);
+}
+
 void TestVitPoseDecodesHeatmapPeaksToTheOriginalImage() {
     const int K = 17, H = 4, W = 3;
     std::vector<float> heat(K * H * W, 0.f);
@@ -2209,6 +2240,7 @@ int main() {
     TestOrderedQueueShutdownDeliversOnlyTheUnbrokenPrefix();
     TestOrderedQueueNeverDeadlocksWhenProducersWaitBehindAMissingFrame();
     TestOrderedQueueHoldsMoveOnlyItems();
+    TestFrameReorderEmitsALateIndexAfterAGapFlush();
 
     TestVitPoseDecodesHeatmapPeaksToTheOriginalImage();
     TestVitPoseNameAndEmptyOutput();
