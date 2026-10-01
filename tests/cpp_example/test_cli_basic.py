@@ -127,5 +127,29 @@ def test_no_arguments(executable, bin_dir):
     )
 
 
+DEFAULT_MODEL_EXAMPLE = "yolov8-n_640x640_sync"
+DEFAULT_MODEL_PATH = "assets/models/yolov8-n_640x640.dxnn"
+
+
+@pytest.mark.e2e
+def test_example_without_model_option_runs_its_default_model(bin_dir):
+    """SDKREQ-529: with -m omitted the example loads its own variant's model
+    from the registry. Skipped when the binary or the model is absent (a
+    missing model would start the auto-downloader)."""
+    executable_path = binary_path(bin_dir, DEFAULT_MODEL_EXAMPLE)
+    if not executable_path.exists():
+        pytest.skip(f"Executable not found: {executable_path}")
+    if not (PROJECT_ROOT / DEFAULT_MODEL_PATH).is_file():
+        pytest.skip(f"{DEFAULT_MODEL_PATH} not downloaded")
+
+    result = run_bounded(
+        [str(executable_path), "-i", "sample/img/sample_dog.jpg", "--no-display"],
+        cwd=str(PROJECT_ROOT), capture_output=True, text=True, timeout=120,
+        env=setup_environment())
+    text = result.stdout + result.stderr
+    assert result.returncode == 0, text[-2000:]
+    assert "Using example default: " + DEFAULT_MODEL_PATH in text, text[-2000:]
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
