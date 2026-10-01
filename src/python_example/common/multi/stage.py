@@ -70,7 +70,32 @@ def resolve_model_file(
         seen.add(resolved)
         if resolved.is_file():
             return resolved
-    searched = "\n  ".join(str(path) for path in candidates[:8])
+    searched = "\n  ".join(str(path) for path in candidates)
     raise FileNotFoundError(
         f"model {filename!r} was not found. Searched:\n  {searched}"
     )
+
+
+def resolve_stage_model(
+    spec: StageSpec,
+    pipeline_dir: Path | None = None,
+    models_dir: Path | None = None,
+) -> Path:
+    """The stage's ``.dxnn`` path, as :func:`resolve_model_file` finds it.
+
+    A miss raises :class:`PipelineError` naming the stage, its variant, every
+    path tried, and how to get the file: ``./setup.sh --models <variant>`` for
+    the variant's model-zoo file (its ``.dxnn`` stem), ``--models-dir`` for any
+    other file. Same message as the C++ ``multi_model_run``.
+    """
+    try:
+        return resolve_model_file(spec.model, pipeline_dir, models_dir)
+    except FileNotFoundError as exc:
+        if spec.model == spec.variant + ".dxnn":
+            hint = f"-> Download: ./setup.sh --models {spec.variant}"
+        else:
+            hint = (f"-> {spec.model!r} is not the variant's model-zoo file;"
+                    " put it in --models-dir")
+        raise PipelineError(
+            f"stage {spec.id!r} (variant {spec.variant}): {exc}\n  {hint}"
+        ) from exc

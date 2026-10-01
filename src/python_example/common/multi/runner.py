@@ -14,7 +14,7 @@ from .cpu_ops import CPU_OPS
 from .factory import MultiModelFactory
 from .fusers import fuse_outputs
 from .pipeline import PipelineError, StageSpec, execution_waves
-from .stage import resolve_model_file
+from .stage import resolve_stage_model
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +62,7 @@ class MultiModelRunner:
         self.factory = factory
         self.models_dir = Path(models_dir) if models_dir else None
         self._engines: dict[str, _NpuStage] = {}
+        self._model_paths: dict[str, Path] | None = None
 
     @classmethod
     def from_json(
@@ -106,10 +107,24 @@ class MultiModelRunner:
         cached = self._engines.get(spec.id)
         if cached is not None:
             return cached
-        pipeline_dir: Optional[Path] = self.factory.pipeline.path
-        pipeline_dir = pipeline_dir.parent if pipeline_dir is not None else None
-        model_path = resolve_model_file(spec.model, pipeline_dir, self.models_dir)
+        model_path = self._stage_model_paths()[spec.id]
         stage_factory = self.factory.create_stage_factory(spec)
         engine = _NpuStage(stage_factory, model_path)
         self._engines[spec.id] = engine
         return engine
+
+    def _stage_model_paths(self) -> dict[str, Path]:
+        """Every NPU stage's model, found before any engine opens.
+
+        A missing file then fails fast whichever stage it belongs to, instead
+        of after the earlier stages' engines were created.
+        """
+        if self._model_paths is None:
+            pipeline_dir: Optional[Path] = self.factory.pipeline.path
+            pipeline_dir = pipeline_dir.parent if pipeline_dir is not None else None
+            self._model_paths = {
+                spec.id: resolve_stage_model(spec, pipeline_dir, self.models_dir)
+                for spec in self.factory.pipeline.stages
+                if spec.kind == "npu"
+            }
+        return self._model_paths

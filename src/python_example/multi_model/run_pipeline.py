@@ -21,6 +21,7 @@ for _cursor in (_SCRIPT_DIR, *_SCRIPT_DIR.parents):
         break
 
 from common.multi import MultiModelRunner  # noqa: E402
+from common.multi.pipeline import PipelineError  # noqa: E402
 
 
 def main() -> None:
@@ -40,7 +41,10 @@ def main() -> None:
 
     models_dir = Path(args.models_dir) if args.models_dir else None
     runner = MultiModelRunner.from_json(args.pipeline, models_dir)
-    result = runner.run_frame(frame)
+    try:
+        result = runner.run_frame(frame)
+    except PipelineError as exc:
+        raise SystemExit(f"[DXAPP] [ERROR] {exc}") from None
     logging.getLogger(__name__).info("%s %s", runner.factory.get_model_name(), result.fused)
     if args.save:
         save_path = Path(args.save)
