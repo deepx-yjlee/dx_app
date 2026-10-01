@@ -328,7 +328,8 @@ All C++ and Python examples share a consistent set of command-line arguments.
 | Variable | Description |
 |----------|-------------|
 | `DXAPP_SAVE_IMAGE` | When set to a file path, saves the visualization output to that path (no `--save` required) |
-| `DXAPP_VERIFY` | When set to `1`, dumps post-processing results to `logs/verify/{model}.json` for numerical verification |
+| `DXAPP_VERIFY` | When set to `1`, dumps post-processing results to `logs/verify/{model}.json` (last frame) and `{model}.frames.jsonl` (every frame, in input order) for numerical verification |
+| `DXAPP_VERIFY_DIR` | Directory for `DXAPP_VERIFY` output (default `logs/verify`) |
 
 ### C++ Templates 
 

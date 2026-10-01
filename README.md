@@ -280,7 +280,8 @@ All C++ and Python examples share a consistent set of command-line arguments.
 | Variable | Description |
 |----------|-------------|
 | `DXAPP_SAVE_IMAGE` | When set to a file path, saves the visualization output to that path (no `--save` required) |
-| `DXAPP_VERIFY` | When set to `1`, dumps post-processing results to `logs/verify/{model}.json` for numerical verification |
+| `DXAPP_VERIFY` | When set to `1`, dumps post-processing results to `logs/verify/{model}.json` (last frame) and `{model}.frames.jsonl` (every frame, in input order) for numerical verification |
+| `DXAPP_VERIFY_DIR` | Directory for `DXAPP_VERIFY` output (default `logs/verify`) |
 
 ---
 
@@ -290,7 +291,7 @@ DX-APP includes several production-oriented features built into all templates.
 
 ## Signal Handling
 
-All runners register SIGINT/SIGTERM handlers for graceful shutdown. Pressing Ctrl+C during inference prints `"Interrupted by user"` and cleanly exits, releasing all resources.
+All runners and the `multi_model_graph_sync`/`multi_model_graph_async` CLI register SIGINT/SIGTERM handlers for graceful shutdown. Pressing Ctrl+C during inference cleanly exits, releasing all resources: a runner prints `"Interrupted by user"`, and the graph CLI finishes the frames in flight in every stream and finalizes `--report`/`--output`. A later Ctrl+C, more than 200 ms after the first, terminates the process at once (for a shutdown that is itself stuck); repeats within 200 ms count as the same request. SIGTERM is always graceful, however often it arrives.
 
 ## Run Directory (`--save` / `--save-dir`)
 
@@ -308,8 +309,8 @@ artifacts/cpp_example/
 
 Serialize post-processing results to JSON for inspection and debugging:
 1. Set `DXAPP_VERIFY=1` before running any example
-2. Post-processing results are serialized to `logs/verify/{model}.json`
-3. Supports all 12 result types (Detection, Classification, Pose, Segmentation, etc.)
+2. Post-processing results are serialized to `logs/verify/{model}.json` (last frame) and `{model}.frames.jsonl` (every frame, in input order); `DXAPP_VERIFY_DIR` overrides the directory
+3. Supports every result type (Detection, Classification, Pose, Segmentation, Panoptic, 3D, SuperPoint keypoints, …)
 
 ## Tensor Dump (`--dump-tensors`)
 
