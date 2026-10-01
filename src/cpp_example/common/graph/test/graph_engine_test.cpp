@@ -11304,13 +11304,21 @@ void TestRegistryResolvesOldNamesAndAliasesToTheVariant() {
     GRAPH_CHECK(alias_of >= 1 && deit_listed && yolov8n_legacy);
 
     // An alias builds its variant's stage, and the refusal names the alias.
-    bool threw = false;
+    // A legacy name of a not-ready variant, so it is refused before any
+    // engine: the refusal comes from the variant's row, under the alias.
+    const char* alias = "efficientad_m_teacher_256x256";
+    const ModelInfo* teacher = registry.find(alias);
+    GRAPH_CHECK(teacher != NULL && teacher->model_name == "efficientad-m-teacher_256x256" &&
+                !teacher->ready);
+    std::string refusal;
     try {
-        registry.createStage("patchcore_224x224", "/nonexistent.dxnn", StageParams());
+        registry.createStage(alias, "/nonexistent.dxnn", StageParams());
     } catch (const std::runtime_error& error) {
-        threw = std::string(error.what()).find("patchcore_224x224") != std::string::npos;
+        refusal = error.what();
     }
-    GRAPH_CHECK(threw);
+    GRAPH_CHECK(refusal.find(std::string("model \"") + alias + "\" is not usable in a graph: ") ==
+                0);
+    GRAPH_CHECK(teacher == NULL || refusal.find(teacher->not_ready_reason) != std::string::npos);
 }
 
 // ModelInfo carries the registry's published flag and R9's resources.
@@ -11402,6 +11410,32 @@ void TestStageConfigIsTheVariantsConfigJson() {
         GRAPH_CHECK(FileIsReadable(config_path));
     }
     GRAPH_CHECK(ready > 400);
+}
+
+// M6: a ModelInfo without family or variant names no config.json. Reading
+// "<task>//config.json" would silently leave the factory on its defaults,
+// so StageConfigPath refuses it.
+void TestStageConfigPathRefusesAModelInfoWithoutFamilyOrVariant() {
+    ModelInfo info;
+    info.model_name = "hand_built";
+    info.task = "object_detection";
+    info.family = "yolov8";
+    info.variant = "yolov8-n_640x640";
+    GRAPH_CHECK(detail::StageConfigPath(info) ==
+                ProjectRoot() + "/src/cpp_example/object_detection/yolov8/yolov8-n_640x640/config.json");
+    const std::string expected =
+        "ModelInfo for \"hand_built\" has no family/variant: cannot locate its config.json";
+    for (int missing = 0; missing < 2; ++missing) {
+        ModelInfo partial = info;
+        (missing == 0 ? partial.family : partial.variant).clear();
+        std::string message;
+        try {
+            detail::StageConfigPath(partial);
+        } catch (const std::runtime_error& error) {
+            message = error.what();
+        }
+        GRAPH_CHECK(message == expected);
+    }
 }
 
 // I2: a stage reads a relative "gallery" against the repository, as --check
@@ -11882,6 +11916,7 @@ int main() {
     TestRegistryCarriesPublishedAndResources();
     TestBuildDoesNotOfferADownloadOfAnUnpublishedModel();
     TestStageConfigIsTheVariantsConfigJson();
+    TestStageConfigPathRefusesAModelInfoWithoutFamilyOrVariant();
     TestARelativeGalleryIsReadAgainstTheRepository();
     TestMattingAlphaBecomesADenseMapPort();
     TestDepthConversionOwnsItsValues();

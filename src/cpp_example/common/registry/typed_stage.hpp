@@ -118,9 +118,16 @@ inline const std::string& LoadableModelPath(const std::string& model_path) {
  * scripts/gen_model_registry.py refuses a registry row whose task or family
  * disagrees with its factory's directory (TASK MISMATCH), so the three
  * ModelInfo fields used here name a real directory. The file's nested
- * "config" object is read through ModelConfig's overlay (C3).
+ * "config" object is read through ModelConfig's overlay (C3). Throws
+ * std::runtime_error when family or variant is empty.
  */
 inline std::string StageConfigPath(const ModelInfo& info) {
+    // Without them the path would be "<task>//config.json", which does not
+    // exist, and the stage would run on factory defaults without a word.
+    if (info.family.empty() || info.variant.empty()) {
+        throw std::runtime_error("ModelInfo for \"" + info.model_name +
+                                 "\" has no family/variant: cannot locate its config.json");
+    }
     return std::string(PROJECT_ROOT_DIR) + "/src/cpp_example/" + info.task + "/" +
            info.family + "/" + info.variant + "/config.json";
 }
