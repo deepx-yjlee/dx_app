@@ -55,7 +55,7 @@ def test_unknown_variant_raises_with_a_useful_message():
 def test_lookup_by_legacy_model_name_also_works():
     """Legacy example-dir names stay resolvable so old scripts keep running."""
     assert resolve_variant("yolov5s").variant == "yolov5-s_640x640"
-    assert resolve_variant("deit_base384_distilled").variant == "deit-b_384x384"
+    assert resolve_variant("deit_base384_distilled").variant == "deit-b_384x384_distilled"
 
 
 def test_list_variants_filters_by_family():

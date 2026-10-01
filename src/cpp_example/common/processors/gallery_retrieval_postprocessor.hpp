@@ -43,6 +43,14 @@
 #include <string>
 #include <vector>
 
+#if __cplusplus >= 201703L || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
+#include <filesystem>
+namespace gallery_fs = std::filesystem;
+#else
+#include <experimental/filesystem>
+namespace gallery_fs = std::experimental::filesystem;
+#endif
+
 namespace dxapp {
 
 /// One gallery, as loaded from a .bin. Kept separate from the postprocessor so the
@@ -86,6 +94,17 @@ inline bool readU32(std::ifstream& fh, std::uint32_t& value) {
     return true;
 }
 
+inline std::string resolveGalleryFile(const std::string& path) {
+    if (path.empty()) return path;
+    gallery_fs::path given(path);
+    if (gallery_fs::exists(given)) return given.string();
+#if defined(PROJECT_ROOT_DIR)
+    gallery_fs::path rooted = gallery_fs::path(PROJECT_ROOT_DIR) / given;
+    if (gallery_fs::exists(rooted)) return rooted.string();
+#endif
+    return path;
+}
+
 inline bool readBlob(std::ifstream& fh, std::string& out) {
     std::uint32_t length = 0;
     if (!readU32(fh, length)) return false;
@@ -102,7 +121,8 @@ inline RetrievalGallery loadRetrievalGallery(const std::string& path) {
     std::size_t slash = path.find_last_of("/\\");
     g.name = (slash == std::string::npos) ? path : path.substr(slash + 1);
 
-    std::ifstream fh(path, std::ios::binary);
+    const std::string resolved = gallery_detail::resolveGalleryFile(path);
+    std::ifstream fh(resolved, std::ios::binary);
     if (!fh.is_open()) { g.error = "gallery not found: " + path; return g; }
 
     char magic[8] = {0};

@@ -50,16 +50,14 @@ EXCEPTIONS: dict[str, tuple[str, str, str]] = {
 # at any phase -- the alignment renames and regroups examples, it does not
 # delete them.
 #
-# ``deit_base384_distilled`` is byte-identical to ``deitbase384`` apart from
-# model_name and points at the NON-distilled deit-b_384x384.dxnn, so its name is
-# misleading; the genuine distilled 384 model is the variant
-# deit-b_384x384_distilled, which resolves from the snapshot with no exception.
-# The misleading name is kept anyway, because dropping it would drop a working
-# example.
+# ``deit_base384_distilled`` is the legacy key for the distilled 384 model.
+# It aliases ``deit_base_distilled_2`` and shares variant
+# ``deit-b_384x384_distilled`` / ``deit-b_384x384_distilled.dxnn``.
+# The non-distilled file stays with ``deitbase384`` only.
 #
 # alias model_name -> canonical model_name it aliases.
 ALIASES: dict[str, str] = {
-    "deit_base384_distilled": "deitbase384",
+    "deit_base384_distilled": "deit_base_distilled_2",
 }
 
 # In the snapshot but intentionally not in dx_app: no example, not on disk.
@@ -233,21 +231,24 @@ def test_alias_entries_are_retained_not_deleted(registry):
 
 
 def test_the_real_distilled_384_model_owns_its_dxnn_stem(registry):
-    """deit-b_384x384_distilled must belong to the entry holding that .dxnn.
+    """deit-b_384x384_distilled.dxnn has one canonical owner.
 
-    Guards the mistake this test file was born from: the entry *named*
-    ``deit_base384_distilled`` points at the non-distilled .dxnn, while the
-    genuine distilled model sits behind a legacy squashed name. Under
-    dxnn-canonical naming the variant follows the .dxnn, not the legacy name.
+    ``deit_base_distilled_2`` is that owner. ``deit_base384_distilled`` is a
+    legacy alias of it and must share the distilled file, not deit-b_384x384.
     """
     owners = [e for e in registry if e["dxnn_file"] == "deit-b_384x384_distilled.dxnn"]
-    assert len(owners) == 1, f"expected exactly 1 owner, got {[e['model_name'] for e in owners]}"
-    owner = owners[0]
-    assert owner["variant"] == "deit-b_384x384_distilled", (
-        f"{owner['model_name']} must carry variant 'deit-b_384x384_distilled', "
-        f"got {owner['variant']!r}"
+    canonical = [e for e in owners if e["alias_of"] is None]
+    aliases = [e for e in owners if e["alias_of"] is not None]
+    assert [e["model_name"] for e in canonical] == ["deit_base_distilled_2"], (
+        f"canonical owner must be deit_base_distilled_2, got "
+        f"{[e['model_name'] for e in canonical]}"
     )
-    assert owner["alias_of"] is None, "the genuine distilled model is not an alias"
+    assert canonical[0]["variant"] == "deit-b_384x384_distilled"
+    assert [e["model_name"] for e in aliases] == ["deit_base384_distilled"]
+    assert aliases[0]["alias_of"] == "deit_base_distilled_2"
+    assert aliases[0]["variant"] == "deit-b_384x384_distilled"
+    plain = [e for e in registry if e["dxnn_file"] == "deit-b_384x384.dxnn"]
+    assert [e["model_name"] for e in plain] == ["deitbase384"]
 
 
 def test_variant_matches_dxnn_stem_except_documented(registry):

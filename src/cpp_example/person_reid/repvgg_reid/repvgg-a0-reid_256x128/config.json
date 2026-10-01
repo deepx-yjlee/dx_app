@@ -10,7 +10,7 @@
   "default_image": "sample/reid/queries/sample_person_a2.jpg",
   "default_video": null,
   "zoo_canonical": false,
-  "published": false,
+  "published": true,
   "config": {
     "gallery": "sample/gallery/reid_repvgg-a0-reid_256x128.bin",
     "top_k": 5,

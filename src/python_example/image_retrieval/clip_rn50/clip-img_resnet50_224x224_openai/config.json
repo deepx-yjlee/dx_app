@@ -10,7 +10,7 @@
   "default_image": "sample/img/sample_person_a2.jpg",
   "default_video": null,
   "zoo_canonical": false,
-  "published": false,
+  "published": true,
   "config": {
     "gallery": "sample/gallery/retrieval_clip-img_resnet50_224x224_openai.bin",
     "top_k": 5,

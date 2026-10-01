@@ -2,10 +2,10 @@
  * @file model_config.hpp
  * @brief Lightweight JSON configuration loader for model parameters
  *
- * Reads a flat JSON config file (config.json) so that Factory parameters
- * (thresholds, class counts, etc.) can be changed at runtime without
- * recompiling.  Only flat key-value pairs are supported — nested objects
- * are silently skipped.
+ * Reads config.json so Factory parameters (thresholds, class counts, etc.)
+ * can be changed at runtime without recompiling. Flat keys are stored as-is.
+ * The nested "config" object is overlaid on top of those keys. Other nested
+ * objects, including "registry_config", are skipped.
  *
  * Usage:
  *   ModelConfig cfg("config.json");
@@ -106,7 +106,14 @@ private:
                 values_[key] = readStringValue_(content, pos);
                 if (pos >= len) break;
             } else if (content[pos] == '{') {
-                skipBlock_(content, pos, '{', '}');
+                if (key == "config") {
+                    std::string block = readBlock_(content, pos, '{', '}');
+                    if (block.size() >= 2) {
+                        parse(block.substr(1, block.size() - 2));
+                    }
+                } else {
+                    skipBlock_(content, pos, '{', '}');
+                }
             } else if (content[pos] == '[') {
                 arrays_[key] = readBlock_(content, pos, '[', ']');
             } else {

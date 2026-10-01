@@ -38,8 +38,9 @@ public:
 
     PostprocessorPtr<PoseResult> createPostprocessor(
         int input_width, int input_height, bool is_ort_configured = false) override {
-        return std::make_unique<YOLOv8PosePostprocessor>(
-            input_width, input_height, score_threshold_, nms_threshold_,
+        return std::make_unique<YOLOv5PosePostprocessor>(
+            input_width, input_height,
+            obj_threshold_, score_threshold_, nms_threshold_,
             is_ort_configured);
     }
 

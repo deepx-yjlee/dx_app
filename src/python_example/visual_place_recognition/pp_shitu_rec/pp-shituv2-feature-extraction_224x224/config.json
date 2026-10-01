@@ -10,7 +10,7 @@
   "default_image": "sample/vpr/queries/q1.jpg",
   "default_video": null,
   "zoo_canonical": false,
-  "published": false,
+  "published": true,
   "config": {
     "gallery": "sample/gallery/vpr_pp-shituv2-feature-extraction_224x224.bin",
     "top_k": 5,

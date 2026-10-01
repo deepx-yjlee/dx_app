@@ -32,11 +32,11 @@
 *.out
 *.app
 
-# VSCode
-.vscode/
-.vscode/launch.json
-.vscode/tasks.json
-.vscode/settings.json
+# VSCode local state. Tracked launch/task files stay visible to git.
+.vscode/*
+!.vscode/generate_launch_configs.py
+!.vscode/launch.json
+!.vscode/tasks.json
 
 .idea/
 
@@ -77,8 +77,9 @@ download/
 out/*
 vcpkg_installed/*
 
-# third_party lib
-third_party/
+# third_party lib at the repo root. The vendored nlohmann header under
+# src/cpp_example/common/third_party/ is tracked.
+/third_party/
 
 # egg-info
 lib/pybind/dx_postprocess.egg-info/
@@ -90,6 +91,7 @@ venv*/
 
 .cache/
 */*.yml
+!docs/mkdocs.yml
 
 # Log files
 logs/

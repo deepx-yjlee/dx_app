@@ -10,7 +10,7 @@
   "default_image": "sample/img/face_pair",
   "default_video": null,
   "zoo_canonical": false,
-  "published": false,
+  "published": true,
   "config": {},
   "registry_config": {},
   "cli": {

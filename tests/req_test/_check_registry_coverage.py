@@ -20,7 +20,7 @@ import sys
 from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parents[2]
-_SKIP_TASK_DIRS = {"common", "build"}
+_SKIP_TASK_DIRS = {"common", "build", "multi_model", "multi_model_graph"}
 _ENTRY_SUFFIX = {"python_example": "_sync.py", "cpp_example": "_sync.cpp"}
 
 

@@ -28,7 +28,7 @@ import subprocess, sys, json, tempfile, shutil
 from pathlib import Path
 import cv2, numpy as np
 
-ROOT = Path("/home/yjlee/git-src/dx-all-suite/dx-runtime/dx_app")
+ROOT = Path(__file__).resolve().parents[1]
 PY_BIN = str(ROOT.parent / "venv-dx-runtime" / "bin" / "python")
 reg = {e["variant"]: e for e in json.loads((ROOT / "config/model_registry.json").read_text())}
 report = sorted((ROOT / "artifacts/npu_sweep").glob("sweep-python_example-sync-*.json"))[-1]

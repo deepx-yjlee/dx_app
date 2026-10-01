@@ -44,15 +44,11 @@ EXCEPTIONS: dict[str, tuple[str, str, str]] = {
 }
 
 # Entries that share another entry's model: same dxnn, no distinct variant.
-# ``deit_base384_distilled`` is byte-identical to ``deitbase384`` apart from
-# model_name and points at the NON-distilled deit-b_384x384.dxnn, so its name is
-# misleading -- the genuine distilled 384 model is ``deit-b_384x384_distilled``,
-# already owned by the entry whose dxnn_file is deit-b_384x384_distilled.dxnn.
-# The misleading name is retained regardless: dropping it would drop a working
-# example, and this alignment does not delete examples.
+# ``deit_base384_distilled`` is the legacy key for the distilled 384 model.
+# It aliases ``deit_base_distilled_2`` (variant ``deit-b_384x384_distilled``).
 # alias model_name -> the canonical model_name it aliases.
 ALIASES: dict[str, str] = {
-    "deit_base384_distilled": "deitbase384",
+    "deit_base384_distilled": "deit_base_distilled_2",
 }
 
 # src/python_example/common/runner/sync_runner.py::_IMAGE_ONLY_TASKS, expressed in

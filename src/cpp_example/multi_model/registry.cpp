@@ -26,13 +26,15 @@ struct FactoryEntry {
     const char* task;
     const char* family;
     const char* variant;
-    std::unique_ptr<IStage> (*make)(const std::string& stageId, const std::string& modelPath);
+    std::unique_ptr<IStage> (*make)(const std::string& stageId, const std::string& modelPath,
+                                    const std::string& configPath);
 };
 
 template <typename Factory, typename Result, bool WithOrt>
-std::unique_ptr<IStage> makeStage(const std::string& stageId, const std::string& modelPath) {
+std::unique_ptr<IStage> makeStage(const std::string& stageId, const std::string& modelPath,
+                                  const std::string& configPath) {
     return std::unique_ptr<IStage>(
-        std::make_unique<NpuStage<Factory, Result, WithOrt>>(stageId, modelPath));
+        std::make_unique<NpuStage<Factory, Result, WithOrt>>(stageId, modelPath, configPath));
 }
 
 const FactoryEntry kEntries[] = {
@@ -74,7 +76,9 @@ std::unique_ptr<IStage> createRegisteredStage(
                 "stage '" + stageId + "' variant '" + variant +
                 "' is registered as " + kEntries[i].task + "/" + kEntries[i].family);
         }
-        return kEntries[i].make(stageId, modelPath);
+        const fs::path configPath = fs::path(PROJECT_ROOT_DIR) / "src" / "cpp_example"
+            / task / family / variant / "config.json";
+        return kEntries[i].make(stageId, modelPath, configPath.string());
     }
     throw PipelineError(
         "stage '" + stageId + "' variant '" + variant +

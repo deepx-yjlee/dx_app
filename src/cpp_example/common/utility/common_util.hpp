@@ -173,8 +173,9 @@ inline bool isVersionGreaterOrEqual(const std::string& v1, const std::string& v2
 /**
  * @brief Check minimum version compatibility for RT and Compiler
  * 
- * Validates that the DXRT library version is >= 3.0.0 and
+ * Validates that the DXRT library version is >= 3.5.0 and
  * the compiled model version is >= v7 (matching Legacy behavior).
+ * Model Zoo 2_5_0 .dxnn files are container format v9, which DX-RT 3.5.0 parses.
  * 
  * @param ie Pointer to InferenceEngine
  * @return true if versions are compatible
@@ -185,7 +186,7 @@ inline bool minversionforRTandCompiler(dxrt::InferenceEngine* ie) {
     std::string rt_version = dxrt::Configuration::GetInstance().GetVersion();
     std::string compiler_version = ie->GetModelVersion();
 
-    if (isVersionGreaterOrEqual(rt_version, "3.0.0")) {
+    if (isVersionGreaterOrEqual(rt_version, "3.5.0")) {
         if (isVersionGreaterOrEqual(compiler_version, "v7")) {
             return true;
         } else {
@@ -198,9 +199,10 @@ inline bool minversionforRTandCompiler(dxrt::InferenceEngine* ie) {
         }
     } else {
         std::cerr << "[DXAPP] [ERROR] DXRT library version is too low. (required: "
-                     ">= 3.0.0, current: "
+                     ">= 3.5.0, current: "
                   << rt_version << ")" << std::endl;
-        std::cerr << DXAPP_GREEN << "[HINT] Please update DXRT: ./install.sh --all"
+        std::cerr << DXAPP_GREEN << "[HINT] Model Zoo 2_5_0 .dxnn files are container v9. "
+                     "Update DX-RT (and the NPU driver) to >= 3.5.0."
                   << DXAPP_RESET << std::endl;
     }
     return false;
@@ -664,14 +666,18 @@ inline std::string getDefaultSampleVideo(const std::string& taskType) {
  * @brief Attempt to auto-download a missing model via setup_sample_models.sh.
  * @return true if download succeeded and file now exists.
  */
-inline bool autoDownloadModel(const std::string& modelPath) {
-    std::string stem = fs::path(modelPath).stem().string();
+inline bool autoDownloadModel(const std::string& modelPath,
+                               const std::string& registryName = "") {
+    // setup.sh matches the manifest display name, which lines up with model_name
+    // (yolov8n), not the .dxnn stem (yolov8-n_640x640).
+    std::string selector = registryName.empty()
+        ? fs::path(modelPath).stem().string() : registryName;
     std::string modelsDir = fs::path(modelPath).parent_path().string();
     if (modelsDir.empty()) modelsDir = "./assets/models";
     std::cout << "[DXAPP] [INFO] Model not found: " << modelPath
               << " — attempting auto-download..." << std::endl;
     std::string cmd = "./setup_sample_models.sh --output=" + modelsDir
-                    + " --models " + stem;
+                    + " --models " + selector;
     int ret = std::system(cmd.c_str());
     return (ret == 0) && fs::exists(modelPath);
 }
@@ -689,10 +695,10 @@ inline bool autoDownloadVideos() {
 /**
  * @brief Derive the example key from argv[0] by stripping the variant suffix.
  *
- * The build names each binary "<example>_sync" / "<example>_async"
- * (optionally with a "_cpp_postprocess" tail), and the example directory name
- * matches the "model_name" key in config/model_registry.json. So the basename
- * with its variant suffix removed is the registry lookup key.
+ * The build names each binary "<variant>_sync" / "<variant>_async"
+ * (optionally with a "_cpp_postprocess" tail). The basename with that suffix
+ * removed is the registry "variant" (for example yolov8-n_640x640), not the
+ * legacy "model_name" (yolov8n).
  */
 inline std::string exampleKeyFromArgv0(const std::string& argv0) {
     std::string name = fs::path(argv0).filename().string();
@@ -710,32 +716,101 @@ inline std::string exampleKeyFromArgv0(const std::string& argv0) {
 /**
  * @brief Resolve this example's default .dxnn path from model_registry.json.
  *
- * Looks up the example key (from argv[0]) against the "model_name" entries in
- * config/model_registry.json and returns "assets/models/<dxnn_file>".
- * Returns "" when the key is not found (caller then errors out).
- * Uses a lightweight scan (consistent with ModelConfig) — no JSON dependency.
+ * Looks the example key up as "variant" first, then "model_name".
+ * dxnn_file sits before variant in each object, so the match is bounded to
+ * the enclosing object. Returns "assets/models/<dxnn_file>" plus the
+ * model_name used by ./setup.sh --models. path is empty when the key is absent.
  */
-inline std::string resolveDefaultModelPath(const std::string& argv0) {
+struct ExampleModelRef {
+    std::string path;
+    std::string modelName;
+};
+
+inline size_t findJsonStringField(const std::string& content, const std::string& field,
+                                   const std::string& value, size_t from) {
+    const std::string spaced = "\"" + field + "\": \"" + value + "\"";
+    const std::string tight = "\"" + field + "\":\"" + value + "\"";
+    size_t spacedPos = content.find(spaced, from);
+    size_t tightPos = content.find(tight, from);
+    if (spacedPos == std::string::npos) return tightPos;
+    if (tightPos == std::string::npos) return spacedPos;
+    return std::min(spacedPos, tightPos);
+}
+
+inline size_t enclosingObjectStart(const std::string& content, size_t pos) {
+    int depth = 0;
+    size_t index = pos;
+    while (index > 0) {
+        --index;
+        if (content[index] == '}') {
+            ++depth;
+        } else if (content[index] == '{') {
+            if (depth == 0) return index;
+            --depth;
+        }
+    }
+    return std::string::npos;
+}
+
+inline size_t enclosingObjectEnd(const std::string& content, size_t start) {
+    int depth = 0;
+    for (size_t index = start; index < content.size(); ++index) {
+        if (content[index] == '{') {
+            ++depth;
+        } else if (content[index] == '}') {
+            --depth;
+            if (depth == 0) return index;
+        }
+    }
+    return std::string::npos;
+}
+
+inline std::string jsonStringValue(const std::string& content, size_t fieldPos, size_t limit) {
+    size_t colon = content.find(':', fieldPos);
+    if (colon == std::string::npos || colon > limit) return "";
+    size_t openQuote = content.find('"', colon + 1);
+    if (openQuote == std::string::npos || openQuote > limit) return "";
+    size_t closeQuote = content.find('"', openQuote + 1);
+    if (closeQuote == std::string::npos || closeQuote > limit) return "";
+    return content.substr(openQuote + 1, closeQuote - openQuote - 1);
+}
+
+inline ExampleModelRef resolveExampleModel(const std::string& argv0) {
+    ExampleModelRef ref;
     std::string key = exampleKeyFromArgv0(argv0);
-    if (key.empty()) return "";
+    if (key.empty()) return ref;
     fs::path reg = fs::path(PROJECT_ROOT_DIR) / "config" / "model_registry.json";
-    std::ifstream f(reg);
-    if (!f.is_open()) return "";
-    std::string content((std::istreambuf_iterator<char>(f)),
+    std::ifstream registryFile(reg);
+    if (!registryFile.is_open()) return ref;
+    std::string content((std::istreambuf_iterator<char>(registryFile)),
                         std::istreambuf_iterator<char>());
-    // Match "model_name": "<key>" (with or without a space after the colon).
-    size_t pos = content.find("\"model_name\": \"" + key + "\"");
-    if (pos == std::string::npos) pos = content.find("\"model_name\":\"" + key + "\"");
-    if (pos == std::string::npos) return "";
-    size_t dpos = content.find("\"dxnn_file\"", pos);
-    if (dpos == std::string::npos) return "";
-    size_t q1 = content.find('"', content.find(':', dpos) + 1);
-    if (q1 == std::string::npos) return "";
-    size_t q2 = content.find('"', q1 + 1);
-    if (q2 == std::string::npos) return "";
-    std::string dxnn = content.substr(q1 + 1, q2 - q1 - 1);
-    if (dxnn.empty()) return "";
-    return "assets/models/" + dxnn;
+
+    size_t match = findJsonStringField(content, "variant", key, 0);
+    if (match == std::string::npos) {
+        match = findJsonStringField(content, "model_name", key, 0);
+    }
+    if (match == std::string::npos) return ref;
+
+    size_t objectStart = enclosingObjectStart(content, match);
+    size_t objectEnd = (objectStart == std::string::npos)
+        ? std::string::npos : enclosingObjectEnd(content, objectStart);
+    if (objectStart == std::string::npos || objectEnd == std::string::npos) return ref;
+
+    size_t dxnnPos = content.find("\"dxnn_file\"", objectStart);
+    if (dxnnPos == std::string::npos || dxnnPos > objectEnd) return ref;
+    std::string dxnn = jsonStringValue(content, dxnnPos, objectEnd);
+    if (dxnn.empty()) return ref;
+
+    size_t namePos = content.find("\"model_name\"", objectStart);
+    if (namePos != std::string::npos && namePos < objectEnd) {
+        ref.modelName = jsonStringValue(content, namePos, objectEnd);
+    }
+    ref.path = "assets/models/" + dxnn;
+    return ref;
+}
+
+inline std::string resolveDefaultModelPath(const std::string& argv0) {
+    return resolveExampleModel(argv0).path;
 }
 
 /**
@@ -751,21 +826,23 @@ inline std::string resolveDefaultModelPath(const std::string& argv0) {
  */
 inline void resolveAndValidateModel(std::string& modelPath, const std::string& argv0) {
     if (modelPath.empty()) {
-        std::string def = resolveDefaultModelPath(argv0);
-        if (def.empty()) {
+        ExampleModelRef ref = resolveExampleModel(argv0);
+        if (ref.path.empty()) {
+            std::string key = exampleKeyFromArgv0(argv0);
             fatal_error("[DXAPP] [ERROR] Model path is required. Use -m or --model_path option.\n"
-                "        -> Download:  ./setup.sh --models <model_name>\n"
+                "        -> Download:  ./setup.sh --models " + key + "\n"
                 "        -> Or use:    ./run_demo.sh  (auto-downloads demo models)\n"
                 "Use -h or --help for usage information.");
         }
-        modelPath = def;
+        modelPath = ref.path;
         std::cout << "[DXAPP] [INFO] No model specified (-m). Using example default: "
                   << modelPath << std::endl;
         if (!fileExists(modelPath)) {
-            if (!autoDownloadModel(modelPath)) {
-                std::string stem = fs::path(modelPath).stem().string();
+            std::string selector = ref.modelName.empty()
+                ? fs::path(modelPath).stem().string() : ref.modelName;
+            if (!autoDownloadModel(modelPath, selector)) {
                 fatal_error("[DXAPP] [ERROR] Model file not found: " + modelPath + "\n"
-                    "        -> Download:  ./setup.sh --models " + stem + "\n"
+                    "        -> Download:  ./setup.sh --models " + selector + "\n"
                     "        -> Or use:    ./run_demo.sh  (auto-downloads demo models)");
             }
             std::cout << "[DXAPP] [INFO] Model downloaded successfully: " << modelPath << std::endl;

@@ -3102,7 +3102,7 @@
       "from common.processors import ClassificationPostprocessor, SimpleResizePreprocessor",
       "from common.visualizers import ClassificationVisualizer"
     ],
-    "model_name": "deit_base384_distilled",
+    "model_name": "deitbase384",
     "postprocessor": {
       "args": [
         {

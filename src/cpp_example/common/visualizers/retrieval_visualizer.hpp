@@ -155,9 +155,9 @@ private:
                                   static_cast<double>(box) / img.rows);
         const int nw = std::max(1, static_cast<int>(img.cols * s + 0.5));
         const int nh = std::max(1, static_cast<int>(img.rows * s + 0.5));
-        cv::Mat small;
-        cv::resize(img, small, cv::Size(nw, nh), 0, 0, cv::INTER_AREA);
-        small.copyTo(canvas(cv::Rect((box - nw) / 2, (box - nh) / 2, nw, nh)));
+        cv::Mat fittedTile;
+        cv::resize(img, fittedTile, cv::Size(nw, nh), 0, 0, cv::INTER_AREA);
+        fittedTile.copyTo(canvas(cv::Rect((box - nw) / 2, (box - nh) / 2, nw, nh)));
         return canvas;
     }
 

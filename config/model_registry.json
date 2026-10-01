@@ -3478,8 +3478,8 @@
   },
   {
     "model_name": "deit_base384_distilled",
-    "dxnn_file": "deit-b_384x384.dxnn",
-    "original_name": "DeiTBase384",
+    "dxnn_file": "deit-b_384x384_distilled.dxnn",
+    "original_name": "DeiTBaseDistilled-2",
     "csv_task": "IC",
     "add_model_task": "classification",
     "postprocessor": "efficientnet",
@@ -3490,13 +3490,13 @@
     },
     "source": "auto_classify",
     "supported": true,
-    "variant": "deit-b_384x384",
+    "variant": "deit-b_384x384_distilled",
     "family": "deit",
     "task": "image_classification",
     "task_legacy": "classification",
     "image_only": false,
     "zoo_canonical": true,
-    "alias_of": "deitbase384",
+    "alias_of": "deit_base_distilled_2",
     "published": true
   },
   {

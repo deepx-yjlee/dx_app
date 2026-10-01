@@ -3,8 +3,9 @@
 """
 SDKREQ-521/522 shared check — Python example completeness.
 
-Verifies that every ``src/python_example/<task>/<model>/`` directory provides the
-full set of 4 variants (sync / async / sync_cpp_postprocess / async_cpp_postprocess).
+Verifies that every ``src/python_example/<task>/<family>/<variant>/`` directory
+provides the full set of 4 entry scripts
+(sync / async / sync_cpp_postprocess / async_cpp_postprocess).
 
 Why structural (not model-name coverage): matching registry ``model_name`` →
 ``dxnn_file`` → example directory is a 3-hop fuzzy chain (version suffixes ``_1``,
@@ -25,30 +26,37 @@ _ROOT = os.path.abspath(os.path.join(_HERE, "..", ".."))  # dx_app/
 _EXROOT = os.path.join(_ROOT, "src", "python_example")
 
 VARIANTS = ("sync", "async", "sync_cpp_postprocess", "async_cpp_postprocess")
-_SKIP_DIRS = {"common", "build"}
+_SKIP_DIRS = {"common", "build", "multi_model", "multi_model_graph"}
 
 
-def _iter_model_dirs():
+def _iter_variant_dirs():
     for task in sorted(os.listdir(_EXROOT)):
-        tp = os.path.join(_EXROOT, task)
-        if not os.path.isdir(tp) or task in _SKIP_DIRS or task.startswith("__"):
+        task_path = os.path.join(_EXROOT, task)
+        if not os.path.isdir(task_path) or task in _SKIP_DIRS or task.startswith("__"):
             continue
-        for model in sorted(os.listdir(tp)):
-            mp = os.path.join(tp, model)
-            if not os.path.isdir(mp) or model.startswith("__"):
+        for family in sorted(os.listdir(task_path)):
+            family_path = os.path.join(task_path, family)
+            if not os.path.isdir(family_path) or family.startswith("__"):
                 continue
-            yield task, model, mp
+            for variant in sorted(os.listdir(family_path)):
+                variant_path = os.path.join(family_path, variant)
+                if not os.path.isdir(variant_path) or variant.startswith("__"):
+                    continue
+                if not os.path.isfile(os.path.join(variant_path, "config.json")):
+                    continue
+                yield task, family, variant, variant_path
 
 
 def main() -> int:
     incomplete = []
     total = 0
-    for task, model, mp in _iter_model_dirs():
+    for task, family, variant, variant_path in _iter_variant_dirs():
         total += 1
-        missing = [v for v in VARIANTS
-                   if not os.path.exists(os.path.join(mp, f"{model}_{v}.py"))]
+        missing = [kind for kind in VARIANTS
+                   if not os.path.exists(os.path.join(variant_path, f"{variant}_{kind}.py"))]
         if missing:
-            incomplete.append(f"{task}/{model}: missing {', '.join(missing)}")
+            incomplete.append(
+                f"{task}/{family}/{variant}: missing {', '.join(missing)}")
 
     # Informational: registry model count vs example dir count (never fails).
     info = ""

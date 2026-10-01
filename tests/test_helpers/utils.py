@@ -101,6 +101,11 @@ def dxnn_for_exe(base_name: str) -> Optional[Path]:
     return _search_model_file(base_name)
 
 
+def _find_dxnn_for_name(base_name: str) -> Optional[Path]:
+    """Name kept for callers that still use the pre-layout helper."""
+    return dxnn_for_exe(base_name)
+
+
 def setup_environment(*, extra_lib_dirs: Optional[List[Path]] = None) -> dict:
     """Return an ``os.environ`` copy with ``LD_LIBRARY_PATH`` set.
 

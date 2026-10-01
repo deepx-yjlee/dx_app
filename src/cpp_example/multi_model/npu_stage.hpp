@@ -9,6 +9,7 @@
 #include "multi_model/pipeline.hpp"
 #include "multi_model/stage_output.hpp"
 
+#include "common/config/model_config.hpp"
 #include "common/utility/common_util.hpp"
 
 #include <dxrt/dxrt_api.h>
@@ -101,7 +102,8 @@ inline void fillMatching(StageOutput& output, const std::vector<HandLandmarkResu
 template <typename Factory, typename Result, bool WithOrt>
 class NpuStage : public IStage {
 public:
-    NpuStage(const std::string& stageId, const std::string& modelPath)
+    NpuStage(const std::string& stageId, const std::string& modelPath,
+             const std::string& configPath)
         : stageId_(stageId),
           modelPath_(modelPath),
           inputWidth_(0),
@@ -122,6 +124,10 @@ public:
         nhwc_ = isInputNHWC(inputShape);
         floatInput_ = engine_->GetInputs().front().type() == dxrt::DataType::FLOAT;
         const bool ortConfigured = engine_->IsOrtConfigured();
+        if (!configPath.empty() && fs::exists(configPath)) {
+            ModelConfig config(configPath);
+            factory_->loadConfig(config);
+        }
         preprocessor_ = factory_->createPreprocessor(inputWidth_, inputHeight_);
         postprocessor_ = makePostprocessor<Factory, Result>(
             factory_.get(), inputWidth_, inputHeight_, ortConfigured,

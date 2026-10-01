@@ -189,14 +189,14 @@ mapping, joined from a committed snapshot of the dx-modelzoo CV tree.
   a best-effort heuristic yields 211 families against the authoritative 89.
 - **`variant` follows the `.dxnn`, never the legacy example-dir name.**
   `deit_base_distilled_2` owns variant `deit-b_384x384_distilled`;
-  `deit_base384_distilled` is `alias_of: deitbase384` — it is byte-identical
-  to that entry apart from `model_name` and points at the NON-distilled
-  `deit-b_384x384.dxnn`, so its name is misleading.
+  `deit_base384_distilled` is `alias_of: deit_base_distilled_2` and shares
+  `deit-b_384x384_distilled.dxnn`. The non-distilled file belongs only to
+  `deitbase384`.
 - **RETENTION POLICY — conflicting examples are kept, never deleted.** The
   alignment renames and regroups; it does not remove examples. An alias keeps its
   own `model_name` as the legacy compat key and shares the canonical entry's
   `variant`/`family`/`task`/`dxnn_file`. Conflict scope across 500 entries is
-  exactly 1 (`deit-b_384x384.dxnn`). Differing `config` within a family (14 of 89)
+  exactly 1 (`deit-b_384x384_distilled.dxnn`). Differing `config` within a family (14 of 89)
   is NOT a conflict — each variant keeps its own `<family>/<variant>/config.json`.
 - Guarded by `tests/python_example/unit/test_registry_modelzoo_conformance.py`
   and `test_registry_image_only.py`.
