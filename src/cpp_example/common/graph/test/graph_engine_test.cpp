@@ -49,6 +49,7 @@
 // it is exempt precisely so a test may name a concrete registry.
 #include "common/registry/static_model_registry.hpp"
 #include "common/registry/typed_stage.hpp"
+#include "visual_place_recognition/eigenplaces/eigenplaces-resnet18_512x512/factory/eigenplaces-resnet18_512x512_factory.hpp"
 #include "common/utility/dxnn_container.hpp"
 #include "multi_model_graph/graph_cli_output.hpp"
 #include "multi_model_graph/graph_consumer.hpp"
@@ -11366,6 +11367,66 @@ void TestStageConfigIsTheVariantsConfigJson() {
     GRAPH_CHECK(ready > 400);
 }
 
+// I2: a stage reads a relative "gallery" against the repository, as --check
+// does, so a run from any working directory opens the gallery --check found.
+// The real EigenPlaces factory, configured the way TypedStage configures it,
+// from a working directory that is not the repository.
+void TestARelativeGalleryIsReadAgainstTheRepository() {
+    StaticModelRegistry registry;
+    const ModelInfo* info = registry.find("eigenplaces-resnet18_512x512");
+    GRAPH_CHECK(info != NULL);
+    if (info == NULL) return;
+    const std::string gallery = "sample/gallery/vpr_eigenplaces-resnet18_512x512.bin";
+    GRAPH_CHECK(info->resources.size() == 1 && info->resources[0].value == gallery);
+
+    // The overlay itself: a config.json value is added, a node param is made
+    // absolute, an absolute path and other params are kept.
+    const ModelConfig file_config("{\"gallery\": \"" + gallery + "\", \"top_k\": 5}",
+                                  ConfigSource::kText);
+    const ModelConfig no_gallery("{\"top_k\": 5}", ConfigSource::kText);
+    StageParams none;
+    GRAPH_CHECK(detail::GalleryAgainstRoot(none, file_config, "/repo").text.at("gallery") ==
+                "/repo/" + gallery);
+    GRAPH_CHECK(detail::GalleryAgainstRoot(none, no_gallery, "/repo").text.empty());
+    StageParams relative;
+    relative.text["gallery"] = "my/g.bin";
+    relative.numeric["top_k"] = 3;
+    const StageParams made = detail::GalleryAgainstRoot(relative, file_config, "/repo");
+    GRAPH_CHECK(made.text.at("gallery") == "/repo/my/g.bin" && made.numeric.at("top_k") == 3);
+    StageParams absolute;
+    absolute.text["gallery"] = "/data/g.bin";
+    GRAPH_CHECK(detail::GalleryAgainstRoot(absolute, file_config, "/repo").text.at("gallery") ==
+                "/data/g.bin");
+    const ModelConfig absolute_file("{\"gallery\": \"/data/g.bin\"}", ConfigSource::kText);
+    GRAPH_CHECK(detail::GalleryAgainstRoot(none, absolute_file, "/repo").text.empty());
+    GRAPH_CHECK(detail::IsAbsolutePath("C:\\g.bin") && !detail::IsAbsolutePath("g.bin"));
+
+    char cwd[4096];
+    GRAPH_CHECK(::getcwd(cwd, sizeof(cwd)) != NULL);
+    const std::string elsewhere = ScratchPath("gallery_cwd");
+    ::mkdir(elsewhere.c_str(), 0700);
+    GRAPH_CHECK(::chdir(elsewhere.c_str()) == 0);
+
+    const char* given[] = {NULL, "sample/gallery/vpr_eigenplaces-resnet18_512x512.bin"};
+    for (std::size_t g = 0; g < 2; ++g) {
+        StageParams params;
+        if (given[g] != NULL) params.text["gallery"] = given[g];  // a node param
+        v_eigenplaces_resnet18_512x512::EigenplacesFactory factory;
+        detail::ConfigureFactory(&factory, *info, params);
+        const PostprocessorPtr<EmbeddingResult> post = factory.createPostprocessor(512, 512);
+        const GalleryRetrievalPostprocessor* retrieval =
+            dynamic_cast<const GalleryRetrievalPostprocessor*>(post.get());
+        GRAPH_CHECK(retrieval != NULL);
+        if (retrieval == NULL) continue;
+        if (!retrieval->galleryError().empty()) {
+            std::printf("gallery: %s\n", retrieval->galleryError().c_str());
+        }
+        GRAPH_CHECK(retrieval->galleryError().empty());
+    }
+    GRAPH_CHECK(::chdir(cwd) == 0);
+    ::rmdir(elsewhere.c_str());
+}
+
 // PP-Matting's soft alpha matte is the "alpha" port: a spatial CV_32F map.
 // The primary output stays the thresholded class map.
 void TestMattingAlphaBecomesADenseMapPort() {
@@ -11783,6 +11844,7 @@ int main() {
     TestRegistryResolvesOldNamesAndAliasesToTheVariant();
     TestRegistryCarriesPublishedAndResources();
     TestStageConfigIsTheVariantsConfigJson();
+    TestARelativeGalleryIsReadAgainstTheRepository();
     TestMattingAlphaBecomesADenseMapPort();
     TestDepthConversionOwnsItsValues();
     TestGalleryMatchesBecomeAScoresPort();

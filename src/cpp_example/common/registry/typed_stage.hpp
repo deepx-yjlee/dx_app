@@ -397,6 +397,63 @@ inline std::string ParamsToJson(const std::map<std::string, double>& numeric) {
     return ParamsToJson(params, std::map<std::string, std::string>());
 }
 
+/// "/a", "\\a" and "C:..." are absolute; "" and "sample/x" are not.
+inline bool IsAbsolutePath(const std::string& path) {
+    if (path.empty()) return false;
+    if (path[0] == '/' || path[0] == '\\') return true;
+    return path.size() > 1 && path[1] == ':';
+}
+
+/**
+ * @brief `params`, with a relative "gallery" read against `root`.
+ *
+ * --check looks a gallery up under the repository (PROJECT_ROOT_DIR), while
+ * the postprocessor opens whatever path it is given, relative to the
+ * working directory. So a relative node param is made absolute here, and a
+ * relative config.json value a node does not override is added as one, so
+ * a run from any directory opens the gallery --check found. An absolute
+ * path is kept as given.
+ */
+inline StageParams GalleryAgainstRoot(const StageParams& params, const ModelConfig& file_config,
+                                      const std::string& root) {
+    StageParams out = params;
+    std::map<std::string, std::string>::iterator node = out.text.find("gallery");
+    if (node != out.text.end()) {
+        if (!node->second.empty() && !IsAbsolutePath(node->second)) {
+            node->second = root + "/" + node->second;
+        }
+        return out;
+    }
+    const std::string from_file = file_config.get<std::string>("gallery", std::string());
+    if (!from_file.empty() && !IsAbsolutePath(from_file)) {
+        out.text["gallery"] = root + "/" + from_file;
+    }
+    return out;
+}
+
+/**
+ * @brief factory defaults < config.json < node params, on `factory`, with
+ *        a relative gallery read against the repository (GalleryAgainstRoot).
+ *
+ * What a stage does to its factory before it builds anything from it,
+ * without an engine, so a test can configure a real factory.
+ */
+template <class F>
+void ConfigureFactory(F* factory, const ModelInfo& info, const StageParams& params) {
+    const ModelConfig file_config = LoadOptionalConfig(StageConfigPath(info));
+    if (file_config.isLoaded()) factory->loadConfig(file_config);
+
+    const std::string overlay = ParamsToJson(
+        GalleryAgainstRoot(params, file_config, PROJECT_ROOT_DIR), file_config.rawArrays());
+    if (overlay.empty()) return;
+    // loadConfig reads every key with the factory's CURRENT value as the
+    // default, so a second call carrying only the overridden keys leaves
+    // everything else exactly as config.json left it. That is the
+    // overlay, not a reload.
+    ModelConfig node_config(overlay, ConfigSource::kText);
+    factory->loadConfig(node_config);
+}
+
 /**
  * @brief TypedStage's pending jobs, keyed by a monotonic id (U-36).
  *
@@ -660,17 +717,7 @@ class TypedStage : public IStage {
      * ModelInfo used here have to name a real directory.
      */
     void ApplyParams(const StageParams& params) {
-        const ModelConfig file_config = LoadOptionalConfig(detail::StageConfigPath(info_));
-        if (file_config.isLoaded()) factory_->loadConfig(file_config);
-
-        const std::string overlay = detail::ParamsToJson(params, file_config.rawArrays());
-        if (overlay.empty()) return;
-        // loadConfig reads every key with the factory's CURRENT value as the
-        // default, so a second call carrying only the overridden keys leaves
-        // everything else exactly as config.json left it. That is the
-        // overlay, not a reload.
-        ModelConfig node_config(overlay, ConfigSource::kText);
-        factory_->loadConfig(node_config);
+        detail::ConfigureFactory(factory_.get(), info_, params);
     }
 
     void Prepare(const StageInput& input, Job* job) {

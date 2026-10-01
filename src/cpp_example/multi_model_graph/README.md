@@ -624,7 +624,9 @@ note: node "c": the CLIP prompt bank is Python-only; in a graph this model outpu
 * `resource: ... gallery <path>`: the gallery file a retrieval,
   re-identification or place-recognition model compares against, relative to
   the repository: `[present, DXGAL1]`, `[present, but not a DXGAL1
-  gallery]` or `[MISSING]`.
+  gallery]` or `[MISSING]`. A run reads a relative `gallery` (from
+  `config.json` or a node's `params`) against the repository too, so it
+  opens the file `--check` found from any working directory.
 * `note: ...`: a fact about the model in a graph, such as the CLIP note
   above, or, before the table, `note: node "od": "yolov8n" is the old name
   of "yolov8-n_640x640"`.
