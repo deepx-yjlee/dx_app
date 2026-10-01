@@ -53,6 +53,7 @@ const long kMaxOptionValue = 2147483647L;
 // The report schema, the path rule, the build sequence and the executor
 // adapters are shared with the dx_graph Python module; see
 // graph_consumer.hpp.
+using consumer::AliasNotes;
 using consumer::AsyncFrameExecutor;
 using consumer::CollectMissing;
 using consumer::DefaultModelDir;
@@ -481,17 +482,6 @@ int PrintModels(const IModelRegistry& registry, const GraphCliArgs& args) {
 // --check / the T1 resource stage
 // ---------------------------------------------------------------------
 
-/// `"<name>" is the old name of "<variant>"`, or an alias of it (R6).
-/// Empty when `name` is the model's own key.
-std::string AliasNote(const std::string& name, const ModelInfo& info,
-                      const std::map<std::string, ModelAlias>& aliases) {
-    if (name == info.model_name) return std::string();
-    std::map<std::string, ModelAlias>::const_iterator alias = aliases.find(name);
-    const bool alias_of = alias != aliases.end() && alias->second.kind == ModelAlias::kAliasOf;
-    return "\"" + name + "\" is " + (alias_of ? "an alias of" : "the old name of") + " \"" +
-           info.model_name + "\"";
-}
-
 /// The --check line of one resource a node needs (R9).
 std::string ResourceLine(const std::string& node, const ResourceInfo& resource,
                          const std::string& model_dir) {
@@ -529,18 +519,9 @@ void PrintCheckSummary(const GraphSpec& spec, const IModelRegistry& registry,
                 static_cast<unsigned>(spec.edges.size()),
                 static_cast<unsigned>(model_nodes));
 
-    // An old name or an alias runs its variant (R6): say so, once per node.
-    std::map<std::string, ModelAlias> alias_by_name;
-    const std::vector<ModelAlias> aliases = registry.aliases();
-    for (std::size_t a = 0; a < aliases.size(); ++a) alias_by_name[aliases[a].name] = aliases[a];
-    for (std::size_t i = 0; i < spec.nodes.size(); ++i) {
-        const NodeSpec& node = spec.nodes[i];
-        if (node.is_source) continue;
-        const ModelInfo* info = registry.find(node.model);
-        if (info == NULL) continue;
-        const std::string note = AliasNote(node.model, *info, alias_by_name);
-        if (!note.empty()) std::printf("note: node \"%s\": %s\n", node.id.c_str(), note.c_str());
-    }
+    // An old name or an alias runs its variant (R6): say so, once per node
+    // (the same lines a run prints on stderr).
+    std::fputs(AliasNotes(spec, registry).c_str(), stdout);
 
     // Columns grow with the longest id and model name; a space always
     // follows. Shorter ones keep the historical widths (10, 30). The model

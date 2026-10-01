@@ -237,11 +237,22 @@ class MissingModelsError : public std::runtime_error {
         : std::runtime_error(text) {}
 };
 
+/// `"<name>" is the old name of "<variant>"`, or an alias of it (R6).
+/// Empty when `name` is the model's own key.
+std::string AliasNote(const std::string& name, const ModelInfo& info,
+                      const std::map<std::string, ModelAlias>& aliases);
+
+/// One `note: node "<id>": <AliasNote>` line per model node named by an old
+/// name or an alias, in node order. --check prints these on stdout and a
+/// run (PrepareGraph) on stderr, so a name never resolves silently.
+std::string AliasNotes(const GraphSpec& spec, const IModelRegistry& registry);
+
 /**
  * @brief The CLI's exact build sequence.
  *
- * Parse the file (T0), validate it against the registry (T0), check every
- * .dxnn exists in model_dir (T1, fatal here), build. Parse and validation
+ * Parse the file (T0), validate it against the registry (T0), print the
+ * AliasNotes on stderr, check every .dxnn exists in model_dir (T1, fatal
+ * here), build. Parse and validation
  * failures throw GraphError; absent artifacts throw MissingModelsError; a
  * failure inside Build throws whatever Build throws. *spec is assigned as
  * soon as the file parses; *graph is built only when every check passed.

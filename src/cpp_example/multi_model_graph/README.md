@@ -38,8 +38,9 @@ columns fit the slot.
 `yolov8-n_640x640`. A graph may still name a model by its old registry name
 (`yolov8n`) or an `alias_of` name; `--check` resolves it and says so on one
 line per node (`note: node "od": "yolov8n" is the old name of
-"yolov8-n_640x640"`), and the table at the end of `docs/graph_models.md`
-lists every old name. The shipped samples use variant names.
+"yolov8-n_640x640"`), a run (and `dx_graph.Graph`) prints the same line on
+stderr, and the table at the end of `docs/graph_models.md` lists every old
+name. The shipped samples use variant names.
 
 **Model files**: `./setup.sh --models` downloads the model zoo's current
 release, `q-lite-dxnn/2_5_0`, for 493 of the 499 models. Those files are

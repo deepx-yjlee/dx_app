@@ -8,8 +8,8 @@ import sys
 import pytest
 
 from conftest import PROJECT_ROOT, resolve_bin_dir
-from test_graph_cli import (GRAPHS, GRAPH_DIR, MODEL_DIR, MULTISTREAM, SAMPLE_GRAPHS, TWO_SR_GRAPH,
-                            V9_MODELS, _registry, missing_artifacts, one_node_graph, read_in_turn,
+from test_graph_cli import (ALIAS_NOTES, GRAPHS, GRAPH_DIR, MODEL_DIR, MULTISTREAM, SAMPLE_GRAPHS,
+                            TWO_SR_GRAPH, V9_MODELS, _registry, missing_artifacts, one_node_graph, read_in_turn,
                             require_an_older_runtime, run, shifted_sample_frames, v9_model_dir,
                             write_moving_video, write_two_stream_videos)
 
@@ -229,6 +229,33 @@ def test_missing_model_matches_cli(tmp_path):
     assert caught.value.code == "MODEL_MISSING"
     assert str(caught.value) == cli.stderr.strip()
     assert isinstance(caught.value, ValueError)
+
+
+@pytest.mark.graph
+def test_a_graph_notes_old_names_and_aliases_on_stderr(tmp_path, capfd):
+    """C5 deit ruling through dx_graph: building a graph prints the CLI run's
+    alias notes on stderr, once per aliased node, before it fails on the
+    empty model_dir; the GraphError text is the CLI's error without them."""
+    dx_graph = load_dx_graph()
+    path = tmp_path / "aliases.json"
+    path.write_text(json.dumps({
+        "version": 1, "name": "port",
+        "nodes": [{"id": "cam", "type": "source", "uri": "sample/img/sample_people.jpg"},
+                  {"id": "od", "model": "yolov8n"},
+                  {"id": "cls", "model": "deit_base384_distilled"}],
+        "edges": [{"from": "cam", "to": "od"}, {"from": "cam", "to": "cls"}]}), encoding="utf-8")
+    empty = tmp_path / "models"
+    empty.mkdir()
+    capfd.readouterr()
+    with pytest.raises(dx_graph.GraphError) as caught:
+        dx_graph.Graph(str(path), model_dir=str(empty))
+    assert caught.value.code == "MODEL_MISSING"
+    err = capfd.readouterr().err
+    assert err.splitlines() == ALIAS_NOTES, err
+    assert "note: " not in str(caught.value)
+    cli = run("multi_model_graph_sync", "--graph", str(path), "--model-dir", str(empty))
+    assert cli.stderr.splitlines()[:2] == ALIAS_NOTES
+    assert str(caught.value) == "\n".join(cli.stderr.splitlines()[2:])
 
 
 @pytest.mark.graph

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <cstdlib>
 #include <fstream>
 #include <iomanip>
@@ -357,11 +358,40 @@ std::string PortsText(const ModelInfo& info) {
     return text;
 }
 
+std::string AliasNote(const std::string& name, const ModelInfo& info,
+                      const std::map<std::string, ModelAlias>& aliases) {
+    if (name == info.model_name) return std::string();
+    std::map<std::string, ModelAlias>::const_iterator alias = aliases.find(name);
+    const bool alias_of = alias != aliases.end() && alias->second.kind == ModelAlias::kAliasOf;
+    return "\"" + name + "\" is " + (alias_of ? "an alias of" : "the old name of") + " \"" +
+           info.model_name + "\"";
+}
+
+std::string AliasNotes(const GraphSpec& spec, const IModelRegistry& registry) {
+    std::map<std::string, ModelAlias> alias_by_name;
+    const std::vector<ModelAlias> aliases = registry.aliases();
+    for (std::size_t a = 0; a < aliases.size(); ++a) alias_by_name[aliases[a].name] = aliases[a];
+    std::string text;
+    for (std::size_t i = 0; i < spec.nodes.size(); ++i) {
+        const NodeSpec& node = spec.nodes[i];
+        if (node.is_source) continue;
+        const ModelInfo* info = registry.find(node.model);
+        if (info == NULL) continue;
+        const std::string note = AliasNote(node.model, *info, alias_by_name);
+        if (!note.empty()) text += "note: node \"" + node.id + "\": " + note + "\n";
+    }
+    return text;
+}
+
 void PrepareGraph(const std::string& graph_path, const std::string& model_dir,
                   const IModelRegistry& registry, GraphSpec* spec,
                   StageGraph* graph) {
     *spec = ParseGraphFile(graph_path);
     ValidateGraph(*spec, registry);                             // T0
+    // An old name or an alias runs its variant (R6). --check says so on
+    // stdout; a run (the CLI's and dx_graph's) says it here, on stderr, so
+    // reports and stdout stay as the variant name writes them.
+    std::fputs(AliasNotes(*spec, registry).c_str(), stderr);
 
     // T1, fatal here. StageGraph::Build would raise kModelMissing one
     // model at a time; listing every absent file at once matters when

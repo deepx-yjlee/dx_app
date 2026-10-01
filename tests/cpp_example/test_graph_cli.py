@@ -2670,6 +2670,57 @@ def test_check_notes_old_names_and_aliases(tmp_path):
     assert table["cls"][1] == "deit-b_384x384_distilled"
 
 
+# The notes --check prints for an old name and an alias_of name (R6).
+ALIAS_NOTES = ['note: node "od": "yolov8n" is the old name of "yolov8-n_640x640"',
+               'note: node "cls": "deit_base384_distilled" is an alias of "deit-b_384x384_distilled"']
+
+
+@pytest.mark.graph
+def test_a_run_notes_old_names_and_aliases_on_stderr(tmp_path):
+    """C5 deit ruling: a run never resolves a name silently. It prints the
+    note --check prints, on stderr, once per aliased node, before anything
+    else fails (here: the empty --model-dir), in both executors."""
+    path = _write_graph(tmp_path, [{"id": "od", "model": "yolov8n"},
+                                   {"id": "cls", "model": "deit_base384_distilled"}])
+    empty = tmp_path / "models"
+    empty.mkdir()
+    for binary in BINARIES:
+        result = run(binary, "--graph", str(path), "--model-dir", str(empty))
+        assert result.returncode == 1, result.stdout + result.stderr
+        lines = result.stderr.splitlines()
+        assert lines[:2] == ALIAS_NOTES, result.stderr
+        assert lines[2].startswith("ERROR [MODEL_MISSING]"), result.stderr
+        for note in ALIAS_NOTES:
+            assert result.stderr.count(note) == 1, result.stderr
+            assert note not in result.stdout
+
+
+@pytest.mark.graph
+def test_a_run_by_an_old_name_notes_it_once_and_reports_as_the_variant(tmp_path):
+    """The note is stderr only: a graph naming "yolov8n" writes the report its
+    variant name writes, byte for byte, with one note on stderr; the variant
+    name prints none."""
+    if not (MODEL_DIR / "yolov8-n_640x640.dxnn").is_file():
+        pytest.skip("{} has no yolov8-n_640x640.dxnn".format(MODEL_DIR))
+    for binary in BINARIES:
+        reports = {}
+        for model in ("yolov8n", "yolov8-n_640x640"):
+            graph = tmp_path / "{}.json".format(model)
+            graph.write_text(json.dumps({
+                "version": 1, "name": "port",
+                "nodes": [{"id": "cam", "type": "source", "uri": "sample/img/sample_people.jpg"},
+                          {"id": "od", "model": model}],
+                "edges": [{"from": "cam", "to": "od"}]}), encoding="utf-8")
+            report = tmp_path / "{}_{}.json".format(model, binary)
+            result = run(binary, "--graph", str(graph), "--report", str(report))
+            assert result.returncode == 0, result.stdout + result.stderr
+            notes = [line for line in result.stderr.splitlines() if line.startswith("note: ")]
+            assert notes == ([ALIAS_NOTES[0]] if model == "yolov8n" else []), result.stderr
+            assert "note: " not in result.stdout
+            reports[model] = report.read_bytes()
+        assert reports["yolov8n"] == reports["yolov8-n_640x640"]
+
+
 @pytest.mark.graph
 def test_check_fails_on_an_unknown_model_name(tmp_path):
     """An unknown name is not substituted: --check exits 1 and names the node
