@@ -419,8 +419,13 @@ The build installs the same script as
 `bin/python/dx_graph_examples/run_graph.py` (`PYTHONPATH=bin/python python3
 bin/python/dx_graph_examples/run_graph.py ...`).
 
-Options: `--graph`, `--model-dir`, `--input`, `--executor`, `--max-inflight`,
-`--frames`, `--output-dir` — each as the CLI option of the same name.
+Options: `--graph`, `--model-dir`, `--input`, `--max-inflight` and `--frames`
+work as the CLI options of the same name. The CLI has neither of the other
+two: `--executor sync|async` picks the executor, which on the CLI is the
+choice of binary (`multi_model_graph_sync` or `multi_model_graph_async`),
+and `--output-dir` writes each frame's rendering into a directory, where
+the CLI's `--output <file>` writes one video, or one image per frame named
+after the file.
 
 ## Performance
 
