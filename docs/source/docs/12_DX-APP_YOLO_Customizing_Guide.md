@@ -52,7 +52,9 @@ Use `scripts/add_model.sh` to create the C++ and Python example trees from the c
 ./scripts/add_model.sh custom_yolox object_detection --postprocessor yolox --lang both
 ```
 
-Generated files follow the family/variant layout. `<family>` groups related models. `<variant>` is the `.dxnn` stem, and that folder holds the factory, `config.json`, and the entry files.
+> **Known issue (this release).** `add_model.sh` still targets the old flat `<task>/<model>/` layout, and it copies the reference model's C++ factory with its `namespace v_<reference variant>` unchanged, so `python3 scripts/generate_cpp_family_layout.py --variant-scope src/cpp_example --check` refuses the new example. Rename by hand the factory's namespace to `v_<new variant>` (every character other than a letter or digit becomes `_`) and the `dxapp::v_<...>::` qualifier in the new `<variant>_sync.cpp` / `<variant>_async.cpp`. Per-variant support in `add_model.sh` is a follow-up.
+
+An example lives in the family/variant layout (until `add_model.sh` supports it, move what it generates there; see the note above). `<family>` groups related models. `<variant>` is the `.dxnn` stem, and that folder holds the factory, `config.json`, and the entry files.
 
 ```text
 src/cpp_example/object_detection/<family>/<variant>/

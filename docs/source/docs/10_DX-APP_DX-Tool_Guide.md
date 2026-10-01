@@ -227,6 +227,8 @@ For YOLO-family model onboarding and postprocessor selection details, refer to [
 ./scripts/add_model.sh yolo_custom detection --postprocessor yolov8 --verify --model assets/models/yolo_custom.dxnn --git-push
 ```
 
+> **Known issue (this release).** `add_model.sh` still targets the old flat `<task>/<model>/` layout, and it copies the reference model's C++ factory with its `namespace v_<reference variant>` unchanged, so `python3 scripts/generate_cpp_family_layout.py --variant-scope src/cpp_example --check` refuses the new example. Rename by hand the factory's namespace to `v_<new variant>` (every character other than a letter or digit becomes `_`) and the `dxapp::v_<...>::` qualifier in the new `<variant>_sync.cpp` / `<variant>_async.cpp`. Per-variant support in `add_model.sh` is a follow-up.
+
 Common `--postprocessor` values include:
 
 | Task | Common values |

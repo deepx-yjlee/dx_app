@@ -28,6 +28,7 @@
 - worker_safety's PPE model is not distributed (in neither the model registry nor the Model Zoo manifest), so the scenario runs without its PPE stage
 - yolov5-s6-pose's `registry_config` lists score threshold 0.25, while both runtimes use 0.3 (Python's default); the variant's `"config"` is empty and neither runtime reads `registry_config`
 - One pytest session over `tests/cpp_example` and `tests/python_example` together does not collect; run each suite on its own
+- `scripts/add_model.sh` still targets the old flat `<task>/<model>/` layout, and it copies the reference model's C++ factory with its `namespace v_<reference variant>` unchanged, so `python3 scripts/generate_cpp_family_layout.py --variant-scope src/cpp_example --check` refuses the new example. Until `add_model.sh` supports the per-variant layout (a follow-up), rename by hand the factory's namespace to `v_<new variant>` (every character other than a letter or digit becomes `_`) and the `dxapp::v_<...>::` qualifier in the new `_sync.cpp` / `_async.cpp`
 ## PR 409 NOTHING NEW
 ## PR 411 NOTHING NEW
 ## PR 406
