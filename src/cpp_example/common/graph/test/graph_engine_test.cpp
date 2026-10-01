@@ -1471,7 +1471,7 @@ void TestUnrotateCropProducesNonEmptyCropForInBoundsObb() {
 // pixels. A partially-clipped OBB straddling a frame edge with fractional
 // coordinates is exactly the case where an independent recompute of the
 // extraction window (clip-in-float-then-truncate vs truncate-then-intersect)
-// disagrees by a pixel from ClipToFrame's own result — not a crash, a
+// disagrees by a pixel from ClipBoxToFrame's own result — not a crash, a
 // silent mismatch. Pin the property (crop size == src_box size), not the
 // specific truncated pixel count, so a future, still-correct change to how
 // truncation works does not spuriously break this test.

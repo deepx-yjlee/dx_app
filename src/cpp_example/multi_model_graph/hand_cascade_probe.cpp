@@ -20,8 +20,8 @@
  *   4. prints one JSON object: per palm, the crop box and the landmarks in
  *      frame coordinates (x + crop.left, y + crop.top).
  *
- * The graph engine cuts a crop by another rounding rule (ClipToFrame in
- * common/graph/roi_router.cpp truncates the clamped width and height, the
+ * The graph engine cuts a crop by another rounding rule (ClipBoxToFrame in
+ * common/utility/roi_crop.hpp truncates the clamped width and height, the
  * runner truncates each corner), so its crop can be one pixel shorter, and
  * the landmark model moves by several pixels over that one row. Each palm
  * therefore also carries "graph_rule": the crop the engine cuts and the same
@@ -158,7 +158,7 @@ std::vector<ProbeCrop> cropLikeTheRunner(
 
 // Copy of the graph engine's crop for an roi edge with pad 0: the detector
 // box as x, y, x2 - x, y2 - y (ToRect in common/graph/result_to_shape.hpp),
-// then ClipToFrame (common/graph/roi_router.cpp): clamp in float, truncate
+// then ClipBoxToFrame (common/utility/roi_crop.hpp): clamp in float, truncate
 // the corner and the size once.
 bool cropLikeTheGraph(const cv::Mat& frame, const std::vector<float>& raw, ProbeCrop& crop) {
     if (raw.size() < 4) {

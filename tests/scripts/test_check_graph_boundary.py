@@ -46,3 +46,12 @@ def test_the_postprocess_variable_left_in_a_comment_is_fatal(tmp_path, monkeypat
 
 def test_the_vitpose_root_is_one_the_guard_resolves_against():
     assert ROOT / "src" / "postprocess" / "vitpose" in load_guard().INCLUDE_ROOTS
+
+
+def test_the_shared_roi_crop_header_is_the_only_utility_header_the_engine_may_include():
+    """I17: the graph engine and multi_model share common/utility/roi_crop.hpp;
+    the rest of common/utility/ stays outside the engine's include surface."""
+    guard = load_guard()
+    engine_file = ROOT / "src" / "cpp_example" / "common" / "graph" / "roi_router.cpp"
+    assert guard._include_violation(engine_file, "common/utility/roi_crop.hpp") is None
+    assert guard._include_violation(engine_file, "common/utility/common_util.hpp") is not None

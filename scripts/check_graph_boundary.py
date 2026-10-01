@@ -225,6 +225,12 @@ ENGINE_INCLUDE_PREFIXES = (
     # purpose and it is already vendored, not a new third-party dependency.
     "common/third_party/",
 )
+# Single shared headers outside those prefixes, by exact path. The engine and
+# the multi_model runtime cut ROI crops by one rule (I17); the rest of
+# common/utility/ stays outside the engine's surface.
+ENGINE_INCLUDE_SHARED_HEADERS = frozenset([
+    "common/utility/roi_crop.hpp",
+])
 ALL_INCLUDE = re.compile(r'#\s*include\s*[<"]([^">]+)[>"]')
 
 # Every -I root src/cpp_example/CMakeLists.txt wires up for a common/graph/
@@ -354,6 +360,8 @@ def _classify_canonical_path(canonical):
     paths through that function apply identical rules."""
     if canonical.startswith(ENGINE_INCLUDE_PREFIXES):
         return None  # the framework surface the engine may consume
+    if canonical in ENGINE_INCLUDE_SHARED_HEADERS:
+        return None  # a shared header named on its own, see above
     if canonical.startswith("common/graph/"):
         remainder = canonical[len("common/graph/"):]
         if "/" in remainder:

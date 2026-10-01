@@ -124,7 +124,7 @@ Which to use:
   (`hand_cascade.json`, `worker_safety.json` above). For `hand_cascade` the
   two find the same palms and hands, but their crops can differ by one pixel
   row or column: the graph clips the padded box to the frame and truncates
-  its width and height once (`ClipToFrame` in `common/graph/roi_router.cpp`),
+  its width and height once (`ClipBoxToFrame` in `common/utility/roi_crop.hpp`),
   while `multi_model_run` truncates each corner (`cropBoxes` in
   `multi_model/runner.cpp`). They differ whenever the fractional part of the
   far edge is smaller than that of the near edge. On the sample image the

@@ -1,5 +1,7 @@
 #include "common/graph/roi_router.hpp"
 
+#include "common/utility/roi_crop.hpp"
+
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
@@ -27,26 +29,6 @@ bool ClassAllowed(const RoiSpec& spec, const BoxItem& item) {
         if (spec.classes[i] == item.class_name) return true;
     }
     return false;
-}
-
-/// Symmetric pad around the box's own centre; angle-agnostic, so it is safe
-/// to reuse for both axis-aligned boxes and the OBB un-rotate path.
-cv::Rect2f ApplyPad(const cv::Rect2f& box, float pad) {
-    if (pad <= 0.f) return box;
-    const float dx = box.width * pad;
-    const float dy = box.height * pad;
-    return cv::Rect2f(box.x - dx, box.y - dy, box.width + dx * 2.f,
-                      box.height + dy * 2.f);
-}
-
-cv::Rect ClipToFrame(const cv::Rect2f& box, const cv::Mat& source) {
-    const float x1 = std::max(0.f, box.x);
-    const float y1 = std::max(0.f, box.y);
-    const float x2 = std::min(static_cast<float>(source.cols), box.x + box.width);
-    const float y2 = std::min(static_cast<float>(source.rows), box.y + box.height);
-    if (x2 <= x1 || y2 <= y1) return cv::Rect();
-    return cv::Rect(static_cast<int>(x1), static_cast<int>(y1),
-                    static_cast<int>(x2 - x1), static_cast<int>(y2 - y1));
 }
 
 /// Five-point similarity transform onto the ArcFace reference layout.
@@ -146,10 +128,11 @@ cv::Matx23f InvertAffine(const cv::Matx23f& forward) {
  *        be fed the raw, unpadded box.
  * @param extraction_window MUST be the exact same rect RouteRois already
  *        used to build the RoiCrop's own `ref.src_box` (today: `clipped`,
- *        from ClipToFrame(padded_box, source)) — passed in, not recomputed
- *        here. That is the actual invariant this parameter exists to
- *        enforce: `crop.image`'s pixel size and `ref.src_box`'s recorded
- *        size must describe the same window, because everything downstream
+ *        from ClipBoxToFrame(padded_box, source.cols, source.rows)) —
+ *        passed in, not recomputed here. That is the actual invariant this
+ *        parameter exists to enforce: `crop.image`'s pixel size and
+ *        `ref.src_box`'s recorded size must describe the same window,
+ *        because everything downstream
  *        reads them as if they always agree — RouteRois folds this same
  *        `clipped`/`ref.src_box` translation into `ref.inv_align` itself
  *        (`ComposeAffine(inverse, Translate(clipped.x, clipped.y))` for
@@ -162,14 +145,14 @@ cv::Matx23f InvertAffine(const cv::Matx23f& forward) {
  *
  *        This is NOT a claim that recomputing the window here from
  *        `centre`/size and re-intersecting it against the rotated frame's
- *        bounds would be numerically identical to `ClipToFrame`'s result —
+ *        bounds would be numerically identical to `ClipBoxToFrame`'s result —
  *        it would not be, in general: the two clip a fractional box in a
- *        different order (`ClipToFrame` clamps in float, then truncates to
+ *        different order (`ClipBoxToFrame` clamps in float, then truncates to
  *        int once; a centre+size recompute truncates each float coordinate
  *        to int first, then intersects), so a padded box straddling a frame
  *        edge with fractional coordinates can differ by a pixel between the
  *        two paths (e.g. `padded.x = 634.7, padded.width = 8.5, cols =
- *        640`: `ClipToFrame` gives `x=634, width=5`; the centre+size
+ *        640`: `ClipBoxToFrame` gives `x=634, width=5`; the centre+size
  *        recompute gives `x=634, width=6`). Neither path crashes — both
  *        results are valid rects inside `rotated`, whose size equals
  *        source.size() — which is exactly why a stale recompute here would
@@ -297,9 +280,10 @@ std::vector<RoiCrop> RouteRois(const BoxesData& boxes, const cv::Mat& source,
         const std::size_t index = kept[k].index;
         const BoxItem& item = boxes.items[index];
 
-        // 4. pad, then clip to the frame.
-        const cv::Rect2f padded = ApplyPad(item.box, spec.pad);
-        const cv::Rect clipped = ClipToFrame(padded, source);
+        // 4. pad, then clip to the frame (the shared rule in
+        //    common/utility/roi_crop.hpp).
+        const cv::Rect2f padded = PadBox(item.box, spec.pad);
+        const cv::Rect clipped = ClipBoxToFrame(padded, source.cols, source.rows);
         if (clipped.width <= 0 || clipped.height <= 0 ||
             static_cast<float>(clipped.width) * clipped.height < spec.min_area) {
             // Review Focus #4: a box whose padded rect falls entirely (or

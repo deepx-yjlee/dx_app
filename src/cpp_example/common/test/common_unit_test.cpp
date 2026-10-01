@@ -71,6 +71,7 @@
 #include "common/utility/common_util.hpp"
 #include "common/utility/labels.hpp"
 #include "common/utility/ordered_queue.hpp"
+#include "common/utility/roi_crop.hpp"
 #include "common/utility/run_dir.hpp"
 #include "common/utility/sr_tiling.hpp"
 #include "common/utility/verify_serialize.hpp"
@@ -1852,6 +1853,105 @@ void TestSrPipelinedTilesWaitForSubmittedJobsWhenRunAsyncThrows() {
 }
 
 // =====================================================================
+// I17: one ROI crop rule (common/utility/roi_crop.hpp) for the graph
+// engine and the multi_model runtime.
+// =====================================================================
+
+// The graph engine's rule before the extraction, verbatim from
+// common/graph/roi_router.cpp (ApplyPad, ClipToFrame).
+cv::Rect2f GraphApplyPadBefore(const cv::Rect2f& box, float pad) {
+    if (pad <= 0.f) return box;
+    const float dx = box.width * pad;
+    const float dy = box.height * pad;
+    return cv::Rect2f(box.x - dx, box.y - dy, box.width + dx * 2.f,
+                      box.height + dy * 2.f);
+}
+
+cv::Rect GraphClipToFrameBefore(const cv::Rect2f& box, const cv::Mat& source) {
+    const float x1 = std::max(0.f, box.x);
+    const float y1 = std::max(0.f, box.y);
+    const float x2 = std::min(static_cast<float>(source.cols), box.x + box.width);
+    const float y2 = std::min(static_cast<float>(source.rows), box.y + box.height);
+    if (x2 <= x1 || y2 <= y1) return cv::Rect();
+    return cv::Rect(static_cast<int>(x1), static_cast<int>(y1),
+                    static_cast<int>(x2 - x1), static_cast<int>(y2 - y1));
+}
+
+void TestPaddedCropRectMatchesTheGraphRule() {
+    const cv::Mat frame(480, 640, CV_8UC3);
+    const float xs[] = {-3.7f, 0.f, 10.2f, 637.9f};
+    const float sizes[] = {0.4f, 5.5f, 100.25f};
+    const float pads[] = {0.f, 0.1f, 0.25f};
+    int cases = 0;
+    int mismatches = 0;
+    for (const float x : xs) {
+        for (const float y : xs) {
+            for (const float w : sizes) {
+                for (const float h : sizes) {
+                    for (const float pad : pads) {
+                        const cv::Rect2f box(x, y, w, h);
+                        const cv::Rect2f padded = dxapp::PadBox(box, pad);
+                        const cv::Rect2f expected_pad = GraphApplyPadBefore(box, pad);
+                        const cv::Rect expected =
+                            GraphClipToFrameBefore(expected_pad, frame);
+                        ++cases;
+                        if (padded != expected_pad ||
+                            dxapp::ClipBoxToFrame(padded, frame.cols, frame.rows) != expected ||
+                            dxapp::PaddedCropRect(box, pad, frame.cols, frame.rows) != expected) {
+                            ++mismatches;
+                            std::printf("  crop rule differs: box %g,%g %gx%g pad %g\n",
+                                        x, y, w, h, pad);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    COMMON_CHECK(cases == 4 * 4 * 3 * 3 * 3);
+    COMMON_CHECK(mismatches == 0);
+}
+
+void TestPaddedCropRectEdgeCases() {
+    const int cols = 640;
+    const int rows = 480;
+    // Fractional coordinates: clamp in float, truncate the corner and the
+    // size once. y 10.7 .. 20.2 is 9 rows (the multi_model runner's old
+    // per-corner truncation cut 10 rows, 10 .. 20).
+    COMMON_CHECK(dxapp::PaddedCropRect(cv::Rect2f(3.5f, 10.7f, 5.f, 9.5f), 0.f, cols, rows) ==
+                 cv::Rect(3, 10, 5, 9));
+    // Over the right border: x 634.7 + 8.5 is clipped at 640.
+    COMMON_CHECK(dxapp::PaddedCropRect(cv::Rect2f(634.7f, 200.f, 8.5f, 20.f), 0.f, cols, rows) ==
+                 cv::Rect(634, 200, 5, 20));
+    // Over the top-left corner: starts at 0.
+    COMMON_CHECK(dxapp::PaddedCropRect(cv::Rect2f(-5.f, -2.5f, 15.f, 12.5f), 0.f, cols, rows) ==
+                 cv::Rect(0, 0, 10, 10));
+    // Exactly the frame, and a box larger than the frame on every side.
+    COMMON_CHECK(dxapp::PaddedCropRect(cv::Rect2f(0.f, 0.f, 640.f, 480.f), 0.f, cols, rows) ==
+                 cv::Rect(0, 0, cols, rows));
+    COMMON_CHECK(dxapp::PaddedCropRect(cv::Rect2f(-10.f, -10.f, 700.f, 500.f), 0.1f, cols, rows) ==
+                 cv::Rect(0, 0, cols, rows));
+    // Pad grows each side by pad x size: 100 x 50 at pad 0.25 -> 25 / 12.5.
+    COMMON_CHECK(dxapp::PadBox(cv::Rect2f(100.f, 100.f, 100.f, 50.f), 0.25f) ==
+                 cv::Rect2f(75.f, 87.5f, 150.f, 75.f));
+    COMMON_CHECK(dxapp::PaddedCropRect(cv::Rect2f(100.f, 100.f, 100.f, 50.f), 0.25f, cols, rows) ==
+                 cv::Rect(75, 87, 150, 75));
+    // A negative or zero pad leaves the box alone.
+    COMMON_CHECK(dxapp::PadBox(cv::Rect2f(1.5f, 2.5f, 3.f, 4.f), -0.5f) ==
+                 cv::Rect2f(1.5f, 2.5f, 3.f, 4.f));
+    // Zero-size and inverted boxes, and boxes wholly outside: empty.
+    COMMON_CHECK(dxapp::PaddedCropRect(cv::Rect2f(10.f, 10.f, 0.f, 5.f), 0.f, cols, rows).empty());
+    COMMON_CHECK(dxapp::PaddedCropRect(cv::Rect2f(10.f, 10.f, 5.f, 0.f), 0.25f, cols, rows).empty());
+    COMMON_CHECK(dxapp::PaddedCropRect(cv::Rect2f(10.f, 10.f, -4.f, 5.f), 0.f, cols, rows).empty());
+    COMMON_CHECK(dxapp::PaddedCropRect(cv::Rect2f(640.f, 10.f, 5.f, 5.f), 0.f, cols, rows).empty());
+    COMMON_CHECK(dxapp::PaddedCropRect(cv::Rect2f(-20.f, 10.f, 20.f, 5.f), 0.f, cols, rows).empty());
+    COMMON_CHECK(dxapp::PaddedCropRect(cv::Rect2f(10.f, 480.5f, 5.f, 5.f), 0.f, cols, rows).empty());
+    // A sliver under one pixel inside the frame truncates to a zero size.
+    COMMON_CHECK(dxapp::PaddedCropRect(cv::Rect2f(10.2f, 10.f, 0.4f, 5.f), 0.f, cols, rows).width == 0);
+    // An empty frame gives no crop.
+    COMMON_CHECK(dxapp::PaddedCropRect(cv::Rect2f(0.f, 0.f, 5.f, 5.f), 0.f, 0, 0).empty());
+}
+
+// =====================================================================
 // U-77: ModelConfig reads JSON strings as JSON does.
 // =====================================================================
 
@@ -2077,6 +2177,9 @@ int main() {
     TestSrMergeLumaIsTheRunnersMerge();
     TestSrPrepareLowResPadsAndConvertsLikeTheRunner();
     TestSrPipelinedTilesWaitForSubmittedJobsWhenRunAsyncThrows();
+
+    TestPaddedCropRectMatchesTheGraphRule();
+    TestPaddedCropRectEdgeCases();
 
     TestModelConfigBracketsInsideStringsAreText();
     TestModelConfigDecodesJsonEscapes();
