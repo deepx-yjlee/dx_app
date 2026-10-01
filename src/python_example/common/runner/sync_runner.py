@@ -507,19 +507,27 @@ def _auto_download_videos() -> bool:
 # Input validation
 # ======================================================================
 
-def _example_key_from_argv0() -> str:
-    """Derive the example key from the entry script name (SDKREQ-529).
+def example_key(name: str) -> str:
+    """The example key of an entry script stem (SDKREQ-529).
 
     Entry scripts are named ``<example>_sync.py`` / ``<example>_async.py``
     (optionally ``_cpp_postprocess``). For a per-model script ``<example>``
-    is the registry ``variant``; ``model_name`` is accepted too.
+    is the registry ``variant``; ``model_name`` is accepted too. The family's
+    ORT-off debug scripts (``yolov8n_sync_ort_off.py``) carry a trailing
+    ``_ort_off``, which is dropped first.
     """
-    name = Path(sys.argv[0]).stem  # drops ".py"
+    if name.endswith("_ort_off"):
+        name = name[: -len("_ort_off")]
     for suf in ("_async_cpp_postprocess", "_sync_cpp_postprocess",
                 "_cpp_postprocess", "_async", "_sync"):
         if name.endswith(suf):
             return name[: -len(suf)]
     return name
+
+
+def _example_key_from_argv0() -> str:
+    """:func:`example_key` of the entry script that started this process."""
+    return example_key(Path(sys.argv[0]).stem)  # stem drops ".py"
 
 
 def _resolve_default_model_path() -> Optional[str]:

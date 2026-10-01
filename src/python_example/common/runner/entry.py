@@ -93,6 +93,33 @@ def config_root_for(script_dir: Path) -> Path:
     return script_dir
 
 
+def ort_off_variant_dir(script_file: str | Path) -> Path:
+    """Variant directory a family-level ``<model>_<kind>_ort_off.py`` script runs.
+
+    These ORT-off debug scripts sit on the family directory, which has no
+    ``factory/`` of its own, and are named after a registry ``model_name``
+    (``yolov8n_sync_ort_off.py``). They run that row's variant
+    (``yolov8-n_640x640``), so the factory and the default model without
+    ``-m`` (:func:`common.runner.sync_runner._resolve_default_model_path`, same
+    name) agree. A name the registry does not know falls back to the family's
+    default variant (:func:`common.variant_config.default_variant`, the first
+    published one).
+    """
+    from common.runner.sync_runner import example_key
+    from common.variant_config import default_variant
+    from common.variants import VariantNotFound, resolve_variant
+
+    script = Path(script_file).resolve()
+    family_dir = script.parent
+    try:
+        variant = resolve_variant(example_key(script.stem)).variant
+    except VariantNotFound:
+        variant = ""
+    if not variant or not (family_dir / variant / "factory").is_dir():
+        variant = default_variant(str(family_dir))
+    return family_dir / variant
+
+
 def run_entry(
     script_file: str | Path,
     *,
