@@ -2350,16 +2350,25 @@ def test_enhance_detect_roi_chain_keeps_source_coordinates(tmp_path):
             assert box_inside(crop["origin"]["src_box"], width, height), \
                 (node, crop["origin"], width, height)
 
-    confident = 0
+    # Which keypoints are confident depends on the model build: on the dark
+    # crop this chain makes, one store's vitpose-s tops out at 0.43 and
+    # another's at 0.24. So each item's top_k most confident keypoints are
+    # checked whatever their score, plus every keypoint above 0.3, and each
+    # must land on its crop's source box.
+    top_k = 5
+    checked = 0
     for crop in crops["kp"]:
         origin = crop["origin"]
         for item in crop["payload"]["items"]:
-            for point in item["keypoints"]:
-                if point["confidence"] > 0.3:
-                    x, y = to_source(origin["inv_align"], point["x"], point["y"])
-                    assert point_near_box(x, y, origin["src_box"], 2), (point, x, y, origin)
-                    confident += 1
-    assert confident > 0, "no keypoint above 0.3 to check"
+            points = sorted(item["keypoints"], key=lambda p: -p["confidence"])
+            assert points, ("no keypoints in a kp item", origin)
+            for rank, point in enumerate(points):
+                if rank >= top_k and point["confidence"] <= 0.3:
+                    break
+                x, y = to_source(origin["inv_align"], point["x"], point["y"])
+                assert point_near_box(x, y, origin["src_box"], 2), (point, x, y, origin)
+                checked += 1
+    assert checked >= top_k, "fewer than {} keypoints to check".format(top_k)
 
     spec = json.loads((GRAPH_DIR / ENHANCE_CHAIN).read_text(encoding="utf-8"))
     emb_model = next(node["model"] for node in spec["nodes"] if node["id"] == "emb")
@@ -2625,16 +2634,21 @@ def test_v9_model_on_an_older_runtime_fails_before_loading(tmp_path, model):
 def test_list_models_shows_published_and_container_version(tmp_path):
     """--list-models prints the registry's published flag and, per row, the
     container version of the .dxnn in --model-dir (bytes 4-7 after DXNN),
-    or "missing". The v8 store has yolov8-n_640x640; a stand-in DXNN+9
-    file reads as v9."""
+    or "missing". The store's yolov8-n_640x640 must read as the version its
+    own header carries (v8 or v9 store alike); a stand-in DXNN+9 file reads
+    as v9."""
     header = run(BINARIES[0], "--list-models", "--model-dir", str(MODEL_DIR))
     assert header.returncode == 0, header.stderr
     assert header.stdout.splitlines()[0].split() == [
         "model", "task", "produces", "consumes", "input", "published", "file", "ready"]
     if not (MODEL_DIR / "yolov8-n_640x640.dxnn").is_file():
         pytest.skip("{} has no yolov8-n_640x640.dxnn".format(MODEL_DIR))
+    with open(MODEL_DIR / "yolov8-n_640x640.dxnn", "rb") as dxnn:
+        magic, version = dxnn.read(4), dxnn.read(4)
+    assert magic == b"DXNN", magic
+    expected = "v{}".format(int.from_bytes(version, "little"))
     row = _list_rows(header.stdout)["yolov8-n_640x640"].split()
-    assert row[5:8] == ["yes", "v8", "yes"], row
+    assert row[5:8] == ["yes", expected, "yes"], (row, expected)
 
     (tmp_path / "yolov8-n_640x640.dxnn").write_bytes(b"DXNN" + (9).to_bytes(4, "little") + b"{}")
     (tmp_path / "resnet50_224x224.dxnn").write_bytes(b"ONNX-not-a-dxnn")
