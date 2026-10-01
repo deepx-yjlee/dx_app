@@ -26,6 +26,7 @@ from test_helpers.utils import (  # noqa: E402
     discover_cpp_model_cases,
     cpp_exe_task_map,
     cpp_variant_image_only,
+    cpp_variant_image_only_reason,
     resolve_cpp_exe_input,
     stream_rejecting_cpp_cases,
     strip_variant_suffix,
@@ -487,9 +488,9 @@ class TestSaveOutputFiles:
         # TestSaveMode.test_video_save).
         if task in IMAGE_ONLY_TASKS:
             pytest.skip(f"[{task}] image-only task; no video save path")
-        if cpp_variant_image_only(executable):
-            pytest.skip(f"[{task}] {executable}: image-only variant (config.json); "
-                        "no video save path")
+        image_only = cpp_variant_image_only_reason(executable)
+        if image_only:
+            pytest.skip(f"[{task}] {executable}: {image_only}; no video save path")
         if video_too_slow(executable):
             pytest.skip(f"[{task}] {executable}: too slow for the video save test")
 

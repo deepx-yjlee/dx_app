@@ -373,8 +373,8 @@ def py_variant_image_only(path) -> bool:
 
 
 @lru_cache(maxsize=1)
-def _cpp_exe_config_map() -> dict:
-    """``{"<variant>_sync"/"_async": <variant dir>/config.json}`` from the source tree."""
+def _cpp_exe_source_map() -> dict:
+    """``{"<variant>_sync"/"_async": <variant dir>/<exe>.cpp}`` from the source tree."""
     src_cpp = PROJECT_ROOT / "src" / "cpp_example"
     mapping: dict = {}
     if not src_cpp.is_dir():
@@ -384,23 +384,72 @@ def _cpp_exe_config_map() -> dict:
             continue
         for cpp_file in sorted(task_dir.rglob("*.cpp")):
             if cpp_file.stem.endswith(("_sync", "_async")):
-                mapping[cpp_file.stem] = cpp_file.parent / "config.json"
+                mapping[cpp_file.stem] = cpp_file
     return mapping
 
 
-def cpp_variant_image_only(executable: str) -> bool:
-    """``image_only`` of a C++ example executable's variant ``config.json``.
+_CPP_RUNNER_USE = re.compile(r"dxapp::(\w+Runner)\s*<")
+# A runner that takes stream input registers the cxxopts option "v, video_path".
+_CPP_STREAM_OPTION = re.compile(r'\(\s*"v\s*,\s*video')
 
-    The C++ counterpart of :func:`py_variant_image_only`: a variant of a
-    video-capable task can still be image-only (casvit-t under
-    ``image_classification``), and a variant whose name merely looks like one
-    (casvit-t-fpn-resnet50, semantic segmentation) is not. False when the
-    executable has no source or its directory has no ``config.json``.
+
+@lru_cache(maxsize=None)
+def _cpp_runner_takes_stream(runner: str, runner_dir: str) -> Optional[bool]:
+    """Whether the C++ runner class *runner* registers ``-v/--video_path``.
+
+    Read from the runner headers in *runner_dir*: the header that defines the
+    class, or the alias it is (``using SyncKeypointRunner = SyncPoseRunner<F>``)
+    followed to the header of its target. Only that header's own text counts; a
+    runner header includes another runner's header (the embedding runners
+    include sync_detection_runner.hpp) without taking its options. None when no
+    header defines *runner*.
     """
-    config = _cpp_exe_config_map().get(executable)
-    if config is None or not config.is_file():
-        return False
-    return bool(json.loads(config.read_text(encoding="utf-8")).get("image_only"))
+    alias = re.compile(r"\busing\s+" + re.escape(runner) + r"\s*=\s*(\w+)\s*<")
+    definition = re.compile(r"\bclass\s+" + re.escape(runner) + r"\b\s*(?:final\s*)?[:{]")
+    for header in sorted(Path(runner_dir).glob("*.hpp")):
+        text = header.read_text(encoding="utf-8", errors="replace")
+        target = alias.search(text)
+        if target:
+            return _cpp_runner_takes_stream(target.group(1), runner_dir)
+        if definition.search(text):
+            return bool(_CPP_STREAM_OPTION.search(text))
+    return None
+
+
+def cpp_variant_image_only_reason(executable: str) -> Optional[str]:
+    """Why a C++ example executable takes image input only, or None.
+
+    Two facts of the source tree make it image-only:
+
+    * its variant ``config.json`` says ``image_only`` -- a variant of a
+      video-capable task can still be image-only (casvit-t under
+      ``image_classification``), and a variant whose name merely looks like one
+      (casvit-t-fpn-resnet50, semantic segmentation) is not;
+    * the runner its ``.cpp`` instantiates registers no ``-v/--video_path``
+      option, so the binary rejects ``-v`` ("Option 'v' does not exist") whatever
+      the config says. The config is the one the Python tree uses, and the Python
+      clip-img zero-shot example does run on video while the C++ one runs it
+      through the image-only embedding runner.
+
+    None when the executable has no source, or neither fact holds.
+    """
+    source = _cpp_exe_source_map().get(executable)
+    if source is None:
+        return None
+    config = source.parent / "config.json"
+    if config.is_file() and json.loads(config.read_text(encoding="utf-8")).get("image_only"):
+        return "image-only variant (config.json image_only)"
+    runner = _CPP_RUNNER_USE.search(source.read_text(encoding="utf-8", errors="replace"))
+    if runner is not None:
+        runner_dir = PROJECT_ROOT / "src" / "cpp_example" / "common" / "runner"
+        if _cpp_runner_takes_stream(runner.group(1), str(runner_dir)) is False:
+            return "image-only runner ({} registers no -v/--video_path)".format(runner.group(1))
+    return None
+
+
+def cpp_variant_image_only(executable: str) -> bool:
+    """True when :func:`cpp_variant_image_only_reason` gives a reason."""
+    return cpp_variant_image_only_reason(executable) is not None
 
 
 @lru_cache(maxsize=1)

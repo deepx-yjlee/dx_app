@@ -160,6 +160,8 @@ def test_py_variant_image_only_without_config(tmp_path):
 
 
 def test_cpp_variant_image_only_matches_every_variant_config():
+    """A config.json image_only variant is image-only; any other variant is
+    image-only only because its runner takes no -v (see the next test)."""
     wrong = []
     checked = 0
     for variant_dir, _task in CPP_VARIANTS:
@@ -167,10 +169,36 @@ def test_cpp_variant_image_only_matches_every_variant_config():
             encoding="utf-8")).get("image_only"))
         for source in sorted(variant_dir.glob("*_sync.cpp")) + sorted(variant_dir.glob("*_async.cpp")):
             checked += 1
-            if utils.cpp_variant_image_only(source.stem) != expected:
-                wrong.append(f"{source.stem}: expected {expected}")
+            reason = utils.cpp_variant_image_only_reason(source.stem)
+            if expected and (reason is None or "config.json" not in reason):
+                wrong.append(f"{source.stem}: config image_only, helper says {reason!r}")
+            if not expected and reason is not None and not reason.startswith("image-only runner"):
+                wrong.append(f"{source.stem}: config not image_only, helper says {reason!r}")
     assert checked >= 400, checked
     assert not wrong, f"{len(wrong)} executables:\n" + "\n".join(wrong[:20])
+
+
+def test_cpp_clip_zero_shot_is_image_only_by_its_runner():
+    """The variant config is shared with Python, where clip-img zero-shot runs on
+    video; the C++ example runs it through the embedding runner, which has no
+    -v option ("Option 'v' does not exist")."""
+    variant = "clip-img_vit-b32_256x256_datacomp-s34b-b86k"
+    config = next(CPP_ROOT.glob(f"*/*/{variant}/config.json"))
+    assert json.loads(config.read_text(encoding="utf-8"))["image_only"] is False
+    for exe, runner in ((variant + "_sync", "SyncEmbeddingRunner"),
+                        (variant + "_async", "AsyncEmbeddingRunner")):
+        assert utils.cpp_variant_image_only(exe) is True, exe
+        assert runner in utils.cpp_variant_image_only_reason(exe), exe
+
+
+def test_cpp_runner_stream_option_follows_aliases():
+    """SyncKeypointRunner is SyncPoseRunner, which registers -v; the embedding
+    runners include the detection runner's header but not its options."""
+    runner_dir = str(CPP_ROOT / "common" / "runner")
+    assert utils._cpp_runner_takes_stream("SyncKeypointRunner", runner_dir) is True
+    assert utils._cpp_runner_takes_stream("SyncDetectionRunner", runner_dir) is True
+    assert utils._cpp_runner_takes_stream("SyncEmbeddingRunner", runner_dir) is False
+    assert utils._cpp_runner_takes_stream("NoSuchRunner", runner_dir) is None
 
 
 def test_cpp_variant_image_only_tells_casvit_classifier_from_casvit_segmenter():
@@ -190,5 +218,6 @@ def test_cpp_e2e_stream_skip_reads_the_variant_config_not_name_keywords():
                      if isinstance(t, ast.Name) and t.id == "_IMAGE_ONLY_KEYWORDS"]
     assert not keyword_lists, "test_e2e.py still skips streams by a name keyword list"
     calls = [n for n in ast.walk(tree) if isinstance(n, ast.Call)
-             and isinstance(n.func, ast.Name) and n.func.id == "cpp_variant_image_only"]
+             and isinstance(n.func, ast.Name)
+             and n.func.id in ("cpp_variant_image_only", "cpp_variant_image_only_reason")]
     assert calls, "test_e2e.py does not read the variant config's image_only"

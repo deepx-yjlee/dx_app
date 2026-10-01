@@ -21,6 +21,7 @@ from test_helpers.utils import (  # noqa: E402
     binary_path,
     setup_environment,
     cpp_exe_task_map,
+    cpp_variant_image_only,
     discover_cpp_model_cases,
     resolve_cpp_exe_input,
     stream_rejecting_cpp_cases,
@@ -99,6 +100,7 @@ VIDEO_DUMP_PARAMS = [
     pytest.param(name, mp, id=name, marks=pytest.mark.sync_exec)
     for name, mp in REPRESENTATIVE
     if EXE_TASK_MAP.get(name) not in IMAGE_ONLY_TASKS
+    and not cpp_variant_image_only(name)
 ]
 # Negative test: one model per task whose runner HARD-REJECTS stream input, to
 # assert the SDKREQ-517 exclusion is actually enforced (not merely skipped).

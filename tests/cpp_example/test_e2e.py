@@ -36,7 +36,7 @@ from test_helpers import platform_paths  # noqa: E402
 from test_helpers.utils import (  # noqa: E402
     binary_path,
     cpp_exe_task_map,
-    cpp_variant_image_only,
+    cpp_variant_image_only_reason,
     dxnn_for_exe,
     resolve_cpp_exe_input,
     setup_environment,
@@ -394,12 +394,13 @@ def test_stream_inference_e2e(executable, model_path, bin_dir):
     if task in IMAGE_ONLY_TASKS:
         pytest.skip(f"{executable}: image-only task ({task}), video input not supported")
 
-    # A variant of a video-capable task can itself be image-only (casvit-t under
-    # image_classification): read the flag the runner reads, the variant's
-    # config.json. A name keyword cannot tell casvit-t from casvit-t-fpn-resnet50
-    # (semantic segmentation, video-capable).
-    if cpp_variant_image_only(executable):
-        pytest.skip(f"{executable}: image-only variant (config.json), video input not supported")
+    # A variant of a video-capable task can itself be image-only: its config.json
+    # says so (casvit-t under image_classification), or its runner has no -v
+    # option (clip-img zero-shot, embedding runner). A name keyword cannot tell
+    # casvit-t from casvit-t-fpn-resnet50 (semantic segmentation, video-capable).
+    image_only = cpp_variant_image_only_reason(executable)
+    if image_only:
+        pytest.skip(f"{executable}: {image_only}, video input not supported")
 
     if not TEST_VIDEO.exists():
         pytest.skip(f"Test video not found: {TEST_VIDEO}")

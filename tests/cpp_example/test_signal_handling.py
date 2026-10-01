@@ -23,6 +23,7 @@ from test_helpers.utils import (  # noqa: E402
     binary_path,
     setup_environment,
     cpp_exe_task_map,
+    cpp_variant_image_only,
     discover_cpp_model_cases,
 )
 from test_helpers.constants import IMAGE_ONLY_TASKS  # noqa: E402
@@ -64,7 +65,7 @@ def discover_fast_sync() -> List[tuple]:
         # tasks (3d_object_detection, embedding, …) reject -v and exit
         # immediately, giving zero real coverage — skip them so a
         # stream-capable model is chosen.
-        if _EXE_TASK_MAP.get(exe_name) in IMAGE_ONLY_TASKS:
+        if _EXE_TASK_MAP.get(exe_name) in IMAGE_ONLY_TASKS or cpp_variant_image_only(exe_name):
             continue
         candidates.append((exe_name, model_path))
     for p in priority:

@@ -8,10 +8,12 @@ signal-handling suites: under the family/variant layout an executable is
 ``.dxnn`` (``yolov5-s_640x640_sync`` runs ``yolov5-s_640x640.dxnn``).
 """
 import os
+import re
 import signal
 import subprocess
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
@@ -229,3 +231,47 @@ def test_linux_discovery_ignores_a_windows_exe(sandbox):
     (models / "yolov5-s_640x640.dxnn").write_bytes(b"x")
     _touch_exe(bin_dir / "yolov5-s_640x640_sync.exe")
     assert utils.discover_cpp_model_cases("_sync", bin_dir) == []
+
+
+def _help_takes_video(exe_path: Path, env: dict) -> tuple:
+    """``(exe name, --help rc, whether --help lists -v/--video_path)``."""
+    result = proc.run_bounded([str(exe_path), "--help"], capture_output=True, timeout=60,
+                              env=env, universal_newlines=True)
+    listed = re.search(r"^\s*-v, --video", result.stdout, re.MULTILINE) is not None
+    return exe_path.name, result.returncode, listed
+
+
+@pytest.mark.cli
+@pytest.mark.help
+def test_cpp_image_only_helper_agrees_with_every_binary(bin_dir):
+    """Every built C++ variant example whose --help has no -v/--video_path is
+    image-only to cpp_variant_image_only (its video tests skip), and the
+    runner-derived reason is given only to binaries that really have no -v.
+    A config.json image_only variant may still list -v (it refuses video at
+    run time), so only that direction of the config reason is checked."""
+    utils._cpp_exe_source_map.cache_clear()  # the real tree, not a sandbox's
+    exes = {}
+    for exe, source in utils._cpp_exe_source_map().items():
+        path = platform_paths.binary_path(bin_dir, exe)
+        if (source.parent / "config.json").is_file() and path.exists():
+            exes[exe] = path
+    if len(exes) < 2:
+        pytest.skip(f"C++ variant examples not built in {bin_dir}")
+    env = utils.setup_environment()
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        results = list(pool.map(lambda p: _help_takes_video(p, env), exes.values()))
+    bad_rc = [f"{name}: rc={rc}" for name, rc, _ in results if rc != 0]
+    assert not bad_rc, "--help failed:\n" + "\n".join(bad_rc[:20])
+    wrong = []
+    rejecting = 0
+    for name, _rc, takes_video in results:
+        exe = name[:-4] if name.endswith(".exe") else name
+        reason = utils.cpp_variant_image_only_reason(exe)
+        if not takes_video:
+            rejecting += 1
+            if reason is None:
+                wrong.append(f"{exe}: --help has no -v, helper says video-capable")
+        elif reason is not None and reason.startswith("image-only runner"):
+            wrong.append(f"{exe}: --help lists -v, helper says {reason!r}")
+    assert rejecting > 0, "no built binary rejects -v; the sweep checked nothing"
+    assert not wrong, f"{len(wrong)} of {len(results)} binaries:\n" + "\n".join(wrong)
