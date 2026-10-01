@@ -721,10 +721,12 @@ inline std::string exampleKeyFromArgv0(const std::string& argv0) {
 /**
  * @brief Resolve this example's default .dxnn path from model_registry.json.
  *
- * Looks the example key up as "variant" first, then "model_name".
- * dxnn_file sits before variant in each object, so the match is bounded to
- * the enclosing object. Returns "assets/models/<dxnn_file>" plus the
- * model_name used by ./setup.sh --models. path is empty when the key is absent.
+ * Looks the example key up as "variant" first, then "model_name". When
+ * several rows match (an alias_of row shares its target's variant), the
+ * canonical row (alias_of null) wins. dxnn_file sits before variant in each
+ * object, so the match is bounded to the enclosing object. Returns
+ * "assets/models/<dxnn_file>" plus the model_name used by
+ * ./setup.sh --models. path is empty when the key is absent.
  */
 struct ExampleModelRef {
     std::string path;
@@ -780,6 +782,42 @@ inline std::string jsonStringValue(const std::string& content, size_t fieldPos, 
     return content.substr(openQuote + 1, closeQuote - openQuote - 1);
 }
 
+// True unless the object [start, end] carries a non-null "alias_of".
+inline bool isCanonicalRegistryRow(const std::string& content, size_t start, size_t end) {
+    size_t field = content.find("\"alias_of\"", start);
+    if (field == std::string::npos || field > end) return true;
+    size_t colon = content.find(':', field);
+    if (colon == std::string::npos || colon > end) return true;
+    size_t value = content.find_first_not_of(" \t\r\n", colon + 1);
+    return value != std::string::npos && content.compare(value, 4, "null") == 0;
+}
+
+// Bounds of the registry row whose `field` is `value`: the first canonical
+// one, else the first. False when no row matches.
+inline bool findRegistryRow(const std::string& content, const std::string& field,
+                            const std::string& value, size_t& start, size_t& end) {
+    bool found = false;
+    for (size_t match = findJsonStringField(content, field, value, 0);
+         match != std::string::npos;
+         match = findJsonStringField(content, field, value, match + 1)) {
+        size_t objectStart = enclosingObjectStart(content, match);
+        size_t objectEnd = (objectStart == std::string::npos)
+            ? std::string::npos : enclosingObjectEnd(content, objectStart);
+        if (objectStart == std::string::npos || objectEnd == std::string::npos) continue;
+        if (isCanonicalRegistryRow(content, objectStart, objectEnd)) {
+            start = objectStart;
+            end = objectEnd;
+            return true;
+        }
+        if (!found) {
+            start = objectStart;
+            end = objectEnd;
+            found = true;
+        }
+    }
+    return found;
+}
+
 inline ExampleModelRef resolveExampleModel(const std::string& argv0) {
     ExampleModelRef ref;
     std::string key = exampleKeyFromArgv0(argv0);
@@ -790,16 +828,12 @@ inline ExampleModelRef resolveExampleModel(const std::string& argv0) {
     std::string content((std::istreambuf_iterator<char>(registryFile)),
                         std::istreambuf_iterator<char>());
 
-    size_t match = findJsonStringField(content, "variant", key, 0);
-    if (match == std::string::npos) {
-        match = findJsonStringField(content, "model_name", key, 0);
+    size_t objectStart = std::string::npos;
+    size_t objectEnd = std::string::npos;
+    if (!findRegistryRow(content, "variant", key, objectStart, objectEnd) &&
+        !findRegistryRow(content, "model_name", key, objectStart, objectEnd)) {
+        return ref;
     }
-    if (match == std::string::npos) return ref;
-
-    size_t objectStart = enclosingObjectStart(content, match);
-    size_t objectEnd = (objectStart == std::string::npos)
-        ? std::string::npos : enclosingObjectEnd(content, objectStart);
-    if (objectStart == std::string::npos || objectEnd == std::string::npos) return ref;
 
     size_t dxnnPos = content.find("\"dxnn_file\"", objectStart);
     if (dxnnPos == std::string::npos || dxnnPos > objectEnd) return ref;
