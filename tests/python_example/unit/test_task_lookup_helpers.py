@@ -157,3 +157,38 @@ def test_py_variant_image_only_without_config(tmp_path):
     script = tmp_path / "x_sync.py"
     script.write_text("", encoding="utf-8")
     assert utils.py_variant_image_only(script) is False
+
+
+def test_cpp_variant_image_only_matches_every_variant_config():
+    wrong = []
+    checked = 0
+    for variant_dir, _task in CPP_VARIANTS:
+        expected = bool(json.loads((variant_dir / "config.json").read_text(
+            encoding="utf-8")).get("image_only"))
+        for source in sorted(variant_dir.glob("*_sync.cpp")) + sorted(variant_dir.glob("*_async.cpp")):
+            checked += 1
+            if utils.cpp_variant_image_only(source.stem) != expected:
+                wrong.append(f"{source.stem}: expected {expected}")
+    assert checked >= 400, checked
+    assert not wrong, f"{len(wrong)} executables:\n" + "\n".join(wrong[:20])
+
+
+def test_cpp_variant_image_only_tells_casvit_classifier_from_casvit_segmenter():
+    """The keyword "casvit" matched both; only the classifier is image-only."""
+    assert utils.cpp_variant_image_only("casvit-t_224x224_sync") is True
+    assert utils.cpp_variant_image_only("casvit-t-fpn-resnet50_512x512_sync") is False
+
+
+def test_cpp_variant_image_only_of_an_unknown_executable_is_false():
+    assert utils.cpp_variant_image_only("no-such-variant_sync") is False
+
+
+def test_cpp_e2e_stream_skip_reads_the_variant_config_not_name_keywords():
+    tree = ast.parse(_CPP_E2E.read_text(encoding="utf-8"), filename=str(_CPP_E2E))
+    keyword_lists = [t.id for n in ast.walk(tree) if isinstance(n, ast.Assign)
+                     for t in n.targets
+                     if isinstance(t, ast.Name) and t.id == "_IMAGE_ONLY_KEYWORDS"]
+    assert not keyword_lists, "test_e2e.py still skips streams by a name keyword list"
+    calls = [n for n in ast.walk(tree) if isinstance(n, ast.Call)
+             and isinstance(n.func, ast.Name) and n.func.id == "cpp_variant_image_only"]
+    assert calls, "test_e2e.py does not read the variant config's image_only"

@@ -373,6 +373,37 @@ def py_variant_image_only(path) -> bool:
 
 
 @lru_cache(maxsize=1)
+def _cpp_exe_config_map() -> dict:
+    """``{"<variant>_sync"/"_async": <variant dir>/config.json}`` from the source tree."""
+    src_cpp = PROJECT_ROOT / "src" / "cpp_example"
+    mapping: dict = {}
+    if not src_cpp.is_dir():
+        return mapping
+    for task_dir in sorted(src_cpp.iterdir()):
+        if not task_dir.is_dir() or task_dir.name in _SKIP_DIRS:
+            continue
+        for cpp_file in sorted(task_dir.rglob("*.cpp")):
+            if cpp_file.stem.endswith(("_sync", "_async")):
+                mapping[cpp_file.stem] = cpp_file.parent / "config.json"
+    return mapping
+
+
+def cpp_variant_image_only(executable: str) -> bool:
+    """``image_only`` of a C++ example executable's variant ``config.json``.
+
+    The C++ counterpart of :func:`py_variant_image_only`: a variant of a
+    video-capable task can still be image-only (casvit-t under
+    ``image_classification``), and a variant whose name merely looks like one
+    (casvit-t-fpn-resnet50, semantic segmentation) is not. False when the
+    executable has no source or its directory has no ``config.json``.
+    """
+    config = _cpp_exe_config_map().get(executable)
+    if config is None or not config.is_file():
+        return False
+    return bool(json.loads(config.read_text(encoding="utf-8")).get("image_only"))
+
+
+@lru_cache(maxsize=1)
 def _cpp_exe_task_map_cached() -> dict:
     """Read-only, cached ``cpp_exe_task_map()`` for per-test input resolution.
 
