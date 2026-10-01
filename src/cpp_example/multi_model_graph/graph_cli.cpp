@@ -559,21 +559,11 @@ void PrintCheckSummary(const GraphSpec& spec, const IModelRegistry& registry,
         }
         const ModelInfo* info = registry.find(node.model);
         if (info == NULL) continue;
-        const std::string path = model_dir + "/" + info->dxnn_file;
-        // A present file this runtime cannot load says why (R12); the
-        // error itself follows on stderr (UnloadableContainers).
-        std::string status = "[MISSING]";
-        if (FileExists(path)) {
-            uint32_t version = 0;
-            std::string error;
-            const std::string requirement =
-                ReadDxnnContainerVersion(path, &version, &error)
-                    ? ContainerRequirement(version, RuntimeVersion())
-                    : std::string();
-            status = requirement.empty() ? "[present]"
-                                         : "[present, v" + std::to_string(version) + " (" +
-                                               requirement + ")]";
-        }
+        // A present file names its container version, as --list-models
+        // does ("[present, v8]"); one this runtime cannot load also says why
+        // (R12), and the error itself follows on stderr (UnloadableContainers).
+        const std::string column = ContainerColumn(*info, model_dir);
+        const std::string status = column == "missing" ? "[MISSING]" : "[present, " + column + "]";
         table << std::setw(model_w) << info->model_name
               << std::setw(11) << ToString(info->output_shape)
               << std::setw(11) << ToString(info->input_contract)

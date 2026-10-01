@@ -2820,6 +2820,29 @@ def test_check_reads_a_node_gallery_as_the_run_does(tmp_path):
         ], result.stdout
 
 
+@pytest.mark.graph
+def test_check_names_the_container_version_of_a_loadable_file(tmp_path):
+    """N3: the file column says which container a present .dxnn is, also
+    when this runtime loads it ("[present, v8]"), as --list-models does."""
+    (tmp_path / "yolov8-n_640x640.dxnn").write_bytes(b"DXNN" + (8).to_bytes(4, "little") + b"{}")
+    graph = one_node_graph(tmp_path, "yolov8-n_640x640")
+    for binary in BINARIES:
+        check = run(binary, "--graph", str(graph), "--check", "--model-dir", str(tmp_path))
+        assert check.returncode == 0, check.stdout + check.stderr
+        assert "yolov8-n_640x640.dxnn  [present, v8]" in check.stdout, check.stdout
+
+    version = dxrt_version()
+    if version is None or version < (3, 5, 0):
+        return  # v9 there is the refusal, pinned by the R12 test above
+    v9_dir = tmp_path / "v9"
+    v9_dir.mkdir()
+    (v9_dir / "yolov8-n_640x640.dxnn").write_bytes(b"DXNN" + (9).to_bytes(4, "little") + b"{}")
+    for binary in BINARIES:
+        check = run(binary, "--graph", str(graph), "--check", "--model-dir", str(v9_dir))
+        assert check.returncode == 0, check.stdout + check.stderr
+        assert "yolov8-n_640x640.dxnn  [present, v9]" in check.stdout, check.stdout
+
+
 # The multi_model runtime (teammate code, Decision 3) runs hand_cascade and
 # worker_safety from its own pipeline.json files. The graph engine ships the
 # same two scenarios as graph JSON; these tests hold the two side by side.
