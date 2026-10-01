@@ -29,6 +29,7 @@ from test_helpers.constants import (  # noqa: E402
     MULTI_MODEL_EXECUTABLES,
     PROJECT_ROOT,
     SAMPLE_DIR,
+    VIDEO_RUN_TIMEOUT_S,
     e2e_effective_loop,
     video_too_slow,
 )
@@ -416,7 +417,7 @@ def test_stream_inference_e2e(executable, model_path, bin_dir):
             cmd,
             capture_output=True,
             text=True,
-            timeout=2000,  # ~33 minutes timeout for video
+            timeout=VIDEO_RUN_TIMEOUT_S,
             env=env,
             cwd=PROJECT_ROOT,
         )
@@ -477,7 +478,7 @@ def test_stream_inference_e2e(executable, model_path, bin_dir):
                 )
         
     except subprocess.TimeoutExpired:
-        pytest.fail(f"{executable} video inference timed out after 2000 seconds")
+        pytest.fail(f"{executable} video inference timed out after {VIDEO_RUN_TIMEOUT_S} seconds")
     except Exception as e:
         pytest.fail(f"{executable} video inference raised exception: {e}")
 

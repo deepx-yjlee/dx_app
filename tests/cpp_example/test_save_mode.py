@@ -34,6 +34,7 @@ from test_helpers.utils import (  # noqa: E402
 from test_helpers.constants import (  # noqa: E402
     IMAGE_ONLY_TASKS,
     STREAM_REJECTING_TASKS_CPP,
+    VIDEO_RUN_TIMEOUT_S,
     video_too_slow,
 )
 
@@ -292,7 +293,7 @@ class TestSaveMode:
 
         env = setup_environment()
         result = run_bounded(
-            cmd, capture_output=True, text=True, timeout=600,
+            cmd, capture_output=True, text=True, timeout=VIDEO_RUN_TIMEOUT_S,
             env=env, cwd=str(PROJECT_ROOT),
         )
 
@@ -506,7 +507,7 @@ class TestSaveOutputFiles:
 
         env = setup_environment()
         result = run_bounded(
-            cmd, capture_output=True, text=True, timeout=600,
+            cmd, capture_output=True, text=True, timeout=VIDEO_RUN_TIMEOUT_S,
             env=env, cwd=str(PROJECT_ROOT),
         )
 

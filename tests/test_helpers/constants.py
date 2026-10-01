@@ -171,6 +171,12 @@ IMAGE_ONLY_TASKS: frozenset = frozenset({
 # ======================================================================
 VIDEO_TOO_SLOW_MODELS: frozenset = frozenset({"yolov7-w6-face_960x960", "yolov7-w6-face_1280x1280_tta"})
 
+# Bound for one C++ example run over the whole 478-frame test video (video E2E
+# and video save). The heaviest video-capable models run near 0.6 frame/s on
+# x86_64 (ppmatting-hrnet-w48 sync: about 800 s for the clip), so the old 600 s
+# bound of the video save tests ended a run that was still making progress.
+VIDEO_RUN_TIMEOUT_S = 2000
+
 
 def video_too_slow(name: str) -> bool:
     """True for an executable, script stem or model name of a model in
