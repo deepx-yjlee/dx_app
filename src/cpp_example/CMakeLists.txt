@@ -199,14 +199,15 @@ target_include_directories(dxapp_graph_obj PRIVATE
 set_target_properties(dxapp_graph_obj PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 # =============================================================================
-# Generated model registry — the bridge from the 348 factories to the engine
+# Generated model registry — the bridge from the 499 per-variant factories to the engine
 # =============================================================================
 # One translation unit per task, split above 64 models per task. Nothing here
 # is hand-maintained: scripts/gen_model_registry.py reads
 # config/model_registry.json plus the factory tree and fails the configure
 # step on an unparseable header, an ambiguous factory class, a duplicate
-# factory class name, or a registry entry whose task disagrees with its
-# factory's directory.
+# fully qualified factory class (::dxapp::v_<variant>::Cls) or a variant
+# header outside its namespace, or a registry entry whose task disagrees with
+# its factory's directory.
 dxapp_find_codegen_python()
 
 set(GRAPH_GENERATED_DIR ${CMAKE_BINARY_DIR}/generated)
@@ -310,18 +311,28 @@ if(DXAPP_BUILD_GRAPH_TESTS)
     # Test-only probe for test_hand_cascade_graph_matches_the_pipeline_runtime:
     # the multi_model runtime's palm crops and hand landmarks in frame
     # coordinates. Links the multi_model sources unchanged, as multi_model_run
-    # does (main.cpp excepted).
-    add_executable(hand_cascade_probe
-        ${CPP_EXAMPLE_DIR}/multi_model_graph/hand_cascade_probe.cpp
+    # does (main.cpp excepted). They build here with multi_model_run's own
+    # flags, not our strict ones: a slip our flags reject there would
+    # otherwise break this probe (and the build) while multi_model_run builds.
+    add_library(hand_cascade_probe_multi_model_obj OBJECT
         ${CPP_EXAMPLE_DIR}/multi_model/pipeline.cpp
         ${CPP_EXAMPLE_DIR}/multi_model/registry.cpp
         ${CPP_EXAMPLE_DIR}/multi_model/runner.cpp
+    )
+    target_compile_options(hand_cascade_probe_multi_model_obj PRIVATE ${COMMON_COMPILE_FLAGS})
+    target_compile_definitions(hand_cascade_probe_multi_model_obj PRIVATE ${COMMON_COMPILE_DEFINITIONS})
+    target_include_directories(hand_cascade_probe_multi_model_obj PRIVATE ${CPP_EXAMPLE_DIR})
+    target_link_libraries(hand_cascade_probe_multi_model_obj PRIVATE dxapp_common_obj ${COMMON_LIBS})
+
+    add_executable(hand_cascade_probe
+        ${CPP_EXAMPLE_DIR}/multi_model_graph/hand_cascade_probe.cpp
     )
     target_compile_options(hand_cascade_probe PRIVATE ${COMMON_COMPILE_FLAGS})
     dxapp_graph_strict_flags(hand_cascade_probe)
     target_compile_definitions(hand_cascade_probe PRIVATE ${COMMON_COMPILE_DEFINITIONS})
     target_include_directories(hand_cascade_probe PRIVATE ${CPP_EXAMPLE_DIR})
-    target_link_libraries(hand_cascade_probe dxapp_common_obj ${COMMON_LIBS})
+    target_link_libraries(hand_cascade_probe hand_cascade_probe_multi_model_obj
+        dxapp_common_obj ${COMMON_LIBS})
     if(TARGET dxapp_stage_vcpkg_dlls)
         add_dependencies(hand_cascade_probe dxapp_stage_vcpkg_dlls)
     endif()
