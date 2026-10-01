@@ -63,8 +63,8 @@ Each variant directory has a `factory/<variant>_factory.hpp` that implements the
 
 ```cpp
 // object_detection/yolov9/yolov9-s_640x640/yolov9-s_640x640_sync.cpp
-auto factory = std::make_unique<dxapp::Yolov9Factory>();
-dxapp::SyncDetectionRunner<dxapp::Yolov9Factory> runner(std::move(factory));
+auto factory = std::make_unique<dxapp::v_yolov9_s_640x640::Yolov9Factory>();
+dxapp::SyncDetectionRunner<dxapp::v_yolov9_s_640x640::Yolov9Factory> runner(std::move(factory));
 return runner.run(argc, argv);
 ```
 
@@ -191,6 +191,16 @@ If no input source is provided, the runner automatically selects a default sampl
 
 All C++ binaries - every single-model runner (`installSignalHandlers()`) and `multi_model_graph_sync`/`multi_model_graph_async` - install SIGINT/SIGTERM handlers. Pressing Ctrl+C triggers a graceful shutdown with clean resource release (the graph CLI finishes the frames in flight in every stream and finalizes `--report`/`--output`). A later Ctrl+C, more than 200 ms after the first, terminates the process at once (for a shutdown that is itself stuck); repeats within 200 ms count as the same request. SIGTERM is always graceful, however often it arrives.
 
+**Output order (async runners)**  
+
+Async runners get results back from dxrt's completion threads in any order. Each frame gets an index when it is submitted, and the display thread releases frames through a reorder buffer (`common/utility/frame_reorder.hpp`), so display, save and `DXAPP_VERIFY` output (written where the buffer releases a frame) follow the input order and equal the sync runner's frame by frame. The runner's one postprocessor is shared by dxrt's callback threads and serialized (`common/processors/serialized_postprocessor.hpp`). SuperPoint's tracker is updated by its visualizer, after the reorder buffer, so it also sees frames in input order.
+
+- At the end of a video the runner waits until every submitted frame has reached the display thread and, with `--save`, has been written. If nothing progresses for 5 s it prints `[DXAPP] [WARN] Output frames stopped draining; saved video may be truncated.` and stops.
+- On an interrupted run (Ctrl+C, SIGTERM, or closing the window) that wait ends at once, and the frames the reorder buffer already holds are still released in index order.
+- The reorder buffer holds at most twice the runner's in-flight depth. If a frame never comes back from dxrt, the lowest buffered frame is released once that cap is passed, so the display cannot stall; from then on output order is no longer guaranteed.
+
+`DXRT_TASK_MAX_LOAD=40` (a dxrt setting) raises dxrt's I/O buffer count from its default (about 7 jobs in flight) to the runners' 40-frame pipeline depth (instance segmentation keeps its own limit of 4). For a large model dxrt may allocate fewer buffers when NPU memory is short and logs `Buffer count reduced from 40 to N due to NPU memory limit (...)`. On the DX-M1 M.2 card used for testing (3.92 GiB, DX-RT 3.4.1), `yolopv2_384x640` does not start at 40 (dxrt reports `Dynamic IPC task init failed` before the first frame) and needs `DXRT_TASK_MAX_LOAD=20` or less. The limit depends on the device's free NPU memory.
+
 **Output Management (`--save`)**  
 
 When `--save` is enabled, a timestamped directory is created (e.g., `artifacts/cpp_example/{model}-image-{name}-{timestamp}/`) containing `run_info.txt`, saved images/video, and optional tensor dumps.
@@ -203,7 +213,9 @@ Runtime parameters (thresholds, top-k, etc.) live in `<task>/<family>/<variant>/
 
 **Numerical Verification (`DXAPP_VERIFY`)**  
 
-Set `DXAPP_VERIFY=1` to serialize all post-processing results to `logs/verify/{model}.json` for inspection and debugging.
+Set `DXAPP_VERIFY=1` to serialize post-processing results. Each run writes `logs/verify/{model}.json` (override the directory with `DXAPP_VERIFY_DIR`) holding the last frame, and `{model}.frames.jsonl` with one record per frame (`"frame": 0, 1, …` in input order). Writes are serialized and the JSON is replaced atomically, so a reader never sees a half-written file. Every runner dumps its real results, including tiled super-resolution (statistics of the stitched output), 3D detection and YOLOPv2 (boxes plus drivable/lane mask statistics); SuperPoint records carry each frame's keypoints.
+
+Frame numbers count per process, so with `-l N` on a video the records of later loops continue the numbering. `{model}` is the model file's stem (for example `yolopv2_384x640.json` for `yolopv2_384x640.dxnn`).
 
 **Tensor Dump for Debugging (`--dump-tensors`)**  
 
@@ -215,6 +227,7 @@ Dumps raw input/output tensors as `.bin` files. On exception, tensors and a `rea
 |----------|-------------|
 | `DXAPP_SAVE_IMAGE` | Save visualization to the specified file path |
 | `DXAPP_VERIFY` | When `1`, dump JSON verification data |
+| `DXAPP_VERIFY_DIR` | Directory for `DXAPP_VERIFY` output (default `logs/verify`) |
 
 ---
 

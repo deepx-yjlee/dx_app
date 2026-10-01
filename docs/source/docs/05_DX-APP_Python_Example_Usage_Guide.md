@@ -198,7 +198,13 @@ If no input source is provided, the runner automatically selects a default sampl
 
 **Signal Handling**  
 
-Both `SyncRunner` and `AsyncRunner` use `stop_event` (`threading.Event`) for graceful Ctrl+C shutdown. The async pipeline uses a SENTINEL chain to propagate stop signals through all queues.  
+Both runners install SIGINT/SIGTERM handlers (`common/runner/interrupts.py`), mirroring the C++ runners: the first Ctrl-C or a SIGTERM stops gracefully (the video writer is finalized and the summary printed); a later Ctrl-C, more than 200 ms after the first, terminates at once; repeats within 200 ms count as one request; SIGTERM never escalates. Python runs signal handlers between bytecodes, so during one long native call the escalation waits until the call returns. The async pipeline uses a SENTINEL chain to propagate the stop through its queues.  
+
+The handlers are installed only while a runner's `run()` executes and the previous handlers are restored when it returns, so importing the runner modules changes nothing and each `run()` starts with a fresh first request. A stop outside the stream loop (during setup or in image mode) prints `Interrupted by user.` and exits with status 0 instead of a `KeyboardInterrupt` traceback.  
+
+**Output order**  
+
+The async runner waits for dxrt's results in submit order (one wait worker and FIFO queues between the workers), so saved output and `DXAPP_VERIFY` records follow the input order and equal the sync runner's frame by frame. The live window also shows frames in input order, but when nothing is saved it is a best-effort preview: it draws at most about 60 frames a second and, when the window falls behind, drops the oldest waiting frame instead of slowing inference (`offer_latest` in `common/runner/async_runner.py`).  
 
 **Output Management** (`--save`)  
 
@@ -240,7 +246,9 @@ python src/python_example/object_detection/yolov7/yolov7_640x640/yolov7_640x640_
 
 **Numerical Verification** (`DXAPP_VERIFY`)  
 
-Set `DXAPP_VERIFY=1` to serialize all post-processing results to `logs/verify/{model}.json` for inspection and debugging.  
+Set `DXAPP_VERIFY=1` to serialize post-processing results. Each run writes `logs/verify/{model}.json` (override the directory with `DXAPP_VERIFY_DIR`) holding the last frame, and `{model}.frames.jsonl` with one record per frame (`"frame": 0, 1, …` in input order). Writes are serialized and the JSON is replaced atomically, so a reader never sees a half-written file. Every runner dumps its real results, including tiled super-resolution (statistics of the stitched output), 3D detection and YOLOPv2 (boxes plus drivable/lane mask statistics); SuperPoint records carry each frame's keypoints and the descriptor size. The `*_cpp_postprocess` scripts dump too (raw arrays as `output_stats` / `output_stats_list`, for the scripts whose post-processing returns arrays). `{model}.json` holds the last frame (it used to hold the first).  
+
+Frame numbers count per process, so with `--loop N` on a video the records of later loops continue the numbering.  
 
 **Tensor Dump for Debugging** (`--dump-tensors`)  
 
@@ -259,6 +267,7 @@ bash scripts/validate_models.sh --lang py
 |----------|-------------|
 | `DXAPP_SAVE_IMAGE` | Save visualization to the specified file path (no `--save` required) |
 | `DXAPP_VERIFY` | When `1`, dump JSON verification data |
+| `DXAPP_VERIFY_DIR` | Directory for `DXAPP_VERIFY` output (default `logs/verify`) |
 
 ---
 

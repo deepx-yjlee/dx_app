@@ -733,6 +733,18 @@ def produces_cell(row):
         "{} ({})".format(name, shape) for (name, _), shape in zip(ports, shapes)))
 
 
+def _ready_cell(row):
+    if not row["ready"]:
+        return "NO - " + row["reason"]
+    if row["shape"] == "kBoxes3d":
+        return "yes, but refused in every graph: boxes3d needs a LiDAR point-cloud source"
+    return "yes"
+
+
+def _names(names):
+    return ", ".join("`{}`".format(n) for n in names)
+
+
 def render_docs(rows, aliases):
     ready = [r for r in rows if r["ready"]]
     lines = [
@@ -746,20 +758,34 @@ def render_docs(rows, aliases):
         "needs a producer whose shape is `boxes`, `obboxes` or `instances` and "
         "a consumer that accepts `roi`. Extra outputs after `+` are named "
         "ports: an edge selects one with `\"port\"`, and `--report` lists "
-        "them under `\"ports\"`.",
+        "them under `\"ports\"`. `published` is NO for a model whose `.dxnn` "
+        "the model zoo does not publish yet, so `setup.sh` cannot download it.",
         "",
-        "| model | task | produces | consumes | input | ready |",
-        "|---|---|---|---|---|---|",
+        "| model | task | produces | consumes | input | published | ready |",
+        "|---|---|---|---|---|---|---|",
     ]
     for row in sorted(rows, key=lambda r: (r["task"], r["model_name"])):
-        lines.append("| `{}` | {} | {} | {} | {}x{} | {} |".format(
+        lines.append("| `{}` | {} | {} | {} | {}x{} | {} | {} |".format(
             row["model_name"], row["task"],
             produces_cell(row),
             CONTRACT_NAMES.get(row["contract"], "?"),
             row["input_width"], row["input_height"],
-            "yes" if row["ready"] else "NO - " + row["reason"]))
-    lines += ["", "{} models registered, {} usable in a graph.".format(
-        len(rows), len(ready)), ""]
+            "yes" if row["published"] else "NO",
+            _ready_cell(row)))
+    # U-19: count what a graph can run. The engine refuses a boxes3d node in
+    # every graph (graph_config.cpp: "consumes LiDAR point clouds, not camera
+    # frames"), and an unpublished model cannot be downloaded.
+    lidar = [r["model_name"] for r in ready if r["shape"] == "kBoxes3d"]
+    unpublished = [r["model_name"] for r in ready if not r["published"]]
+    summary = "{} models registered, {} ready. {} run in a graph".format(
+        len(rows), len(ready), len(ready) - len(lidar))
+    summary += (": {} {} refused (boxes3d).".format(
+        _names(lidar), "is" if len(lidar) == 1 else "are") if lidar else ".")
+    if unpublished:
+        summary += " {} ready model{} no published `.dxnn`: {}.".format(
+            len(unpublished), " has" if len(unpublished) == 1 else "s have",
+            _names(unpublished))
+    lines += ["", summary, ""]
     lines += [
         "## Old names",
         "",

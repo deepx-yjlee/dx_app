@@ -148,7 +148,8 @@ dx_app/
 │   ├── utility/                # Shared support code used by build flow
 │   └── bindings/
 │       └── python/
-│           └── dx_postprocess/ # pybind11 bindings wrapping src/postprocess/
+│           ├── dx_postprocess/ # pybind11 bindings wrapping src/postprocess/
+│           └── dx_graph/       # pybind11 module running multi-model graphs
 ├── config/
 │   ├── model_registry.json     # Model registry — single source of truth
 │   ├── test_models.conf        # Test model configuration
@@ -205,6 +206,39 @@ The process from environment setup to running your first AI application is divid
 - **Build & Execution:** Compile the source code using `./build.sh` and run the generated binaries or Python scripts located in the `bin/` or `src/python_example/` directories.  
 
 For contributor workflows such as model onboarding, validation, filtered execution, and benchmarking, refer to [DX Tool Guide](./docs/source/docs/10_DX-APP_DX-Tool_Guide.md).
+
+---
+
+## Checks and CI
+
+Every check that needs no NPU (the architecture guards, the model-registry generator, `pytest tests/scripts`; the aarch64 and header checks run where the DX-RT headers are installed) runs from one script, which GitHub Actions also runs on each push and pull request. Details, the list of checks and the opt-in NPU job: [Repository checks](./docs/source/docs/04_DX-APP_CPP_Example_Test.md#repository-checks-github-actions).
+
+```bash
+bash scripts/ci_checks.sh
+```
+
+---
+
+# Multi-Model Pipelines
+
+## Two multi-model runtimes in this release
+
+Two independent runtimes run several models together. Both build from the same per-variant factories.
+
+| | Multi-model graph | Scenario pipelines |
+|---|---|---|
+| Binaries | `bin/multi_model_graph_sync`, `bin/multi_model_graph_async`; Python module `dx_graph` | `bin/multi_model_run`; `src/python_example/multi_model/run_pipeline.py` |
+| Sources | [`src/cpp_example/multi_model_graph/`](./src/cpp_example/multi_model_graph/README.md), [`src/bindings/python/dx_graph/`](./src/bindings/python/dx_graph/README.md) | `src/cpp_example/multi_model/`, `src/python_example/multi_model/` |
+| Written as | a node-graph JSON: any registry models, wired by frame, ROI and image hand-off edges | a `pipeline.json` per scenario: stages, their dependencies, and a fuse step |
+| Models | the 494 models [`docs/graph_models.md`](./docs/graph_models.md) lists as running in a graph | the 9 variants compiled into `multi_model/registry.cpp` |
+| Input | images, videos, cameras and RTSP streams, several at once | one image per run |
+| Adds | `--check` without the NPU, tracking, output ports, `--report`, byte-identical sync and async reports | scenario logic after the models: volume, head pose (solvePnP), CLIP scores, PPE rules |
+
+Use a graph to compose registry models on images or streams and to swap a model by editing one name. Use `multi_model_run` for the four scenarios whose result is computed after the models (`hand_cascade`, `logistics_volume`, `worker_safety`, `dms_clip`). The hand cascade and worker safety (without its PPE stage, whose model is in neither the registry nor the model-zoo manifest) also ship as graphs. The two runtimes crop a region with different rounding, so their hand landmarks can differ by a few pixels on the same image. Details and the rest of the comparison: *Two multi-model runtimes in this release* in the [multi-model graph README](./src/cpp_example/multi_model_graph/README.md).
+
+The graph binaries and `dx_graph` are built by `./build.sh --all` (the default `--minimal` build does not build them); `./build.sh --all --python_exec <python>` builds `dx_graph` for that interpreter into `bin/python/dx_graph`.
+
+**Model files.** `./setup.sh` downloads DX Model Zoo 2_5_0 for 493 of the 499 models: `.dxnn` container v9, which needs DX-RT 3.5.0 (see *Repository Layout* below). The graph runtime checks the container before loading and stops with `.dxnn container v9 needs DX-RT >= 3.5.0, but this runtime is <version>. Use the v8 file (dxnn/2_4_0) or upgrade DX-RT.`; `--check` reports it and exits 1. The graphs were validated on DX-RT 3.4.1 with v8 files; validation on DX-RT 3.5.0 with the v9 files is still pending.
 
 ---
 

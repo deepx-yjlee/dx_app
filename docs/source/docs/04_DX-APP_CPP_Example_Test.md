@@ -24,7 +24,8 @@ The suite is organized into tiered categories based on execution speed and scope
      : Auto-discovers all (executable, model) pairs from `bin/` and `assets/models/`.  
      : Assets: Uses real models from `assets/models/` and test data from `sample/img/` and `assets/videos/`.  
      : Parameters: Default loop count configurable via `--loop`.  
-     : Timeouts: 100 seconds for image inference (300s for TTA models), 10 minutes for video inference.  
+     : Timeouts: 100 seconds for image inference (300s for TTA models), 15 minutes for video inference.  
+     : Video E2E and `--save` video tests run every stream-capable model except the W6 face detectors (`VIDEO_TOO_SLOW_MODELS` in `tests/test_helpers/constants.py`). Super-resolution's stream path runs on a 6-frame low-resolution clip (`test_super_resolution_stream_e2e`).  
 
 **Specialized Tests**  
 
@@ -41,9 +42,13 @@ Feature Tests
 |------|--------|-------|
 | `test_save_mode.py` | `save_mode` | `--save` / `--save-dir` output and run directory creation |
 | `test_dump_tensors.py` | `dump_tensors` | `--dump-tensors` tensor file generation |
-| `test_verify.py` | `verify` | `DXAPP_VERIFY` JSON output validation |
+| `test_verify.py` | `verify` | `DXAPP_VERIFY` output of every downloaded model, sync and async: one non-empty record, per-frame file |
+| `test_verify_dumps.py` | `verify` | Runtime checks of past `DXAPP_VERIFY` regressions (async classification/detection, restoration and tiled SR, 3D detection, YOLOPv2 masks) |
+| `test_sync_async_parity.py` | `verify` | Async output equals sync frame by frame (video clip, DXRT_TASK_MAX_LOAD=40): every video-capable async runner, plus loops and an interrupt mid-video. The sweep leaves out the image-only tasks (super_resolution among them) and the registry rows marked `image_only`; `espcn-x4_17x17`, `realesrgan-x2_192x192`, `sfa3d_608x608` and `arcface_mobilefacenet_112x112` are compared in image mode instead. `yolopv2_384x640` runs at DXRT_TASK_MAX_LOAD=20 (it does not start at 40 on the test device, `MAX_LOAD` in the file); other models that get fewer than 40 buffers run at 40 with dxrt's reduced count |
 | `test_multi_loop.py` | `multi_loop` | `-l N` loop count behavior |
-| `test_signal_handling.py` | `signal_handling` | SIGINT graceful shutdown |
+| `test_signal_handling.py` | `signal_handling` | SIGINT graceful shutdown; one Ctrl-C under `timeout` is one request; a later Ctrl-C ends a run stuck in its output (a FIFO) |
+
+`test_graph_engine.py` (marker `graph`) runs the graph engine's `graph_engine_test` binary: it fails on a missing summary line, any failure, an OpenCV or GLib log line on stderr, a `Config file not found` line or any file left in its scratch `TMPDIR`; skipped hardware cases are reported as a pytest SKIP naming them.
 
 ### Environment Setup
 
@@ -306,6 +311,65 @@ Coverage Filtering Rules
 ---
 
 ## Maintenance & CI/CD
+
+### Repository checks (GitHub Actions)
+
+`scripts/ci_checks.sh` is the single entry point for the repository checks that need no NPU; those needing the DX-RT headers SKIP where they are missing. `.github/workflows/dxapp-checks.yml` runs it on every push and pull request (and on `workflow_dispatch`); developers run the same command.
+
+```bash
+bash scripts/ci_checks.sh                  # every check, then a PASS / SKIP / FAIL summary
+bash scripts/ci_checks.sh --list           # the check names, in order
+bash scripts/ci_checks.sh --only guard-graph-boundary,workflow-yaml
+bash scripts/ci_checks.sh --require-dxrt   # a check skipped for want of the dxrt headers FAILS
+```
+
+| Check | What it runs | Needs |
+|---|---|---|
+| `guard-graph-boundary` | `scripts/check_graph_boundary.py`: the engine never names a concrete registry | Python |
+| `guard-factory-uniqueness` | `scripts/check_factory_uniqueness.py`: no two factory headers declare the same class name | Python |
+| `guard-model-registry` | `scripts/check_model_registry.py`: `config/model_registry.json` matches the factory tree | Python |
+| `guard-variant-scope` | `scripts/generate_cpp_family_layout.py --variant-scope src/cpp_example --check`: every per-variant factory header is wrapped in its own `dxapp::v_<variant>` namespace, so two variants of one family linked into one program cannot silently share one class definition | Python |
+| `codegen-strict` | `scripts/gen_model_registry.py --strict` into a temporary directory | Python |
+| `codegen-check-docs` | `scripts/check_graph_models_doc.py`: `docs/graph_models.md` is not stale | Python |
+| `header-odr` | `scripts/check_header_odr.sh`: two translation units including every shared header link | dxrt and OpenCV headers, g++ |
+| `cxx14-headers` | `scripts/check_cxx14.sh`: the headers that own `g_interrupted()` compile as C++14 with `-Werror` | dxrt and OpenCV headers, g++ |
+| `cross-compile` | `scripts/check_cross_compile.sh`: the graph engine and CLI compile for aarch64 | `aarch64-linux-gnu-g++`, dxrt and OpenCV headers |
+| `python-compile` | `python -m compileall` over `src/python_example`, `src/bindings/python`, `scripts` and `tests` | Python |
+| `workflow-yaml` | every `.github/workflows/*.yml` parses and has a `jobs:` mapping | PyYAML |
+| `tests-scripts` | `pytest tests/scripts` (hermetic, see `tests/README.md`) with `--known-failures tests/scripts/known_target_failures.txt` | pytest, PyYAML, requests (cmake and g++ for the tests that use them; the others skip) |
+
+**Known TARGET failures.** `tests/scripts/known_target_failures.txt` lists the `tests/scripts` tests that already fail on the release base (`feat/per-model-example-dirs` at 8d0b748), one `<test id> | <reason>` per line. `tests-scripts` runs each of them as `xfail(strict=True)` (`tests/scripts/known_failures.py`): the check stays green while they fail, and turns red (XPASS(strict)) the day one passes, until its line is deleted. A malformed line, a test listed twice or a missing list file is a usage error (exit 4). A plain `pytest tests/scripts` reads no list and shows those tests failing. The list today:
+
+- `test_generate_build_bat.py::test_run_bat_executes_bare_relative_filename`: a Windows `cmd.exe` test with no platform guard; on Linux `/bin/sh` cannot run the `.bat`;
+- `test_setup_demo_models.py::test_download_models_demo_models_filters_to_run_demo_models` and `test_setup_demo_models.py::test_setup_assets_forwards_demo_models_to_downloader`: they expect 18 demo models, `run_demo.py` selects 27.
+
+**SKIP versus FAIL.** A check whose prerequisite is missing on this machine prints `SKIP` with the reason, and the run still exits 0; only a `FAIL` makes it exit 1. `--require-dxrt` turns the missing dxrt headers of `header-odr`, `cxx14-headers` and `cross-compile` into a `FAIL`. A missing cross compiler is still a `SKIP`. `--only` runs the named checks (an unknown name exits 2).
+
+**The runner's view, locally.** The GitHub-hosted runner has no dxrt headers, so those three checks are skipped there. To see the same on your machine:
+
+```bash
+DXRT_INCLUDE_DIR=/nonexistent bash scripts/ci_checks.sh
+```
+
+Other variables: `PYTHON` (the interpreter for the checks, default the active virtual environment's, else `python3`) and `DXAPP_CROSS_CXX`. `DXAPP_CHECKS_RUNNER` is a repository variable that replaces the `ubuntu-24.04` runner of the `checks` job. Pull requests from a fork always run on `ubuntu-24.04`, whatever the variable says, so a fork's code never reaches that runner; pushes, `workflow_dispatch` and pull requests from branches of this repository use it.
+
+**The NPU job** (`npu` in the workflow) is off by default. It needs a self-hosted runner and runs tests on the real device.
+
+- Enable it with the repository variable `DXAPP_NPU_CI=true` (Settings, Secrets and variables, Actions, Variables), together with three more variables:
+  - `DXAPP_NPU_PYTHON`: a virtual environment's Python with pybind11, pytest and numpy;
+  - `DXAPP_NPU_RUNTIME_DIR`: the dx-runtime checkout, for `scripts/sanity_check.sh`;
+  - `DXAPP_NPU_ASSETS_DIR`: the models and videos, laid out as `setup.sh` fills `assets/`.
+- Register a runner with the labels `self-hosted, linux, x64, dxapp-npu`, with DX-RT, the NPU driver, cmake, ninja, g++ and OpenCV installed.
+- It runs on `workflow_dispatch` and on pushes to `main` or `staging`, after the `checks` job passes, and never on `pull_request`.
+- What it runs, in order, every NPU step under an external `timeout` (a hung hardware case fails its step instead of holding the runner):
+  1. the NPU sanity check, judged by the text `Sanity check PASSED!`;
+  2. `scripts/ci_checks.sh --require-dxrt --only header-odr,cxx14-headers`;
+  3. a link from `assets` to `DXAPP_NPU_ASSETS_DIR`;
+  4. the build and install into `bin/`, with `graph_engine_test` and `common_unit_test` copied there;
+  5. `graph_engine_test` (0 failures, 0 skipped) and `common_unit_test` (0 failures);
+  6. the graph trio: `tests/cpp_example/test_graph_engine.py`, `test_graph_cli.py` and `test_graph_python.py`.
+
+The `checks` job also marks the checkout as a git `safe.directory`, so the hermetic guard of `tests/scripts` can list the tracked files in a container runner.
 
 ### Continuous Integration (CI) Integration
 

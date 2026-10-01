@@ -239,7 +239,7 @@ after `close()` (or the end of its `with` block) it raises
 `RuntimeError("dx_graph.Graph is closed")`, even for a report taken earlier —
 render what you need before closing.
 
-`render()` draws ports as the CLI does: the `yolopv2` masks in green
+`render()` draws ports as the CLI does: the `yolopv2_384x640` masks in green
 (drivable) and red (lane), a 3DDFA `pose` as `vec[3]` and handedness as
 `Left: 97%` at the crop. SuperPoint's descriptors are not drawn.
 
@@ -266,13 +266,13 @@ numpy copy of the data it summarizes (`d["nodes"]["seg"]["payload"]["labels_arra
 ...). `to_dict(arrays=False)` is exactly the CLI entry: it carries `"stream"`
 exactly when the CLI's report does, on a graph with several sources.
 
-A result with **output ports** (`yolopv2`, `superpoint`, the two 3DDFA
-models, `handlandmarklite_1`; see *Output ports* in the multi_model_graph
+A result with **output ports** (`yolopv2_384x640`, `superpoint_480x640`, the two 3DDFA
+models, `mediapipe-hands-lite_224x224`; see *Output ports* in the multi_model_graph
 README) has a `"ports"` entry next to its `"payload"`, as in the CLI's
 report, and each dense port payload gets its `<key>_array` too:
 
 - `d["nodes"]["drive"]["ports"]["lane"]["labels_array"]` is the lane mask:
-  `uint8` 0/1, at the size of the image `yolopv2` ran on, which is the
+  `uint8` 0/1, at the size of the image `yolopv2_384x640` ran on, which is the
   source size when it reads the source (`(576, 768)` for a 768×576 image).
   `"drivable"` is the drivable-area mask, likewise.
 - `d["nodes"]["sp"]["ports"]["descriptors"]["values_array"]` is `float32`
@@ -305,7 +305,10 @@ cannot be read. `.code` is the CLI's error code (`"GRAPH_EDGE"`,
 multi_model_graph README), `str()` the message the CLI prints for the same
 file. `.code` is `"MODEL_LOAD"` when the runtime cannot load a model whose
 `.dxnn` is present, for example because the device memory is full (see
-*Device memory*); before, that was a `RuntimeError`. Other engine failures,
+*Device memory*), or because the file is a `.dxnn` container v9 and this
+DX-RT is older than 3.5.0 (the message is the CLI's: `... .dxnn container v9
+needs DX-RT >= 3.5.0, but this runtime is 3.4.1. Use the v8 file (dxnn/2_4_0)
+or upgrade DX-RT.`); before, that was a `RuntimeError`. Other engine failures,
 such as a `stall_timeout_ms` stall, are `RuntimeError`.
 
 ---
@@ -385,8 +388,8 @@ Every model node loads its own engine on the NPU, even two nodes that name
 the same model, and other processes on the NPU draw on the same device
 memory. A graph whose engines do not fit raises `GraphError` with `.code ==
 "MODEL_LOAD"` from the constructor, naming the first node that did not fit:
-on DX-M1, a second `realesrgan_x2` next to `yolov8n`, `resnet50` and a first
-`realesrgan_x2` cannot load. Nothing checks this in advance (the CLI's
+on DX-M1, a second `realesrgan-x2_192x192` next to `yolov8-n_640x640`, `resnet50_224x224` and a first
+`realesrgan-x2_192x192` cannot load. Nothing checks this in advance (the CLI's
 `--check` cannot either: the runtime exposes no reliable per-model
 device-memory figure); remove a node or use a smaller model. See the
 multi_model_graph README's *Device memory*.
@@ -421,10 +424,11 @@ Options: `--graph`, `--model-dir`, `--input`, `--executor`, `--max-inflight`,
 
 ## Performance
 
-Pipelining survives the binding: a one-model graph (`yolov8s_pose`) streamed
-from a video by `Graph.stream(source=...)` reaches **96.6 %** of
-`multi_model_graph_async`'s throughput on the same input (186.2 vs 192.7 FPS,
-steady state, DX-M1).
+Pipelining survives the binding: an `executor="async"` Graph runs the CLI's
+own asynchronous executor (`consumer::AsyncFrameExecutor`, the one
+`multi_model_graph_async` uses), with up to `max_frames_in_flight` frames in
+flight. This release publishes no throughput figure: the one measured
+during development was not re-measured on the release tree.
 
 ## Limitations
 

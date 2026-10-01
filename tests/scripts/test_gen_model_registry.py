@@ -476,6 +476,32 @@ def test_docs_only_writes_the_doc_and_no_sources(tmp_path):
     assert not (tmp_path / "generated").exists()
 
 
+def test_docs_count_only_what_a_camera_graph_can_run(tmp_path):
+    """U-19: the doc's count is what a graph can run. A boxes3d model is ready
+    but refused in every graph (its input is a LiDAR point cloud; a graph's
+    sources are camera frames), and an unpublished model has no .dxnn to
+    download; the table says so and the summary counts them apart."""
+    gen = load("gen_model_registry")
+    base = {"task": "t", "family": "f", "shape": "kBoxes", "contract": "kFullFrame",
+            "input_width": 8, "input_height": 8, "ports": [], "ready": True,
+            "reason": "", "published": True}
+    rows = [dict(base, model_name="cam_8x8"),
+            dict(base, model_name="lidar_8x8", shape="kBoxes3d"),
+            dict(base, model_name="pending_8x8", published=False),
+            dict(base, model_name="anomaly_8x8", ready=False, reason="not graph-ready")]
+    doc = gen.render_docs(rows, [])
+
+    assert "| model | task | produces | consumes | input | published | ready |" in doc
+    assert "| `cam_8x8` | t | boxes | frame | 8x8 | yes | yes |" in doc
+    assert "| `pending_8x8` | t | boxes | frame | 8x8 | NO | yes |" in doc
+    assert ("| `lidar_8x8` | t | boxes3d | frame | 8x8 | yes | yes, but refused in "
+            "every graph: boxes3d needs a LiDAR point-cloud source |") in doc
+    assert "| `anomaly_8x8` | t | boxes | frame | 8x8 | yes | NO - not graph-ready |" in doc
+    assert ("4 models registered, 3 ready. 2 run in a graph: `lidar_8x8` is refused "
+            "(boxes3d). 1 ready model has no published `.dxnn`: `pending_8x8`.") in doc
+    assert "usable in a graph." not in doc
+
+
 def test_the_tracked_graph_models_doc_is_fresh():
     """The guard, on the real tree: configure no longer rewrites the doc, so
     only this notices when a registry change did not regenerate it."""

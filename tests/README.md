@@ -148,3 +148,44 @@ SKIPs into PASSes.
    exists to prevent.
 4. Before renaming a module, marker, or option, check the contract surface
    above.
+
+## `tests/scripts` is hermetic
+
+No test in `tests/scripts` configures, builds, installs or deletes anything
+in the real repository, and none rewrites a tracked file.
+
+- `hermetic_guard.py` snapshots `build/`, `build_*/`, `bin/`, `lib/`,
+  `include/`, every tracked file and the names under `src/cpp_example/`. The
+  autouse fixture in `tests/scripts/conftest.py` takes the snapshot before
+  and after every test and fails the test that changed something.
+- `build.sh` runs only through `build_sh_sandbox.sh` (driven by
+  `build_sh_sandbox.py`): a copy of `build.sh` in a throwaway tree, with
+  `cmake`, `ninja`, `python3` and `sudo` replaced by stubs that record their
+  arguments.
+- Never build while `tests/scripts` runs: the guard would, rightly, report
+  the build.
+
+So running `tests/scripts` never needs a reinstall of `bin/` afterwards.
+
+## CI
+
+`scripts/ci_checks.sh` is the one entry point for the repository checks
+that need no NPU (those needing the dxrt headers SKIP where they are
+missing), and it includes `pytest tests/scripts`. GitHub Actions runs it
+(`.github/workflows/dxapp-checks.yml`). See *Repository checks (GitHub
+Actions)* in `docs/source/docs/04_DX-APP_CPP_Example_Test.md`.
+
+There, `tests/scripts` runs with
+`--known-failures tests/scripts/known_target_failures.txt`: each test listed
+in that file (one `<test id> | <reason>` per line) already fails on the
+release base and runs as a strict xfail, so the check stays green while it
+fails and turns red the day it passes, until its line is deleted. A plain
+`pytest tests/scripts` reads no list and shows those tests failing.
+
+## Windows
+
+The tests find the binaries with `tests/test_helpers/platform_paths.py`:
+`bin/Release` (or `bin/RelWithDebInfo`, `bin/Debug`) when it exists, else
+`bin/`, with `.exe` names. The Linux side of those rules is tested in
+`tests/scripts/test_platform_paths.py`. Nothing in `tests/windows` is run on
+Windows here.

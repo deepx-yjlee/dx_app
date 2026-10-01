@@ -368,7 +368,7 @@ This bridge enables the `*_cpp_postprocess.py` Python variants to use C++ decode
 
 DX-APP can serialize post-processing results to JSON for inspection and debugging:  
 
-- **`DXAPP_VERIFY=1`**: serializes post-processing results to `logs/verify/{model}.json`  
+- **`DXAPP_VERIFY=1`**: serializes post-processing results to `logs/verify/{model}.json` (last frame) and `{model}.frames.jsonl` (every frame, in input order)  
 - **`common/runner/verify_serialize.py`**: serializes postprocess results to JSON for comparison  
 
 This helps catch regressions such as broken post-processing, incorrect model configurations, or NPU output changes.  

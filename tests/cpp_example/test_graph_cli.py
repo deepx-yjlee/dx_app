@@ -1612,7 +1612,7 @@ def test_readmes_document_model_load_non_finite_values_and_device_memory():
         assert "MODEL_LOAD" in text, path
         assert '"NaN"' in text and '"Infinity"' in text and '"-Infinity"' in text, path
         assert "Device memory" in text, path
-        assert "realesrgan_x2" in text, path
+        assert "realesrgan-x2_192x192" in text, path
 
 
 @pytest.mark.graph
@@ -1625,7 +1625,11 @@ def test_readmes_document_several_sources():
                    "one tracker per stream"):
         assert needle in section, needle
     assert "multistream_od_two_sources.json" in text
-    assert "eight shipped sample graphs" in text
+    # The parity claim counts what SAMPLE_GRAPHS compares against what ships.
+    words = {11: "eleven", 12: "twelve", 13: "thirteen", 14: "fourteen"}
+    shipped = len(list(GRAPH_DIR.glob("*.json")))
+    claim = "{} of the {} shipped sample graphs".format(words[len(SAMPLE_GRAPHS)], words[shipped])
+    assert claim in " ".join(text.split()), claim
     assert "more than one full-frame image into one node in one stream" in text
     py = DX_GRAPH_README.read_text(encoding="utf-8")
     for needle in ("sources=", "run(frame, stream=None)", "| `stream` |", "g.streams",

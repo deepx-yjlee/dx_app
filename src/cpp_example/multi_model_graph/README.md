@@ -17,21 +17,44 @@ image and composites all three onto one picture. To make it run a different
 detector, change one string:
 
 ```diff
--    { "id": "od",   "model": "yolov8n" },
-+    { "id": "od",   "model": "yolo26s" },
+-    { "id": "od",   "model": "yolov8-n_640x640" },
++    { "id": "od",   "model": "yolo26-s_640x640" },
 ```
 
 ```bash
-./setup.sh --models yolo26s        # fetch the .dxnn, once
+./setup.sh --models yolo26-s_640x640   # fetch the .dxnn, once (see "Model files" below)
 ./bin/multi_model_graph_async --graph .../fanout_od_seg_pose.json --output result.png
 ```
 
 No `cmake`, no `ninja`, no recompilation — the same binary, reading a
 different word out of a JSON file. The same edit works for the segmenter,
 the pose model, and every second-stage model in the cascade samples: any of
-the 348 entries in [`docs/graph_models.md`](../../../docs/graph_models.md)
-whose `produces` and `consumes` columns fit the slot. `--check` tells you
-before you run whether they fit.
+the 494 models that [`docs/graph_models.md`](../../../docs/graph_models.md)
+counts as running in a graph, as long as its `produces` and `consumes`
+columns fit the slot.
+`--check` tells you before you run whether they fit.
+
+**Model names are variants**: the `.dxnn` file stem, as in
+`yolov8-n_640x640`. A graph may still name a model by its old registry name
+(`yolov8n`) or an `alias_of` name; `--check` resolves it and says so on one
+line per node (`note: node "od": "yolov8n" is the old name of
+"yolov8-n_640x640"`), and the table at the end of `docs/graph_models.md`
+lists every old name. The shipped samples use variant names.
+
+**Model files**: `./setup.sh --models` downloads the model zoo's current
+release, `q-lite-dxnn/2_5_0`, for 493 of the 499 models. Those files are
+`.dxnn` container **v9**, and DX-RT older than 3.5.0 cannot load them. Every
+graph path checks the container before it creates an engine and stops with
+
+```text
+<file>: .dxnn container v9 needs DX-RT >= 3.5.0, but this runtime is 3.4.1. Use the v8 file (dxnn/2_4_0) or upgrade DX-RT.
+```
+
+`--check` prints that file as `[present, v9 (needs DX-RT >= 3.5.0)]`, adds an
+`ERROR [MODEL_LOAD]` line and exits 1; `--list-models` shows it in its `file`
+column. The graphs in this release were validated on DX-RT 3.4.1 with v8
+files. A run on DX-RT 3.5.0 with the v9 files is still to be done, so the
+graphs are not yet validated on v9.
 
 Two binaries are built from one engine and differ in exactly one value:
 
@@ -42,31 +65,72 @@ Two binaries are built from one engine and differ in exactly one value:
 
 Both produce the same `FrameReport` for the same input — `--report` writes
 it as JSON, and `tests/cpp_example/test_graph_cli.py` compares the two files
-byte for byte on real hardware for **every one of the eight shipped sample graphs**,
-covering every payload shape they produce — `frame`,
-`boxes`, `obboxes`, `keypoints`, `labelmap`, `densemap`, `image`, `scores`
-and `vector`.
-
-(An earlier revision of this file claimed `cascade_obb_cls.json` could not
-be certified, because the C++ `FrameReport::operator==` is fail-closed for
-`obboxes`. That comparator has no non-shipping caller — it exists for the
-C++ unit suite. The certification that ships is the `--report` comparison
-above, and its serializer handles `obboxes` in full, angle included.)
+byte for byte on real hardware for **eleven of the twelve shipped sample
+graphs** (all but `worker_safety.json`, which is compared with its
+`pipeline.json` by structure only, because one of its models is not
+available here; a graph whose model file is missing is skipped), covering
+every payload shape they produce — `frame`, `boxes`, `obboxes`,
+`keypoints`, `labelmap`, `densemap`, `image`, `scores` and `vector`. The C++
+`FrameReport::operator==`, used by the unit suite, compares every shape
+exactly too, `obboxes` included.
 
 Shipped samples, next to the CLI sources in `src/cpp_example/multi_model_graph/`:
 
 | File | Shape | Models |
 |---|---|---|
-| `fanout_od_seg_pose.json` | one frame, three models in parallel | `yolov8n` + `bisenetv2` + `yolov8s_pose` |
-| `fanout_od_seg_depth.json` | same, with depth instead of pose | `yolov8n` + `bisenetv2` + `fastdepth_1` |
-| `cascade_od_reid_track.json` | detector → per-person crop → embedding, with tracking | `yolov8n` → `casvit_t` |
-| `cascade_od_attr.json` | detector → per-person crop → attributes | `yolov8n` → `deepmar_resnet50` |
-| `cascade_obb_cls.json` | oriented detector → un-rotated crop → classifier | `yolo26l_obb` → `resnet50` |
-| `handoff_denoise_od.json` | denoise, then detect on the denoised image (image hand-off on a plain edge) | `dncnn_color_blind` → `yolov5n` |
-| `handoff_sr_od_cls.json` | super-resolve ×2, then detect on the large image → per-person crop → classifier | `realesrgan_x2` → `yolov8n` → `resnet50` |
-| `multistream_od_two_sources.json` | two sources, each its own stream, through one shared tracked detector and one reid | `yolov8n` → `casvit_t` |
+| `fanout_od_seg_pose.json` | one frame, three models in parallel | `yolov8-n_640x640` + `bisenetv2_1024x2048` + `yolov8-s-pose_640x640` |
+| `fanout_od_seg_depth.json` | same, with depth instead of pose | `yolov8-n_640x640` + `bisenetv2_1024x2048` + `fastdepth_224x224` |
+| `cascade_od_reid_track.json` | detector → per-person crop → embedding, with tracking | `yolov8-n_640x640` → `casvit-t_224x224` |
+| `cascade_od_attr.json` | detector → per-person crop → attributes | `yolov8-n_640x640` → `deepmar_resnet50_224x224` |
+| `cascade_obb_cls.json` | oriented detector → un-rotated crop → classifier | `yolo26-l-obb_1024x1024` → `resnet50_224x224` |
+| `handoff_denoise_od.json` | denoise, then detect on the denoised image (image hand-off on a plain edge) | `dncnn-color_512x512` → `yolov5-n_640x640` |
+| `handoff_sr_od_cls.json` | super-resolve ×2, then detect on the large image → per-person crop → classifier | `realesrgan-x2_192x192` → `yolov8-n_640x640` → `resnet50_224x224` |
+| `multistream_od_two_sources.json` | two sources, each its own stream, through one shared tracked detector and one reid | `yolov8-n_640x640` → `casvit-t_224x224` |
+| `chain_sr_od_pose.json` | super-resolve ×2, then detect on the large image → per-person crop → top-down pose | `realesrgan-x2_192x192` → `yolov8-n_640x640` → `vitpose-s_256x192` |
+| `chain_zerodce_od_pose_emb.json` | low-light enhancement, then detect on the enhanced image → per-person crop → top-down pose, and an embedding per person | `zerodce_400x600` → `yolov8-n_640x640` → `vitpose-s_256x192` + `casvit-t_224x224` |
 | `hand_cascade.json` | palm detector → per-palm crop → 21 hand landmarks; the graph form of `multi_model/hand_cascade/pipeline.json` | `mediapipe-hand-detector_192x192` → `mediapipe-hands-lite_224x224` |
 | `worker_safety.json` | person detector and pose model in parallel; the graph form of `multi_model/worker_safety/pipeline.json` without its `ppe` stage, whose `ppe_yolo26n.dxnn` is in neither the registry nor the model-zoo manifest | `yolo26-n_640x640` + `yolo26-n-pose_640x640` |
+
+`hand_cascade.json` and `worker_safety.json` are the two scenarios of the
+other multi-model runtime in this release that a graph can express; see
+*Two multi-model runtimes in this release* below.
+
+### Two multi-model runtimes in this release
+
+This release ships two independent ways to run several models together.
+They share the per-variant factories and nothing else.
+
+| | `multi_model_graph_{sync,async}` and `dx_graph` (this directory) | `multi_model_run` and `run_pipeline.py` (`src/cpp_example/multi_model/`, `src/python_example/multi_model/`) |
+|---|---|---|
+| Written as | a node-graph JSON (`"nodes"`, `"edges"`, `"roi"`, `"track"`, `"port"`) | a `pipeline.json` of `"stages"` with `"depends_on"` and `"bind"`, plus a named `"fuse"` step |
+| Models | any of the 494 models `docs/graph_models.md` lists as running in a graph, by variant or old name | the variants compiled into `multi_model/registry.cpp` (9 in this release) |
+| Input | images, videos, `camera:<N>`, `rtsp://`, several sources at once | one image per run (`--image`) |
+| Scenario logic | none: models, crops, hand-offs, tracking and ports only | a C++ fuse step per scenario (`hand_cascade`, `logistics_volume`, `worker_safety`, `dms`) and CPU stages such as `face_solvepnp` |
+| Coordinates | every result mapped back to the source frame (`origin`) | a crop's results stay in crop coordinates, next to the crop box |
+| Checks | `--check` without the NPU; sync and async reports byte-identical | none before the run |
+
+Which to use:
+
+* **Use a graph** to combine registry models on images or streams, to swap
+  a model by editing one string, or when you need tracking, several sources,
+  ports, `--report` or Python (`dx_graph`).
+* **Use `multi_model_run`** for the four scenarios whose answer is computed
+  after the models: logistics volume, driver monitoring (head pose by
+  solvePnP and CLIP scores), worker safety with its PPE model, and the hand
+  cascade's fused summary. A graph has no fuse or CPU node (see *Not in this
+  release*).
+* The **hand cascade** and **worker safety** exist in both forms
+  (`hand_cascade.json`, `worker_safety.json` above). For `hand_cascade` the
+  two find the same palms and hands, but their crops can differ by one pixel
+  row or column: the graph clips the padded box to the frame and truncates
+  its width and height once (`ClipToFrame` in `common/graph/roi_router.cpp`),
+  while `multi_model_run` truncates each corner (`cropBoxes` in
+  `multi_model/runner.cpp`). They differ whenever the fractional part of the
+  far edge is smaller than that of the near edge. On the sample image the
+  graph's crop is one row shorter, and after the landmark model's resize to
+  224×224 that moves hand landmarks by up to 6.45 px. On the same crop the
+  two landmark stages agree to 3.1e-5 px. Each runtime is consistent with
+  itself; compare their landmarks only on the same crop.
 
 ---
 
@@ -77,7 +141,7 @@ Shipped samples, next to the CLI sources in `src/cpp_example/multi_model_graph/`
 | Kind | Written as | Meaning |
 |---|---|---|
 | source | `{ "id": "cam", "type": "source", "uri": "..." }` | where frames come from: an image, a video file, `camera:0`, or an `rtsp://` URL. A relative `uri` is resolved against the repository root, so the samples run from any directory. `"source"` is the only `"type"` value the schema defines. A graph may have several source nodes; each one is its own stream (see *Several sources: one stream each*) |
-| model | `{ "id": "od", "model": "yolov8n" }` | one model from the registry — note there is **no `"type"`** on a model node. `--list-models` and [`docs/graph_models.md`](../../../docs/graph_models.md) say which names exist |
+| model | `{ "id": "od", "model": "yolov8-n_640x640" }` | one model from the registry — note there is **no `"type"`** on a model node. `--list-models` and [`docs/graph_models.md`](../../../docs/graph_models.md) say which names exist |
 
 **Edges**
 
@@ -93,9 +157,9 @@ must emit `boxes`, `obboxes` or `instances`. Both columns are in
 `docs/graph_models.md`.
 
 The `consumes` column is each model's **input contract**. It comes from the
-model's factory interface by default, and a factory may override it with one
-line (see *A model's graph contract*). `vit_pose_small_bn` does: it
-`consumes` `either`, so `yolov8n → roi person → vit_pose_small_bn` is a
+model's factory interface by default, and a model family may override it
+(see *A model's graph contract*). `vitpose-s_256x192` does: it
+`consumes` `either`, so `yolov8-n_640x640 → roi person → vitpose-s_256x192` is a
 top-down pose cascade, one pose per person crop, and it still runs on a
 whole frame as its single-model example does.
 
@@ -139,7 +203,7 @@ hand-off that is the producer's image, not the source frame, so every result
 carries `origin.inv_align` (emitted as `inv_align` in the `--report` JSON):
 the 2×3 affine that maps its coordinates back to the source frame. After ×2
 super-resolution a detector reports `inv_align` = `[0.5, 0, 0, 0, 0.5, 0]`;
-after `dncnn_color_blind` (512×512 out) on a 640×640 frame, `[1.25, 0, 0, 0,
+after `dncnn-color_512x512` (512×512 out) on a 640×640 frame, `[1.25, 0, 0, 0,
 1.25, 0]`. Chains compose. The renderer applies it, so overlays land on the
 source frame.
 
@@ -148,13 +212,13 @@ family's postprocessor decides it (the image is used as produced):
 
 | Family | Models | Handed-off image |
 |---|---|---|
-| Super-resolution (Real-ESRGAN) | `realesrgan_x2`, `_x4`, `_x8` | the input size × the factor: 640×480 → 1280×960 at ×2. Aspect ratio kept. |
-| Super-resolution (ESPCN) | `espcn_x2`, `_x3`, `_x4` | the input size × the factor (275×150 → 550×300 at ×2): tiled exactly like `espcn_x2_sync` (17×17 tiles, halo 4; `"params": {"sr_tile_halo": N}` overrides it). Aspect ratio kept. |
-| Denoising (DnCNN) | `dncnn_*` | always 512×512, the model resolution, whatever the input size. Aspect ratio not kept: a 640×480 frame gives `[1.25, 0, 0, 0, 0.9375, 0]`. |
-| Low-light enhancement (Zero-DCE) | `zero_dce`, `zero_dce_pp` | resized back to the input size, so the scale is 1 and `inv_align` is the identity. |
+| Super-resolution (Real-ESRGAN) | `realesrgan-x2_192x192`, `realesrgan-x4_192x192`, `realesrgan-x8_192x192` | the input size × the factor: 640×480 → 1280×960 at ×2. Aspect ratio kept. |
+| Super-resolution (ESPCN) | `espcn-x2_17x17`, `espcn-x3_17x17`, `espcn-x4_17x17` | the input size × the factor (275×150 → 550×300 at ×2): tiled exactly like `espcn-x2_17x17_sync` (17×17 tiles, halo 4; `"params": {"sr_tile_halo": N}` overrides it). Aspect ratio kept. |
+| Denoising (DnCNN) | `dncnn-*_512x512` | always 512×512, the model resolution, whatever the input size. Aspect ratio not kept: a 640×480 frame gives `[1.25, 0, 0, 0, 0.9375, 0]`. |
+| Low-light enhancement (Zero-DCE) | `zerodce_400x600`, `zerodce-pp_400x600` | resized back to the input size, so the scale is 1 and `inv_align` is the identity. |
 
 ESPCN in a graph uses the runner's own tiling code, so its `sr` image equals
-`espcn_x2_sync`'s `_output_only` image pixel for pixel. The tile is the
+`espcn-x2_17x17_sync`'s `_output_only` image pixel for pixel. The tile is the
 model's input (17×17). The halo is taken from the first of these that is
 set: the node's `"sr_tile_halo"`, the model's `config.json` `sr_tile_halo`,
 the environment variable `DXAPP_SR_TILE_HALO`, then 4. A bad halo fails
@@ -193,26 +257,28 @@ drawn with its box and label on top of its mask, as a `boxes` result is.
 
 ### Output ports
 
-Most models have one output, their `produces` shape. Five also have named
+Most models have one output, their `produces` shape. Twelve also have named
 extra outputs, called **ports**. `docs/graph_models.md` shows them after a
 `+` in the `produces` column (`boxes + drivable, lane (labelmap)`), and
 `--list-models` ends their rows with `  ports: <name>=<shape> ...`:
 
 | Model | Port | Shape | What it holds |
 |---|---|---|---|
-| `yolopv2` | `drivable` | `labelmap` | the drivable-area mask: 0/1 per pixel, a binary mask, at the size of the image the model ran on |
-| `yolopv2` | `lane` | `labelmap` | the lane-line mask, likewise 0/1 and binary |
-| `superpoint` | `descriptors` | `densemap` | N×256 float32, row i = the descriptor of keypoint i across the frame's items, in order. Not spatial: no pixel meaning |
-| `3ddfa_v2_mobilnetv1_120x120`, `3ddfa_v2_mobilnet0_5_120x120` | `pose` | `vector` | yaw, pitch and roll in degrees, 3 floats per face, concatenated in item order |
-| `handlandmarklite_1` | `handedness` | `scores` | one item per hand: `class_name` `Left`/`Right`/`Unknown`, `class_id` 0/1/-1, `confidence` = the hand-presence score |
+| `yolopv2_384x640` | `drivable` | `labelmap` | the drivable-area mask: 0/1 per pixel, a binary mask, at the size of the image the model ran on |
+| `yolopv2_384x640` | `lane` | `labelmap` | the lane-line mask, likewise 0/1 and binary |
+| `superpoint_480x640` | `descriptors` | `densemap` | N×256 float32, row i = the descriptor of keypoint i across the frame's items, in order. Not spatial: no pixel meaning |
+| `3ddfa-v2_mobilenetv1_120x120`, `3ddfa-v2_mobilenet-0.5_120x120` | `pose` | `vector` | yaw, pitch and roll in degrees, 3 floats per face, concatenated in item order |
+| `mediapipe-hands-lite_224x224` | `handedness` | `scores` | one item per hand: `class_name` `Left`/`Right`/`Unknown`, `class_id` 0/1/-1, `confidence` = the hand-presence score |
+| `ppmatting-hrnet-w48-composition_512x512`, `ppmatting-hrnet-w48-distinctions_512x512` | `alpha` | `densemap` | the soft alpha matte, 0 to 1 per pixel |
+| `clip-img_resnet50_224x224_openai`, `repvgg-a0-reid_256x128`, `eigenplaces-resnet18_512x512`, `eigenplaces-resnet50_512x512`, `pp-shituv2-feature-extraction_224x224` | `matches` | `scores` | the ranking against the model's gallery file, best first: one item per match, `class_id` = its rank, `confidence` = its cosine score, `class_name` = its gallery label (its image path when unlabelled). A model has this port when its `config.json` names a gallery |
 
-The primary output keeps its own name: `yolopv2`'s is `boxes`,
-`superpoint`'s `keypoints`. It is unchanged by the ports.
+The primary output keeps its own name: `yolopv2_384x640`'s is `boxes`,
+`superpoint_480x640`'s `keypoints`. It is unchanged by the ports.
 
 **Selecting a port on an edge.** An edge takes the primary output unless it
 has `"port": "<name>"`. The port is a separate key, not part of `"from"`,
 because node ids may contain dots, so `"from": "drive.lane"` would be
-ambiguous. Naming the primary (`"port": "boxes"` on `yolopv2`) is the same
+ambiguous. Naming the primary (`"port": "boxes"` on `yolopv2_384x640`) is the same
 as leaving `"port"` out. Validation:
 
 * `"port"` must be a non-empty string (`GRAPH_SCHEMA`: `"port" must be a
@@ -249,7 +315,7 @@ non-primary box port would be untracked (`track_id` -1).
 **In `--report`**, a result with ports has a `"ports"` object next to its
 `"payload"`, one entry per port in the payload format of its shape. A
 result without ports has no `"ports"` key and is byte for byte what it was
-before. From `yolopv2` on a 768×576 image:
+before. From `yolopv2_384x640` on a 768×576 image:
 
 ```json
 "ports": {
@@ -259,7 +325,7 @@ before. From `yolopv2` on a 768×576 image:
 ```
 
 **In the render**, each port is drawn in the pass of its shape, right after
-its result's primary payload, with the same `origin`. The `yolopv2` masks
+its result's primary payload, with the same `origin`. The `yolopv2_384x640` masks
 blend only their non-zero pixels at alpha 0.5, `drivable` in green and
 `lane` in red, the colours of the YOLOPv2 runner. A 3DDFA `pose` prints
 `vec[3]` at the face crop and `handedness` prints `Left: 97%` at the hand
@@ -271,12 +337,12 @@ render is unchanged.
 handed out. A `dx_graph` `Report` holds them for as long as you keep it.
 Per frame:
 
-* `yolopv2`: 2 × W × H bytes for its two masks, at the size of the image it
+* `yolopv2_384x640`: 2 × W × H bytes for its two masks, at the size of the image it
   ran on (884,736 bytes for 768×576, about 4 MB for 1920×1080).
-* `superpoint`: N × 256 × 4 bytes. With its default `top_k` of 500
+* `superpoint_480x640`: N × 256 × 4 bytes. With its default `top_k` of 500
   keypoints that is 512,000 bytes, about 0.5 MB.
 
-**SuperPoint tracks are not a port.** `superpoint_sync` also matches
+**SuperPoint tracks are not a port.** `superpoint_480x640_sync` also matches
 keypoints from frame to frame into tracks. A track needs a step applied to
 every frame in frame order. Graph stages decode in completion order, and the
 only frame-ordered state the engine keeps is the IoU tracker on box streams,
@@ -296,13 +362,13 @@ so tracks would need a new engine concept. The `descriptors` port gives a
     { "id": "cam",  "type": "source",
       "uri": "sample/img/sample_people.jpg" },   // --input overrides this
 
-    { "id": "od",   "model": "yolov8n",
+    { "id": "od",   "model": "yolov8-n_640x640",
       "params": { "score_threshold": 0.35 },     // overrides the model's config.json
       "track":  { "algo": "iou",                 // one id space for every consumer
                   "iou": 0.3,                    // (0, 1]
                   "max_age": 30 } },             // a whole number, 0 or more
 
-    { "id": "reid", "model": "casvit_t" }
+    { "id": "reid", "model": "casvit-t_224x224" }
   ],
 
   "edges": [
@@ -332,6 +398,11 @@ All three `track` keys are optional; `"track": {}` means the defaults.
 | `algo` | the tracker. `"iou"` is the only one; any other value is `GRAPH_SCHEMA` (`unknown tracker "sort"`) | `"iou"` |
 | `iou` | the overlap a box needs to continue a track: greater than 0, at most 1 | `0.3` |
 | `max_age` | how many frames an unmatched track survives: a whole number, 0 or more. `0` drops a track the first frame it goes unmatched | `30` |
+
+A frame on which a tracked node does not run - its stage failed, or its
+hand-off input was unusable, so the frame's report carries an error - does
+not reach its tracker: the tracks neither match nor age on that frame. Both
+executors behave the same way.
 
 ---
 
@@ -400,13 +471,16 @@ value is a number, a string or an array of strings:
 
 * **A number** works for any key, as before.
 * **A string or an array of strings** works only for a key the model reads
-  as text. Today that is `class_names`, an array, read by 126 factories
-  (111 detectors and 15 instance segmenters). The kinds come
+  as text. Today that is `class_names`, an array, read by 187 models (169
+  detectors, 17 instance segmenters and 1 zero-shot instance segmenter);
+  `layout`, a string, read by 20 detectors and instance segmenters; and
+  `gallery` and `title`, strings, read by the 5 retrieval, re-identification
+  and place-recognition models. The kinds come
   from a scan of each factory header at build time: `get<std::string>("k")`
   is a string key, `get_string_list("k")` a list key. `--list-models` does
   not show them; the error message for a wrong value names them. The kind
   must match, too: `"class_names": "person"` is refused (`"class_names"
-  must be an array of strings for model "yolov8n", got "person"`).
+  must be an array of strings for model "yolov8-n_640x640", got "person"`).
 * **Anything else** (`true`, `null`, an object) is refused: `"use_x" must be
   a number, a string or an array of strings, got true` / `-> write a switch
   as 1 or 0`.
@@ -415,7 +489,7 @@ value is a number, a string or an array of strings:
 order, so it can make an ROI filter read naturally:
 
 ```jsonc
-{ "id": "od", "model": "yolov8n", "params": { "class_names": ["pedestrian"] } },
+{ "id": "od", "model": "yolov8-n_640x640", "params": { "class_names": ["pedestrian"] } },
 ...
 { "from": "od", "to": "reid", "roi": { "classes": ["pedestrian"] } }
 ```
@@ -453,16 +527,16 @@ each, for edge ports and node params. Each example below is real output from
 | `GRAPH_SCHEMA` | malformed JSON, a wrong type, a missing or duplicate key, an unreadable file, a value out of range or not a whole number | `ERROR [GRAPH_SCHEMA] edge "od"->"cls": duplicate edge "od" -> "cls"`<br>`  -> declare the connection once; add a second consumer node instead of a second edge`<br>`ERROR [GRAPH_SCHEMA] g.json: "version" must be a whole number, got 1.5`<br>`  -> add "version": 1` |
 | `GRAPH_EDGE` | shapes or input contracts do not meet across an edge | `ERROR [GRAPH_EDGE] edge "seg"->"cls": "seg" produces labelmap, not boxes`<br>`  -> remove "roi" from this edge, or use a detector as the source` |
 | `GRAPH_EDGE` | an edge's `"port"` names no output of the producer, or is on an edge from a source (see *Output ports*) | `ERROR [GRAPH_EDGE] edge "drive"->"x": "drive" has no output port "wings"`<br>`  -> its outputs: boxes, drivable, lane`<br>`ERROR [GRAPH_EDGE] edge "cam"->"drive": "cam" is a source; "port" selects one of a model's outputs`<br>`  -> remove "port" from this edge` |
-| `GRAPH_SCHEMA` | a `params` value the model cannot read: text for a numeric key, or the wrong kind for a text key (see *Parameter precedence*) | `ERROR [GRAPH_SCHEMA] node "od" "params": "score_threshold" must be a number, got "0.5"`<br>`  -> model "yolov8n" reads text only for: class_names`<br>`ERROR [GRAPH_SCHEMA] node "od" "params": "class_names" must be an array of strings for model "yolov8n", got "person"`<br>`ERROR [GRAPH_SCHEMA] node "c" "params": "label" must be a number, got "x"`<br>`  -> model "resnet50" reads only numbers` |
-| `GRAPH_ALIGN` | `align: "face5"` from a producer without landmarks | `ERROR [GRAPH_ALIGN] edge "od"->"emb": "align": "face5" needs five facial landmarks, and model "yolov8n" produces no landmarks`<br>`  -> remove "align", or use a face detector as the source` |
+| `GRAPH_SCHEMA` | a `params` value the model cannot read: text for a numeric key, or the wrong kind for a text key (see *Parameter precedence*) | `ERROR [GRAPH_SCHEMA] node "od" "params": "score_threshold" must be a number, got "0.5"`<br>`  -> model "yolov8-n_640x640" reads text only for: class_names`<br>`ERROR [GRAPH_SCHEMA] node "od" "params": "class_names" must be an array of strings for model "yolov8-n_640x640", got "person"`<br>`ERROR [GRAPH_SCHEMA] node "c" "params": "label" must be a number, got "x"`<br>`  -> model "resnet50_224x224" reads only numbers` |
+| `GRAPH_ALIGN` | `align: "face5"` from a producer without landmarks | `ERROR [GRAPH_ALIGN] edge "od"->"emb": "align": "face5" needs five facial landmarks, and model "yolov8-n_640x640" produces no landmarks`<br>`  -> remove "align", or use a face detector as the source` |
 | `GRAPH_CYCLE` | the nodes do not form a DAG | `ERROR [GRAPH_CYCLE] graph: cycle detected among: a, b`<br>`  -> a graph must be acyclic` |
 | `GRAPH_ORPHAN` | a node no source can reach, or a graph with no source | `ERROR [GRAPH_ORPHAN] node "lost": unreachable from any source`<br>`  -> connect it with an edge, or remove it` |
 | `GRAPH_RESERVED` | a key held back for a later release | `ERROR [GRAPH_RESERVED] g.json node[1]: "prompt" is reserved for text-conditioned models and is not supported in this release`<br>`  -> remove "prompt"; see README.md for the models this build runs` |
-| `MODEL_UNKNOWN` | the name is not in the registry | `ERROR [MODEL_UNKNOWN] node "od": unknown model "YoloV8N" - not in config/model_registry.json`<br>`  -> did you mean "yolov8n"? run --list-models, or see docs/graph_models.md` |
-| `MODEL_NO_TASK` | registered without a task *(no model this build ships is in this state)* | `ERROR [MODEL_NO_TASK] node "od": model "X" has no task registered`<br>`  -> ./scripts/add_model.sh --model X --task <task>` |
-| `MODEL_NOT_READY` | registered, but with no factory or no postprocessor *(likewise)* | `ERROR [MODEL_NOT_READY] node "det": model "X" is registered but cannot run: no postprocessor`<br>`  -> see docs/graph_models.md for models usable in graphs` |
-| `MODEL_MISSING` | the `.dxnn` is not in `--model-dir` | *(from a run: `--check` lists the same files and the same command without failing)*<br>`ERROR [MODEL_MISSING] graph "person-reid": 2 model files are not in ./no_models`<br>`  node "od"  model yolov8n  ->  ./no_models/yolov8-n_640x640.dxnn`<br>`  -> ./setup.sh --models YoloV8N casvit_t` |
-| `MODEL_LOAD` | the `.dxnn` is present but the runtime cannot load it (device memory, device state, an incompatible file) | *(real output on DX-M1, from a run, not from `--check`; the runtime's source path is shortened to `...`)*<br>`ERROR [MODEL_LOAD] node "sr2": model "realesrgan_x2" (realesrgan-x2_192x192.dxnn) could not be loaded: [dxrt-exception] Invalid model exception {"failed to register task":.../task.cpp:115:Task}`<br>`  -> the NPU's device memory may be full: this graph loaded 3 model(s) before this one, and every node loads its own copy, even of the same model (another process on the NPU uses memory too); remove a node or use a smaller model - DX-M1 cannot hold a second realesrgan_x2 next to yolov8n and resnet50` |
+| `MODEL_UNKNOWN` | the name is not in the registry | `ERROR [MODEL_UNKNOWN] node "od": unknown model "YoloV8N" - not in config/model_registry.json`<br>`  -> did you mean "yolov8-n_640x640"? run --list-models, or see docs/graph_models.md` |
+| `MODEL_NO_TASK` | registered without a task *(no model this build ships is in this state; not real output)* | `ERROR [MODEL_NO_TASK] node "od": model "X" has no task registered`<br>`  -> ./scripts/add_model.sh --model X --task <task>` |
+| `MODEL_NOT_READY` | registered, but the graph engine cannot run it: no factory, no postprocessor, or an interface with no graph stage (the four anomaly models in this release) | `ERROR [MODEL_NOT_READY] node "ad": model "patchcore_224x224" is registered but cannot run: anomaly detection is not graph-ready in this release`<br>`  -> see docs/graph_models.md for models usable in graphs` |
+| `MODEL_MISSING` | the `.dxnn` is not in `--model-dir` | *(from a run: `--check` lists the same files and the same command without failing)*<br>`ERROR [MODEL_MISSING] graph "person-reid": 2 model files are not in ./no_models`<br>`  node "od"  model yolov8-n_640x640  ->  ./no_models/yolov8-n_640x640.dxnn`<br>`  node "reid"  model casvit-t_224x224  ->  ./no_models/casvit-t_224x224.dxnn`<br>`  -> ./setup.sh --models YoloV8N casvit_t` |
+| `MODEL_LOAD` | the `.dxnn` is present but the runtime cannot load it (device memory, device state, an incompatible file). `--check` reports the one case it can see without the NPU, a v9 file on DX-RT older than 3.5.0 (see *Model files*), and exits 1 | *(real output on DX-M1, from a run, not from `--check`, of a graph that names its models by their old names; the runtime's source path is shortened to `...`)*<br>`ERROR [MODEL_LOAD] node "sr2": model "realesrgan_x2" (realesrgan-x2_192x192.dxnn) could not be loaded: [dxrt-exception] Invalid model exception {"failed to register task":.../task.cpp:115:Task}`<br>`  -> the NPU's device memory may be full: this graph loaded 3 model(s) before this one, and every node loads its own copy, even of the same model (another process on the NPU uses memory too); remove a node or use a smaller model - DX-M1 cannot hold a second realesrgan_x2 next to yolov8n and resnet50` |
 
 `MODEL_LOAD` names the node and keeps the runtime's own reason whole. Its
 hint depends on how far loading got: after other models loaded, it is the
@@ -471,10 +545,11 @@ graph it is `check the NPU with dxrt-cli -s, and that <file> was compiled
 for this DX-RT version; to download it again: ./setup.sh --models <name>`.
 
 Note the download command in `MODEL_MISSING`: the name it prints is the
-**model zoo's** spelling, which is not always the registry's (`yolov8n` is
-`YoloV8N` there, `yolo26l_obb` is `yolo26l-obb`). 119 of the 348 registered
-models differ this way. `setup.sh --models` accepts either spelling (and
-the `.dxnn` file name), in any letter case, but the zoo's name is the
+**model zoo's** spelling, which is almost never the variant (`yolov8-n_640x640`
+is `YoloV8N` there, `yolo26-l-obb_1024x1024` is `yolo26l-obb`): 488 of the
+499 registered models differ this way. `setup.sh --models` accepts the zoo's
+name, the `.dxnn` file name with or without `.dxnn` (which is the variant),
+or the old registry name, in any letter case, but the zoo's name is the
 manifest's own spelling, so that is the one the CLI prints. It is compiled into
 the binary from `scripts/modelzoo_manifest.json` at build time, so a binary
 deployed without a source tree prints the same name.
@@ -509,8 +584,8 @@ OK: graph "person-reid" is valid (3 nodes, 2 edges, 2 models)
 
 node      model                         produces   consumes   artifact
 cam       (source)                      frame      -          sample/img/sample_people.jpg
-od        yolov8n                       boxes      full_frame yolov8-n_640x640.dxnn  [present]
-reid      casvit_t                      vector     either     casvit-t_224x224.dxnn  [present]
+od        yolov8-n_640x640              boxes      full_frame yolov8-n_640x640.dxnn  [present]
+reid      casvit-t_224x224              vector     either     casvit-t_224x224.dxnn  [present]
 ```
 
 A graph with several sources gets a `streams:` block after the node table,
@@ -523,18 +598,54 @@ OK: graph "two-cameras-reid" is valid (4 nodes, 3 edges, 2 models)
 node      model                         produces   consumes   artifact
 cam1      (source)                      frame      -          sample/img/sample_people.jpg
 cam2      (source)                      frame      -          sample/img/sample_person_a1.jpg
-od        yolov8n                       boxes      full_frame yolov8-n_640x640.dxnn  [present]
-reid      casvit_t                      vector     either     casvit-t_224x224.dxnn  [present]
+od        yolov8-n_640x640              boxes      full_frame yolov8-n_640x640.dxnn  [present]
+reid      casvit-t_224x224              vector     either     casvit-t_224x224.dxnn  [present]
 
 streams: 2 - one per source node, read in turn, one frame from each
   cam1      -> od, reid
   cam2      -> od, reid
 ```
 
-The exit code answers *is this graph valid?* — a question a fresh checkout
-with nothing downloaded must still be able to ask — so a missing `.dxnn` is
-reported here but does not make `--check` fail. A real run does fail on it,
-with the same list and the same recovery command.
+Before the table, `--check` prints a `note:` line for each node that names
+a model by an old name; after it, what a node needs besides its `.dxnn`.
+None of these lines changes the exit code:
+
+```console
+$ ./bin/multi_model_graph_sync --check vpr.json
+...
+resource: node "v": gallery sample/gallery/vpr_eigenplaces-resnet18_512x512.bin [present, DXGAL1]
+note: node "c": the CLIP prompt bank is Python-only; in a graph this model outputs its image embedding, not zero-shot scores
+```
+
+* `resource: ... gallery <path>`: the gallery file a retrieval,
+  re-identification or place-recognition model compares against, relative to
+  the repository: `[present, DXGAL1]`, `[present, but not a DXGAL1
+  gallery]` or `[MISSING]`.
+* `note: ...`: a fact about the model in a graph, such as the CLIP note
+  above, or, before the table, `note: node "od": "yolov8n" is the old name
+  of "yolov8-n_640x640"`.
+
+An anomaly model is refused before any of this (`MODEL_NOT_READY`, exit 1);
+its message names the companion engines it would need.
+
+The exit code answers *is this graph valid, and can this runtime load what
+is here?* — a question a fresh checkout with nothing downloaded must still
+be able to ask — so a missing `.dxnn` is reported but does not make
+`--check` fail. A real run does fail on it, with the same list and the same
+recovery command. A `.dxnn` that is present but that this DX-RT cannot load
+does make `--check` fail: the artifact column says
+`[present, v9 (needs DX-RT >= 3.5.0)]`, one line per such node follows on
+stderr, and the exit code is 1:
+
+```console
+$ ./bin/multi_model_graph_sync --check sr.json --model-dir v9_models
+OK: graph "sr" is valid (2 nodes, 1 edges, 1 models)
+
+node      model                         produces   consumes   artifact
+cam       (source)                      frame      -          sample/img/sample_people.jpg
+sr        espcn-x2_17x17                image      either     espcn-x2_17x17.dxnn  [present, v9 (needs DX-RT >= 3.5.0)]
+ERROR [MODEL_LOAD] node "sr": model "espcn-x2_17x17" (espcn-x2_17x17.dxnn) cannot be loaded here: v9_models/espcn-x2_17x17.dxnn: .dxnn container v9 needs DX-RT >= 3.5.0, but this runtime is 3.4.1. Use the v8 file (dxnn/2_4_0) or upgrade DX-RT.
+```
 
 Because it never opens the NPU, `--check` cannot tell whether the device
 can hold every model of the graph at once: that is found out when the
@@ -546,10 +657,29 @@ models load (`MODEL_LOAD`, see *Device memory*).
 $ ./bin/multi_model_graph_async --list-models --consumes roi --produces scores
 ```
 
+```text
+model                                              task                            produces   consumes   input      published file     ready
+--------------------------------------------------------------------------------------------------------------------------------------------
+faceattr_resnetv1-18_218x178                       face_attribute                  scores     either     178x218    yes       missing  yes
+mobilenetv2_224x224                                image_classification            scores     either     224x224    yes       v8       yes
+...
+```
+
 `--consumes` takes `roi`, `frame` or `either`; `--produces` takes a shape
 name (`boxes`, `obboxes`, `instances`, `keypoints`, `labelmap`, `densemap`,
 `image`, `scores`, `vector`, `boxes3d`). Together they answer the question a
 task name cannot: *which model can I put in the second stage?*
+
+One row per registered model (499), named by its variant, then one
+`alias of <variant>` row per `alias_of` name (the old registry names are not
+listed; `docs/graph_models.md` has them). `published` is `no` for a model the
+model zoo does not publish yet. `file` is the container version of the
+model's `.dxnn` in `--model-dir`: `v8`, `v9`, `missing`, or `invalid` for a
+file without the `DXNN` header; when this DX-RT cannot load the file it
+says why, as in `v9 (needs DX-RT >= 3.5.0)`. `ready` is `no`, with the
+reason, for a model the graph engine cannot run (the anomaly models in this
+release). A model with extra outputs ends its row with
+`  ports: <name>=<shape> ...`.
 
 Three sources, in order of authority:
 
@@ -610,13 +740,13 @@ A key that is genuinely absent rather than mistyped gets the location and a
 recovery line of its own:
 
 ```console
-ERROR [GRAPH_SCHEMA] g.json node[1] (model "yolov8n"): missing required key "id"
+ERROR [GRAPH_SCHEMA] g.json node[1] (model "yolov8-n_640x640"): missing required key "id"
   -> add "id": a name unique within this graph
 ```
 
 Node `"type"` values are checked the same way. `"source"` is the only type;
 a model node carries a `"model"` name and no `"type"` at all. In
-particular `{"type": "model", "model": "yolov8n"}` — a natural thing to
+particular `{"type": "model", "model": "yolov8-n_640x640"}` — a natural thing to
 write — is **rejected**, because it used to be accepted only by accident.
 
 Two deliberate exceptions to the key rule:
@@ -684,7 +814,9 @@ of them.
 | **Multi-model fusion** (`"type": "fuse"`) | Grammar reserved, rejected with `GRAPH_RESERVED` |
 | **Text-conditioned models** (`"prompt"`) | Grammar reserved, rejected with `GRAPH_RESERVED` |
 | **Condition / rule expressions on edges** | No key in v1; an expression language is a small language and permanently binding once shipped |
-| **3D / LiDAR models** (`boxes3d`) | Rejected in a camera graph: the input is not a camera frame |
+| **3D / LiDAR models** (`boxes3d`) | Rejected in every graph (`GRAPH_EDGE`: `consumes LiDAR point clouds, not camera frames`): every source is a camera frame |
+| **Anomaly detection** | The four anomaly models are registered but not graph-ready (`MODEL_NOT_READY`); EfficientAD's companion engines have no graph stage |
+| **CPU nodes and scenario reducers** (solvePnP, CLIP prompt scores, volume estimation, PPE rules) | Not graph nodes; the other multi-model runtime has them (see *Two multi-model runtimes in this release*) |
 | **SuperPoint tracks in a graph** | Needs an ordered per-stream step; the descriptors port is available |
 | **DnCNN resized back to the input size** | Hand-off hands off as produced: DnCNN's image stays 512×512 |
 
@@ -849,8 +981,8 @@ Every model node opens its own engine on the NPU, even two nodes that name
 the same model, and each engine holds its own device memory; other
 processes using the NPU draw on the same memory. A graph whose engines do
 not fit fails while it loads, with `MODEL_LOAD` on the first node that does
-not fit. On DX-M1, a second `realesrgan_x2` next to `yolov8n`, `resnet50`
-and a first `realesrgan_x2` cannot load (the example under *Error
+not fit. On DX-M1, a second `realesrgan-x2_192x192` next to `yolov8-n_640x640`, `resnet50_224x224`
+and a first `realesrgan-x2_192x192` cannot load (the example under *Error
 messages*).
 
 `--check` cannot predict this: it never opens the NPU, and the runtime
@@ -873,8 +1005,8 @@ happens, remove a node or use a smaller model.
 | `--max-jobs-per-stage <N>` | `0` | jobs one stage may have outstanding across frames; 0 = no limit. Async only: `multi_model_graph_sync` refuses it (exit 2) |
 | `--stall-timeout-ms <N>` | `0` | fail with `ERROR: AsyncExecutor stalled: …` (exit 1) when work is outstanding and nothing completes for N ms; 0 = wait forever. Async only: `multi_model_graph_sync` refuses it (exit 2) |
 | `--frames <N>` | all | stop after N frames; with several sources, after N frames of each stream |
-| `--check [<file>]` | — | validate and report, then exit |
-| `--list-models` | — | with `--consumes` / `--produces` |
+| `--check [<file>]` | — | validate and report without opening the NPU, then exit: 0 for a valid graph (missing `.dxnn` files are listed, not an error), 1 for an invalid graph or a present `.dxnn` this DX-RT cannot load |
+| `--list-models` | — | every model, then the `alias of` rows; filter with `--consumes` / `--produces`; `--model-dir` sets the directory the `file` column reads |
 | `--help` | — | |
 
 `--max-jobs-per-stage` and `--stall-timeout-ms` are `dx_graph`'s
@@ -971,17 +1103,23 @@ request, let the run finish; if you may have to kill it, write `.mkv` or
 
 What a model `consumes` and which ports it has come from its factory
 interface (`IPoseFactory`, `IDetectionFactory`, ...), through the table in
-`scripts/gen_model_registry.py`. A factory overrides either one with a
-single line in its header:
+`scripts/gen_model_registry.py`. A model family overrides either one in
+that script's `GRAPH_TRAITS` table (the per-variant factory headers are
+generated, so the overrides live beside the generator): `vitpose` and
+`dark_hrnet` consume `either`, `superpoint` has the `descriptors` port and
+`ppmatting` the `alpha` port. A gallery embedding model gets its `matches`
+port from its `config.json`. A factory header may still declare either one
+itself, with a single line:
 
 ```cpp
 static constexpr GraphInput graphInput() { return GraphInput::kEither; }   // kFullFrame, kRoi or kEither
 static constexpr const char* graphPorts() { return "descriptors"; }       // comma-separated port names
 ```
 
-`vit_pose_small_bn` declares `graphInput()` (`kEither`) and `superpoint`
-declares `graphPorts()`. The build's code generator parses those lines out of
-the header, so no factory is instantiated to learn its contract. Every
+The build's code generator parses those lines out of the header, so no
+factory is instantiated to learn its contract. A header declaration must
+agree with `GRAPH_TRAITS` for its family, or generation fails with
+`TRAIT MISMATCH`. Every
 generated registry row also carries a `static_assert` that the factory's own
 declaration equals what the generator parsed. A declaration the generator
 misread or missed, such as one inherited from another factory, then fails
@@ -995,10 +1133,12 @@ a trait in a header that declares none, or that quotes the declaration a
 second time, stops the build. A port name must also be one the generator
 knows for the factory's result type (`UNKNOWN PORT`).
 
-`vit_pose_small_bn` also decodes its output as the 17 VitPose heatmaps it
+`vitpose-s_256x192` also decodes its output as the 17 VitPose heatmaps it
 is, as the Python example does, where it used to run a YOLOv8-pose decoder.
 Its C++ and Python keypoints agree to within 2e-5. It no longer reads
-`score_threshold` or `nms_threshold`.
+`score_threshold` or `nms_threshold`. `dark-hrnet-w32_256x192` got the same
+decoder fix; it is covered by a unit test on a synthetic heatmap only,
+because no `.dxnn` of it could be run here.
 
 ## Your own registry (`IModelRegistry`)
 
@@ -1062,13 +1202,13 @@ interpreter and ships it as `bin/python/dx_graph` (the default `./build.sh`,
 This is the claim the example exists to make, so it is worth trying:
 
 ```bash
-# edit cascade_od_reid_track.json: "model": "yolov8n" -> "yolo26s"
-./setup.sh --models yolo26s
+# edit cascade_od_reid_track.json: "model": "yolov8-n_640x640" -> "yolo26-s_640x640"
+./setup.sh --models yolo26-s_640x640     # a v9 file: needs DX-RT >= 3.5.0 (see "Model files")
 ./bin/multi_model_graph_async \
     --graph src/cpp_example/multi_model_graph/cascade_od_reid_track.json \
     --output /tmp/swapped.png
 ```
 
 No rebuild, no recompilation, no code change. The same holds for swapping
-`bisenetv2` for any other model whose `produces` column says `labelmap`, or
-`casvit_t` for anything that `consumes` `roi` or `either`.
+`bisenetv2_1024x2048` for any other model whose `produces` column says `labelmap`, or
+`casvit-t_224x224` for anything that `consumes` `roi` or `either`.

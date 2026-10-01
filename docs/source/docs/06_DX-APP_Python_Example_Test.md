@@ -29,6 +29,15 @@ The framework employs a layered approach to isolate issues effectively
 
 - **Integration Tests (`-m integration`)** Validates error handling (e.g., missing files) and resource cleanup during interrupts  (`Ctrl+C`)  
 - **E2E (End-to-End) Tests (`-m e2e`):** High-fidelity tests using real `.dxnn` models and NPU hardware to capture actual performance  
+  Video E2E tests run every stream-capable model except the W6 face detectors (`VIDEO_TOO_SLOW_MODELS` in `tests/test_helpers/constants.py`). Super-resolution's stream path runs on a 6-frame low-resolution clip (`test_super_resolution_stream_e2e`).  
+
+**Feature Tests (selection)**  
+
+| File | Marker | Scope |
+|------|--------|-------|
+| `test_verify.py` | `verify` | `DXAPP_VERIFY` output of every downloaded model, sync and async (`*_cpp_postprocess` included): one non-empty record, per-frame file |
+| `test_sync_async_parity.py` | `verify` | Async output equals sync frame by frame (120-frame video clip; `yolov5-s_640x640`, `yolopv2_384x640`, `superpoint_480x640` and one model per postprocessor family) |
+| `test_signal_handling.py` | `signal_handling` | SIGINT graceful shutdown; SIGTERM in save mode finalizes the video and prints the summary |
 
 ### Environment Setup
 
@@ -36,6 +45,28 @@ The framework employs a layered approach to isolate issues effectively
 
 - `pytest.ini`: Defines custom markers (50+), log formats, and global settings.  
 - `conftest.py`: Contains shared fixtures, mock infrastructure, and setup/teardown utilities.  
+
+**Interpreter for the examples (`DXAPP_TEST_PYTHON`)**  
+
+The mocks in `conftest.py` exist only inside the pytest process. Most tests launch the real example scripts as subprocesses, and those import `dx_engine`, `dx_postprocess` and `cv2` for real. The interpreter for those subprocesses is chosen in this order:
+
+1. `$DXAPP_TEST_PYTHON`, when set.
+2. The dx-runtime venv, `dx-runtime/venv-dx-runtime/bin/python3`, when it exists.
+3. The interpreter running pytest.
+
+The pytest header prints the choice (`example python (DXAPP_TEST_PYTHON): ...`). The simplest setup is to run pytest itself from that venv:
+
+```bash
+VENV=../venv-dx-runtime                     # from dx_app/
+$VENV/bin/python -m pip install -r requirements.txt -r tests/python_example/requirements.txt
+$VENV/bin/python -m pytest tests/python_example
+# another interpreter for the examples:
+DXAPP_TEST_PYTHON=/path/to/python3 $VENV/bin/python -m pytest tests/python_example
+```
+
+Behind a TLS-intercepting proxy, pass the system CA bundle to pip (`--cert /etc/ssl/certs/ca-certificates.crt`); never disable verification.
+
+Without `DISPLAY`/`WAYLAND_DISPLAY`, both suites set `QT_QPA_PLATFORM=offscreen` for the examples they start, so OpenCV windows do not abort on a headless machine. Every example subprocess has a timeout that sends SIGTERM first, then SIGKILL if the process is still alive (`tests/test_helpers/proc.py`).
 
 !!! note "Coverage Scope"
 
