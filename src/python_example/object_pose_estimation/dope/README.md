@@ -99,12 +99,10 @@ omitted, `config.json` in this folder is applied automatically. Use `-h` /
 
 ### 3-2. C++ (built binaries)
 
-> **Build first.** The DOPE C++ example is excluded from the default build
-> because `solvePnP` / `projectPoints` need `opencv_calib3d`. To build it,
-> uncomment `object_pose_estimation` in `CATEGORIES` in
-> `src/cpp_example/CMakeLists.txt`, make calib3d available, then run
-> `./build.sh`. The binaries are `dope-hope-ketchup_480x640_sync` and
-> `dope-hope-ketchup_480x640_async`.
+> **Build first.** `object_pose_estimation` is in `CATEGORIES` in
+> `src/cpp_example/CMakeLists.txt`, so `./build.sh` builds the DOPE C++
+> example (`solvePnP` / `projectPoints` need `opencv_calib3d`). The binaries
+> are `dope-hope-ketchup_480x640_sync` and `dope-hope-ketchup_480x640_async`.
 
 ```bash
 # 5 sync — single image
@@ -117,22 +115,17 @@ omitted, `config.json` in this folder is applied automatically. Use `-h` /
   -m assets/models/dope-hope-ketchup_480x640.dxnn \
   -i <image_dir>
 
-# video / camera / RTSP
-./dope-hope-ketchup_480x640_sync -m <model.dxnn> -v <video.mp4>
-./dope-hope-ketchup_480x640_sync -m <model.dxnn> -c 0
-./dope-hope-ketchup_480x640_sync -m <model.dxnn> -r <rtsp://...>
-
 # save, headless (write results without opening a window)
 ./dope-hope-ketchup_480x640_async -m <model.dxnn> -i <image_dir> --save --no-display
 ```
 
 | Option | Description |
 |--------|-------------|
-| `-m`, `--model_path` | path to the `.dxnn` model (required) |
+| `-m`, `--model_path` | path to the `.dxnn` model (default: `assets/models/dope-hope-ketchup_480x640.dxnn`) |
 | `-i`, `--image_path` | image file **or** directory |
-| `-v`, `--video_path` | video file path |
-| `-c`, `--camera_index` | camera device index |
-| `-r`, `--rtsp_url` | RTSP stream URL |
+| `-v`, `--video_path` | accepted, but refused for this task (image input only) |
+| `-c`, `--camera_index` | accepted, but refused for this task (image input only) |
+| `-r`, `--rtsp_url` | accepted, but refused for this task (image input only) |
 | `-s`, `--save` | save results to disk |
 | `--save-dir` | base directory for saved results (default `artifacts/cpp_example`) |
 | `--no-display` | disable window output (headless) |

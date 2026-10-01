@@ -12,6 +12,13 @@ pick the one that matches what you want to check before running anything.
 | [`windows/`](windows/) | Windows-specific argument handling and pybind11 bindings | E2E only | yes | `tests\windows\run_tests.bat` |
 | [`req_test/`](req_test/) | SDKREQ requirement verification (static + runtime) | optional | optional | `tests/req_test/run_all.sh` |
 
+Run each suite in its own pytest session, as `run_tc.sh` does (it runs
+pytest inside each suite's directory). One session over `tests/cpp_example` and `tests/python_example`
+together is not supported: 11 test modules have the same file name in both
+(`test_e2e.py`, `test_cli_basic.py`, ...), and the C++ suite's
+`from conftest import ...` then finds the Python suite's `conftest.py`, so
+collection stops with 18 errors.
+
 Two helper directories are not test suites:
 
 - [`test_helpers/`](test_helpers/) — shared constants, discovery utilities, and

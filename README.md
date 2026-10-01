@@ -182,6 +182,15 @@ To utilize NPU acceleration, you **must** install the kernel-mode drivers and th
 - **DEEPX NPU Linux Driver:** Required for low-level NPU communication. [Github Repository](https://github.com/DEEPX-AI/dx_rt_npu_linux_driver)  
 - **DX-RT (Runtime & Tools):** The core library for model inference and hardware management. [Github Repository](https://github.com/DEEPX-AI/dx_rt)  
 
+Versions this release needs:
+
+- **DX-RT ≥ 3.5.0.** `./setup.sh` downloads DX Model Zoo 2_5_0, whose `.dxnn` files are container **v9**; DX-RT 3.5.0 is the first runtime that loads them.
+- **NPU driver ≥ 2.7.0** (RT and PCIe driver, as installed and tested here). The runtime's own minimum driver, firmware and `.dxnn` versions are printed by `dxrt-cli --version`.
+- **`dx_engine` 3.5.x**, the Python package of the same DX-RT: `import dx_engine` (3.5.0) raises `dx_engine and DX-RT versions do not match` when its major.minor differs from the runtime's.
+- The C++ examples check the floor when they start: a runtime older than 3.5.0 stops with `DXRT library version is too low. (required: >= 3.5.0, current: <version>)`. The check runs after the engine is created, so an older runtime may report its own error on the `.dxnn` first (see *Known issues* in `RELEASE_NOTES_MATERIAL.md`).
+
+Tested with DX-RT 3.5.0 (build 1.6fdc543), NPU driver 2.7.0 (RT and PCIe) and firmware 2.7.4 on a DX-M1 M.2 card (x86_64).
+
 **B. Development Toolchain and Libraries**  
 
 The following tools are required to compile the C++ templates and the Python dx_postprocess bindings.  
@@ -234,11 +243,11 @@ Two independent runtimes run several models together. Both build from the same p
 | Input | images, videos, cameras and RTSP streams, several at once | one image per run |
 | Adds | `--check` without the NPU, tracking, output ports, `--report`, byte-identical sync and async reports | scenario logic after the models: volume, head pose (solvePnP), CLIP scores, PPE rules |
 
-Use a graph to compose registry models on images or streams and to swap a model by editing one name. Use `multi_model_run` for the four scenarios whose result is computed after the models (`hand_cascade`, `logistics_volume`, `worker_safety`, `dms_clip`). The hand cascade and worker safety (without its PPE stage, whose model is in neither the registry nor the model-zoo manifest) also ship as graphs. The two runtimes crop a region with different rounding, so their hand landmarks can differ by a few pixels on the same image. Details and the rest of the comparison: *Two multi-model runtimes in this release* in the [multi-model graph README](./src/cpp_example/multi_model_graph/README.md).
+Use a graph to compose registry models on images or streams and to swap a model by editing one name. Use `multi_model_run` for the four scenarios whose result is computed after the models (`hand_cascade`, `logistics_volume`, `worker_safety`, `dms_clip`). The hand cascade and worker safety (without its PPE stage, whose model is in neither the registry nor the model-zoo manifest) also ship as graphs. The graph and both `multi_model` runtimes (C++ `multi_model_run`, Python `run_pipeline.py`) cut a region by one crop rule (`common/utility/roi_crop.hpp`, ported to `src/python_example/common/multi/binds.py`), so the hand cascade's landmarks agree between the graph and `multi_model_run` within 1e-3 px on the sample image. Details and the rest of the comparison: *Two multi-model runtimes in this release* in the [multi-model graph README](./src/cpp_example/multi_model_graph/README.md).
 
 The graph binaries and `dx_graph` are built by `./build.sh --all` (the default `--minimal` build does not build them); `./build.sh --all --python_exec <python>` builds `dx_graph` for that interpreter into `bin/python/dx_graph`.
 
-**Model files.** `./setup.sh` downloads DX Model Zoo 2_5_0 for 493 of the 499 models: `.dxnn` container v9, which needs DX-RT 3.5.0 (see *Repository Layout* below). The graph runtime checks the container before loading and stops with `.dxnn container v9 needs DX-RT >= 3.5.0, but this runtime is <version>. Use the v8 file (dxnn/2_4_0) or upgrade DX-RT.`; `--check` reports it and exits 1. The graphs were validated on DX-RT 3.4.1 with v8 files; validation on DX-RT 3.5.0 with the v9 files is still pending.
+**Model files.** `./setup.sh` downloads DX Model Zoo 2_5_0 for 493 of the 499 models: `.dxnn` container v9, which needs DX-RT 3.5.0 (see *Repository Layout* below). The graph runtime checks the container before loading; on a DX-RT older than 3.5.0 it stops with `.dxnn container v9 needs DX-RT >= 3.5.0, but this runtime is <version>. Use the v8 file (dxnn/2_4_0) or upgrade DX-RT.`, and `--check` reports it and exits 1. The graphs were validated on DX-RT 3.4.1 with v8 files and on DX-RT 3.5.0 with both the v8 and the v9 files: the golden reports (9 sample graphs) are byte-identical between `multi_model_graph_sync` and `_async` on either store, and the v8 ones equal the DX-RT 3.4.1 results.
 
 ---
 
@@ -250,7 +259,7 @@ All C++ and Python examples share a consistent set of command-line arguments.
 
 | Flag | C++ | Python | Description |
 |------|-----|--------|-------------|
-| `-m` / `--model` | `-m` | `--model` | Path to `.dxnn` model file (auto-downloaded if missing) |
+| `-m` / `--model` | `-m` | `--model` | Path to `.dxnn` model file (auto-downloaded if missing). Without it, an example runs its own variant's model, `assets/models/<variant>.dxnn` |
 | `-i` / `--image` | `-i` | `--image` | Input image file or directory |
 | `-v` / `--video` | `-v` | `--video` | Input video file |
 | `-c` / `--camera` | `-c` | `--camera` | Camera device index |
@@ -312,11 +321,9 @@ Runtime parameters (score threshold, NMS threshold, top-k) live in `<task>/<fami
 
 ## Version Compatibility
 
-All runners verify:
-- **DX-RT library** ≥ 3.0.0
-- **Compiled model format** ≥ v7
-
-Incompatible versions produce a clear error message before exit.
+The runners check the runtime and the model before they run:
+- **C++:** DX-RT library ≥ 3.5.0 and compiled model format ≥ v7 (`minversionforRTandCompiler`, `common/utility/common_util.hpp`), checked once the engine is created. An older runtime or model stops the example with an error and a hint.
+- **Python:** DX-RT library ≥ 3.0.0 (an older one exits with an error) and a warning for a model format older than v7. `import dx_engine` itself refuses a DX-RT of another major.minor. The Model Zoo 2_5_0 files still need DX-RT ≥ 3.5.0 (see *Prerequisites*).
 
 ## Auto-Download
 
@@ -428,7 +435,7 @@ Templates are categorized by task across multiple task directories. All examples
 - **Face Detection:** SCRFD, YOLOv5Face, YOLOv7Face, RetinaFace  
 - **Pose Estimation:** YOLOv8-Pose  
 - **Segmentation:** BiSeNet, DeepLabV3+, SegFormer, YOLOv8Seg  
-- **Image Retrieval / Visual Place Recognition / Person Re-ID:** CLIP RN50, EigenPlaces, PP-ShiTuV2, RepVGG-A0 -- each ranks a query descriptor against a gallery built on the NPU (`sample/gallery/*.bin`, one shared format both example trees read -- see `scripts/build_gallery_database.py`)  
+- **Image Retrieval / Visual Place Recognition / Person Re-ID:** CLIP RN50, EigenPlaces, PP-ShiTuV2, RepVGG-A0 -- each ranks a query descriptor against a gallery built on the NPU (`sample/gallery/*.bin`, one shared format both example trees read -- see `scripts/build_gallery_database.py`). A relative gallery or thumbnail path that does not exist from the working directory is read against the repository root, in both trees, so these examples rank and draw their matches the same from any working directory  
 - **Image Matting:** PP-Matting HRNet-W48 (continuous alpha matte, not a class map)  
 - **Depth, Embedding, OBB, Denoising, Enhancement, Super Resolution, Hand Landmark, Attribute Recognition, PPU**  
 

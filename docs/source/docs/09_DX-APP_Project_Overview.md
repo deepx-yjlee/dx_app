@@ -436,12 +436,12 @@ Runtime parameters (score threshold, NMS threshold, top-k) live in `<task>/<fami
 
 **Version Compatibility**  
 
-All runners verify:  
+The runners check the runtime and the model before they run:  
 
-- **DX-RT library** ≥ 3.0.0  
-- **Compiled model format** ≥ v7  
+- **C++:** DX-RT library ≥ 3.5.0 and compiled model format ≥ v7 (`minversionforRTandCompiler` in `common/utility/common_util.hpp`), checked once the engine is created  
+- **Python:** DX-RT library ≥ 3.0.0, and a warning for a model format older than v7  
 
-Incompatible versions produce a clear error message before exit.
+An incompatible version stops the example with an error message. The Model Zoo 2_5_0 files (`.dxnn` container v9) need DX-RT ≥ 3.5.0 in both languages; see *Software Requirements on Linux* in the installation guide.
 
 **Headless Mode**  
 

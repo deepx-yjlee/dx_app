@@ -44,18 +44,22 @@ name. The shipped samples use variant names.
 
 **Model files**: `./setup.sh --models` downloads the model zoo's current
 release, `q-lite-dxnn/2_5_0`, for 493 of the 499 models. Those files are
-`.dxnn` container **v9**, and DX-RT older than 3.5.0 cannot load them. Every
-graph path checks the container before it creates an engine and stops with
+`.dxnn` container **v9**; this release needs DX-RT 3.5.0 or later, the first
+runtime that loads them. Every graph path checks the container before it
+creates an engine, so on an older DX-RT it stops with
 
 ```text
 <file>: .dxnn container v9 needs DX-RT >= 3.5.0, but this runtime is 3.4.1. Use the v8 file (dxnn/2_4_0) or upgrade DX-RT.
 ```
 
-`--check` prints that file as `[present, v9 (needs DX-RT >= 3.5.0)]`, adds an
-`ERROR [MODEL_LOAD]` line and exits 1; `--list-models` shows it in its `file`
-column. The graphs in this release were validated on DX-RT 3.4.1 with v8
-files. A run on DX-RT 3.5.0 with the v9 files is still to be done, so the
-graphs are not yet validated on v9.
+There `--check` prints that file as `[present, v9 (needs DX-RT >= 3.5.0)]`,
+adds an `ERROR [MODEL_LOAD]` line and exits 1; a file this runtime loads is
+`[present, v8]` or `[present, v9]`. `--list-models` shows the same container
+version in its `file` column. The graphs in this release were validated on
+DX-RT 3.4.1 with v8 files and on DX-RT 3.5.0 (driver 2.7.0) with both the v8
+and the v9 files: the golden reports of the 9 sample graphs that have one are
+byte-identical between the two binaries on either store, and the v8 ones
+equal the DX-RT 3.4.1 results.
 
 Two binaries are built from one engine and differ in exactly one value:
 
@@ -99,7 +103,7 @@ other multi-model runtime in this release that a graph can express; see
 ### Two multi-model runtimes in this release
 
 This release ships two independent ways to run several models together.
-They share the per-variant factories and nothing else.
+They share the per-variant factories and the ROI crop rule, and nothing else.
 
 | | `multi_model_graph_{sync,async}` and `dx_graph` (this directory) | `multi_model_run` and `run_pipeline.py` (`src/cpp_example/multi_model/`, `src/python_example/multi_model/`) |
 |---|---|---|
@@ -121,10 +125,13 @@ Which to use:
   cascade's fused summary. A graph has no fuse or CPU node (see *Not in this
   release*).
 * The **hand cascade** and **worker safety** exist in both forms
-  (`hand_cascade.json`, `worker_safety.json` above). Both runtimes cut an
-  ROI crop by one rule, `PaddedCropRect` in `common/utility/roi_crop.hpp`:
-  pad the box around its centre, clamp it to the frame in float, then
-  truncate the corner and the size once. For `hand_cascade` the two find the
+  (`hand_cascade.json`, `worker_safety.json` above). The graph and both
+  `multi_model` runtimes cut an ROI crop by one rule, `PaddedCropRect` in
+  `common/utility/roi_crop.hpp` (`multi_model_run`'s `cropBoxes` calls it;
+  `run_pipeline.py` has the same rule in float32, `padded_crop_rect` in
+  `src/python_example/common/multi/binds.py`): pad the box around its
+  centre, clamp it to the frame in float, then truncate the corner and the
+  size once. For `hand_cascade` the graph and `multi_model_run` find the
   same palms and hands, cut the same crops, and their hand landmarks agree
   within 1e-3 px on the sample image (v8 and v9 models).
 
@@ -587,8 +594,8 @@ OK: graph "person-reid" is valid (3 nodes, 2 edges, 2 models)
 
 node      model                         produces   consumes   artifact
 cam       (source)                      frame      -          sample/img/sample_people.jpg
-od        yolov8-n_640x640              boxes      full_frame yolov8-n_640x640.dxnn  [present]
-reid      casvit-t_224x224              vector     either     casvit-t_224x224.dxnn  [present]
+od        yolov8-n_640x640              boxes      full_frame yolov8-n_640x640.dxnn  [present, v9]
+reid      casvit-t_224x224              vector     either     casvit-t_224x224.dxnn  [present, v9]
 ```
 
 A graph with several sources gets a `streams:` block after the node table,
@@ -601,8 +608,8 @@ OK: graph "two-cameras-reid" is valid (4 nodes, 3 edges, 2 models)
 node      model                         produces   consumes   artifact
 cam1      (source)                      frame      -          sample/img/sample_people.jpg
 cam2      (source)                      frame      -          sample/img/sample_person_a1.jpg
-od        yolov8-n_640x640              boxes      full_frame yolov8-n_640x640.dxnn  [present]
-reid      casvit-t_224x224              vector     either     casvit-t_224x224.dxnn  [present]
+od        yolov8-n_640x640              boxes      full_frame yolov8-n_640x640.dxnn  [present, v9]
+reid      casvit-t_224x224              vector     either     casvit-t_224x224.dxnn  [present, v9]
 
 streams: 2 - one per source node, read in turn, one frame from each
   cam1      -> od, reid
@@ -621,11 +628,12 @@ note: node "c": the CLIP prompt bank is Python-only; in a graph this model outpu
 ```
 
 * `resource: ... gallery <path>`: the gallery file a retrieval,
-  re-identification or place-recognition model compares against, relative to
-  the repository: `[present, DXGAL1]`, `[present, but not a DXGAL1
-  gallery]` or `[MISSING]`. A run reads a relative `gallery` (from
-  `config.json` or a node's `params`) against the repository too, so it
-  opens the file `--check` found from any working directory.
+  re-identification or place-recognition model compares against: the
+  node's `"gallery"` param when it has one, else the model's `config.json`
+  entry, an absolute path as given and a relative one against the
+  repository: `[present, DXGAL1]`, `[present, but not a DXGAL1 gallery]` or
+  `[MISSING]`. A run resolves the same `gallery` the same way, so it opens
+  the file `--check` found from any working directory.
 * `note: ...`: a fact about the model in a graph, such as the CLIP note
   above, or, before the table, `note: node "od": "yolov8n" is the old name
   of "yolov8-n_640x640"`.
@@ -640,7 +648,7 @@ be able to ask — so a missing `.dxnn` is reported but does not make
 recovery command. A `.dxnn` that is present but that this DX-RT cannot load
 does make `--check` fail: the artifact column says
 `[present, v9 (needs DX-RT >= 3.5.0)]`, one line per such node follows on
-stderr, and the exit code is 1:
+stderr, and the exit code is 1 (output on DX-RT 3.4.1):
 
 ```console
 $ ./bin/multi_model_graph_sync --check sr.json --model-dir v9_models
