@@ -11199,17 +11199,62 @@ void TestAStageRefusesAV9FileBeforeOpeningAnEngine() {
     const char* models[] = {"yolov8-n_640x640", "espcn-x2_17x17"};
     for (std::size_t m = 0; m < sizeof(models) / sizeof(models[0]); ++m) {
         std::string message;
+        std::string container_message;
+        std::string hint;
         try {
             registry.createStage(models[m], v9, StageParams());
+        } catch (const ModelContainerError& error) {
+            // I3: the registry passes the container refusal through as its
+            // own type, so Build can tell it from a device failure.
+            message = container_message = error.what();
+            hint = error.hint();
         } catch (const std::exception& error) {
             message = error.what();
         }
         GRAPH_CHECK(!message.empty());
         if (!expected.empty()) {
-            GRAPH_CHECK(message == v9 + ": " + expected);
+            GRAPH_CHECK(container_message == v9 + ": " + expected);
+            GRAPH_CHECK(hint == "use the v8 file (dxnn/2_4_0) or upgrade DX-RT to >= 3.5.0");
         }
     }
     std::remove(v9.c_str());
+
+    // StageGraph::Build turns it into MODEL_LOAD with that hint and no
+    // download line: ./setup.sh --models would fetch the same v9 file.
+    if (expected.empty()) return;
+    const std::string dir = ScratchPath("v9_models");
+    ::mkdir(dir.c_str(), 0700);
+    const std::string file = dir + "/yolov8-n_640x640.dxnn";
+    {
+        std::ofstream out(file.c_str(), std::ios::binary | std::ios::trunc);
+        const std::string header = ContainerHeader(9);
+        out.write(header.data(), static_cast<std::streamsize>(header.size()));
+    }
+    const GraphSpec spec = ParseGraphText(
+        "{\"version\":1,\"name\":\"v9\",\"nodes\":["
+        "{\"id\":\"cam\",\"type\":\"source\",\"uri\":\"x.jpg\"},"
+        "{\"id\":\"od\",\"model\":\"yolov8n\"}],"
+        "\"edges\":[{\"from\":\"cam\",\"to\":\"od\"}]}",
+        "v9.json");
+    std::string built;
+    GraphErrorCode code = GraphErrorCode::kGraphSchema;
+    try {
+        StageGraph graph;
+        graph.Build(spec, registry, dir);
+    } catch (const GraphError& error) {
+        built = error.what();
+        code = error.code();
+    }
+    GRAPH_CHECK(code == GraphErrorCode::kModelLoad);
+    GRAPH_CHECK(built.find("ERROR [MODEL_LOAD] node \"od\": model \"yolov8n\" "
+                           "(yolov8-n_640x640.dxnn) could not be loaded: " + file + ": " +
+                           expected) == 0);
+    GRAPH_CHECK(built.find("\n  -> use the v8 file (dxnn/2_4_0) or upgrade DX-RT to >= 3.5.0") !=
+                std::string::npos);
+    GRAPH_CHECK(built.find("setup.sh") == std::string::npos);
+    GRAPH_CHECK(built.find("dxrt-cli -s") == std::string::npos);
+    std::remove(file.c_str());
+    ::rmdir(dir.c_str());
 }
 
 // R6: the model key is the variant. A legacy model_name and an alias_of row

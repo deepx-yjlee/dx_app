@@ -544,6 +544,9 @@ hint depends on how far loading got: after other models loaded, it is the
 device-memory hint above (see *Device memory*); for the first model of the
 graph it is `check the NPU with dxrt-cli -s, and that <file> was compiled
 for this DX-RT version; to download it again: ./setup.sh --models <name>`.
+For a `.dxnn` container v9 on DX-RT older than 3.5.0 (see *Model files*) it
+is `use the v8 file (dxnn/2_4_0) or upgrade DX-RT to >= 3.5.0` instead:
+downloading again would fetch the same v9 file.
 
 Note the download command in `MODEL_MISSING`: the name it prints is the
 **model zoo's** spelling, which is almost never the variant (`yolov8-n_640x640`

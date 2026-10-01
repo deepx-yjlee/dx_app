@@ -188,6 +188,8 @@ def test_v9_model_on_an_older_runtime_raises_before_loading(tmp_path, model):
     assert caught.value.code == "MODEL_LOAD"
     assert str(caught.value) == cli.stderr.strip()
     assert str(model_dir / dxnn) + ": .dxnn container v9 needs DX-RT >= 3.5.0" in str(caught.value)
+    assert "use the v8 file (dxnn/2_4_0) or upgrade DX-RT to >= 3.5.0" in str(caught.value)
+    assert "setup.sh" not in str(caught.value)
 
 
 @pytest.mark.graph

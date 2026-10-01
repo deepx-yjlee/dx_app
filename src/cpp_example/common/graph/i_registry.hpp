@@ -33,6 +33,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -474,11 +475,35 @@ class IModelRegistry {
     /// A registry without aliases keeps the default.
     virtual std::vector<ModelAlias> aliases() const { return std::vector<ModelAlias>(); }
 
-    /// Throws std::runtime_error when the model is unknown or not ready.
+    /// Throws std::runtime_error when the model is unknown or not ready,
+    /// and ModelContainerError, unchanged, when the .dxnn is a container
+    /// this DX-RT cannot load.
     /// Must not invalidate anything find() returned - see find() above.
     virtual std::unique_ptr<IStage> createStage(const std::string& model_name,
                                                 const std::string& model_path,
                                                 const StageParams& params) const = 0;
+};
+
+/**
+ * @brief A model's .dxnn is a container this DX-RT cannot load (R12): a v9
+ *        file on DX-RT older than 3.5.0.
+ *
+ * A stage maker throws it before it opens an engine, and createStage()
+ * passes it through as this type, so StageGraph::Build can tell it from a
+ * device or memory failure: its hint() replaces the "download it again"
+ * line, which would fetch the same file.
+ */
+class ModelContainerError : public std::runtime_error {
+ public:
+    ModelContainerError(const std::string& what, const std::string& hint)
+        : std::runtime_error(what), hint_(hint) {}
+
+    /// What to do instead, e.g. "use the v8 file (dxnn/2_4_0) or upgrade
+    /// DX-RT to >= 3.5.0".
+    const std::string& hint() const { return hint_; }
+
+ private:
+    std::string hint_;
 };
 
 /**

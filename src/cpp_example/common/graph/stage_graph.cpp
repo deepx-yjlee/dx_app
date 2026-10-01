@@ -363,6 +363,13 @@ void StageGraph::Build(const GraphSpec& spec, const IModelRegistry& registry,
         }
         try {
             runtime.stage = registry.createStage(node.model, path, node.params);
+        } catch (const ModelContainerError& error) {
+            // A container this DX-RT cannot load (R12): no engine was
+            // opened, and downloading it again fetches the same file.
+            throw GraphError(GraphErrorCode::kModelLoad, "node \"" + node.id + "\"",
+                             "model \"" + node.model + "\" (" + info->dxnn_file +
+                                 ") could not be loaded: " + error.what(),
+                             error.hint());
         } catch (const std::exception& error) {
             // The runtime's own text is kept whole: it is the only place the
             // reason (memory, device, model format) is spelled out.

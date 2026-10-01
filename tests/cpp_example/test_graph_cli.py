@@ -2587,6 +2587,9 @@ def test_v9_model_on_an_older_runtime_fails_before_loading(tmp_path, model):
         assert first.startswith("ERROR [MODEL_LOAD] node \"m\""), result.stderr
         assert (str(model_dir / dxnn) + ": .dxnn container v9 needs DX-RT >= 3.5.0, but this "
                 "runtime is ") in first, result.stderr
+        # I3: the hint names the v8 file; downloading again fetches this v9 file.
+        assert "  -> use the v8 file (dxnn/2_4_0) or upgrade DX-RT to >= 3.5.0" in result.stderr
+        assert "setup.sh" not in result.stderr, result.stderr
 
 
 @pytest.mark.graph

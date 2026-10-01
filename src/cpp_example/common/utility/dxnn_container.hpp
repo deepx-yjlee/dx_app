@@ -128,6 +128,15 @@ inline std::string ContainerSupportError(uint32_t version, const std::string& ru
 }
 
 /**
+ * @brief What to do about a container ContainerSupportError refuses: the v8
+ *        file or DX-RT >= 3.5.0 for v9, a newer DX-RT for anything newer.
+ */
+inline std::string ContainerSupportHint(uint32_t version) {
+    return version == 9 ? "use the v8 file (dxnn/2_4_0) or upgrade DX-RT to >= 3.5.0"
+                        : "upgrade DX-RT";
+}
+
+/**
  * @brief "<path>: <ContainerSupportError>" for the .dxnn at `path`, or ""
  *        when it loads on DX-RT `runtime`.
  *

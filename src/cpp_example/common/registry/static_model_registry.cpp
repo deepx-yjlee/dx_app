@@ -90,8 +90,12 @@ std::unique_ptr<IStage> StaticModelRegistry::createStage(
     // here. The text is the runtime's own, unprefixed: the caller's
     // MODEL_LOAD already names the node, the model and its .dxnn, so a
     // prefix here printed the model twice.
+    // A container this DX-RT cannot load keeps its type (and hint): Build
+    // must not offer to download the same file again.
     try {
         return maker->second(model_path, info->second, params);
+    } catch (const ModelContainerError&) {
+        throw;
     } catch (const std::exception& error) {
         throw std::runtime_error(error.what());
     } catch (...) {

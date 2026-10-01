@@ -92,7 +92,8 @@ namespace detail {
 
 /**
  * @brief `model_path`, once its .dxnn container is one this DX-RT loads;
- *        otherwise throws std::runtime_error with ContainerLoadError's text.
+ *        otherwise throws ModelContainerError with ContainerLoadError's text
+ *        and ContainerSupportHint's hint.
  *
  * Called on the path an engine is about to be created from (TypedStage,
  * MakeRestorationStage), so a v9 file on DX-RT < 3.5.0 fails with one
@@ -101,7 +102,12 @@ namespace detail {
 inline const std::string& LoadableModelPath(const std::string& model_path) {
     const std::string error =
         ContainerLoadError(model_path, dxrt::Configuration::GetInstance().GetVersion());
-    if (!error.empty()) throw std::runtime_error(error);
+    if (!error.empty()) {
+        uint32_t version = 0;
+        std::string unread;
+        ReadDxnnContainerVersion(model_path, &version, &unread);
+        throw ModelContainerError(error, ContainerSupportHint(version));
+    }
     return model_path;
 }
 
