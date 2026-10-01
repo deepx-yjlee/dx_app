@@ -128,3 +128,31 @@ def test_an_explicit_models_dir_stands_in_for_the_repository_store(tmp_path, mon
     with pytest.raises(FileNotFoundError) as excinfo:
         resolve_model_file("mediapipe-hand-detector_192x192.dxnn", tmp_path, empty)
     assert str(store) not in str(excinfo.value), str(excinfo.value)
+
+
+def test_the_search_stops_at_the_repository_root(tmp_path, monkeypatch):
+    """A pipeline inside the repository never takes a model from a store above
+    it (a suite checkout's workspace/res/models), so one run cannot mix that
+    store with <repository>/assets/models. The pipeline directory is absolute,
+    as the C++ multi_model_run makes it."""
+    from common.multi import stage
+
+    suite = tmp_path / "dx-all-suite"
+    above = suite / "workspace" / "res" / "models"
+    above.mkdir(parents=True)
+    root = suite / "dx-runtime" / "dx_app"
+    store = root / "assets" / "models"
+    store.mkdir(parents=True)
+    pipeline_dir = root / "src" / "python_example" / "multi_model" / "dms_clip"
+    pipeline_dir.mkdir(parents=True)
+    name = "scrfd-500m_640x640.dxnn"
+    (above / name).write_bytes(b"above")
+    (store / name).write_bytes(b"repository")
+    monkeypatch.setattr(stage, "_PROJECT_ROOT", root, raising=False)
+
+    assert stage.resolve_model_file(name, pipeline_dir) == (store / name).resolve()
+    with pytest.raises(FileNotFoundError) as excinfo:
+        stage.resolve_model_file("absent.dxnn", pipeline_dir)
+    searched = [line.strip() for line in str(excinfo.value).splitlines()[1:]]
+    assert searched[-1] == str(store / "absent.dxnn"), searched
+    assert all(path.startswith(str(root) + "/") for path in searched), searched

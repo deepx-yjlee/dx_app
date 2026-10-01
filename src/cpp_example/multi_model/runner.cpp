@@ -17,6 +17,7 @@
 #include <cmath>
 #include <map>
 #include <sstream>
+#include <system_error>
 
 namespace dxapp {
 namespace {
@@ -55,10 +56,25 @@ std::string baseName(const std::string& path) {
     return path.substr(slash + 1);
 }
 
+// True when the directory is the repository root, where the walk up for a
+// workspace/res/models stops.
+bool isRepositoryRoot(const std::string& directory) {
+#if defined(PROJECT_ROOT_DIR)
+    std::error_code error;
+    return fs::equivalent(fs::path(directory), fs::path(PROJECT_ROOT_DIR), error);
+#else
+    (void)directory;
+    return false;
+#endif
+}
+
 // The stage's .dxnn path, searched in --models-dir, <pipeline dir>/models,
-// the pipeline dir, workspace/res/models in it and each parent up to
-// dx-all-suite, and (without --models-dir) <repository>/assets/models - the
-// same order as resolve_model_file in src/python_example/common/multi/stage.py.
+// the pipeline dir, workspace/res/models in it and each parent up to the
+// repository root (a pipeline outside the repository: up to dx-all-suite),
+// and (without --models-dir) <repository>/assets/models - the same order as
+// resolve_model_file in src/python_example/common/multi/stage.py. A pipeline
+// in the repository so never takes a model from a store above it, such as a
+// suite checkout's workspace/res/models, next to one from assets/models.
 // A miss names the stage, its variant, every path tried, and how to get the
 // file: ./setup.sh --models <the .dxnn stem> for the variant's model-zoo file,
 // --models-dir for any other file.
@@ -84,7 +100,7 @@ std::string resolveModelFile(
     while (!cursor.empty()) {
         candidates.push_back(joinPath(joinPath(joinPath(cursor, "workspace"), "res"), "models") +
                              "/" + filename);
-        if (baseName(cursor) == "dx-all-suite") {
+        if (isRepositoryRoot(cursor) || baseName(cursor) == "dx-all-suite") {
             break;
         }
         const std::string next = parentPath(cursor);

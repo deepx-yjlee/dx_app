@@ -56,9 +56,14 @@ def resolve_model_file(
 
     In order: ``models_dir``; ``<pipeline_dir>/models`` and ``pipeline_dir``;
     ``workspace/res/models`` in the pipeline's directory and each parent up to
-    ``dx-all-suite``. Without ``models_dir``, last ``<repository>/assets/models``,
-    where ``./setup.sh --models`` downloads; an explicit ``models_dir`` stands
-    in for that store.
+    the repository root (a pipeline outside the repository: up to
+    ``dx-all-suite``). Without ``models_dir``, last
+    ``<repository>/assets/models``, where ``./setup.sh --models`` downloads; an
+    explicit ``models_dir`` stands in for that store. A pipeline in the
+    repository so never takes a model from a store above it, such as a suite
+    checkout's ``workspace/res/models``, next to one from ``assets/models``.
+    The walk starts from the absolute pipeline directory, so it does not
+    depend on the working directory. Same order as the C++ ``multi_model_run``.
     """
     candidates: list[Path] = []
     if models_dir is not None:
@@ -66,10 +71,11 @@ def resolve_model_file(
     if pipeline_dir is not None:
         candidates.append(pipeline_dir / "models" / filename)
         candidates.append(pipeline_dir / filename)
-    start = pipeline_dir or Path.cwd()
+    start = Path(pipeline_dir).absolute() if pipeline_dir is not None else Path.cwd()
+    root = _PROJECT_ROOT.resolve()
     for parent in (start, *start.parents):
         candidates.append(parent / "workspace" / "res" / "models" / filename)
-        if parent.name == "dx-all-suite":
+        if parent.name == "dx-all-suite" or parent.resolve() == root:
             break
     if models_dir is None:
         candidates.append(_PROJECT_ROOT / "assets" / "models" / filename)

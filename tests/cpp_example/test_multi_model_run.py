@@ -125,3 +125,32 @@ def test_without_models_dir_the_repository_model_store_is_searched_last(tmp_path
                 if line.startswith("  ") and not line.strip().startswith("->")]
     assert searched, result.stderr
     assert searched[-1] == str(PROJECT_ROOT / "assets" / "models" / model), result.stderr
+
+
+@pytest.mark.parametrize("with_models_dir", [False, True], ids=["no-models-dir", "models-dir"])
+def test_the_search_stops_at_the_repository_root(tmp_path, with_models_dir):
+    """The shipped worker_safety pipeline, run from the repository: its ppe
+    model is in no store, so the run lists every path it tried. None is above
+    the repository (a suite checkout's workspace/res/models), so one run cannot
+    mix that store with <repository>/assets/models; --models-dir comes first,
+    and without it the repository's store comes last. Same order as Python's
+    resolve_model_file."""
+    pipeline = PIPELINE_DIR / "worker_safety" / "pipeline.json"
+    models_dir = None
+    if with_models_dir:
+        models_dir = tmp_path / "models"
+        models_dir.mkdir()
+
+    result = _run(pipeline, models_dir)
+    assert result.returncode != 0, result.stdout + result.stderr
+    searched = [line.strip() for line in result.stderr.splitlines()
+                if line.startswith("  ") and not line.strip().startswith("->")]
+    assert searched, result.stderr
+    model = searched[0].rsplit("/", 1)[-1]
+    if with_models_dir:
+        assert searched[0] == str(models_dir / model), result.stderr
+        searched = searched[1:]
+    else:
+        assert searched[-1] == str(PROJECT_ROOT / "assets" / "models" / model), result.stderr
+    above = [path for path in searched if not path.startswith(str(PROJECT_ROOT) + "/")]
+    assert not above, result.stderr
