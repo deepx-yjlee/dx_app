@@ -262,8 +262,11 @@ def test_async_runner_delivers_through_the_reorder_buffer(runner):
     rendered, written or dumped."""
     code = _strip_comments(_runner_text(runner))
     assert re.search(r"\bFrameReorderBuffer<\w+> reorder\(", code), "the display thread owns a FrameReorderBuffer"
-    assert _REORDER_PUSH.search(code), "every popped item goes through reorder.push()"
-    assert "reorder.drain(" in code, "what the buffer still holds at shutdown is emitted, in order"
+    push = _REORDER_PUSH.search(code)
+    assert push, "every popped item goes through reorder.push()"
+    assert "reorder.drain({})".format(push.group(1)) in code, (
+        "what the buffer still holds at shutdown is emitted, in order, by the same "
+        "lambda reorder.push() emits through")
     assert code.count("RunAsync(") <= len(re.findall(r"frame_index = static_cast<uint64_t>\(", code)), (
         "every submitted frame carries its submit index")
 
@@ -292,6 +295,21 @@ def test_async_runner_waits_for_every_frame_before_the_display_thread_stops(runn
     assert "received = metrics_.display_received;" in code
     assert re.search(r"const bool pending = !display_queue_\.empty\(\) \|\| received < processCount \|\|",
                      code), "the end-of-run wait holds until every submitted frame was received"
+
+
+@pytest.mark.parametrize("runner", ASYNC_RUNNERS)
+def test_async_runner_tail_bail_warning_names_what_may_be_lost(runner):
+    """The end-of-run wait also covers frames still in a callback without
+    --save, so its 5 s warning names the saved video only when saving, and
+    otherwise what a non-saving run can lose: the last frames' display and
+    DXAPP_VERIFY records."""
+    code = " ".join(_strip_comments(_runner_text(runner)).split())
+    warn = re.search(r'std::cerr << "\[DXAPP\] \[WARN\] Output frames stopped draining; " '
+                     r'<< \(args\.saveMode \? "saved video may be truncated\." '
+                     r': "the last frames may be missing from the display and " '
+                     r'"DXAPP_VERIFY records\."\) << std::endl;', code)
+    assert warn, "the warning is chosen by args.saveMode"
+    assert code.count("Output frames stopped draining") == 1
 
 
 def test_common_unit_tests_leave_no_temp_directories(tmp_path):

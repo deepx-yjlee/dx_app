@@ -352,7 +352,11 @@ public:
                     } else if (std::chrono::steady_clock::now() - last_progress >
                                std::chrono::seconds(5)) {
                         std::cerr << "[DXAPP] [WARN] Output frames stopped draining; "
-                                     "saved video may be truncated." << std::endl;
+                                  << (args.saveMode
+                                          ? "saved video may be truncated."
+                                          : "the last frames may be missing from the display and "
+                                            "DXAPP_VERIFY records.")
+                                  << std::endl;
                         break;
                     }
                     std::this_thread::sleep_for(std::chrono::milliseconds(2));
