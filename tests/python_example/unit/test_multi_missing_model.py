@@ -81,3 +81,50 @@ def test_a_custom_model_file_gets_no_model_zoo_download_line(tmp_path):
     assert str(empty / ppe["model"]) in message, message
     assert "./setup.sh --models" not in message, message
     assert "--models-dir" in message, message
+
+
+# The repository store: ./setup.sh --models downloads into <root>/assets/models,
+# so without models_dir that is searched too (last); the root is patched to a
+# temp dir, so the real store never answers.
+def _patch_repository(monkeypatch, tmp_path: Path) -> Path:
+    from common.multi import stage
+
+    root = tmp_path / "repo"
+    (root / "assets" / "models").mkdir(parents=True)
+    monkeypatch.setattr(stage, "_PROJECT_ROOT", root, raising=False)
+    return root / "assets" / "models"
+
+
+def test_without_models_dir_the_repository_model_store_is_searched(tmp_path, monkeypatch):
+    from common.multi.stage import resolve_model_file
+
+    store = _patch_repository(monkeypatch, tmp_path)
+    model = store / "mediapipe-hand-detector_192x192.dxnn"
+    model.write_bytes(b"x")
+    pipeline_dir = tmp_path / "pipeline"
+    pipeline_dir.mkdir()
+
+    assert resolve_model_file(model.name, pipeline_dir) == model.resolve()
+
+
+def test_a_missing_model_without_models_dir_lists_the_repository_store(tmp_path, monkeypatch):
+    store = _patch_repository(monkeypatch, tmp_path)
+    pipeline = _copy_pipeline(tmp_path, "hand_cascade")
+
+    message, runner = _run(pipeline, None)
+    assert str(store / "mediapipe-hand-detector_192x192.dxnn") in message, message
+    assert "./setup.sh --models mediapipe-hand-detector_192x192" in message, message
+    assert not runner._engines
+
+
+def test_an_explicit_models_dir_stands_in_for_the_repository_store(tmp_path, monkeypatch):
+    from common.multi.stage import resolve_model_file
+
+    store = _patch_repository(monkeypatch, tmp_path)
+    (store / "mediapipe-hand-detector_192x192.dxnn").write_bytes(b"x")
+    empty = tmp_path / "models"
+    empty.mkdir()
+
+    with pytest.raises(FileNotFoundError) as excinfo:
+        resolve_model_file("mediapipe-hand-detector_192x192.dxnn", tmp_path, empty)
+    assert str(store) not in str(excinfo.value), str(excinfo.value)

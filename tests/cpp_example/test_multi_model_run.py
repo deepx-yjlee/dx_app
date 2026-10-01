@@ -33,10 +33,12 @@ def _copy_pipeline(tmp_path, name):
 
 
 def _run(pipeline, models_dir):
+    """models_dir None runs without --models-dir."""
+    args = [str(_binary()), "--pipeline", str(pipeline), "--image", str(HAND_IMAGE)]
+    if models_dir is not None:
+        args += ["--models-dir", str(models_dir)]
     return subprocess.run(
-        [str(_binary()), "--pipeline", str(pipeline), "--image", str(HAND_IMAGE),
-         "--models-dir", str(models_dir)],
-        cwd=str(PROJECT_ROOT), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        args, cwd=str(PROJECT_ROOT), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         universal_newlines=True, timeout=60)
 
 
@@ -52,6 +54,8 @@ def test_missing_model_names_stage_variant_path_and_download(tmp_path):
     assert "variant mediapipe-hand-detector_192x192" in message, message
     assert str(empty / "mediapipe-hand-detector_192x192.dxnn") in message, message
     assert "./setup.sh --models mediapipe-hand-detector_192x192" in message, message
+    # An explicit --models-dir stands in for the repository's store.
+    assert str(PROJECT_ROOT / "assets" / "models") not in message, message
     assert "stage ready" not in result.stdout, result.stdout
 
 
@@ -95,3 +99,29 @@ def test_a_custom_model_file_gets_no_model_zoo_download_line(tmp_path):
     assert str(empty / "ppe_yolo26n.dxnn") in message, message
     assert "./setup.sh --models" not in message, message
     assert "--models-dir" in message, message
+
+
+def _ppe_only_pipeline(tmp_path):
+    source = json.loads((PIPELINE_DIR / "worker_safety" / "pipeline.json")
+                        .read_text(encoding="utf-8"))
+    ppe = next(stage for stage in source["stages"] if stage["id"] == "ppe")
+    work = tmp_path / "pipeline"
+    work.mkdir()
+    pipeline = work / "pipeline.json"
+    pipeline.write_text(json.dumps({"name": "ppe_only", "fuse": source["fuse"],
+                                    "stages": [ppe]}), encoding="utf-8")
+    return pipeline, ppe["model"]
+
+
+def test_without_models_dir_the_repository_model_store_is_searched_last(tmp_path):
+    """./setup.sh --models downloads into <repository>/assets/models, so a run
+    without --models-dir looks there too. ppe_yolo26n.dxnn is distributed by
+    neither the registry nor the model zoo, so no store holds it."""
+    pipeline, model = _ppe_only_pipeline(tmp_path)
+
+    result = _run(pipeline, None)
+    assert result.returncode != 0, result.stdout + result.stderr
+    searched = [line.strip() for line in result.stderr.splitlines()
+                if line.startswith("  ") and not line.strip().startswith("->")]
+    assert searched, result.stderr
+    assert searched[-1] == str(PROJECT_ROOT / "assets" / "models" / model), result.stderr

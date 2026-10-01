@@ -55,9 +55,13 @@ std::string baseName(const std::string& path) {
     return path.substr(slash + 1);
 }
 
-// The stage's .dxnn path. A miss names the stage, its variant, every path
-// tried, and how to get the file: ./setup.sh --models <the .dxnn stem> for
-// the variant's model-zoo file, --models-dir for any other file.
+// The stage's .dxnn path, searched in --models-dir, <pipeline dir>/models,
+// the pipeline dir, workspace/res/models in it and each parent up to
+// dx-all-suite, and (without --models-dir) <repository>/assets/models - the
+// same order as resolve_model_file in src/python_example/common/multi/stage.py.
+// A miss names the stage, its variant, every path tried, and how to get the
+// file: ./setup.sh --models <the .dxnn stem> for the variant's model-zoo file,
+// --models-dir for any other file.
 std::string resolveModelFile(
     const StageSpec& spec,
     const std::string& pipelinePath,
@@ -89,6 +93,13 @@ std::string resolveModelFile(
         }
         cursor = next;
     }
+#if defined(PROJECT_ROOT_DIR)
+    // Without --models-dir, last the repository's store, where
+    // ./setup.sh --models downloads; an explicit --models-dir stands in for it.
+    if (modelsDir.empty()) {
+        candidates.push_back(joinPath(joinPath(PROJECT_ROOT_DIR, "assets/models"), filename));
+    }
+#endif
     for (std::size_t i = 0; i < candidates.size(); ++i) {
         if (fileExists(candidates[i])) {
             return candidates[i];

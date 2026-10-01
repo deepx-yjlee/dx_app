@@ -10,6 +10,8 @@ from .pipeline import PipelineError, StageSpec
 
 # src/python_example, parent of common/.
 _EXAMPLE_ROOT = Path(__file__).resolve().parents[2]
+# The repository root: ./setup.sh --models downloads into <root>/assets/models.
+_PROJECT_ROOT = _EXAMPLE_ROOT.parents[1]
 
 
 def variant_factory_dir(spec: StageSpec, example_root: Path | None = None) -> Path:
@@ -50,7 +52,14 @@ def resolve_model_file(
     pipeline_dir: Path | None = None,
     models_dir: Path | None = None,
 ) -> Path:
-    """Find ``filename`` next to the pipeline, in ``models_dir``, or in the suite model store."""
+    """Find ``filename`` in ``models_dir``, next to the pipeline, or in a model store.
+
+    In order: ``models_dir``; ``<pipeline_dir>/models`` and ``pipeline_dir``;
+    ``workspace/res/models`` in the pipeline's directory and each parent up to
+    ``dx-all-suite``. Without ``models_dir``, last ``<repository>/assets/models``,
+    where ``./setup.sh --models`` downloads; an explicit ``models_dir`` stands
+    in for that store.
+    """
     candidates: list[Path] = []
     if models_dir is not None:
         candidates.append(Path(models_dir) / filename)
@@ -62,6 +71,8 @@ def resolve_model_file(
         candidates.append(parent / "workspace" / "res" / "models" / filename)
         if parent.name == "dx-all-suite":
             break
+    if models_dir is None:
+        candidates.append(_PROJECT_ROOT / "assets" / "models" / filename)
     seen: set[Path] = set()
     for candidate in candidates:
         resolved = candidate.resolve()
