@@ -5,6 +5,7 @@
 - `IPanopticDrivingFactory` gains two pure virtual methods, `createPanopticPostprocessor` and `createPanopticVisualizer`; an out-of-tree panoptic factory must implement them
 - `ModelConfig` applies the nested `"config"` object of a variant's `config.json` over the top level
 - `multi_model_run`, `run_pipeline.py` and the multi-model graph cut an ROI crop by one rule (`common/utility/roi_crop.hpp`; the same rule in `src/python_example/common/multi/binds.py`); hand_cascade landmarks of `multi_model_run` and the graph now agree within 1e-3 px
+- C++ image classification results are now softmax probabilities, with the ImageNet class name for a 1000-class head, instead of raw logits without a name: this covers every C++ `image_classification` variant whose factory uses `EfficientNetPostprocessor` (134 of them, all but `casvit-m_224x224` and `casvit-t_224x224`). An output that already is a distribution is passed through unchanged; the top-k ranking is the same as before. The Python classification examples already reported softmax probabilities and now also carry the ImageNet class name
 ### 2. Fixed
 - Fixed VitPose and dark-hrnet heatmap decoding (keypoints now match the Python examples within 2.1e-5 px)
 - Fixed yolov5-s6-pose decoding and its default thresholds (C++ and Python both use obj 0.25, score 0.3, NMS 0.45)
