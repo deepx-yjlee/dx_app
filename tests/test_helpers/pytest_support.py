@@ -47,44 +47,57 @@ def configure_stdio_errors() -> None:
             pass  # None (pythonw), or a capture object without reconfigure()
 
 
+def _addoption_once(parser, *names, **attrs) -> None:
+    """``parser.addoption`` that tolerates a second conftest having added it already.
+
+    Both suites register the shared options, so a session that loads both
+    conftests (``pytest tests/cpp_example/... tests/python_example/...``) sees
+    each option twice; the first registration wins.
+    """
+    try:
+        parser.addoption(*names, **attrs)
+    except ValueError as exc:
+        msg = str(exc)
+        if "already added" not in msg and "conflicting" not in msg:
+            raise
+
+
 def add_loop_option(parser, default: str) -> None:
     """Register ``--loop``; tolerate a second conftest having added it already.
 
     The two suites use different defaults (Python: 1, C++: 50), so the default
     is a parameter rather than a constant.
     """
-    try:
-        parser.addoption(
-            "--loop",
-            action="store",
-            default=default,
-            help=(
-                "Number of inference iterations for E2E image tests "
-                f"(default: {default})"
-            ),
-        )
-    except ValueError as exc:
-        msg = str(exc)
-        if "already added" not in msg and "conflicting" not in msg:
-            raise
-        # --loop already registered by another conftest (e.g. the E2E suite)
+    _addoption_once(
+        parser,
+        "--loop",
+        action="store",
+        default=default,
+        help=(
+            "Number of inference iterations for E2E image tests "
+            f"(default: {default})"
+        ),
+    )
 
 
 def add_stream_options(parser) -> None:
-    """Register the camera / RTSP options shared by both suites."""
-    parser.addoption(
+    """Register the camera / RTSP options shared by both suites (once per session)."""
+    _addoption_once(
+        parser,
         "--camera-index",
         action="store",
         default=None,
         help="Camera device index for e2e_camera tests (e.g. 0)",
     )
-    parser.addoption(
+    _addoption_once(
+        parser,
         "--rtsp-url",
         action="store",
         default=None,
         help="RTSP stream URL for e2e_rtsp tests",
     )
-    parser.addoption(
+    _addoption_once(
+        parser,
         "--stream-duration",
         action="store",
         default="10",
