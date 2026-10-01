@@ -11,7 +11,7 @@
  * ----------------------------------------
  * common/graph/ is the engine, and scripts/check_graph_boundary.py enforces
  * that the engine never names a concrete registry or a concrete factory.
- * This file names 348 concrete factories by template parameter and is
+ * This file names the concrete factories by template parameter and is
  * compiled only into the generated registry translation units; it belongs on
  * the zoo side of the i_registry.hpp boundary, next to the concrete registry
  * that hands it out. Nothing under common/graph/ includes it, and the

@@ -39,8 +39,9 @@ namespace dxapp {
 namespace graph {
 
 /// How the generated tables hand a model's constructor to the registry.
-/// Deliberately a plain function pointer, not a std::function: 348 of them
-/// are static data, and a function pointer costs nothing to store.
+/// Deliberately a plain function pointer, not a std::function: the generated
+/// tables hold one per model as static data, and a function pointer costs
+/// nothing to store.
 typedef std::unique_ptr<IStage> (*StageMaker)(const std::string& model_path,
                                               const ModelInfo& info,
                                               const StageParams& params);
