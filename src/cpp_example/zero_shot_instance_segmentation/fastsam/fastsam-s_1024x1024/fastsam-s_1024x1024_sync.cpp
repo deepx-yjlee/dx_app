@@ -10,7 +10,7 @@
 #include "common/runner/sync_segmentation_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::FastsamFactory>();
-    dxapp::SyncInstanceSegRunner<dxapp::FastsamFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_fastsam_s_1024x1024::FastsamFactory>();
+    dxapp::SyncInstanceSegRunner<dxapp::v_fastsam_s_1024x1024::FastsamFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

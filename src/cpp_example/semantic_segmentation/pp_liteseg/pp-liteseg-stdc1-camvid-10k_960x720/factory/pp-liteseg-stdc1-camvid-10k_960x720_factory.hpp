@@ -22,6 +22,7 @@
 // class name, include guard and identity differ.
 
 namespace dxapp {
+namespace v_pp_liteseg_stdc1_camvid_10k_960x720 {
 
 class PpLitesegFactory : public ISegmentationFactory {
 public:
@@ -51,6 +52,7 @@ public:
 private:
 };
 
+}  // namespace v_pp_liteseg_stdc1_camvid_10k_960x720
 }  // namespace dxapp
 
 #endif  // PP_LITESEG_STDC1_CAMVID_10K_960X720_FACTORY_HPP

@@ -10,7 +10,7 @@
 #include "common/runner/async_detection_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::NanodetFactory>();
-    dxapp::AsyncDetectionRunner<dxapp::NanodetFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_nanodet_repvgg_a12_224x224::NanodetFactory>();
+    dxapp::AsyncDetectionRunner<dxapp::v_nanodet_repvgg_a12_224x224::NanodetFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

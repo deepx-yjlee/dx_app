@@ -10,7 +10,7 @@
 #include "common/runner/sync_detection_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::Yolov4Factory>();
-    dxapp::SyncDetectionRunner<dxapp::Yolov4Factory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_yolov4_leaky_512x512::Yolov4Factory>();
+    dxapp::SyncDetectionRunner<dxapp::v_yolov4_leaky_512x512::Yolov4Factory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

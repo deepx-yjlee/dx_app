@@ -10,7 +10,7 @@
 #include "common/runner/async_face_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::RetinafaceFactory>();
-    dxapp::AsyncFaceRunner<dxapp::RetinafaceFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_retinaface_mobilenet_0_25_640x640::RetinafaceFactory>();
+    dxapp::AsyncFaceRunner<dxapp::v_retinaface_mobilenet_0_25_640x640::RetinafaceFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

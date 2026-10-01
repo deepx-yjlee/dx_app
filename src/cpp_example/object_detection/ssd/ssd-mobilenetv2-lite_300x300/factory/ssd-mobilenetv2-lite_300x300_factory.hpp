@@ -18,6 +18,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_ssd_mobilenetv2_lite_300x300 {
 
 class SsdFactory : public IDetectionFactory {
 public:
@@ -65,6 +66,7 @@ private:
     std::vector<std::string> class_names_;
 };
 
+}  // namespace v_ssd_mobilenetv2_lite_300x300
 }  // namespace dxapp
 
 #endif  // SSD_MOBILENETV2_LITE_300X300_FACTORY_HPP

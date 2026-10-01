@@ -15,6 +15,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_unet_mobilenetv2_256x256 {
 
 class UnetFactory : public ISegmentationFactory {
 public:
@@ -51,6 +52,7 @@ public:
 private:
 };
 
+}  // namespace v_unet_mobilenetv2_256x256
 }  // namespace dxapp
 
 #endif  // UNET_MOBILENETV2_256X256_FACTORY_HPP

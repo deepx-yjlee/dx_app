@@ -10,7 +10,7 @@
 #include "common/runner/async_anomaly_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::PatchcoreFactory>();
-    dxapp::AsyncAnomalyRunner<dxapp::PatchcoreFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_patchcore_224x224::PatchcoreFactory>();
+    dxapp::AsyncAnomalyRunner<dxapp::v_patchcore_224x224::PatchcoreFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

@@ -10,7 +10,7 @@
 #include "common/runner/sync_face_alignment_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::N3ddfaV2Factory>();
-    dxapp::SyncFaceAlignmentRunner<dxapp::N3ddfaV2Factory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_3ddfa_v2_mobilenet_0_5_120x120::N3ddfaV2Factory>();
+    dxapp::SyncFaceAlignmentRunner<dxapp::v_3ddfa_v2_mobilenet_0_5_120x120::N3ddfaV2Factory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

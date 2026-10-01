@@ -10,7 +10,7 @@
 #include "common/runner/async_detection_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::Yolov8Factory>();
-    dxapp::AsyncDetectionRunner<dxapp::Yolov8Factory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_yolov8_m_640x640_pre_optimized::Yolov8Factory>();
+    dxapp::AsyncDetectionRunner<dxapp::v_yolov8_m_640x640_pre_optimized::Yolov8Factory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

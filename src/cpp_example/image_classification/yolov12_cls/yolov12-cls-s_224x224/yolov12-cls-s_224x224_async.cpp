@@ -10,7 +10,7 @@
 #include "common/runner/async_classification_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::Yolov12ClsFactory>();
-    dxapp::AsyncClassificationRunner<dxapp::Yolov12ClsFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_yolov12_cls_s_224x224::Yolov12ClsFactory>();
+    dxapp::AsyncClassificationRunner<dxapp::v_yolov12_cls_s_224x224::Yolov12ClsFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

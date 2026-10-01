@@ -16,6 +16,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_realesrgan_x4_192x192 {
 
 class RealesrganFactory : public IRestorationFactory {
 public:
@@ -43,6 +44,7 @@ public:
 private:
 };
 
+}  // namespace v_realesrgan_x4_192x192
 }  // namespace dxapp
 
 #endif  // REALESRGAN_X4_192X192_FACTORY_HPP

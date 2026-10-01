@@ -16,6 +16,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_clip_img_resnet50_224x224_openai {
 
 class ClipFactory : public IEmbeddingFactory {
 public:
@@ -64,6 +65,7 @@ private:
     std::string title_{"Image Retrieval - CLIP RN50 image tower"};
 };
 
+}  // namespace v_clip_img_resnet50_224x224_openai
 }  // namespace dxapp
 
 #endif  // CLIP_IMG_RESNET50_224X224_OPENAI_FACTORY_HPP

@@ -10,7 +10,7 @@
 #include "common/runner/sync_depth_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::FastdepthFactory>();
-    dxapp::SyncDepthRunner<dxapp::FastdepthFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_fastdepth_224x224::FastdepthFactory>();
+    dxapp::SyncDepthRunner<dxapp::v_fastdepth_224x224::FastdepthFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

@@ -17,6 +17,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_bisenetv1_1024x2048 {
 
 class BisenetFactory : public ISegmentationFactory {
 public:
@@ -46,6 +47,7 @@ public:
 private:
 };
 
+}  // namespace v_bisenetv1_1024x2048
 }  // namespace dxapp
 
 #endif  // BISENETV1_1024X2048_FACTORY_HPP

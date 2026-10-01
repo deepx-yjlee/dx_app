@@ -34,6 +34,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_dope_hope_ketchup_480x640 {
 
 // ---------------------------------------------------------------------------
 // Postprocessor wrapper — converts DopeResult (heatmap coords) to PoseResult
@@ -183,6 +184,7 @@ public:
 private:
 };
 
+}  // namespace v_dope_hope_ketchup_480x640
 }  // namespace dxapp
 
 #endif  // DOPE_HOPE_KETCHUP_480X640_FACTORY_HPP

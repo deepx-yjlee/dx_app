@@ -18,6 +18,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_centerpose_repvgg_a0_416x416 {
 
 class CenterposeFactory : public IPoseFactory {
 public:
@@ -60,6 +61,7 @@ private:
     float nms_threshold_;
 };
 
+}  // namespace v_centerpose_repvgg_a0_416x416
 }  // namespace dxapp
 
 #endif  // CENTERPOSE_REPVGG_A0_416X416_FACTORY_HPP

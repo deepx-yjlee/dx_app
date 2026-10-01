@@ -17,6 +17,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_segformer_mit_b0_512x1024 {
 
 class SegformerFactory : public ISegmentationFactory {
 public:
@@ -46,6 +47,7 @@ public:
 private:
 };
 
+}  // namespace v_segformer_mit_b0_512x1024
 }  // namespace dxapp
 
 #endif  // SEGFORMER_MIT_B0_512X1024_FACTORY_HPP

@@ -10,7 +10,7 @@
 #include "common/runner/sync_classification_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::RegnetFactory>();
-    dxapp::SyncClassificationRunner<dxapp::RegnetFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_regnet_x1_6gf_224x224_v1::RegnetFactory>();
+    dxapp::SyncClassificationRunner<dxapp::v_regnet_x1_6gf_224x224_v1::RegnetFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

@@ -20,6 +20,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_yolov4_leaky_512x512 {
 
 class Yolov4Factory : public IDetectionFactory {
 public:
@@ -67,6 +68,7 @@ private:
     std::vector<std::string> class_names_;
 };
 
+}  // namespace v_yolov4_leaky_512x512
 }  // namespace dxapp
 
 #endif  // YOLOV4_LEAKY_512X512_FACTORY_HPP

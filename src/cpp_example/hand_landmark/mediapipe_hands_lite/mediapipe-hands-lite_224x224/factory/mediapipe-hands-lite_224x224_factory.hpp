@@ -16,6 +16,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_mediapipe_hands_lite_224x224 {
 
 class MediapipeHandsLiteFactory : public IHandLandmarkFactory {
 public:
@@ -50,6 +51,7 @@ private:
     float confidence_threshold_;
 };
 
+}  // namespace v_mediapipe_hands_lite_224x224
 }  // namespace dxapp
 
 #endif  // MEDIAPIPE_HANDS_LITE_224X224_FACTORY_HPP

@@ -33,6 +33,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_yolopv2_384x640 {
 
 // ---------------------------------------------------------------------------
 // Shared state: passes masks from postprocessor to visualizer
@@ -229,6 +230,7 @@ class Yolopv2Factory : public IPanopticDrivingFactory {
 private:
 };
 
+}  // namespace v_yolopv2_384x640
 }  // namespace dxapp
 
 #endif  // YOLOPV2_384X640_FACTORY_HPP

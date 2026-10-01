@@ -10,7 +10,7 @@
 #include "common/runner/async_object_pose_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::DopeFactory>();
-    dxapp::AsyncObjectPoseRunner<dxapp::DopeFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_dope_hope_ketchup_480x640::DopeFactory>();
+    dxapp::AsyncObjectPoseRunner<dxapp::v_dope_hope_ketchup_480x640::DopeFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

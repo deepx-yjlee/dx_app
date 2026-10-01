@@ -16,6 +16,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_eigenplaces_resnet50_512x512 {
 
 class EigenplacesFactory : public IEmbeddingFactory {
 public:
@@ -64,6 +65,7 @@ private:
     std::string title_{"Visual Place Recognition - EigenPlaces ResNet-50"};
 };
 
+}  // namespace v_eigenplaces_resnet50_512x512
 }  // namespace dxapp
 
 #endif  // EIGENPLACES_RESNET50_512X512_FACTORY_HPP

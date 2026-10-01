@@ -10,7 +10,7 @@
 #include "common/runner/sync_classification_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::Shufflenetv1Factory>();
-    dxapp::SyncClassificationRunner<dxapp::Shufflenetv1Factory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_shufflenetv1_x1_0_224x224::Shufflenetv1Factory>();
+    dxapp::SyncClassificationRunner<dxapp::v_shufflenetv1_x1_0_224x224::Shufflenetv1Factory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

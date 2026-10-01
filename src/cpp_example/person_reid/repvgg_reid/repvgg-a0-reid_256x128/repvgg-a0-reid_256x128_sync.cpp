@@ -10,7 +10,7 @@
 #include "common/runner/sync_embedding_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::RepvggReidFactory>();
-    dxapp::SyncEmbeddingRunner<dxapp::RepvggReidFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_repvgg_a0_reid_256x128::RepvggReidFactory>();
+    dxapp::SyncEmbeddingRunner<dxapp::v_repvgg_a0_reid_256x128::RepvggReidFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

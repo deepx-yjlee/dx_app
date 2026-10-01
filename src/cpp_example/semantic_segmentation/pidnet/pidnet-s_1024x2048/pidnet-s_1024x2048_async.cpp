@@ -10,7 +10,7 @@
 #include "common/runner/async_semantic_seg_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::PidnetFactory>();
-    dxapp::AsyncSemanticSegRunner<dxapp::PidnetFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_pidnet_s_1024x2048::PidnetFactory>();
+    dxapp::AsyncSemanticSegRunner<dxapp::v_pidnet_s_1024x2048::PidnetFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

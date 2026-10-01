@@ -21,6 +21,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_nanodet_plus_1_5x_224x224 {
 
 class NanodetFactory : public IDetectionFactory {
 public:
@@ -73,6 +74,7 @@ private:
     std::vector<std::string> class_names_;
 };
 
+}  // namespace v_nanodet_plus_1_5x_224x224
 }  // namespace dxapp
 
 #endif  // NANODET_PLUS_1_5X_224X224_FACTORY_HPP

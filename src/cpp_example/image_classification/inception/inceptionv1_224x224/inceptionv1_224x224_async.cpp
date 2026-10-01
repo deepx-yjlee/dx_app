@@ -10,7 +10,7 @@
 #include "common/runner/async_classification_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::InceptionFactory>();
-    dxapp::AsyncClassificationRunner<dxapp::InceptionFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_inceptionv1_224x224::InceptionFactory>();
+    dxapp::AsyncClassificationRunner<dxapp::v_inceptionv1_224x224::InceptionFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

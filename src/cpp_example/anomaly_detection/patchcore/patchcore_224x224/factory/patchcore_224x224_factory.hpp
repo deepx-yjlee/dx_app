@@ -26,6 +26,7 @@
 #include <vector>
 
 namespace dxapp {
+namespace v_patchcore_224x224 {
 
 class PatchcoreFactory : public IAnomalyDetectionFactory {
 public:
@@ -54,6 +55,7 @@ public:
 private:
 };
 
+}  // namespace v_patchcore_224x224
 }  // namespace dxapp
 
 #endif  // PATCHCORE_224X224_FACTORY_HPP

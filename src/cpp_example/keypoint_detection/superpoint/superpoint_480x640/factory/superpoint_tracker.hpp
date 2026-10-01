@@ -8,8 +8,8 @@
  * colour-coded track lines on the output image.
  */
 
-#ifndef SUPERPOINT_TRACKER_HPP
-#define SUPERPOINT_TRACKER_HPP
+#ifndef SUPERPOINT_480X640_SUPERPOINT_TRACKER_HPP
+#define SUPERPOINT_480X640_SUPERPOINT_TRACKER_HPP
 
 #include <algorithm>
 #include <cmath>
@@ -21,6 +21,7 @@
 #include <opencv2/imgproc.hpp>
 
 namespace dxapp {
+namespace v_superpoint_480x640 {
 
 // ---------------------------------------------------------------------------
 // Jet colormap — 10 RGB entries, same as the original Python demo.
@@ -349,6 +350,7 @@ private:
     mutable std::mutex mtx_;  // guards all mutable state for thread-safety
 };
 
+}  // namespace v_superpoint_480x640
 }  // namespace dxapp
 
-#endif  // SUPERPOINT_TRACKER_HPP
+#endif  // SUPERPOINT_480X640_SUPERPOINT_TRACKER_HPP

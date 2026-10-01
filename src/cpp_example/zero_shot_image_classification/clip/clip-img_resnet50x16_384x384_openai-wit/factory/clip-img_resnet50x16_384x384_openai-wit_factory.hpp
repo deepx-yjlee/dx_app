@@ -16,6 +16,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_clip_img_resnet50x16_384x384_openai_wit {
 
 class ClipFactory : public IEmbeddingFactory {
 public:
@@ -43,6 +44,7 @@ public:
 private:
 };
 
+}  // namespace v_clip_img_resnet50x16_384x384_openai_wit
 }  // namespace dxapp
 
 #endif  // CLIP_IMG_RESNET50X16_384X384_OPENAI_WIT_FACTORY_HPP

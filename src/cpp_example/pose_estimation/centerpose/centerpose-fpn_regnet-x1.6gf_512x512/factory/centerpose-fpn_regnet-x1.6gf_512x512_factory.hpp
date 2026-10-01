@@ -18,6 +18,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_centerpose_fpn_regnet_x1_6gf_512x512 {
 
 class CenterposeFactory : public IPoseFactory {
 public:
@@ -60,6 +61,7 @@ private:
     float nms_threshold_;
 };
 
+}  // namespace v_centerpose_fpn_regnet_x1_6gf_512x512
 }  // namespace dxapp
 
 #endif  // CENTERPOSE_FPN_REGNET_X1_6GF_512X512_FACTORY_HPP

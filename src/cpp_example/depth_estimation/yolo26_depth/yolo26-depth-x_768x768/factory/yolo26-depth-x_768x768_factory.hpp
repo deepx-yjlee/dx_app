@@ -21,6 +21,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_yolo26_depth_x_768x768 {
 
 class Yolo26DepthFactory : public IDepthEstimationFactory {
 public:
@@ -54,6 +55,7 @@ public:
 private:
 };
 
+}  // namespace v_yolo26_depth_x_768x768
 }  // namespace dxapp
 
 #endif  // YOLO26_DEPTH_X_768X768_FACTORY_HPP

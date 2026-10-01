@@ -10,7 +10,7 @@
 #include "common/runner/sync_embedding_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::CasvitFactory>();
-    dxapp::SyncEmbeddingRunner<dxapp::CasvitFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_casvit_m_224x224::CasvitFactory>();
+    dxapp::SyncEmbeddingRunner<dxapp::v_casvit_m_224x224::CasvitFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

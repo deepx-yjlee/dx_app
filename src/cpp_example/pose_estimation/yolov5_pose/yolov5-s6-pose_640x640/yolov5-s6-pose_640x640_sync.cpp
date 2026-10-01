@@ -10,7 +10,7 @@
 #include "common/runner/sync_pose_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::Yolov5PoseFactory>();
-    dxapp::SyncPoseRunner<dxapp::Yolov5PoseFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_yolov5_s6_pose_640x640::Yolov5PoseFactory>();
+    dxapp::SyncPoseRunner<dxapp::v_yolov5_s6_pose_640x640::Yolov5PoseFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

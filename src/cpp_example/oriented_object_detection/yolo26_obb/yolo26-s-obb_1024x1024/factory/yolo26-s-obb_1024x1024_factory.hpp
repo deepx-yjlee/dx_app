@@ -18,6 +18,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_yolo26_s_obb_1024x1024 {
 
 class Yolo26ObbFactory : public IOBBFactory {
 public:
@@ -55,6 +56,7 @@ private:
     float score_threshold_;
 };
 
+}  // namespace v_yolo26_s_obb_1024x1024
 }  // namespace dxapp
 
 #endif  // YOLO26_S_OBB_1024X1024_FACTORY_HPP

@@ -10,7 +10,7 @@
 #include "common/runner/async_embedding_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::ArcfaceFactory>();
-    dxapp::AsyncEmbeddingRunner<dxapp::ArcfaceFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_arcface_mobilefacenet_112x112::ArcfaceFactory>();
+    dxapp::AsyncEmbeddingRunner<dxapp::v_arcface_mobilefacenet_112x112::ArcfaceFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

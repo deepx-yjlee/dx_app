@@ -17,6 +17,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_yolov5_x_640x640 {
 
 class Yolov5Factory : public IDetectionFactory {
 public:
@@ -70,6 +71,7 @@ private:
     std::vector<std::string> class_names_;
 };
 
+}  // namespace v_yolov5_x_640x640
 }  // namespace dxapp
 
 #endif  // YOLOV5_X_640X640_FACTORY_HPP

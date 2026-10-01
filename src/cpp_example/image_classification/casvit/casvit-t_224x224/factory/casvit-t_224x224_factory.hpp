@@ -17,6 +17,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_casvit_t_224x224 {
 
 class CasvitFactory : public IEmbeddingFactory {
 public:
@@ -46,6 +47,7 @@ public:
 private:
 };
 
+}  // namespace v_casvit_t_224x224
 }  // namespace dxapp
 
 #endif  // CASVIT_T_224X224_FACTORY_HPP

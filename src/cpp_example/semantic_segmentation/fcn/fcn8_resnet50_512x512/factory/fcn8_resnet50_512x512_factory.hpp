@@ -16,6 +16,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_fcn8_resnet50_512x512 {
 
 class FcnFactory : public ISegmentationFactory {
 public:
@@ -43,6 +44,7 @@ public:
 private:
 };
 
+}  // namespace v_fcn8_resnet50_512x512
 }  // namespace dxapp
 
 #endif  // FCN8_RESNET50_512X512_FACTORY_HPP

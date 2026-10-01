@@ -21,6 +21,7 @@
 #include <vector>
 
 namespace dxapp {
+namespace v_rtdetrv2_r34vd_120e_640x640 {
 
 class RtdetrFactory : public IDetectionFactory {
 public:
@@ -67,6 +68,7 @@ private:
     std::vector<std::string> class_names_;
 };
 
+}  // namespace v_rtdetrv2_r34vd_120e_640x640
 }  // namespace dxapp
 
 #endif  // RTDETRV2_R34VD_120E_640X640_FACTORY_HPP

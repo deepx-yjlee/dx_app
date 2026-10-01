@@ -21,6 +21,7 @@
 // class name, include guard and identity differ.
 
 namespace dxapp {
+namespace v_pp_shituv2_feature_extraction_224x224 {
 
 class PpShituRecFactory : public IEmbeddingFactory {
 public:
@@ -69,6 +70,7 @@ private:
     std::string title_{"Visual Place Recognition - PP-ShiTuV2 features"};
 };
 
+}  // namespace v_pp_shituv2_feature_extraction_224x224
 }  // namespace dxapp
 
 #endif  // PP_SHITUV2_FEATURE_EXTRACTION_224X224_FACTORY_HPP

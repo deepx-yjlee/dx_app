@@ -19,6 +19,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_espcn_x4_17x17 {
 
 class EspcnFactory : public IRestorationFactory {
 public:
@@ -49,6 +50,7 @@ public:
 private:
 };
 
+}  // namespace v_espcn_x4_17x17
 }  // namespace dxapp
 
 #endif  // ESPCN_X4_17X17_FACTORY_HPP

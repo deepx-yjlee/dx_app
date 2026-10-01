@@ -21,6 +21,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_YOLOV5Pose_PPU {
 
 class Yolov5PoseFactory : public IPoseFactory {
 public:
@@ -67,6 +68,7 @@ private:
     float nms_threshold_;
 };
 
+}  // namespace v_YOLOV5Pose_PPU
 }  // namespace dxapp
 
 #endif  // YOLOV5POSE_PPU_FACTORY_HPP

@@ -10,7 +10,7 @@
 #include "common/runner/sync_classification_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::DensenetFactory>();
-    dxapp::SyncClassificationRunner<dxapp::DensenetFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_densenet169_224x224::DensenetFactory>();
+    dxapp::SyncClassificationRunner<dxapp::v_densenet169_224x224::DensenetFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

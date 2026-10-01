@@ -16,6 +16,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_depthanythingv2_vitb_224x224 {
 
 class Depthanythingv2Factory : public IDepthEstimationFactory {
 public:
@@ -50,6 +51,7 @@ public:
 private:
 };
 
+}  // namespace v_depthanythingv2_vitb_224x224
 }  // namespace dxapp
 
 #endif  // DEPTHANYTHINGV2_VITB_224X224_FACTORY_HPP

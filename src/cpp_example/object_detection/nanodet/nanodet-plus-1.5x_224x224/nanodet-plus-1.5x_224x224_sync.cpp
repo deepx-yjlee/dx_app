@@ -10,7 +10,7 @@
 #include "common/runner/sync_detection_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::NanodetFactory>();
-    dxapp::SyncDetectionRunner<dxapp::NanodetFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_nanodet_plus_1_5x_224x224::NanodetFactory>();
+    dxapp::SyncDetectionRunner<dxapp::v_nanodet_plus_1_5x_224x224::NanodetFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

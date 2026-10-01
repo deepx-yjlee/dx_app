@@ -20,6 +20,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_dncnn_50_512x512 {
 
 class DncnnFactory : public IRestorationFactory {
 public:
@@ -50,6 +51,7 @@ public:
 private:
 };
 
+}  // namespace v_dncnn_50_512x512
 }  // namespace dxapp
 
 #endif  // DNCNN_50_512X512_FACTORY_HPP

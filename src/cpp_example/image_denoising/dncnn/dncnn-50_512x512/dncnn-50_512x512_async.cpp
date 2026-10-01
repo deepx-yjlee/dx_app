@@ -10,7 +10,7 @@
 #include "common/runner/async_restoration_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::DncnnFactory>();
-    dxapp::AsyncRestorationRunner<dxapp::DncnnFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_dncnn_50_512x512::DncnnFactory>();
+    dxapp::AsyncRestorationRunner<dxapp::v_dncnn_50_512x512::DncnnFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

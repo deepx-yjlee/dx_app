@@ -26,6 +26,7 @@
 // class name, include guard and identity differ.
 
 namespace dxapp {
+namespace v_pp_shituv1_mainbody_detection_640x640 {
 
 class PpShituFactory : public IDetectionFactory {
 public:
@@ -78,6 +79,7 @@ private:
     std::vector<std::string> class_names_;
 };
 
+}  // namespace v_pp_shituv1_mainbody_detection_640x640
 }  // namespace dxapp
 
 #endif  // PP_SHITUV1_MAINBODY_DETECTION_640X640_FACTORY_HPP

@@ -16,6 +16,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_clip_text_resnet50_77x512_openai {
 
 class ClipFactory : public IEmbeddingFactory {
 public:
@@ -43,6 +44,7 @@ public:
 private:
 };
 
+}  // namespace v_clip_text_resnet50_77x512_openai
 }  // namespace dxapp
 
 #endif  // CLIP_TEXT_RESNET50_77X512_OPENAI_FACTORY_HPP

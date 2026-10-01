@@ -10,7 +10,7 @@
 #include "common/runner/async_embedding_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::PpShituRecFactory>();
-    dxapp::AsyncEmbeddingRunner<dxapp::PpShituRecFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_pp_shituv2_feature_extraction_224x224::PpShituRecFactory>();
+    dxapp::AsyncEmbeddingRunner<dxapp::v_pp_shituv2_feature_extraction_224x224::PpShituRecFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

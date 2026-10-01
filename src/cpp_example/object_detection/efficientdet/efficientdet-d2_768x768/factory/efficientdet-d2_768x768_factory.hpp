@@ -19,6 +19,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_efficientdet_d2_768x768 {
 
 class EfficientdetFactory : public IDetectionFactory {
 public:
@@ -66,6 +67,7 @@ private:
     std::vector<std::string> class_names_;
 };
 
+}  // namespace v_efficientdet_d2_768x768
 }  // namespace dxapp
 
 #endif  // EFFICIENTDET_D2_768X768_FACTORY_HPP

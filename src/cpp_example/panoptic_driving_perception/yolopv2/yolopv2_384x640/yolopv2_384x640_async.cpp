@@ -10,7 +10,7 @@
 #include "common/runner/async_panoptic_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::Yolopv2Factory>();
-    dxapp::AsyncPanopticRunner<dxapp::Yolopv2Factory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_yolopv2_384x640::Yolopv2Factory>();
+    dxapp::AsyncPanopticRunner<dxapp::v_yolopv2_384x640::Yolopv2Factory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

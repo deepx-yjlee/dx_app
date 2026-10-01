@@ -17,6 +17,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_scdepthv3_256x320 {
 
 class Scdepthv3Factory : public IDepthEstimationFactory {
 public:
@@ -46,6 +47,7 @@ public:
 private:
 };
 
+}  // namespace v_scdepthv3_256x320
 }  // namespace dxapp
 
 #endif  // SCDEPTHV3_256X320_FACTORY_HPP

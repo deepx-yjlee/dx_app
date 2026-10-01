@@ -16,6 +16,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_yolox_s_wide_leaky_640x640 {
 
 class YoloxFactory : public IDetectionFactory {
 public:
@@ -67,6 +68,7 @@ private:
     std::vector<std::string> class_names_;
 };
 
+}  // namespace v_yolox_s_wide_leaky_640x640
 }  // namespace dxapp
 
 #endif  // YOLOX_S_WIDE_LEAKY_640X640_FACTORY_HPP

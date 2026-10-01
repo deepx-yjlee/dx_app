@@ -10,7 +10,7 @@
 #include "common/runner/sync_pose_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::Yolo26PoseFactory>();
-    dxapp::SyncPoseRunner<dxapp::Yolo26PoseFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_yolo26_x_pose_640x640::Yolo26PoseFactory>();
+    dxapp::SyncPoseRunner<dxapp::v_yolo26_x_pose_640x640::Yolo26PoseFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

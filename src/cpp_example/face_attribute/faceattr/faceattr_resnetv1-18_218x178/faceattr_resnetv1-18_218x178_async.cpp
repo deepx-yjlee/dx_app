@@ -10,7 +10,7 @@
 #include "common/runner/async_classification_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::FaceattrFactory>();
-    dxapp::AsyncClassificationRunner<dxapp::FaceattrFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_faceattr_resnetv1_18_218x178::FaceattrFactory>();
+    dxapp::AsyncClassificationRunner<dxapp::v_faceattr_resnetv1_18_218x178::FaceattrFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

@@ -24,6 +24,7 @@
 // class name, include guard and identity differ.
 
 namespace dxapp {
+namespace v_swin_b_224x224 {
 
 class SwinFactory : public IClassificationFactory {
 public:
@@ -37,7 +38,7 @@ public:
     }
 
     PostprocessorPtr<ClassificationResult> createPostprocessor(
-        int input_width, int input_height) override {
+        int /*input_width*/, int /*input_height*/) override {
         return std::make_unique<EfficientNetPostprocessor>(num_classes_, top_k_);
     }
 
@@ -60,6 +61,7 @@ private:
     int top_k_;
 };
 
+}  // namespace v_swin_b_224x224
 }  // namespace dxapp
 
 #endif  // SWIN_B_224X224_FACTORY_HPP

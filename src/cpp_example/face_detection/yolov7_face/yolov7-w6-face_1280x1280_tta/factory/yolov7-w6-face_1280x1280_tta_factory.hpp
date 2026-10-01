@@ -16,6 +16,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_yolov7_w6_face_1280x1280_tta {
 
 class Yolov7FaceFactory : public IFaceDetectionFactory {
 public:
@@ -62,6 +63,7 @@ private:
     float nms_threshold_;
 };
 
+}  // namespace v_yolov7_w6_face_1280x1280_tta
 }  // namespace dxapp
 
 #endif  // YOLOV7_W6_FACE_1280X1280_TTA_FACTORY_HPP

@@ -29,6 +29,7 @@
 #include <vector>
 
 namespace dxapp {
+namespace v_efficientad_m_autoencoder_256x256 {
 
 class EfficientadFactory : public IAnomalyDetectionFactory {
 public:
@@ -120,6 +121,7 @@ private:
 
 };
 
+}  // namespace v_efficientad_m_autoencoder_256x256
 }  // namespace dxapp
 
 #endif  // EFFICIENTAD_M_AUTOENCODER_256X256_FACTORY_HPP

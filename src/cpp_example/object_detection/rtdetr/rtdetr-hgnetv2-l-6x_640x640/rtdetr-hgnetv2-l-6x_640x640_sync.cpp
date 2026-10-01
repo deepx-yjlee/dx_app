@@ -10,7 +10,7 @@
 #include "common/runner/sync_detection_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::RtdetrFactory>();
-    dxapp::SyncDetectionRunner<dxapp::RtdetrFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_rtdetr_hgnetv2_l_6x_640x640::RtdetrFactory>();
+    dxapp::SyncDetectionRunner<dxapp::v_rtdetr_hgnetv2_l_6x_640x640::RtdetrFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

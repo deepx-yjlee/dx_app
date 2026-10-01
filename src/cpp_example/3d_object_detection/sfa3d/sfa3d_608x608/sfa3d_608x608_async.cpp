@@ -10,7 +10,7 @@
 #include "common/runner/async_3d_object_detection_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::Sfa3dFactory>();
-    dxapp::Async3DDetectionRunner<dxapp::Sfa3dFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_sfa3d_608x608::Sfa3dFactory>();
+    dxapp::Async3DDetectionRunner<dxapp::v_sfa3d_608x608::Sfa3dFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

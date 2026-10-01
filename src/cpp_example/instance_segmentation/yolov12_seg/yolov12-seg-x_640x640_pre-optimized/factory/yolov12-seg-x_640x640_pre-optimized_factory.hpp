@@ -21,6 +21,7 @@
 // class name, include guard and identity differ.
 
 namespace dxapp {
+namespace v_yolov12_seg_x_640x640_pre_optimized {
 
 class Yolov12SegFactory : public IInstanceSegmentationFactory {
 public:
@@ -61,6 +62,7 @@ private:
     float nms_threshold_;
 };
 
+}  // namespace v_yolov12_seg_x_640x640_pre_optimized
 }  // namespace dxapp
 
 #endif  // YOLOV12_SEG_X_640X640_PRE_OPTIMIZED_FACTORY_HPP

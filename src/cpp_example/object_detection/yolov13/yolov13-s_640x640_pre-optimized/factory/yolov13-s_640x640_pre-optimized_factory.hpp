@@ -23,6 +23,7 @@
 // class name, include guard and identity differ.
 
 namespace dxapp {
+namespace v_yolov13_s_640x640_pre_optimized {
 
 class Yolov13Factory : public IDetectionFactory {
 public:
@@ -70,6 +71,7 @@ private:
     std::vector<std::string> class_names_;
 };
 
+}  // namespace v_yolov13_s_640x640_pre_optimized
 }  // namespace dxapp
 
 #endif  // YOLOV13_S_640X640_PRE_OPTIMIZED_FACTORY_HPP

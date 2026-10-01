@@ -16,6 +16,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_yolov7_640x640_nodecode {
 
 class Yolov7Factory : public IDetectionFactory {
 public:
@@ -68,6 +69,7 @@ private:
     std::vector<std::string> class_names_;
 };
 
+}  // namespace v_yolov7_640x640_nodecode
 }  // namespace dxapp
 
 #endif  // YOLOV7_640X640_NODECODE_FACTORY_HPP

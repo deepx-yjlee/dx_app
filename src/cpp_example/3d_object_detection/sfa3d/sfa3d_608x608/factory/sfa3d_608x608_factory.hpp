@@ -16,6 +16,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_sfa3d_608x608 {
 
 class Sfa3dFactory : public I3DDetectionFactory {
 public:
@@ -56,6 +57,7 @@ private:
     float nms_threshold_;
 };
 
+}  // namespace v_sfa3d_608x608
 }  // namespace dxapp
 
 #endif  // SFA3D_608X608_FACTORY_HPP

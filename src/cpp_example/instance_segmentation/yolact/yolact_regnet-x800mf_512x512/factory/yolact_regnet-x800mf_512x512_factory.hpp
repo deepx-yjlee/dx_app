@@ -18,6 +18,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_yolact_regnet_x800mf_512x512 {
 
 class YolactFactory : public IInstanceSegmentationFactory {
 public:
@@ -74,6 +75,7 @@ private:
     std::vector<std::string> class_names_;
 };
 
+}  // namespace v_yolact_regnet_x800mf_512x512
 }  // namespace dxapp
 
 #endif  // YOLACT_REGNET_X800MF_512X512_FACTORY_HPP

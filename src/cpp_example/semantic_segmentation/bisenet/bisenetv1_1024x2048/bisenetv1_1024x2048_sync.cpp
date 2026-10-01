@@ -10,7 +10,7 @@
 #include "common/runner/sync_semantic_seg_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::BisenetFactory>();
-    dxapp::SyncSemanticSegRunner<dxapp::BisenetFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_bisenetv1_1024x2048::BisenetFactory>();
+    dxapp::SyncSemanticSegRunner<dxapp::v_bisenetv1_1024x2048::BisenetFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

@@ -18,6 +18,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_yolov5_x_seg_640x640 {
 
 class Yolov5SegFactory : public IInstanceSegmentationFactory {
 public:
@@ -64,6 +65,7 @@ private:
     std::vector<std::string> class_names_;
 };
 
+}  // namespace v_yolov5_x_seg_640x640
 }  // namespace dxapp
 
 #endif  // YOLOV5_X_SEG_640X640_FACTORY_HPP

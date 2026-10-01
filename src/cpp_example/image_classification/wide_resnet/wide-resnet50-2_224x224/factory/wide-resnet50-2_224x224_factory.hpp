@@ -16,6 +16,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_wide_resnet50_2_224x224 {
 
 class WideResnetFactory : public IClassificationFactory {
 public:
@@ -28,7 +29,7 @@ public:
     }
 
     PostprocessorPtr<ClassificationResult> createPostprocessor(
-        int input_width, int input_height) override {
+        int /*input_width*/, int /*input_height*/) override {
         return std::make_unique<EfficientNetPostprocessor>(num_classes_, top_k_);
     }
 
@@ -51,6 +52,7 @@ private:
     int top_k_;
 };
 
+}  // namespace v_wide_resnet50_2_224x224
 }  // namespace dxapp
 
 #endif  // WIDE_RESNET50_2_224X224_FACTORY_HPP

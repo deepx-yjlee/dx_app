@@ -22,6 +22,7 @@
 #include <vector>
 
 namespace dxapp {
+namespace v_ppmatting_hrnet_w48_composition_512x512 {
 
 class PpmattingFactory : public ISegmentationFactory {
 public:
@@ -72,6 +73,7 @@ private:
     float mean_target_above_{195.f};
 };
 
+}  // namespace v_ppmatting_hrnet_w48_composition_512x512
 }  // namespace dxapp
 
 #endif  // PPMATTING_HRNET_W48_COMPOSITION_512X512_FACTORY_HPP

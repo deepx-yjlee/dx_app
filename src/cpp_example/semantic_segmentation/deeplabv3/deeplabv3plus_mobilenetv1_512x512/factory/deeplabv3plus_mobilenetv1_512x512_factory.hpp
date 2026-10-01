@@ -19,6 +19,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_deeplabv3plus_mobilenetv1_512x512 {
 
 class Deeplabv3Factory : public ISegmentationFactory {
 public:
@@ -48,6 +49,7 @@ public:
 private:
 };
 
+}  // namespace v_deeplabv3plus_mobilenetv1_512x512
 }  // namespace dxapp
 
 #endif  // DEEPLABV3PLUS_MOBILENETV1_512X512_FACTORY_HPP

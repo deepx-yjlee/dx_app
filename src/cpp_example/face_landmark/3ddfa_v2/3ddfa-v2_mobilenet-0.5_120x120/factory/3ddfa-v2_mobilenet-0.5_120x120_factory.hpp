@@ -17,6 +17,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_3ddfa_v2_mobilenet_0_5_120x120 {
 
 class N3ddfaV2Factory : public IFaceAlignmentFactory {
 public:
@@ -44,6 +45,7 @@ public:
 private:
 };
 
+}  // namespace v_3ddfa_v2_mobilenet_0_5_120x120
 }  // namespace dxapp
 
 #endif  // DXAPP_3DDFA_V2_MOBILENET_0_5_120X120_FACTORY_HPP

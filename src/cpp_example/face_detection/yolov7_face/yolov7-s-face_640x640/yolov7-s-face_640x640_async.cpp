@@ -10,7 +10,7 @@
 #include "common/runner/async_face_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::Yolov7FaceFactory>();
-    dxapp::AsyncFaceRunner<dxapp::Yolov7FaceFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_yolov7_s_face_640x640::Yolov7FaceFactory>();
+    dxapp::AsyncFaceRunner<dxapp::v_yolov7_s_face_640x640::Yolov7FaceFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

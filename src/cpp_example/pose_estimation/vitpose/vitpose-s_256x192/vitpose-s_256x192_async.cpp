@@ -10,7 +10,7 @@
 #include "common/runner/async_pose_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::VitposeFactory>();
-    dxapp::AsyncPoseRunner<dxapp::VitposeFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_vitpose_s_256x192::VitposeFactory>();
+    dxapp::AsyncPoseRunner<dxapp::v_vitpose_s_256x192::VitposeFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

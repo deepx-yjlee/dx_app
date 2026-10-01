@@ -10,7 +10,7 @@
 #include "common/runner/sync_segmentation_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::Yolo26SegFactory>();
-    dxapp::SyncInstanceSegRunner<dxapp::Yolo26SegFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_yolo26_l_seg_640x640::Yolo26SegFactory>();
+    dxapp::SyncInstanceSegRunner<dxapp::v_yolo26_l_seg_640x640::Yolo26SegFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

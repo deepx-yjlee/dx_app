@@ -16,6 +16,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_yolo11_l_pose_640x640 {
 
 class Yolo11PoseFactory : public IPoseFactory {
 public:
@@ -53,6 +54,7 @@ private:
     float nms_threshold_;
 };
 
+}  // namespace v_yolo11_l_pose_640x640
 }  // namespace dxapp
 
 #endif  // YOLO11_L_POSE_640X640_FACTORY_HPP

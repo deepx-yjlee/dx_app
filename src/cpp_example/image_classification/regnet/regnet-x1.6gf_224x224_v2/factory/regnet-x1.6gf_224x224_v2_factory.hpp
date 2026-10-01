@@ -16,6 +16,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_regnet_x1_6gf_224x224_v2 {
 
 class RegnetFactory : public IClassificationFactory {
 public:
@@ -28,7 +29,7 @@ public:
     }
 
     PostprocessorPtr<ClassificationResult> createPostprocessor(
-        int input_width, int input_height) override {
+        int /*input_width*/, int /*input_height*/) override {
         return std::make_unique<EfficientNetPostprocessor>(num_classes_, top_k_);
     }
 
@@ -51,6 +52,7 @@ private:
     int top_k_;
 };
 
+}  // namespace v_regnet_x1_6gf_224x224_v2
 }  // namespace dxapp
 
 #endif  // REGNET_X1_6GF_224X224_V2_FACTORY_HPP

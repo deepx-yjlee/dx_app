@@ -10,7 +10,7 @@
 #include "common/runner/async_keypoint_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::SuperpointFactory>();
-    dxapp::AsyncKeypointRunner<dxapp::SuperpointFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_superpoint_480x640::SuperpointFactory>();
+    dxapp::AsyncKeypointRunner<dxapp::v_superpoint_480x640::SuperpointFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

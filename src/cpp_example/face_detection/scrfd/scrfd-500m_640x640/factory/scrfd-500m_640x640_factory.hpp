@@ -21,6 +21,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_scrfd_500m_640x640 {
 
 class ScrfdFactory : public IFaceDetectionFactory {
 public:
@@ -62,6 +63,7 @@ private:
     float nms_threshold_;
 };
 
+}  // namespace v_scrfd_500m_640x640
 }  // namespace dxapp
 
 #endif  // SCRFD_500M_640X640_FACTORY_HPP

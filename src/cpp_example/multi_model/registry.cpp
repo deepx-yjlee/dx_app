@@ -39,23 +39,23 @@ std::unique_ptr<IStage> makeStage(const std::string& stageId, const std::string&
 
 const FactoryEntry kEntries[] = {
     {"object_detection", "yolo26", "yolo26-n_640x640",
-     &makeStage<Yolo26Factory, DetectionResult, true>},
+     &makeStage<dxapp::v_yolo26_n_640x640::Yolo26Factory, DetectionResult, true>},
     {"instance_segmentation", "yolo26_seg", "yolo26-n-seg_640x640",
-     &makeStage<Yolo26SegFactory, InstanceSegmentationResult, true>},
+     &makeStage<dxapp::v_yolo26_n_seg_640x640::Yolo26SegFactory, InstanceSegmentationResult, true>},
     {"depth_estimation", "yolo26_depth", "yolo26-depth-n_768x768",
-     &makeStage<Yolo26DepthFactory, DepthResult, false>},
+     &makeStage<dxapp::v_yolo26_depth_n_768x768::Yolo26DepthFactory, DepthResult, false>},
     {"pose_estimation", "yolo26_pose", "yolo26-n-pose_640x640",
-     &makeStage<Yolo26PoseFactory, PoseResult, true>},
+     &makeStage<dxapp::v_yolo26_n_pose_640x640::Yolo26PoseFactory, PoseResult, true>},
     {"pose_estimation", "yolo11_pose", "yolo11-n-pose_640x640",
-     &makeStage<Yolo11PoseFactory, PoseResult, true>},
+     &makeStage<dxapp::v_yolo11_n_pose_640x640::Yolo11PoseFactory, PoseResult, true>},
     {"face_detection", "scrfd", "scrfd-500m_640x640",
-     &makeStage<ScrfdFactory, FaceDetectionResult, true>},
+     &makeStage<dxapp::v_scrfd_500m_640x640::ScrfdFactory, FaceDetectionResult, true>},
     {"hand_detection", "mediapipe_hand_detector", "mediapipe-hand-detector_192x192",
-     &makeStage<MediapipeHandDetectorFactory, FaceDetectionResult, true>},
+     &makeStage<dxapp::v_mediapipe_hand_detector_192x192::MediapipeHandDetectorFactory, FaceDetectionResult, true>},
     {"hand_landmark", "mediapipe_hands_lite", "mediapipe-hands-lite_224x224",
-     &makeStage<MediapipeHandsLiteFactory, HandLandmarkResult, false>},
+     &makeStage<dxapp::v_mediapipe_hands_lite_224x224::MediapipeHandsLiteFactory, HandLandmarkResult, false>},
     {"zero_shot_image_classification", "clip", "clip-img_vit-b32_256x256_datacomp-s34b-b86k",
-     &makeStage<ClipFactory, EmbeddingResult, false>},
+     &makeStage<dxapp::v_clip_img_vit_b32_256x256_datacomp_s34b_b86k::ClipFactory, EmbeddingResult, false>},
 };
 
 }  // namespace

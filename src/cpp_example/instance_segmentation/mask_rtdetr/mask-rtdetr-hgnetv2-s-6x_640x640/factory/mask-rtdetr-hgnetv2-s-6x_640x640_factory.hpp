@@ -21,6 +21,7 @@
 #include <vector>
 
 namespace dxapp {
+namespace v_mask_rtdetr_hgnetv2_s_6x_640x640 {
 
 class MaskRtdetrFactory : public IInstanceSegmentationFactory {
 public:
@@ -67,6 +68,7 @@ private:
     std::vector<std::string> class_names_;
 };
 
+}  // namespace v_mask_rtdetr_hgnetv2_s_6x_640x640
 }  // namespace dxapp
 
 #endif  // MASK_RTDETR_HGNETV2_S_6X_640X640_FACTORY_HPP

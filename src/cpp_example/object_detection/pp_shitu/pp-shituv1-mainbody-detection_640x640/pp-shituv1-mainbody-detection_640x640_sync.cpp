@@ -10,7 +10,7 @@
 #include "common/runner/sync_detection_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::PpShituFactory>();
-    dxapp::SyncDetectionRunner<dxapp::PpShituFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_pp_shituv1_mainbody_detection_640x640::PpShituFactory>();
+    dxapp::SyncDetectionRunner<dxapp::v_pp_shituv1_mainbody_detection_640x640::PpShituFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

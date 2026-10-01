@@ -21,6 +21,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_retinaface_mobilenet_0_25_640x640 {
 
 class RetinafaceFactory : public IFaceDetectionFactory {
 public:
@@ -64,6 +65,7 @@ private:
     float nms_threshold_;
 };
 
+}  // namespace v_retinaface_mobilenet_0_25_640x640
 }  // namespace dxapp
 
 #endif  // RETINAFACE_MOBILENET_0_25_640X640_FACTORY_HPP

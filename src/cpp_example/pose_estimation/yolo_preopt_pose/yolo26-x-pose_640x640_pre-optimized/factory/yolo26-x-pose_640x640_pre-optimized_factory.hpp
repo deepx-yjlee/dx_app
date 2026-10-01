@@ -23,6 +23,7 @@
 #include <vector>
 
 namespace dxapp {
+namespace v_yolo26_x_pose_640x640_pre_optimized {
 
 class YoloPreoptPoseFactory : public IPoseFactory {
 public:
@@ -73,6 +74,7 @@ private:
     int num_keypoints_{17};
 };
 
+}  // namespace v_yolo26_x_pose_640x640_pre_optimized
 }  // namespace dxapp
 
 #endif  // YOLO26_X_POSE_640X640_PRE_OPTIMIZED_FACTORY_HPP

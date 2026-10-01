@@ -16,6 +16,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_fastsam_s_1024x1024 {
 
 class FastsamFactory : public IInstanceSegmentationFactory {
 public:
@@ -60,6 +61,7 @@ private:
     std::vector<std::string> class_names_;
 };
 
+}  // namespace v_fastsam_s_1024x1024
 }  // namespace dxapp
 
 #endif  // FASTSAM_S_1024X1024_FACTORY_HPP

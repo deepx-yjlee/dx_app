@@ -16,6 +16,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_yolo26_x_seg_640x640 {
 
 class Yolo26SegFactory : public IInstanceSegmentationFactory {
 public:
@@ -60,6 +61,7 @@ private:
     std::vector<std::string> class_names_;
 };
 
+}  // namespace v_yolo26_x_seg_640x640
 }  // namespace dxapp
 
 #endif  // YOLO26_X_SEG_640X640_FACTORY_HPP

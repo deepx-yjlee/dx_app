@@ -10,7 +10,7 @@
 #include "common/runner/async_detection_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::RtdetrFactory>();
-    dxapp::AsyncDetectionRunner<dxapp::RtdetrFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_rtdetrv2_r34vd_120e_640x640::RtdetrFactory>();
+    dxapp::AsyncDetectionRunner<dxapp::v_rtdetrv2_r34vd_120e_640x640::RtdetrFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

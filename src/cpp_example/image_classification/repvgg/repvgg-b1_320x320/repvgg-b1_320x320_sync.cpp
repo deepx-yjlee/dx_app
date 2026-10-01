@@ -10,7 +10,7 @@
 #include "common/runner/sync_classification_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::RepvggFactory>();
-    dxapp::SyncClassificationRunner<dxapp::RepvggFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_repvgg_b1_320x320::RepvggFactory>();
+    dxapp::SyncClassificationRunner<dxapp::v_repvgg_b1_320x320::RepvggFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

@@ -17,6 +17,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_yolov3_gluon_608x608 {
 
 class Yolov3Factory : public IDetectionFactory {
 public:
@@ -68,6 +69,7 @@ private:
     std::vector<std::string> class_names_;
 };
 
+}  // namespace v_yolov3_gluon_608x608
 }  // namespace dxapp
 
 #endif  // YOLOV3_GLUON_608X608_FACTORY_HPP

@@ -10,7 +10,7 @@
 #include "common/runner/async_hand_landmark_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::MediapipeHandsLiteFactory>();
-    dxapp::AsyncHandLandmarkRunner<dxapp::MediapipeHandsLiteFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_mediapipe_hands_lite_224x224::MediapipeHandsLiteFactory>();
+    dxapp::AsyncHandLandmarkRunner<dxapp::v_mediapipe_hands_lite_224x224::MediapipeHandsLiteFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

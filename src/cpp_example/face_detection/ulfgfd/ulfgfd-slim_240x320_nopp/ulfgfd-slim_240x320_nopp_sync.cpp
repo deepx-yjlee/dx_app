@@ -10,7 +10,7 @@
 #include "common/runner/sync_face_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::UlfgfdFactory>();
-    dxapp::SyncFaceRunner<dxapp::UlfgfdFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_ulfgfd_slim_240x320_nopp::UlfgfdFactory>();
+    dxapp::SyncFaceRunner<dxapp::v_ulfgfd_slim_240x320_nopp::UlfgfdFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

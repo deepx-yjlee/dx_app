@@ -20,6 +20,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_mediapipe_hand_detector_192x192 {
 
 class MediapipeHandDetectorFactory : public IFaceDetectionFactory {
 public:
@@ -58,6 +59,7 @@ private:
     float nms_threshold_;
 };
 
+}  // namespace v_mediapipe_hand_detector_192x192
 }  // namespace dxapp
 
 #endif  // MEDIAPIPE_HAND_DETECTOR_192X192_FACTORY_HPP

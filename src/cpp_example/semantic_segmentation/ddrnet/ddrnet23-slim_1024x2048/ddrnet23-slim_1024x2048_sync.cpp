@@ -10,7 +10,7 @@
 #include "common/runner/sync_semantic_seg_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::DdrnetFactory>();
-    dxapp::SyncSemanticSegRunner<dxapp::DdrnetFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_ddrnet23_slim_1024x2048::DdrnetFactory>();
+    dxapp::SyncSemanticSegRunner<dxapp::v_ddrnet23_slim_1024x2048::DdrnetFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

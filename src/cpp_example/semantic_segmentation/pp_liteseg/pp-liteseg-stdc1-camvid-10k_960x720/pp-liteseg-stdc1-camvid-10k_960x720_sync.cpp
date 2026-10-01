@@ -10,7 +10,7 @@
 #include "common/runner/sync_semantic_seg_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::PpLitesegFactory>();
-    dxapp::SyncSemanticSegRunner<dxapp::PpLitesegFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_pp_liteseg_stdc1_camvid_10k_960x720::PpLitesegFactory>();
+    dxapp::SyncSemanticSegRunner<dxapp::v_pp_liteseg_stdc1_camvid_10k_960x720::PpLitesegFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

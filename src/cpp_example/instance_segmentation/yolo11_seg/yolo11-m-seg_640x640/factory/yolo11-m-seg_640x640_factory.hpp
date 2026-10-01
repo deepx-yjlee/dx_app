@@ -16,6 +16,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_yolo11_m_seg_640x640 {
 
 class Yolo11SegFactory : public IInstanceSegmentationFactory {
 public:
@@ -54,6 +55,7 @@ private:
     float nms_threshold_;
 };
 
+}  // namespace v_yolo11_m_seg_640x640
 }  // namespace dxapp
 
 #endif  // YOLO11_M_SEG_640X640_FACTORY_HPP

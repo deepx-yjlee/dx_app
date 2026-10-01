@@ -23,6 +23,7 @@
 // class name, include guard and identity differ.
 
 namespace dxapp {
+namespace v_repvgg_a0_reid_256x128 {
 
 class RepvggReidFactory : public IEmbeddingFactory {
 public:
@@ -71,6 +72,7 @@ private:
     std::string title_{"Person ReID - RepVGG-A0"};
 };
 
+}  // namespace v_repvgg_a0_reid_256x128
 }  // namespace dxapp
 
 #endif  // REPVGG_A0_REID_256X128_FACTORY_HPP

@@ -16,6 +16,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_fastvit_ma36_256x256 {
 
 class FastvitFactory : public IClassificationFactory {
 public:
@@ -28,7 +29,7 @@ public:
     }
 
     PostprocessorPtr<ClassificationResult> createPostprocessor(
-        int input_width, int input_height) override {
+        int /*input_width*/, int /*input_height*/) override {
         return std::make_unique<EfficientNetPostprocessor>(num_classes_, top_k_);
     }
 
@@ -51,6 +52,7 @@ private:
     int top_k_;
 };
 
+}  // namespace v_fastvit_ma36_256x256
 }  // namespace dxapp
 
 #endif  // FASTVIT_MA36_256X256_FACTORY_HPP

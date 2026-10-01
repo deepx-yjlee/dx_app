@@ -25,6 +25,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_superpoint_480x640 {
 
 /**
  * @brief Wraps SuperPointPostProcess to produce PoseResult (keypoints plus the
@@ -221,6 +222,7 @@ private:
     std::shared_ptr<SuperPointTracker> tracker_;  // shared by postprocessor + visualizer
 };
 
+}  // namespace v_superpoint_480x640
 }  // namespace dxapp
 
 #endif  // SUPERPOINT_480X640_FACTORY_HPP

@@ -17,6 +17,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_arcface_iresnet50_112x112_ms1m {
 
 class ArcfaceFactory : public IEmbeddingFactory {
 public:
@@ -46,6 +47,7 @@ public:
 private:
 };
 
+}  // namespace v_arcface_iresnet50_112x112_ms1m
 }  // namespace dxapp
 
 #endif  // ARCFACE_IRESNET50_112X112_MS1M_FACTORY_HPP

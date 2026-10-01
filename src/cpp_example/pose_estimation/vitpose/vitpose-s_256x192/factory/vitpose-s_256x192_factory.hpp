@@ -16,6 +16,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_vitpose_s_256x192 {
 
 class VitposeFactory : public IPoseFactory {
 public:
@@ -43,6 +44,7 @@ public:
     std::string getTaskType() const override { return "pose_estimation"; }
 };
 
+}  // namespace v_vitpose_s_256x192
 }  // namespace dxapp
 
 #endif  // VITPOSE_S_256X192_FACTORY_HPP

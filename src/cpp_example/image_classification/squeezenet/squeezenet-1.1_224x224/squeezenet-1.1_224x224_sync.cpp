@@ -10,7 +10,7 @@
 #include "common/runner/sync_classification_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::SqueezenetFactory>();
-    dxapp::SyncClassificationRunner<dxapp::SqueezenetFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_squeezenet_1_1_224x224::SqueezenetFactory>();
+    dxapp::SyncClassificationRunner<dxapp::v_squeezenet_1_1_224x224::SqueezenetFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

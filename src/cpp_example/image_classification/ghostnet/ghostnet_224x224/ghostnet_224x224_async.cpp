@@ -10,7 +10,7 @@
 #include "common/runner/async_classification_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::GhostnetFactory>();
-    dxapp::AsyncClassificationRunner<dxapp::GhostnetFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_ghostnet_224x224::GhostnetFactory>();
+    dxapp::AsyncClassificationRunner<dxapp::v_ghostnet_224x224::GhostnetFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

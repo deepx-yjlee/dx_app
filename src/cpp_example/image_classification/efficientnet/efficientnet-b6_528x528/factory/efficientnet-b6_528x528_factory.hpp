@@ -19,6 +19,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_efficientnet_b6_528x528 {
 
 class EfficientnetFactory : public IClassificationFactory {
 public:
@@ -32,7 +33,7 @@ public:
     }
 
     PostprocessorPtr<ClassificationResult> createPostprocessor(
-        int input_width, int input_height) override {
+        int /*input_width*/, int /*input_height*/) override {
         return std::make_unique<EfficientNetPostprocessor>(num_classes_, top_k_);
     }
 
@@ -55,6 +56,7 @@ private:
     int top_k_;
 };
 
+}  // namespace v_efficientnet_b6_528x528
 }  // namespace dxapp
 
 #endif  // EFFICIENTNET_B6_528X528_FACTORY_HPP

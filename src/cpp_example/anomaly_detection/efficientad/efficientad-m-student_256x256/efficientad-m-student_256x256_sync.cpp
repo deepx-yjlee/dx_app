@@ -10,7 +10,7 @@
 #include "common/runner/sync_anomaly_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::EfficientadFactory>();
-    dxapp::SyncAnomalyRunner<dxapp::EfficientadFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_efficientad_m_student_256x256::EfficientadFactory>();
+    dxapp::SyncAnomalyRunner<dxapp::v_efficientad_m_student_256x256::EfficientadFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

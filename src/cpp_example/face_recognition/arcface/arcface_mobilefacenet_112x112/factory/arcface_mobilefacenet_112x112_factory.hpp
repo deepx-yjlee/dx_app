@@ -17,6 +17,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_arcface_mobilefacenet_112x112 {
 
 class ArcfaceFactory : public IEmbeddingFactory {
 public:
@@ -46,6 +47,7 @@ public:
 private:
 };
 
+}  // namespace v_arcface_mobilefacenet_112x112
 }  // namespace dxapp
 
 #endif  // ARCFACE_MOBILEFACENET_112X112_FACTORY_HPP

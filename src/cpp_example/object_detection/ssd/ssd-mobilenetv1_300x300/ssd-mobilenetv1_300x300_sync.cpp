@@ -10,7 +10,7 @@
 #include "common/runner/sync_detection_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::SsdFactory>();
-    dxapp::SyncDetectionRunner<dxapp::SsdFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_ssd_mobilenetv1_300x300::SsdFactory>();
+    dxapp::SyncDetectionRunner<dxapp::v_ssd_mobilenetv1_300x300::SsdFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

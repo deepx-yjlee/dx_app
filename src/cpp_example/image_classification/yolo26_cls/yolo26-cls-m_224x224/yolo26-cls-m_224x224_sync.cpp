@@ -10,7 +10,7 @@
 #include "common/runner/sync_classification_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::Yolo26ClsFactory>();
-    dxapp::SyncClassificationRunner<dxapp::Yolo26ClsFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_yolo26_cls_m_224x224::Yolo26ClsFactory>();
+    dxapp::SyncClassificationRunner<dxapp::v_yolo26_cls_m_224x224::Yolo26ClsFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

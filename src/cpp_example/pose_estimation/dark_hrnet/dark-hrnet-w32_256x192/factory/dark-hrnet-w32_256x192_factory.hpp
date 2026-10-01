@@ -21,6 +21,7 @@
 // class name, include guard and identity differ.
 
 namespace dxapp {
+namespace v_dark_hrnet_w32_256x192 {
 
 class DarkHrnetFactory : public IPoseFactory {
 public:
@@ -48,6 +49,7 @@ public:
     std::string getTaskType() const override { return "pose_estimation"; }
 };
 
+}  // namespace v_dark_hrnet_w32_256x192
 }  // namespace dxapp
 
 #endif  // DARK_HRNET_W32_256X192_FACTORY_HPP

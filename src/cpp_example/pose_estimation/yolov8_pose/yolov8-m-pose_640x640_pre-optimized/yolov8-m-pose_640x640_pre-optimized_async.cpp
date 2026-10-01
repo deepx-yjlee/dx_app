@@ -10,7 +10,7 @@
 #include "common/runner/async_pose_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::Yolov8PoseFactory>();
-    dxapp::AsyncPoseRunner<dxapp::Yolov8PoseFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_yolov8_m_pose_640x640_pre_optimized::Yolov8PoseFactory>();
+    dxapp::AsyncPoseRunner<dxapp::v_yolov8_m_pose_640x640_pre_optimized::Yolov8PoseFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

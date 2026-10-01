@@ -23,6 +23,7 @@
 #include <vector>
 
 namespace dxapp {
+namespace v_yolo26_n_640x640_pre_optimized {
 
 class YoloPreoptFactory : public IDetectionFactory {
 public:
@@ -73,6 +74,7 @@ private:
     std::vector<std::string> class_names_;
 };
 
+}  // namespace v_yolo26_n_640x640_pre_optimized
 }  // namespace dxapp
 
 #endif  // YOLO26_N_640X640_PRE_OPTIMIZED_FACTORY_HPP

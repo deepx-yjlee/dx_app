@@ -16,6 +16,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_clip_img_vit_l14_224x224_datacomp_xl_s13b_b90k {
 
 class ClipFactory : public IEmbeddingFactory {
 public:
@@ -43,6 +44,7 @@ public:
 private:
 };
 
+}  // namespace v_clip_img_vit_l14_224x224_datacomp_xl_s13b_b90k
 }  // namespace dxapp
 
 #endif  // CLIP_IMG_VIT_L14_224X224_DATACOMP_XL_S13B_B90K_FACTORY_HPP

@@ -16,6 +16,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_yolov8_m_seg_640x640_pre_optimized {
 
 class Yolov8SegFactory : public IInstanceSegmentationFactory {
 public:
@@ -56,6 +57,7 @@ private:
     float nms_threshold_;
 };
 
+}  // namespace v_yolov8_m_seg_640x640_pre_optimized
 }  // namespace dxapp
 
 #endif  // YOLOV8_M_SEG_640X640_PRE_OPTIMIZED_FACTORY_HPP

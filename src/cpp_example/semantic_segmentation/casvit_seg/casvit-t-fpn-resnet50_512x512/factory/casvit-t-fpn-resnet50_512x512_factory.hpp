@@ -16,6 +16,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_casvit_t_fpn_resnet50_512x512 {
 
 class CasvitSegFactory : public ISegmentationFactory {
 public:
@@ -43,6 +44,7 @@ public:
 private:
 };
 
+}  // namespace v_casvit_t_fpn_resnet50_512x512
 }  // namespace dxapp
 
 #endif  // CASVIT_T_FPN_RESNET50_512X512_FACTORY_HPP

@@ -10,7 +10,7 @@
 #include "common/runner/sync_embedding_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::ClipFactory>();
-    dxapp::SyncEmbeddingRunner<dxapp::ClipFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_clip_img_resnet50_224x224_openai::ClipFactory>();
+    dxapp::SyncEmbeddingRunner<dxapp::v_clip_img_resnet50_224x224_openai::ClipFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

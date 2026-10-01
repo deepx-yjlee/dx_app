@@ -18,6 +18,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_zerodce_400x600 {
 
 class ZerodceFactory : public IRestorationFactory {
 public:
@@ -49,6 +50,7 @@ public:
 private:
 };
 
+}  // namespace v_zerodce_400x600
 }  // namespace dxapp
 
 #endif  // ZERODCE_400X600_FACTORY_HPP

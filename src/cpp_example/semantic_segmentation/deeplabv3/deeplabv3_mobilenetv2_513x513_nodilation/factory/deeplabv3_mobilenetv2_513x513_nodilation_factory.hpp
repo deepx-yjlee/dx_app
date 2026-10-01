@@ -19,6 +19,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_deeplabv3_mobilenetv2_513x513_nodilation {
 
 class Deeplabv3Factory : public ISegmentationFactory {
 public:
@@ -48,6 +49,7 @@ public:
 private:
 };
 
+}  // namespace v_deeplabv3_mobilenetv2_513x513_nodilation
 }  // namespace dxapp
 
 #endif  // DEEPLABV3_MOBILENETV2_513X513_NODILATION_FACTORY_HPP

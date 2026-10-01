@@ -17,6 +17,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_ulfgfd_rfb_480x640 {
 
 class UlfgfdFactory : public IFaceDetectionFactory {
 public:
@@ -31,7 +32,7 @@ public:
     }
 
     PostprocessorPtr<FaceDetectionResult> createPostprocessor(
-        int input_width, int input_height, bool is_ort_configured = false) override {
+        int input_width, int input_height, bool /*is_ort_configured*/ = false) override {
         return std::make_unique<ULFGFacePostprocessor>(
             input_width, input_height,
             score_threshold_, nms_threshold_
@@ -57,6 +58,7 @@ private:
     float nms_threshold_;
 };
 
+}  // namespace v_ulfgfd_rfb_480x640
 }  // namespace dxapp
 
 #endif  // ULFGFD_RFB_480X640_FACTORY_HPP

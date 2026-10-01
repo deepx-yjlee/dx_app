@@ -16,6 +16,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_yolo26_l_640x640 {
 
 class Yolo26Factory : public IDetectionFactory {
 public:
@@ -63,6 +64,7 @@ private:
     std::vector<std::string> class_names_;
 };
 
+}  // namespace v_yolo26_l_640x640
 }  // namespace dxapp
 
 #endif  // YOLO26_L_640X640_FACTORY_HPP

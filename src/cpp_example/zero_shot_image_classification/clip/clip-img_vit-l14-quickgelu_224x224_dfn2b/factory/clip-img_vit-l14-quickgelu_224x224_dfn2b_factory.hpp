@@ -16,6 +16,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_clip_img_vit_l14_quickgelu_224x224_dfn2b {
 
 class ClipFactory : public IEmbeddingFactory {
 public:
@@ -43,6 +44,7 @@ public:
 private:
 };
 
+}  // namespace v_clip_img_vit_l14_quickgelu_224x224_dfn2b
 }  // namespace dxapp
 
 #endif  // CLIP_IMG_VIT_L14_QUICKGELU_224X224_DFN2B_FACTORY_HPP

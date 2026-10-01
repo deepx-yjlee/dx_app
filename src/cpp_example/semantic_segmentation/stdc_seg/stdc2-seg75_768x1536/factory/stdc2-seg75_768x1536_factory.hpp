@@ -16,6 +16,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_stdc2_seg75_768x1536 {
 
 class StdcSegFactory : public ISegmentationFactory {
 public:
@@ -43,6 +44,7 @@ public:
 private:
 };
 
+}  // namespace v_stdc2_seg75_768x1536
 }  // namespace dxapp
 
 #endif  // STDC2_SEG75_768X1536_FACTORY_HPP

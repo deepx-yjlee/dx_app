@@ -19,6 +19,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_vit_l_p16_512x512_swag {
 
 class VitFactory : public IClassificationFactory {
 public:
@@ -32,7 +33,7 @@ public:
     }
 
     PostprocessorPtr<ClassificationResult> createPostprocessor(
-        int input_width, int input_height) override {
+        int /*input_width*/, int /*input_height*/) override {
         return std::make_unique<EfficientNetPostprocessor>(num_classes_, top_k_);
     }
 
@@ -55,6 +56,7 @@ private:
     int top_k_;
 };
 
+}  // namespace v_vit_l_p16_512x512_swag
 }  // namespace dxapp
 
 #endif  // VIT_L_P16_512X512_SWAG_FACTORY_HPP

@@ -10,7 +10,7 @@
 #include "common/runner/sync_classification_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::VitFactory>();
-    dxapp::SyncClassificationRunner<dxapp::VitFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_vit_s_p16_224x224::VitFactory>();
+    dxapp::SyncClassificationRunner<dxapp::v_vit_s_p16_224x224::VitFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

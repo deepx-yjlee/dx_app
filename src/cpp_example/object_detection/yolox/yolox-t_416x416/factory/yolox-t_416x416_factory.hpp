@@ -16,6 +16,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_yolox_t_416x416 {
 
 class YoloxFactory : public IDetectionFactory {
 public:
@@ -67,6 +68,7 @@ private:
     std::vector<std::string> class_names_;
 };
 
+}  // namespace v_yolox_t_416x416
 }  // namespace dxapp
 
 #endif  // YOLOX_T_416X416_FACTORY_HPP

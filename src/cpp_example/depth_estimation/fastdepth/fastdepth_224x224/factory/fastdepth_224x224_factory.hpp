@@ -17,6 +17,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_fastdepth_224x224 {
 
 class FastdepthFactory : public IDepthEstimationFactory {
 public:
@@ -46,6 +47,7 @@ public:
 private:
 };
 
+}  // namespace v_fastdepth_224x224
 }  // namespace dxapp
 
 #endif  // FASTDEPTH_224X224_FACTORY_HPP

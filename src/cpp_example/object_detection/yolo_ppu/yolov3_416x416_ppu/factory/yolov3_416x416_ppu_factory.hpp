@@ -18,6 +18,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_yolov3_416x416_ppu {
 
 class YoloPpuFactory : public IDetectionFactory {
 public:
@@ -66,6 +67,7 @@ private:
     std::vector<std::string> class_names_;
 };
 
+}  // namespace v_yolov3_416x416_ppu
 }  // namespace dxapp
 
 #endif  // YOLOV3_416X416_PPU_FACTORY_HPP

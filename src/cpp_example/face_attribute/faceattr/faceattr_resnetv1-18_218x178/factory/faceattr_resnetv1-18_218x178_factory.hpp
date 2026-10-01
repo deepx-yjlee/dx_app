@@ -16,6 +16,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_faceattr_resnetv1_18_218x178 {
 
 class FaceattrFactory : public IClassificationFactory {
 public:
@@ -28,7 +29,7 @@ public:
     }
 
     PostprocessorPtr<ClassificationResult> createPostprocessor(
-        int input_width, int input_height) override {
+        int /*input_width*/, int /*input_height*/) override {
         return std::make_unique<AttributePostprocessor>(
             threshold_, AttributePostprocessor::LabelSet::CELEBA_40);
     }
@@ -50,6 +51,7 @@ private:
     float threshold_;
 };
 
+}  // namespace v_faceattr_resnetv1_18_218x178
 }  // namespace dxapp
 
 #endif  // FACEATTR_RESNETV1_18_218X178_FACTORY_HPP

@@ -16,6 +16,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_pidnet_s_1024x2048 {
 
 class PidnetFactory : public ISegmentationFactory {
 public:
@@ -43,6 +44,7 @@ public:
 private:
 };
 
+}  // namespace v_pidnet_s_1024x2048
 }  // namespace dxapp
 
 #endif  // PIDNET_S_1024X2048_FACTORY_HPP

@@ -10,7 +10,7 @@
 #include "common/runner/async_segmentation_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::MaskRtdetrFactory>();
-    dxapp::AsyncInstanceSegRunner<dxapp::MaskRtdetrFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_mask_rtdetr_hgnetv2_l_6x_640x640::MaskRtdetrFactory>();
+    dxapp::AsyncInstanceSegRunner<dxapp::v_mask_rtdetr_hgnetv2_l_6x_640x640::MaskRtdetrFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

@@ -16,6 +16,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_yolov8_x_pose_640x640_pre_optimized {
 
 class Yolov8PoseFactory : public IPoseFactory {
 public:
@@ -54,6 +55,7 @@ private:
     float nms_threshold_;
 };
 
+}  // namespace v_yolov8_x_pose_640x640_pre_optimized
 }  // namespace dxapp
 
 #endif  // YOLOV8_X_POSE_640X640_PRE_OPTIMIZED_FACTORY_HPP

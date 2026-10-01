@@ -10,7 +10,7 @@
 #include "common/runner/sync_obb_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::Yolo26ObbFactory>();
-    dxapp::SyncOBBRunner<dxapp::Yolo26ObbFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_yolo26_x_obb_1024x1024::Yolo26ObbFactory>();
+    dxapp::SyncOBBRunner<dxapp::v_yolo26_x_obb_1024x1024::Yolo26ObbFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

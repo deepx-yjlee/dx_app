@@ -22,6 +22,7 @@
 // class name, include guard and identity differ.
 
 namespace dxapp {
+namespace v_ddrnet23_1024x2048 {
 
 class DdrnetFactory : public ISegmentationFactory {
 public:
@@ -51,6 +52,7 @@ public:
 private:
 };
 
+}  // namespace v_ddrnet23_1024x2048
 }  // namespace dxapp
 
 #endif  // DDRNET23_1024X2048_FACTORY_HPP

@@ -16,6 +16,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_yolov7_lite_t_face_640x640 {
 
 class Yolov7FaceFactory : public IFaceDetectionFactory {
 public:
@@ -32,7 +33,7 @@ public:
     }
 
     PostprocessorPtr<FaceDetectionResult> createPostprocessor(
-        int input_width, int input_height, bool is_ort_configured = false) override {
+        int input_width, int input_height, bool /*is_ort_configured*/ = false) override {
         return std::make_unique<YOLOv5FacePostprocessor>(
             input_width, input_height, score_threshold_, nms_threshold_);
     }
@@ -58,6 +59,7 @@ private:
     float nms_threshold_;
 };
 
+}  // namespace v_yolov7_lite_t_face_640x640
 }  // namespace dxapp
 
 #endif  // YOLOV7_LITE_T_FACE_640X640_FACTORY_HPP

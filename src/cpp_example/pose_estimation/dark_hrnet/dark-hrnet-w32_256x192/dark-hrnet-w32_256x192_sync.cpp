@@ -10,7 +10,7 @@
 #include "common/runner/sync_pose_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::DarkHrnetFactory>();
-    dxapp::SyncPoseRunner<dxapp::DarkHrnetFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_dark_hrnet_w32_256x192::DarkHrnetFactory>();
+    dxapp::SyncPoseRunner<dxapp::v_dark_hrnet_w32_256x192::DarkHrnetFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

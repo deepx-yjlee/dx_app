@@ -10,7 +10,7 @@
 #include "common/runner/async_segmentation_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::Yolov9SegFactory>();
-    dxapp::AsyncInstanceSegRunner<dxapp::Yolov9SegFactory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_yolov9_seg_e_640x640_pre_optimized::Yolov9SegFactory>();
+    dxapp::AsyncInstanceSegRunner<dxapp::v_yolov9_seg_e_640x640_pre_optimized::Yolov9SegFactory> runner(std::move(factory));
     return runner.run(argc, argv);
 }

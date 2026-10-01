@@ -18,6 +18,7 @@
 #include <utility>
 
 namespace dxapp {
+namespace v_yolo11_l_640x640_pre_optimized {
 
 class Yolo11Factory : public IDetectionFactory {
 public:
@@ -66,6 +67,7 @@ private:
     std::vector<std::string> class_names_;
 };
 
+}  // namespace v_yolo11_l_640x640_pre_optimized
 }  // namespace dxapp
 
 #endif  // YOLO11_L_640X640_PRE_OPTIMIZED_FACTORY_HPP

@@ -10,7 +10,7 @@
 #include "common/runner/async_classification_runner.hpp"
 
 int main(int argc, char* argv[]) {
-    auto factory = std::make_unique<dxapp::Shufflenetv2Factory>();
-    dxapp::AsyncClassificationRunner<dxapp::Shufflenetv2Factory> runner(std::move(factory));
+    auto factory = std::make_unique<dxapp::v_shufflenetv2_x1_5_224x224::Shufflenetv2Factory>();
+    dxapp::AsyncClassificationRunner<dxapp::v_shufflenetv2_x1_5_224x224::Shufflenetv2Factory> runner(std::move(factory));
     return runner.run(argc, argv);
 }
