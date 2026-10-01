@@ -37,7 +37,8 @@ def load_dx_graph():
 def test_import_reports_its_build():
     dx_graph = load_dx_graph()
     info = dx_graph.build_info()
-    assert info["python"].startswith("3.12")
+    # Built for the interpreter that runs the tests (major.minor).
+    assert info["python"].startswith("{}.{}.".format(*sys.version_info[:2]))
     assert os.path.realpath(info["project_root"]) == os.path.realpath(str(PROJECT_ROOT))
     assert isinstance(dx_graph.__version__, str) and dx_graph.__version__
 
