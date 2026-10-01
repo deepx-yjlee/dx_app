@@ -162,8 +162,7 @@ IMAGE_ONLY_TASKS: frozenset = frozenset({
 # ======================================================================
 # Tasks whose SINGLE-MODEL example runners HARD-REJECT stream input
 # (-v/--video, -c/--camera, -r/--rtsp) with a fatal "image input only" error.
-# Keyed by example DIRECTORY name (the C++/Python runners map the
-# 3d_object_detection directory to the internal task name "3d_detection").
+# Keyed by example DIRECTORY name, which is also the task name both runners report.
 #
 # This is a *stricter* subset of IMAGE_ONLY_TASKS used by NEGATIVE tests that
 # verify the SDKREQ-517 exclusion is actually ENFORCED (not merely skipped).

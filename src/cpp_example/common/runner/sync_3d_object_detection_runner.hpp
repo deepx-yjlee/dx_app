@@ -1,12 +1,12 @@
 /**
- * @file 3d_detection_runner.hpp
+ * @file sync_3d_object_detection_runner.hpp
  * @brief Synchronous 3D LiDAR detection runner using factory pattern
  *
  * Provides a generic runner that accepts any I3DDetectionFactory implementation.
  */
 
-#ifndef SYNC_3D_DETECTION_RUNNER_HPP
-#define SYNC_3D_DETECTION_RUNNER_HPP
+#ifndef SYNC_3D_OBJECT_DETECTION_RUNNER_HPP
+#define SYNC_3D_OBJECT_DETECTION_RUNNER_HPP
 
 #include <dxrt/dxrt_api.h>
 #include <chrono>
@@ -59,13 +59,13 @@ public:
         dxapp::requireBinInput(args.imageFilePath);
         validateArguments(args);
 
-        // Image-only task (3d_detection, e.g. SFA3D — LiDAR .bin input): -v/-c/-r are
+        // Image-only task (3d_object_detection, e.g. SFA3D — LiDAR .bin input): -v/-c/-r are
         // accepted as CLI options, but this task has no video/camera example — reject
         // stream input with a clear message (mirrors the embedding/reid policy).
         {
             const std::string _io_task = factory_->getTaskType();
             const bool _io_stream = !args.videoFile.empty() || args.cameraIndex >= 0 || !args.rtspUrl.empty();
-            if ((_io_task == "3d_detection" || _io_task == "3d_object_detection") && _io_stream) {
+            if (_io_task == "3d_object_detection" && _io_stream) {
                 dxapp::fatal_error("[DXAPP] [ERROR] Task '" + _io_task + "' supports image input only (-i / --image_path). "
                     "Video/camera input requires a detection crop pipeline and is not supported in single-model examples. "
                     "Use -i (--image_path) to provide an image file or directory.");
@@ -634,4 +634,4 @@ private:
 
 }  // namespace dxapp
 
-#endif  // SYNC_3D_DETECTION_RUNNER_HPP
+#endif  // SYNC_3D_OBJECT_DETECTION_RUNNER_HPP

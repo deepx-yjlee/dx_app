@@ -618,7 +618,7 @@ inline std::string getDefaultSampleImage(const std::string& taskType,
     if (taskType == "attribute_recognition")  return "sample/img/sample_person_a1.jpg";
     if (taskType == "reid")                   return "sample/img/person_pair";
     if (taskType == "ppu")                    return "sample/img/sample_street.jpg";
-    if (taskType == "3d_detection" || taskType == "3d_object_detection")
+    if (taskType == "3d_object_detection")
         return "sample/kitti/velodyne/000049.bin";
     return "sample/img/sample_street.jpg";
 }

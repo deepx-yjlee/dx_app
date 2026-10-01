@@ -123,8 +123,8 @@ The project is structured to separate core logic from language-specific implemen
 dx_app/
 ├── src/
 │   ├── cpp_example/            # C++ end-to-end examples (499 variants / 28 tasks, 498 downloadable)
-│   │                           #   <task>/<family>/<variant>/ holds config.json only
-│   │                           #   factory/ and <family>_sync.cpp stay on the family (.dxnn stem)
+│   │                           #   <task>/<family>/<variant>/ holds factory, config.json, and entries
+│   │                           #   bin/<variant>_sync is the built executable (.dxnn stem)
 │   │   └── common/             # ← Shared C++ runtime layer
 │   │       ├── base/           #   Abstract interfaces (IFactory, IProcessor, ...)
 │   │       ├── processors/     #   40 shared post-processors
@@ -134,8 +134,8 @@ dx_app/
 │   │       ├── config/         #   ModelConfig loader
 │   │       └── utility/        #   Labels, preprocessing, profiling, run_dir, signal_handler, verify_serialize
 │   ├── python_example/         # Python end-to-end examples (499 variants / 28 tasks, 498 downloadable)
-│   │                           #   <task>/<family>/<variant>/ holds config.json and thin entry scripts
-│   │                           #   factory/ and <family>_sync.py stay on the family (--variant)
+│   │                           #   <task>/<family>/<variant>/ holds factory, config.json, and thin entries
+│   │                           #   <variant>_sync.py fixes that variant
 │   │   └── common/             # ← Shared Python runtime layer
 │   │       ├── base/           #   Abstract interfaces (IFactory, IProcessor, ...)
 │   │       ├── processors/     #   35 shared post-processors
@@ -274,7 +274,7 @@ Dumps raw input/output tensors for debugging. On exception, tensors are auto-dum
 
 ## Model Config (`--config`)
 
-Runtime parameters (score threshold, NMS threshold, top-k) live in `<task>/<family>/<variant>/config.json`. A Python family entry selects that folder with `--variant`. A variant thin script sits next to its `config.json` and fixes the variant. A C++ family entry takes the variant from the `.dxnn` stem. A single-model extract may keep `config.json` beside the entry script.
+Runtime parameters (score threshold, NMS threshold, top-k) live in `<task>/<family>/<variant>/config.json`, next to that variant's entry. A single-model extract may keep `config.json` beside the entry script.
 
 ## Version Compatibility
 
@@ -296,7 +296,7 @@ If no input source (`--image`, `--video`, `--camera`, `--rtsp`) is provided, the
 ```
 This allows the simplest possible execution — just specify the model:
 ```bash
-python src/python_example/object_detection/yolov7/yolov7_sync.py --model assets/models/yolov7_640x640.dxnn
+python src/python_example/object_detection/yolov7/yolov7_640x640/yolov7_640x640_sync.py --model assets/models/yolov7_640x640.dxnn
 ```
 
 ## Headless Mode
@@ -483,7 +483,7 @@ Build the C++ binaries and the Python dx_postprocess bindings simultaneously.
 # For a clean rebuild, use: ./build.sh --clean
 
 # Build specific targets only (faster incremental builds)
-./build.sh --target yolov9s_sync yolov9s_async
+./build.sh --target yolov9-s_640x640_sync yolov9-s_640x640_async
 
 # List all available build targets
 ./build.sh --target list
@@ -493,7 +493,7 @@ Build the C++ binaries and the Python dx_postprocess bindings simultaneously.
 
 **Step 4. Execution Examples**  
 
-The quickest way to explore all 24 AI task categories (27 demo tasks) is the unified interactive demo script:
+The quickest way to explore all 24 AI task categories (26 demo tasks) is the unified interactive demo script:
 
 ```bash
 # Interactive — select task, mode, and input type from menus
@@ -514,37 +514,36 @@ The quickest way to explore all 24 AI task categories (27 demo tasks) is the uni
 
 **Demo Task ↔ Model Reference**
 
-Each of the 27 demo tasks uses exactly one model. When you run `run_demo.sh`, any missing models and videos are **automatically downloaded** — no manual `setup.sh` required.
+Each of the 26 demo tasks uses exactly one model. When you run `run_demo.sh`, any missing models and videos are **automatically downloaded** — no manual `setup.sh` required.
 
 | # | Demo Task | Model File | Group |
 |--:|-----------|-----------|-------|
-| 0 | Object Detection (YOLOv7) | `yolov7_640x640.dxnn` | Detection |
-| 1 | Object Detection (YOLOv11N) | `yolo11-n_640x640.dxnn` | Detection |
-| 2 | Face Detection (SCRFD500M) | `scrfd-500m_640x640.dxnn` | Detection |
-| 3 | OBB Detection (YOLO26N-OBB) | `yolo26-n-obb_1024x1024.dxnn` | Detection |
-| 4 | Pose Estimation (YOLOv8s-Pose) | `yolov8-s-pose_640x640.dxnn` | Pose & Landmark |
-| 5 | Hand Landmark (HandLandmarkLite) | `mediapipe-hands-lite_224x224.dxnn` | Pose & Landmark |
-| 6 | Face Alignment (3DDFA-V2) | `3ddfa-v2_mobilenetv1_120x120.dxnn` | Pose & Landmark |
-| 7 | Instance Segmentation (YOLOv8N-Seg) | `yolov8-n-seg_640x640.dxnn` | Segmentation |
-| 8 | Semantic Segmentation (DeepLabV3+) | `deeplabv3plus_mobilenetv1_512x512.dxnn` | Segmentation |
-| 9 | Classification (ResNet50) | `resnet50_224x224.dxnn` | Classification |
-| 10 | Depth Estimation (YOLO26-Depth-S) | `yolo26-depth-s_768x768.dxnn` | Depth Estimation |
-| 11 | Image Denoising (DnCNN-50) | `dncnn-50_512x512.dxnn` | Image Restoration |
-| 12 | Super Resolution (ESPCN-X4) | `espcn-x4_17x17.dxnn` | Image Restoration |
-| 13 | Image Enhancement (Zero-DCE) | `zerodce_400x600.dxnn` | Image Restoration |
-| 14 | Embedding (ArcFace) | `arcface_mobilefacenet_112x112.dxnn` | Recognition |
-| 15 | Attribute Recognition (DeepMAR) | `deepmar_resnet50_224x224.dxnn` | Recognition |
-| 16 | Person Re-ID (CasViT-T) | `casvit-t_224x224.dxnn` | Recognition |
-| 17 | PPU Pipeline (YOLOv7-PPU) | `yolov7_640x640_ppu.dxnn` | PPU |
-| 18 | Keypoint Detection (SuperPoint) | `superpoint_480x640.dxnn` | Keypoint & Pose |
-| 19 | Object Pose Estimation (DOPE) | `dope-hope-ketchup_480x640.dxnn` | Keypoint & Pose |
-| 20 | Panoptic Driving (YOLOPv2) | `yolopv2_384x640.dxnn` | Driving & 3D |
-| 21 | 3D Object Detection (SFA3D) | `sfa3d_608x608.dxnn` | Driving & 3D |
-| 22 | Hand Detection (MediaPipe Palm) | `mediapipe-hand-detector_192x192.dxnn` | Hand Detection |
-| 23 | Image Retrieval (CLIP RN50) | `clip-img_resnet50_224x224_openai.dxnn` | Retrieval & Matting |
-| 24 | Visual Place Recognition (EigenPlaces R18) | `eigenplaces-resnet18_512x512.dxnn` | Retrieval & Matting |
-| 25 | Person Re-ID (RepVGG-A0) | `repvgg-a0-reid_256x128.dxnn` | Retrieval & Matting |
-| 26 | Image Matting (PP-Matting HRNet-W48) | `ppmatting-hrnet-w48-composition_512x512.dxnn` | Retrieval & Matting |
+| 0 | Object Detection         (YOLOv7) | `yolov7_640x640.dxnn` | Detection |
+| 1 | Object Detection         (YOLOv11N) | `yolo11-n_640x640.dxnn` | Detection |
+| 2 | Face Detection           (SCRFD500M) | `scrfd-500m_640x640.dxnn` | Detection |
+| 3 | OBB Detection            (YOLO26N-OBB) | `yolo26-n-obb_1024x1024.dxnn` | Detection |
+| 4 | Pose Estimation          (YOLOv8s-Pose) | `yolov8-s-pose_640x640.dxnn` | Pose & Landmark |
+| 5 | Hand Landmark            (HandLandmarkLite) | `mediapipe-hands-lite_224x224.dxnn` | Pose & Landmark |
+| 6 | Face Alignment           (3DDFA-V2-MobileNetV1) | `3ddfa-v2_mobilenetv1_120x120.dxnn` | Pose & Landmark |
+| 7 | Instance Segmentation    (YOLOv8N-Seg) | `yolov8-n-seg_640x640.dxnn` | Segmentation |
+| 8 | Semantic Segmentation    (DeepLabV3+MobileNet) | `deeplabv3plus_mobilenetv1_512x512.dxnn` | Segmentation |
+| 9 | Classification           (ResNet50) | `resnet50_224x224.dxnn` | Classification |
+| 10 | Depth Estimation         (YOLO26-Depth-S) | `yolo26-depth-s_768x768.dxnn` | Depth Estimation |
+| 11 | Image Denoising          (DnCNN-50) | `dncnn-50_512x512.dxnn` | Image Restoration |
+| 12 | Super Resolution         (ESPCN-X4) | `espcn-x4_17x17.dxnn` | Image Restoration |
+| 13 | Image Enhancement        (Zero-DCE) | `zerodce_400x600.dxnn` | Image Restoration |
+| 14 | Embedding                (ArcFace) | `arcface_mobilefacenet_112x112.dxnn` | Recognition |
+| 15 | Attribute Recognition    (DeepMAR-ResNet50) | `deepmar_resnet50_224x224.dxnn` | Recognition |
+| 16 | PPU Pipeline             (YOLOv7-PPU) | `yolov7_640x640_ppu.dxnn` | PPU |
+| 17 | Keypoint Detection       (SuperPoint) | `superpoint_480x640.dxnn` | Keypoint & Pose |
+| 18 | Object Pose Estimation   (DOPE) | `dope-hope-ketchup_480x640.dxnn` | Keypoint & Pose |
+| 19 | Panoptic Driving         (YOLOPv2) | `yolopv2_384x640.dxnn` | Driving & 3D |
+| 20 | 3D Object Detection      (SFA3D) | `sfa3d_608x608.dxnn` | Driving & 3D |
+| 21 | Hand Detection           (MediaPipe Palm) | `mediapipe-hand-detector_192x192.dxnn` | Hand Detection |
+| 22 | Image Retrieval          (CLIP RN50) | `clip-img_resnet50_224x224_openai.dxnn` | Retrieval & Matting |
+| 23 | Visual Place Recognition (EigenPlaces R18) | `eigenplaces-resnet18_512x512.dxnn` | Retrieval & Matting |
+| 24 | Person Re-ID             (RepVGG-A0) | `repvgg-a0-reid_256x128.dxnn` | Retrieval & Matting |
+| 25 | Image Matting            (PP-Matting HRNet-W48) | `ppmatting-hrnet-w48-composition_512x512.dxnn` | Retrieval & Matting |
 
 Sizes are not listed here because they move with each DX Model Zoo release; `./setup.sh --demo-models` downloads exactly this set and reports each file. The
 sample video pack is a separate ~1.1 GB download (`./setup_sample_videos.sh`).
@@ -555,7 +554,7 @@ To download only specific demo models without running the demo:
 ```
 
 > **TIP — Running other models**  
-> `run_demo.sh` showcases 27 representative models. To run or benchmark **all 499 registered variants**,
+> `run_demo.sh` showcases 26 representative models. To run or benchmark **all 499 registered variants**,
 > use the **example runner** or the **DX Model Tool**:
 >
 > ```bash
@@ -579,7 +578,7 @@ Alternatively, run individual binaries or scripts directly:
 **Simplest Execution (auto-download model + default sample image)**
 ```bash
 # Just specify the model — everything else is automatic
-python src/python_example/object_detection/yolov7/yolov7_sync.py --model assets/models/yolov7_640x640.dxnn
+python src/python_example/object_detection/yolov7/yolov7_640x640/yolov7_640x640_sync.py --model assets/models/yolov7_640x640.dxnn
 # → Model auto-downloaded if missing
 # → Default sample image auto-selected for the task
 ```
@@ -587,12 +586,12 @@ python src/python_example/object_detection/yolov7/yolov7_sync.py --model assets/
 C++ Implementation (High Performance)  
 ```bash
 # Static Image Inference (Synchronous)
-./bin/yolov9s_sync \
+./bin/yolov9-s_640x640_sync \
 -m assets/models/yolov9-s_640x640.dxnn \
 -i sample/img/sample_kitchen.jpg
 
 # Video Stream Inference (Asynchronous)
-./bin/yolov9s_async \
+./bin/yolov9-s_640x640_async \
 -m assets/models/yolov9-s_640x640.dxnn \
 -v assets/videos/dance-group.mov
 ```
@@ -600,12 +599,12 @@ C++ Implementation (High Performance)
 Python Implementation (Rapid Prototyping)  
 ```bash
 # Python Baseline (Synchronous)
-python src/python_example/object_detection/yolov9s/yolov9s_sync.py \
+python src/python_example/object_detection/yolov9/yolov9-s_640x640/yolov9-s_640x640_sync.py \
    --model assets/models/yolov9-s_640x640.dxnn \
    --image sample/img/sample_kitchen.jpg
 
 # Python Optimized (Asynchronous + C++ Post-processing)
-python src/python_example/object_detection/yolov9s/yolov9s_async_cpp_postprocess.py \
+python src/python_example/object_detection/yolov9/yolov9-s_640x640/yolov9-s_640x640_async_cpp_postprocess.py \
   --model assets/models/yolov9-s_640x640.dxnn \
     --video assets/videos/dance-group.mov 
 ```

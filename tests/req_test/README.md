@@ -152,7 +152,7 @@ tests\req_test\run_all.bat 518 520 530     :: 특정 번호만
   | Face Detection | `[FACE] ...` | sync_face_runner.hpp |
   | Face Alignment | `[ALIGN] ...` | sync_face_alignment_runner.hpp |
   | Hand Landmark | `[HAND] ...` | sync_hand_landmark_runner.hpp |
-  | 3D Object Detection | `[3D] ...` | sync_3d_detection_runner.hpp |
+  | 3D Object Detection | `[3D] ...` | sync_3d_object_detection_runner.hpp |
   | **Object Pose Estimation** | `[POSE]` — `using = SyncPoseRunner` (alias) | sync_object_pose_runner.hpp |
   | **Keypoint Detection** | `[POSE]` — `using = SyncPoseRunner` (alias) | sync_keypoint_runner.hpp |
   | **Panoptic Driving Perception** | `[DET]` — `using = SyncDetectionRunner` (alias) | sync_panoptic_runner.hpp |

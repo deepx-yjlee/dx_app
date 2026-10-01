@@ -19,7 +19,7 @@ source "${DX_APP_PATH}/scripts/color_env.sh"
 source "${DX_APP_PATH}/scripts/common_util.sh"
 
 # =============================================================================
-# Demo Registry (27 entries)
+# Demo Registry (26 entries)
 # =============================================================================
 DEMO_LABELS=(
     # ── Detection (4) ──
@@ -42,10 +42,9 @@ DEMO_LABELS=(
     "Image Denoising          (DnCNN-50)"
     "Super Resolution         (ESPCN-X4)"
     "Image Enhancement        (Zero-DCE)"
-    # ── Recognition (3) ──
+    # ── Recognition (2) ──
     "Embedding                (ArcFace)"
     "Attribute Recognition    (DeepMAR-ResNet50)"
-    "Person Re-ID             (CasViT-T)"
     # ── PPU (1) ──
     "PPU Pipeline             (YOLOv7-PPU)"
     # ── Keypoint & Pose (2) ──
@@ -54,9 +53,9 @@ DEMO_LABELS=(
     # ── Driving & 3D (2) ──
     "Panoptic Driving         (YOLOPv2)"
     "3D Object Detection      (SFA3D)"
-    # ── Hand (1) ──
+    # ── Hand Detection (1) ──
     "Hand Detection           (MediaPipe Palm)"
-    # ── Retrieval & Matting (4) ── DX Model Zoo 2_5_0 task categories
+    # ── Retrieval & Matting (4) ──
     "Image Retrieval          (CLIP RN50)"
     "Visual Place Recognition (EigenPlaces R18)"
     "Person Re-ID             (RepVGG-A0)"
@@ -64,18 +63,32 @@ DEMO_LABELS=(
 )
 
 DEMO_GROUPS=(
-    "Detection" "Detection" "Detection" "Detection"
-    "Pose & Landmark" "Pose & Landmark" "Pose & Landmark"
-    "Segmentation" "Segmentation"
+    "Detection"
+    "Detection"
+    "Detection"
+    "Detection"
+    "Pose & Landmark"
+    "Pose & Landmark"
+    "Pose & Landmark"
+    "Segmentation"
+    "Segmentation"
     "Classification"
     "Depth Estimation"
-    "Image Restoration" "Image Restoration" "Image Restoration"
-    "Recognition" "Recognition" "Recognition"
+    "Image Restoration"
+    "Image Restoration"
+    "Image Restoration"
+    "Recognition"
+    "Recognition"
     "PPU"
-    "Keypoint & Pose" "Keypoint & Pose"
-    "Driving & 3D" "Driving & 3D"
+    "Keypoint & Pose"
+    "Keypoint & Pose"
+    "Driving & 3D"
+    "Driving & 3D"
     "Hand Detection"
-    "Retrieval & Matting" "Retrieval & Matting" "Retrieval & Matting" "Retrieval & Matting"
+    "Retrieval & Matting"
+    "Retrieval & Matting"
+    "Retrieval & Matting"
+    "Retrieval & Matting"
 )
 
 DEMO_CPP_BASE=(
@@ -95,7 +108,6 @@ DEMO_CPP_BASE=(
     "zerodce"
     "arcface"
     "deepmar"
-    "casvit"
     "yolo_ppu"
     "superpoint"
     "dope"
@@ -125,7 +137,6 @@ DEMO_PY_DIR=(
     "low_light_enhancement/zerodce"
     "face_recognition/arcface"
     "person_attribute/deepmar"
-    "image_classification/casvit"
     "object_detection/yolo_ppu"
     "keypoint_detection/superpoint"
     "object_pose_estimation/dope"
@@ -155,7 +166,6 @@ DEMO_PY_BASE=(
     "zerodce"
     "arcface"
     "deepmar"
-    "casvit"
     "yolo_ppu"
     "superpoint"
     "dope"
@@ -169,19 +179,32 @@ DEMO_PY_BASE=(
 )
 
 DEMO_MODEL=(
-    yolov7_640x640.dxnn yolo11-n_640x640.dxnn scrfd-500m_640x640.dxnn yolo26-n-obb_1024x1024.dxnn
-    yolov8-s-pose_640x640.dxnn mediapipe-hands-lite_224x224.dxnn 3ddfa-v2_mobilenetv1_120x120.dxnn
-    yolov8-n-seg_640x640.dxnn deeplabv3plus_mobilenetv1_512x512.dxnn
-    resnet50_224x224.dxnn
-    yolo26-depth-s_768x768.dxnn
-    dncnn-50_512x512.dxnn espcn-x4_17x17.dxnn zerodce_400x600.dxnn
-    arcface_mobilefacenet_112x112.dxnn deepmar_resnet50_224x224.dxnn casvit-t_224x224.dxnn
-    yolov7_640x640_ppu.dxnn
-    superpoint_480x640.dxnn dope-hope-ketchup_480x640.dxnn
-    yolopv2_384x640.dxnn sfa3d_608x608.dxnn
-    mediapipe-hand-detector_192x192.dxnn
-    clip-img_resnet50_224x224_openai.dxnn eigenplaces-resnet18_512x512.dxnn
-    repvgg-a0-reid_256x128.dxnn ppmatting-hrnet-w48-composition_512x512.dxnn
+    "yolov7_640x640.dxnn"
+    "yolo11-n_640x640.dxnn"
+    "scrfd-500m_640x640.dxnn"
+    "yolo26-n-obb_1024x1024.dxnn"
+    "yolov8-s-pose_640x640.dxnn"
+    "mediapipe-hands-lite_224x224.dxnn"
+    "3ddfa-v2_mobilenetv1_120x120.dxnn"
+    "yolov8-n-seg_640x640.dxnn"
+    "deeplabv3plus_mobilenetv1_512x512.dxnn"
+    "resnet50_224x224.dxnn"
+    "yolo26-depth-s_768x768.dxnn"
+    "dncnn-50_512x512.dxnn"
+    "espcn-x4_17x17.dxnn"
+    "zerodce_400x600.dxnn"
+    "arcface_mobilefacenet_112x112.dxnn"
+    "deepmar_resnet50_224x224.dxnn"
+    "yolov7_640x640_ppu.dxnn"
+    "superpoint_480x640.dxnn"
+    "dope-hope-ketchup_480x640.dxnn"
+    "yolopv2_384x640.dxnn"
+    "sfa3d_608x608.dxnn"
+    "mediapipe-hand-detector_192x192.dxnn"
+    "clip-img_resnet50_224x224_openai.dxnn"
+    "eigenplaces-resnet18_512x512.dxnn"
+    "repvgg-a0-reid_256x128.dxnn"
+    "ppmatting-hrnet-w48-composition_512x512.dxnn"
 )
 
 DEMO_VIDEO=(
@@ -201,16 +224,15 @@ DEMO_VIDEO=(
     "assets/videos/lowlight.mp4"
     "assets/videos/face-pair-sofa.mp4"
     "assets/videos/person-pair-hallway.mp4"
-    "assets/videos/person-pair-hallway.mp4"
     "assets/videos/snowboard.mp4"
     "assets/videos/blackbox-city-road2.mov"
     "assets/videos/snowboard.mp4"
     "assets/videos/blackbox-city-road.mp4"
     "assets/videos/blackbox-city-road.mp4"
     "assets/videos/hand.mp4"
-    # The three retrieval tasks are image-only (DEMO_IMAGE_ONLY=1) so these are never
-    # read; matting is the one that does run on video.
-    "" "" ""
+    ""
+    ""
+    ""
     "assets/videos/person-pair-hallway.mp4"
 )
 
@@ -231,15 +253,12 @@ DEMO_IMAGE=(
     "sample/img/sample_lowlight.jpg"
     "sample/img/face_pair"
     "sample/img/sample_person_a1.jpg"
-    "sample/img/person_pair"
     "sample/img/sample_street.jpg"
     "sample/img/sample_street.jpg"
     "sample/dope/000000.png"
     "sample/img/sample_parking.jpg"
     "sample/kitti/velodyne/000049.bin"
     "sample/img/sample_hand.jpg"
-    # Each retrieval query is held OUT of its own gallery -- a query that is also a
-    # gallery member scores a meaningless 1.0000 self-match.
     "sample/img/sample_person_a2.jpg"
     "sample/vpr/queries/q1.jpg"
     "sample/reid/queries/sample_person_a2.jpg"
@@ -248,36 +267,62 @@ DEMO_IMAGE=(
 
 # "full" = all 6 modes, "no_py_async" = task ships no *_async.py variant
 DEMO_PY_ASYNC=(
-    full full full full
-    full full full
-    full full
-    full
-    full
-    full full full
-    full full full
-    full
-    full full
-    full full
-    full
-    full full full full
+    "full"
+    "full"
+    "full"
+    "full"
+    "full"
+    "full"
+    "full"
+    "full"
+    "full"
+    "full"
+    "full"
+    "full"
+    "full"
+    "full"
+    "full"
+    "full"
+    "full"
+    "full"
+    "full"
+    "full"
+    "full"
+    "full"
+    "full"
+    "full"
+    "full"
+    "full"
 )
 
 # 1 = image only (skip video selection), 0 = both image and video
 DEMO_IMAGE_ONLY=(
-    0 0 0 0
-    0 0 0
-    0 0
-    0
-    0
-    0 0 0
-    1 1 1
-    0
-    0 1
-    0 1
-    0
-    # Retrieval x3 compare against a gallery; matting measures 0.5 FPS (2036 ms/frame)
-    # so a video run is minutes long -- image only for the demo, --video still works.
-    1 1 1 1
+    "0"
+    "0"
+    "0"
+    "0"
+    "0"
+    "0"
+    "0"
+    "0"
+    "0"
+    "0"
+    "0"
+    "0"
+    "0"
+    "0"
+    "1"
+    "1"
+    "0"
+    "0"
+    "1"
+    "0"
+    "1"
+    "0"
+    "1"
+    "1"
+    "1"
+    "1"
 )
 
 DEMO_COUNT=${#DEMO_LABELS[@]}

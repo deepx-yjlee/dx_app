@@ -6,7 +6,7 @@ detects 3D objects with SFA3D. It provides 4 Python variants and 2 C++ variants.
 | Item | Value |
 |------|-------|
 | Model | `sfa3d_608x608` (`sfa3d_608x608.dxnn`) |
-| Task type | `3d_detection` |
+| Task type | `3d_object_detection` |
 | Input | LiDAR point cloud (`.bin`) — KITTI velodyne format |
 | Input resolution | 608 × 608 (BEV) |
 | Classes | `Pedestrian`, `Car`, `Cyclist` |

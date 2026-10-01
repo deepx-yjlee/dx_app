@@ -9,7 +9,7 @@ The Python Example project includes a comprehensive test framework built on `pyt
 - **Framework-Based:** Uses common base classes to ensure consistent testing logic across the entire repository.  
 - **Layered Testing Strategy:** Provides a comprehensive validation path - **Unit → Integration → CLI → E2E**.  
 - **Smart Mocking:** Combines high-speed software mocks (hardware-free) with real NPU hardware validation.  
-- **Centralized Configuration:** Model metadata is managed in a single source of truth (config.py) for simple maintenance.  
+- **Centralized Configuration:** Model metadata comes from `config/model_registry.json`. Test discovery lives in `tests/test_helpers/`.  
 - **Automated Performance Tracking:** E2E tests automatically capture and aggregate NPU performance metrics (FPS, Latency).  
 
 ---
@@ -39,7 +39,7 @@ The framework employs a layered approach to isolate issues effectively
 
 !!! note "Coverage Scope"
 
-    The Python test framework uses centralized model registration under `tests/python_example/framework/`. Adding a new source directory under `src/python_example/` does not automatically guarantee full test coverage until the corresponding test registration and mappings are updated.
+    Variant scripts are discovered from `src/python_example/<task>/<family>/<variant>/` by `tests/test_helpers/utils.py`. Adding a new source directory does not automatically guarantee full test coverage until registry metadata and the discovery helpers agree.
 
 ---
 
@@ -47,41 +47,29 @@ The framework employs a layered approach to isolate issues effectively
 
 **Project Structure & Reference**  
 
-The test suite mirrors the example structure for consistency  
+The test files sit next to each other. They are not split into per-task directories.
 
 ```text   
 tests/python_example/
-├── framework/              # Test framework core
-│   ├── config.py           # Model configurations (60+ models)
-│   ├── base_test.py        # Unit test base
-│   ├── groups_test.py      # Variant group test
-│   ├── integration_test.py # Integration template
-│   ├── cli_test.py         # CLI template
-│   ├── e2e_test.py         # E2E template
-│   └── performance_collector.py  # Performance metrics
-│
-├── test_visualization.py   # Visualization tests (sync + async)
-│                           #   Output → tests/test_visualization_result/python_example/{sync,async}/<task>/
-│
-├── object_detection/       # Object detection tests (25+ models)
-├── classification/         # Classification tests
-├── face_detection/         # Face detection tests
-├── pose_estimation/        # Pose estimation tests
-├── instance_segmentation/  # Instance segmentation tests
-├── semantic_segmentation/  # Semantic segmentation tests
-├── depth_estimation/       # Depth estimation tests
-├── hand_landmark/          # Hand landmark tests
-├── embedding/              # Embedding tests
-├── obb_detection/          # OBB detection tests
-├── image_denoising/        # Image denoising tests
-├── image_enhancement/      # Image enhancement tests
-├── super_resolution/       # Super resolution tests
-└── ppu/                    # PPU model tests
+├── conftest.py
+├── pytest.ini
+├── test_cli_basic.py
+├── test_cli_help.py
+├── test_dump_tensors.py
+├── test_e2e.py
+├── test_e2e_camera_rtsp.py
+├── test_multi_loop.py
+├── test_preopt_contract.py
+├── test_save_mode.py
+├── test_signal_handling.py
+├── test_verify.py
+├── test_visualization.py
+└── unit/                   # Processor, layout, and registry unit tests
 ```
 
-### Shared Module (`tests/common/`)
+### Shared Module (`tests/test_helpers/`)
 
-All test files import shared constants and utilities from `tests/common/`:  
+All test files import shared constants and utilities from `tests/test_helpers/`:  
 
 - `constants.py`: `TASK_IMAGE_MAP`, `MODEL_IMAGE_OVERRIDE`, path constants  
 - `utils.py`: `setup_environment()`, `discover_python_scripts()`, `normalize_model_name()`  

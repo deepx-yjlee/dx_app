@@ -10,27 +10,26 @@ The Python examples are located under `src/python_example/` and are organized by
 
 - **task**    
 - **model family**    
-- **execution and post-processing variant**  
+- **variant** (the `.dxnn` stem; each folder has sync, async, and C++ post-process entries)
 
-All examples share a common runtime layer under `src/python_example/common/` that provides base interfaces, processors, runners, input sources, visualizers, and utilities. This is the Python counterpart of `src/cpp_example/common/` — both languages implement the same 7-module factory-based architecture. Each model directory contains only thin entry-point scripts and a factory that wires shared components together.  
+All examples share a common runtime layer under `src/python_example/common/` that provides base interfaces, processors, runners, input sources, visualizers, and utilities. This is the Python counterpart of `src/cpp_example/common/` — both languages implement the same 7-module factory-based architecture. Each variant directory contains thin entry-point scripts and a factory that wires shared components together.  
 
 Representative task directories include:  
 
-- `classification/` — EfficientNet, AlexNet, ResNet, MobileNet, etc.  
-- `object_detection/` — YOLOv3/v5/v7/v8/v9/v10/v11/v12, YOLO26, YOLOX, NanoDet, DAMOYOLO, SSD  
+- `image_classification/` — EfficientNet, AlexNet, ResNet, MobileNet, CasViT, etc.  
+- `object_detection/` — YOLOv3/v5/v7/v8/v9/v10/v11/v12, YOLO26, YOLOX, NanoDet, DAMOYOLO, SSD. PPU variants live under families such as `yolo_ppu/`  
 - `face_detection/` — SCRFD, YOLOv5Face, YOLOv7Face, RetinaFace  
 - `pose_estimation/` — YOLOv8-Pose  
 - `semantic_segmentation/` — BiSeNet, DeepLabV3+, SegFormer  
 - `instance_segmentation/` — YOLOv8Seg, YOLOv26Seg  
 - `depth_estimation/` — FastDepth, SCDepthV3  
-- `embedding/` — ArcFace  
-- `obb_detection/` — YOLOv26OBB  
-- `image_denoising/`, `image_enhancement/`, `super_resolution/`  
+- `face_recognition/` — ArcFace  
+- `oriented_object_detection/` — YOLOv26OBB  
+- `image_denoising/`, `low_light_enhancement/`, `super_resolution/`  
 - `hand_landmark/` — Hand landmark estimation  
-- `ppu/` — PPU-accelerated variants (YOLOv5/v7/v8/v9/v10/v11/v12/SCRFD/Pose)  
-- `attribute_recognition/` — Attribute recognition (DeepMAR)  
-- `reid/` — Person re-identification (CasViT)  
-- `face_alignment/` — Face alignment / 3D landmark (3DDFA v2)  
+- `person_attribute/` — Attribute recognition (DeepMAR)  
+- `person_reid/` — Person re-identification (RepVGG)  
+- `face_landmark/` — Face alignment / 3D landmark (3DDFA v2)  
 
 For the full repository-level structure, refer to [DX-APP Example Source Structure](11_DX-APP_Example_Source_Structure.md).  
 
@@ -83,21 +82,15 @@ A JSON registry stores per-model metadata (task, postprocessor type, input dimen
 
 ### Directory & File Pattern
 
-Each model family has one directory. The factory and family entries stay there.
-Each variant is a subdirectory named after the `.dxnn` stem and holds `config.json`
-plus thin entry scripts.
+Each task directory contains model families. Each variant is a subdirectory named after the `.dxnn` stem and holds that variant's factory, `config.json`, and thin entry scripts.
 
 ```text
 src/python_example/object_detection/yolov8/
-├── factory/
-│   └── yolov8_factory.py                     # One factory for the family
-├── yolov8_sync.py                            # Family entry; selects --variant
-├── yolov8_async.py
-├── yolov8_sync_cpp_postprocess.py
-├── yolov8_async_cpp_postprocess.py
 └── yolov8-n_640x640/
-    ├── config.json                           # This variant's runtime settings
-    ├── yolov8-n_640x640_sync.py              # Thin entry; variant is fixed
+    ├── factory/
+    │   └── yolov8-n_640x640_factory.py
+    ├── config.json
+    ├── yolov8-n_640x640_sync.py
     ├── yolov8-n_640x640_async.py
     ├── yolov8-n_640x640_sync_cpp_postprocess.py
     └── yolov8-n_640x640_async_cpp_postprocess.py
@@ -151,7 +144,17 @@ All Python examples use `argparse` via `common/runner/args.py` and share a consi
 
 !!! note "NOTE"
 
-    **Image-only tasks:** `embedding`, `reid`, and `attribute_recognition` tasks accept `--image` input only. `--video`, `--camera`, and `--rtsp` are not supported for these tasks because meaningful inference requires a crop of a pre-detected subject (face or person). Running a single embedding model on a raw video stream without a preceding detector would not produce valid results. Passing a video/camera source to these tasks exits with an error.
+    **Image-only tasks:** 11 tasks accept `--image` input only; `--video`, `--camera` and `--rtsp`
+    are rejected at runtime with an error. The authoritative list is
+    `_IMAGE_ONLY_TASKS` in `src/python_example/common/runner/sync_runner.py`.
+
+    `embedding`, `reid`, `attribute_recognition`, `face_recognition`, `face_attribute`, `person_attribute`, `person_reid`, `image_retrieval`, `visual_place_recognition` need a crop of a pre-detected subject, or a committed gallery to rank
+    against. Running a single embedding model on a raw stream without a preceding
+    detector would not produce valid results.
+
+    `object_pose_estimation`, `3d_object_detection` do not take a video frame at all: `3d_object_detection` (SFA3D) consumes a
+    LiDAR point cloud (`sample/kitti/velodyne/*.bin`) and refuses any other file
+    type, and DOPE scores the pose of a static object from a single image.
 
 ---
 
@@ -172,8 +175,8 @@ All Python examples use `argparse` via `common/runner/args.py` and share a consi
 **Step 3. Run a Python example**  
 
 ```bash
-python src/python_example/object_detection/yolov9s/yolov9s_sync.py --model assets/models/yolov9-s_640x640.dxnn --image sample/img/sample_kitchen.jpg
-python src/python_example/object_detection/yolov9s/yolov9s_async_cpp_postprocess.py --model assets/models/yolov9-s_640x640.dxnn --video assets/videos/dance-group.mov
+python src/python_example/object_detection/yolov9/yolov9-s_640x640/yolov9-s_640x640_sync.py --model assets/models/yolov9-s_640x640.dxnn --image sample/img/sample_kitchen.jpg
+python src/python_example/object_detection/yolov9/yolov9-s_640x640/yolov9-s_640x640_async_cpp_postprocess.py --model assets/models/yolov9-s_640x640.dxnn --video assets/videos/dance-group.mov
 ```
 
 ---
@@ -207,7 +210,7 @@ When `DISPLAY`/`WAYLAND_DISPLAY` environment variables are absent, `cv2.imshow()
 
 **Model Configuration** (`--config`)  
 
-Runtime parameters (thresholds, top-k, etc.) come from `<family>/<variant>/config.json` via `load_variant_config`, with alias normalization (`score_threshold` → `conf_threshold`). A family entry selects the folder with `--variant`. A thin script in that folder fixes the variant. A single-model extract may keep `config.json` beside the entry script.  
+Runtime parameters (thresholds, top-k, etc.) come from `<task>/<family>/<variant>/config.json` via `load_variant_config`, with alias normalization (`score_threshold` → `conf_threshold`). The thin script in that folder fixes the variant. A single-model extract may keep `config.json` beside the entry script.  
 
 **Fast Postprocessing** (`--fast-postprocess`)  
 
@@ -229,7 +232,7 @@ There are two accuracy tiers:
 
 ```bash
 # Object detection (exact tier) — identical results, faster decode
-python src/python_example/object_detection/yolov7/yolov7_sync.py \
+python src/python_example/object_detection/yolov7/yolov7_640x640/yolov7_640x640_sync.py \
     --model assets/models/yolov7_640x640.dxnn --image sample/img/sample_street.jpg --fast-postprocess
 ```
 

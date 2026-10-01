@@ -49,43 +49,42 @@ Both `cpp_example/` and `python_example/` follow the same task-first structure.
 
 Representative task directories include:  
 
-- `classification/`  
-- `object_detection/`  
+- `image_classification/`  
+- `object_detection/` — PPU models are a family here, for example `yolo_ppu/`  
 - `face_detection/`  
 - `pose_estimation/`  
 - `semantic_segmentation/`  
 - `instance_segmentation/`  
 - `depth_estimation/`  
-- `embedding/`  
+- `face_recognition/`  
 - `image_denoising/`  
-- `image_enhancement/`  
+- `low_light_enhancement/`  
 - `super_resolution/`  
-- `obb_detection/`  
-- `ppu/`  
+- `oriented_object_detection/`  
 - `hand_landmark/`  
-- `attribute_recognition/`  
-- `reid/`  
-- `face_alignment/`  
+- `person_attribute/`  
+- `person_reid/`  
+- `face_landmark/`  
 
 This makes it easy to answer both questions below:  
 
 - what task does this example belong to?  
 - where should a new model example be added?  
 
-**Model-First Subdirectories**  
+**Family and Variant Subdirectories**  
 
-Within each task directory, examples are split again by model family.  
+Within each task directory, examples are split by model family, then by variant. The variant directory name is the `.dxnn` stem.
 
 Examples:  
 
 ```text
-src/cpp_example/object_detection/yolov9s/
-src/cpp_example/object_detection/yolov8/
-src/python_example/object_detection/yolov9s/
-src/python_example/object_detection/ssdmv1/
+src/cpp_example/object_detection/yolov9/yolov9-s_640x640/
+src/cpp_example/object_detection/yolov8/yolov8-n_640x640/
+src/python_example/object_detection/yolov9/yolov9-s_640x640/
+src/python_example/object_detection/ssd/ssd-mobilenetv2-lite_300x300/
 ```
 
-This gives each model family its own isolated workspace for:  
+This gives each variant its own workspace for:  
 
 - config files  
 - source files  
@@ -245,40 +244,32 @@ Python runners are **generic**: `SyncRunner` and `AsyncRunner` work for all task
 
 ### How Model Directories Connect to `common/`
 
-**C++ family directory**
+**C++ variant directory**
 
-The factory and family entries stay on `<task>/<family>/`. Each variant directory
-holds `config.json` only. The family entry selects the variant from the `.dxnn` stem.
+The factory and the sync/async entries live in `<task>/<family>/<variant>/`. The directory name is the `.dxnn` stem.
 
 ```text
-src/cpp_example/object_detection/yolov8/
+src/cpp_example/object_detection/yolov8/yolov8-n_640x640/
 ├── factory/
-│   └── yolov8_factory.hpp         # One factory for every yolov8 variant
-├── yolov8_sync.cpp                # Entry → sync_detection_runner
-├── yolov8_async.cpp               # Entry → async_detection_runner
-└── yolov8-n_640x640/
-    └── config.json                # This variant's runtime settings
+│   └── yolov8-n_640x640_factory.hpp
+├── yolov8-n_640x640_sync.cpp        # Entry → sync_detection_runner
+├── yolov8-n_640x640_async.cpp       # Entry → async_detection_runner
+└── config.json
 ```
 
-**Python family directory**
+**Python variant directory**
 
-One factory serves the family. `<family>_sync.py` selects `--variant`.
-`<family>/<variant>/` holds `config.json` and thin entry scripts that fix that variant.
+The same folder holds the factory, `config.json`, and one thin script per execution mode. Each script fixes that variant.
 
 ```text
-src/python_example/object_detection/yolov8/
+src/python_example/object_detection/yolov8/yolov8-n_640x640/
 ├── factory/
-│   └── yolov8_factory.py
-├── yolov8_sync.py                          # Family entry; --variant
-├── yolov8_async.py
-├── yolov8_sync_cpp_postprocess.py
-├── yolov8_async_cpp_postprocess.py
-└── yolov8-n_640x640/
-    ├── config.json
-    ├── yolov8-n_640x640_sync.py            # Thin entry; variant fixed
-    ├── yolov8-n_640x640_async.py
-    ├── yolov8-n_640x640_sync_cpp_postprocess.py
-    └── yolov8-n_640x640_async_cpp_postprocess.py
+│   └── yolov8-n_640x640_factory.py
+├── config.json
+├── yolov8-n_640x640_sync.py
+├── yolov8-n_640x640_async.py
+├── yolov8-n_640x640_sync_cpp_postprocess.py
+└── yolov8-n_640x640_async_cpp_postprocess.py
 ```
 
 The factory imports shared components from `common/`:
@@ -304,43 +295,34 @@ runner = SyncRunner(factory)
 runner.run()
 ```
 
-Adding a variant usually means a new `<family>/<variant>/config.json`. Add a family factory only when the family does not exist yet.
+Adding a variant means a new `<task>/<family>/<variant>/` directory with `config.json`, a factory, and that variant's entry files.
 
 ### Entry Naming
 
 **C++**
 
-Family entries live next to `factory/`. The variant folder is config only.
-
 ```text
-src/cpp_example/<task>/<family>/
-├── factory/<family>_factory.hpp
-├── <family>_sync.cpp
-├── <family>_async.cpp
-└── <variant>/
-    └── config.json
+src/cpp_example/<task>/<family>/<variant>/
+├── factory/<variant>_factory.hpp
+├── <variant>_sync.cpp
+├── <variant>_async.cpp
+└── config.json
 ```
 
-- `<family>_sync.cpp`: sequential execution for every variant of the family
-- `<family>_async.cpp`: pipelined execution for every variant of the family
+- `<variant>_sync.cpp`: sequential execution for that variant
+- `<variant>_async.cpp`: pipelined execution for that variant
+- `bin/<variant>_sync` and `bin/<variant>_async`: built executables
 
 **Python**
 
-Family entries select `--variant`. Thin scripts under `<variant>/` fix one stem.
-
 ```text
-src/python_example/<task>/<family>/
-├── factory/<family>_factory.py
-├── <family>_sync.py
-├── <family>_async.py
-├── <family>_sync_cpp_postprocess.py
-├── <family>_async_cpp_postprocess.py
-└── <variant>/
-    ├── config.json
-    ├── <variant>_sync.py
-    ├── <variant>_async.py
-    ├── <variant>_sync_cpp_postprocess.py
-    └── <variant>_async_cpp_postprocess.py
+src/python_example/<task>/<family>/<variant>/
+├── factory/<variant>_factory.py
+├── config.json
+├── <variant>_sync.py
+├── <variant>_async.py
+├── <variant>_sync_cpp_postprocess.py
+└── <variant>_async_cpp_postprocess.py
 ```
 
 - `*_sync.py`: synchronous path
@@ -405,23 +387,28 @@ The model registry is a JSON array that serves as the single source of truth for
 {
   "model_name": "yolov9s",
   "dxnn_file": "yolov9-s_640x640.dxnn",
+  "variant": "yolov9-s_640x640",
+  "family": "yolov9",
+  "task": "object_detection",
   "add_model_task": "object_detection",
   "postprocessor": "yolov8",
   "input_width": 640,
   "input_height": 640,
-  "config": { "conf_threshold": 0.5, "num_classes": 80 },
+  "config": { "score_threshold": 0.25, "nms_threshold": 0.45 },
   "supported": true
 }
 ```
+
+`model_name` is the registry key used by `./setup.sh --models`. The example directory is `<task>/<family>/<variant>`, here `object_detection/yolov9/yolov9-s_640x640`.
 
 **`scripts/add_model.sh`**
 
 The `add_model.sh` script reads an entry from the registry and auto-generates:
 
 - `config.json` with correct input dimensions and thresholds
-- `factory/{model}_factory.py` wired to the correct processor and visualizer
-- 4 entry-point scripts (sync/async × python/cpp_postprocess)
-- C++ equivalents under `src/cpp_example/`
+- `factory/<variant>_factory.py` wired to the correct processor and visualizer
+- 4 entry-point scripts under the variant directory (sync/async × python/cpp_postprocess)
+- C++ `<variant>_sync.cpp` and `<variant>_async.cpp` under `src/cpp_example/<task>/<family>/<variant>/`
 
 This enables onboarding a new model with zero manual code in most cases.
 
@@ -432,7 +419,7 @@ This enables onboarding a new model with zero manual code in most cases.
 When adding a new example, keep the following rules:  
 
 - (1) choose the correct task directory first  
-- (2) create a dedicated model directory under that task  
+- (2) create `<task>/<family>/<variant>/` for that model  
 - (3) follow existing variant naming conventions  
 - (4) place shared decode logic in `src/cpp_example/common/processors/` (C++) or `src/python_example/common/processors/` (Python) when appropriate  
 - (5) add pybind11 bindings in `src/postprocess/` + `src/bindings/` only if the new flow needs `*_cpp_postprocess.py` variants  
@@ -443,7 +430,7 @@ When adding a new example, keep the following rules:
 
 When a new example is intended to become part of the maintained repository flow, confirm all of the following:  
 
-- source files are placed under the correct task/model directory  
+- source files are placed under the correct `<task>/<family>/<variant>/` directory  
 - naming follows the current variant convention  
 - required shared post-processing logic exists or is added under `src/cpp_example/common/processors/` (C++) or `src/python_example/common/processors/` (Python)  
 - model assets can be prepared through the standard setup flow  
@@ -459,9 +446,9 @@ When a new example is intended to become part of the maintained repository flow,
 
 The source tree and the test tree are related, but not identical.
 
-**Shared Test Infrastructure** (`tests/common/`)  
+**Shared Test Infrastructure** (`tests/test_helpers/`)  
 
-`tests/common/` provides shared constants and utilities used by both C++ and Python test suites:  
+`tests/test_helpers/` provides shared constants and utilities used by both C++ and Python test suites:  
 
 - `constants.py` — paths, timeout values, suffix patterns (e.g., `_sync`, `_async`)  
 - `utils.py` — helper functions for executable/script discovery, process execution, result validation  
@@ -482,20 +469,21 @@ C++ tests are organized into four categories:
 | Feature: Multi-Loop | `test_multi_loop.py` | Tests `--loop` repeated execution |
 | Feature: Signal | `test_signal_handling.py` | Tests SIGINT/SIGTERM graceful shutdown |
 
-All tests auto-discover executables from `bin/` using `tests/common/utils.py`.
+All tests auto-discover executables from `bin/` using `tests/test_helpers/utils.py`.
 
 **Python tests**  
 
-- Python example tests are driven by centralized configuration under `tests/python_example/framework/`  
-- `test_visualization.py` validates output image generation across all task types  
+- Python example tests discover variant scripts through `tests/test_helpers/utils.py` and `config/model_registry.json`  
+- `tests/python_example/test_visualization.py` validates output image generation across task types  
+- `tests/python_example/unit/` holds processor and layout checks  
 - adding a new source directory alone does **not** automatically guarantee full test coverage  
 
 Relevant files include:  
 
-- `tests/python_example/framework/config.py`  
-- `tests/python_example/framework/performance_collector.py`  
+- `tests/test_helpers/utils.py`  
+- `tests/test_helpers/constants.py`  
 - `tests/python_example/test_visualization.py`  
-- `tests/python_example/<task>/` (14 task directories)  
+- `tests/python_example/unit/`  
 - `config/test_models.conf`  
 
 **Model validation**  

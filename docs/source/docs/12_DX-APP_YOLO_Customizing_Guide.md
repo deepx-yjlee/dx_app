@@ -52,29 +52,22 @@ Use `scripts/add_model.sh` to create the C++ and Python example trees from the c
 ./scripts/add_model.sh custom_yolox object_detection --postprocessor yolox --lang both
 ```
 
-Generated files follow the family/variant layout. `<family>` is the shared
-implementation. `<variant>` is the `.dxnn` stem.
+Generated files follow the family/variant layout. `<family>` groups related models. `<variant>` is the `.dxnn` stem, and that folder holds the factory, `config.json`, and the entry files.
 
 ```text
-src/cpp_example/object_detection/<family>/
-├── factory/<family>_factory.hpp
-├── <family>_sync.cpp
-├── <family>_async.cpp
-└── <variant>/
-    └── config.json
+src/cpp_example/object_detection/<family>/<variant>/
+├── factory/<variant>_factory.hpp
+├── <variant>_sync.cpp
+├── <variant>_async.cpp
+└── config.json
 
-src/python_example/object_detection/<family>/
-├── factory/<family>_factory.py
-├── <family>_sync.py
-├── <family>_async.py
-├── <family>_sync_cpp_postprocess.py
-├── <family>_async_cpp_postprocess.py
-└── <variant>/
-    ├── config.json
-    ├── <variant>_sync.py
-    ├── <variant>_async.py
-    ├── <variant>_sync_cpp_postprocess.py
-    └── <variant>_async_cpp_postprocess.py
+src/python_example/object_detection/<family>/<variant>/
+├── factory/<variant>_factory.py
+├── config.json
+├── <variant>_sync.py
+├── <variant>_async.py
+├── <variant>_sync_cpp_postprocess.py
+└── <variant>_async_cpp_postprocess.py
 ```
 
 After generation, review both language trees. Do not assume a generated factory is final; the selected template only gives a safe starting point.
@@ -207,28 +200,28 @@ If verification fails due to unexpected tensor shape:
 Build the generated targets:
 
 ```bash
-./build.sh --type debug --target <model_name>_sync
-./build.sh --type debug --target <model_name>_async
+./build.sh --type debug --target <variant>_sync
+./build.sh --type debug --target <variant>_async
 ```
 
 Run C++ examples:
 
 ```bash
-./bin/<model_name>_sync  -m assets/models/<Model>.dxnn -i sample/img/sample_kitchen.jpg --no-display -l 1
-./bin/<model_name>_async -m assets/models/<Model>.dxnn -v assets/videos/dance-group.mov --no-display -l 1
+./bin/<variant>_sync  -m assets/models/<variant>.dxnn -i sample/img/sample_kitchen.jpg --no-display -l 1
+./bin/<variant>_async -m assets/models/<variant>.dxnn -v assets/videos/dance-group.mov --no-display -l 1
 ```
 
 Run Python examples:
 
 ```bash
-python src/python_example/object_detection/<model_name>/<model_name>_sync.py \
-  --model assets/models/<Model>.dxnn \
+python src/python_example/object_detection/<family>/<variant>/<variant>_sync.py \
+  --model assets/models/<variant>.dxnn \
   --image sample/img/sample_kitchen.jpg \
   --no-display \
   --loop 1
 
-python src/python_example/object_detection/<model_name>/<model_name>_async.py \
-  --model assets/models/<Model>.dxnn \
+python src/python_example/object_detection/<family>/<variant>/<variant>_async.py \
+  --model assets/models/<variant>.dxnn \
   --video assets/videos/dance-group.mov \
   --no-display \
   --loop 1
@@ -237,7 +230,7 @@ python src/python_example/object_detection/<model_name>/<model_name>_async.py \
 Use saved output for visual checks:
 
 ```bash
-./bin/<model_name>_sync -m assets/models/<Model>.dxnn -i sample/img/sample_kitchen.jpg --save
+./bin/<variant>_sync -m assets/models/<variant>.dxnn -i sample/img/sample_kitchen.jpg --save
 ```
 
 ---
@@ -253,12 +246,12 @@ Recommended sequence:
 ./scripts/dx_tool.sh validate
 
 # Targeted build
-./build.sh --type debug --target <model_name>_sync
-./build.sh --type debug --target <model_name>_async
+./build.sh --type debug --target <variant>_sync
+./build.sh --type debug --target <variant>_async
 
 # CLI smoke tests
-./scripts/dx_tool.sh run --lang cpp --model <model_name>
-./scripts/dx_tool.sh run --lang py --model <model_name>
+./scripts/dx_tool.sh run --lang cpp --model <variant>
+./scripts/dx_tool.sh run --lang py --model <variant>
 
 # Broader checks when assets are available
 ./run_tc.sh --cpp --cli

@@ -110,7 +110,7 @@ Build the C++ binaries and the Python dx_postprocess bindings simultaneously.
 ## For a clean rebuild, use: ./build.sh --clean
 
 ## Build specific targets only (faster incremental builds)
-./build.sh --target yolov9s_sync yolov9s_async
+./build.sh --target yolov9-s_640x640_sync yolov9-s_640x640_async
 
 ## List all available build targets
 ./build.sh --target list
@@ -125,12 +125,12 @@ Test the NPU performance using the YOLOv9 object detection template.
 
 ```bash
 ## Static Image Inference (Synchronous)
-./bin/yolov9s_sync \
+./bin/yolov9-s_640x640_sync \
 -m assets/models/yolov9-s_640x640.dxnn \
 -i sample/img/sample_kitchen.jpg
 
 ## Video Stream Inference (Asynchronous)
-./bin/yolov9s_async \
+./bin/yolov9-s_640x640_async \
 -m assets/models/yolov9-s_640x640.dxnn \
 -v assets/videos/dance-group.mov
 ```
@@ -139,12 +139,12 @@ Test the NPU performance using the YOLOv9 object detection template.
 
 ```bash
 ## Python Baseline (Synchronous)
-python src/python_example/object_detection/yolov9s/yolov9s_sync.py \
+python src/python_example/object_detection/yolov9/yolov9-s_640x640/yolov9-s_640x640_sync.py \
    --model assets/models/yolov9-s_640x640.dxnn \
    --image sample/img/sample_kitchen.jpg
 
 ## Python Optimized (Asynchronous + C++ Post-processing)
-python src/python_example/object_detection/yolov9s/yolov9s_async_cpp_postprocess.py \
+python src/python_example/object_detection/yolov9/yolov9-s_640x640/yolov9-s_640x640_async_cpp_postprocess.py \
   --model assets/models/yolov9-s_640x640.dxnn \
     --video assets/videos/dance-group.mov 
 ```
@@ -432,7 +432,7 @@ Dumps raw input/output tensors for debugging. On exception, tensors are auto-dum
 
 **Model Config** (`--config`)  
 
-Runtime parameters (score threshold, NMS threshold, top-k) live in `<task>/<family>/<variant>/config.json`. A Python family entry selects that folder with `--variant`. A C++ family entry takes the variant from the `.dxnn` stem. A single-model extract may keep `config.json` beside the entry script.  
+Runtime parameters (score threshold, NMS threshold, top-k) live in `<task>/<family>/<variant>/config.json`, next to that variant's entry. A single-model extract may keep `config.json` beside the entry script.  
 
 **Version Compatibility**  
 

@@ -229,7 +229,7 @@ _VID_LOWRES = "assets/videos/lowres-drone-city-road.mp4"
 # Tasks that accept image input only (no video/camera/rtsp stream).
 #   - embedding/reid/attribute_recognition: image-pair / single-image tasks
 #   - object_pose_estimation (DOPE): static-object pose, sample is sample/dope/*.png
-#   - 3d_detection (SFA3D): LiDAR .bin input, no video
+#   - 3d_object_detection (SFA3D): LiDAR .bin input, no video
 # NOTE: hand_detection / hand_landmark are NOT image-only — they run the single
 # model per frame on video/camera/RTSP the same way they run on a whole image
 # (no palm-detector crop stage), so they use the normal stream pipeline.
@@ -239,7 +239,7 @@ _IMAGE_ONLY_TASKS = {
     "embedding", "reid", "attribute_recognition",
     "face_recognition", "person_attribute", "face_attribute",
     "person_reid", "image_retrieval", "visual_place_recognition",
-    "object_pose_estimation", "3d_detection", "3d_object_detection",
+    "object_pose_estimation", "3d_object_detection",
 }
 
 _DEFAULT_SAMPLE_IMAGE = {
@@ -278,7 +278,6 @@ _DEFAULT_SAMPLE_IMAGE = {
     "object_pose_estimation": "sample/dope/000000.png",
     "panoptic_driving_perception": _IMG_PARKING,
     "3d_object_detection":    "sample/kitti/velodyne/000049.bin",
-    "3d_detection":           "sample/kitti/velodyne/000049.bin",
     # No industrial-defect sample ships with dx_app, and these models produce a
     # feature response for any input, so a structured scene is the honest default
     # rather than a stand-in that implies a defect dataset is bundled.
@@ -320,8 +319,8 @@ _DEFAULT_SAMPLE_VIDEO = {
     "keypoint_detection":     _VID_SNOWBOARD,
     "object_pose_estimation": _VID_SNOWBOARD,
     "panoptic_driving_perception": _VID_BLACKBOX,
-    "3d_object_detection":    _VID_BLACKBOX,
-    "3d_detection":           None,   # LiDAR .bin input only; video unsupported
+    # LiDAR .bin input only; there is no video form of a point cloud.
+    "3d_object_detection":    None,
     "anomaly_detection":      _VID_BLACKBOX,
 }
 
@@ -615,7 +614,8 @@ def _validate_media(args, factory=None) -> None:
             logger.error(f"Image path must be a valid file or directory: {args.image}")
             sys.exit(1)
         # 3D LiDAR examples consume raw point clouds — reject a non-.bin file.
-        if task_type == "3d_detection" and p.is_file() and p.suffix.lower() != ".bin":
+        if (task_type == "3d_object_detection" and p.is_file()
+                and p.suffix.lower() != ".bin"):
             logger.error(
                 "This example requires a LiDAR point-cloud .bin input "
                 f"(--image / -i). Got: {args.image}")

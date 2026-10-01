@@ -73,7 +73,7 @@ REGISTRY_KEYS = (
 # image_only=True without a per-variant flag, which is how the existing 17 work.
 IMAGE_ONLY_LEGACY_TASKS = {
     "embedding", "reid", "attribute_recognition", "object_pose_estimation",
-    "3d_detection", "3d_object_detection",
+    "3d_object_detection",
 }
 
 

@@ -282,3 +282,78 @@ def test_release_docs_cover_yolo_and_fast_segmentation_updates():
     assert "FastSegmentationPostprocessor" in pybind_postprocess
     assert "fast_segmentation" in dx_tool
     assert "fast_segmentation_postprocessor.py" in source_structure
+
+
+# ---------------------------------------------------------------------------
+# The 3D task is spelled "3d_object_detection" everywhere: registry, example
+# directory, variant config, and the task type both runners report. These tests
+# hold that single spelling, and hold the guard that depends on it -- a LiDAR
+# example must refuse a non-.bin input rather than push image pixels through a
+# point-cloud network.
+# ---------------------------------------------------------------------------
+
+SFA3D_DIR = ("src/python_example/3d_object_detection/sfa3d/sfa3d_608x608")
+
+
+def test_no_source_file_compares_against_a_short_form_task_name():
+    """Only the full task name is compared at runtime, in both trees."""
+    offenders = []
+    for rel in ("src/python_example/common/runner/sync_runner.py",
+                "src/python_example/common/runner/async_runner.py",
+                "src/cpp_example/common/utility/common_util.hpp",
+                "src/cpp_example/common/runner/sync_3d_object_detection_runner.hpp",
+                "src/cpp_example/common/runner/async_3d_object_detection_runner.hpp",
+                f"{SFA3D_DIR}/factory/sfa3d_608x608_factory.py"):
+        path = ROOT / rel
+        if not path.is_file():
+            continue
+        for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            bare = line.strip()
+            if bare.startswith(("#", "//", "*", "/*")):
+                continue
+            if '"3d_detection"' in line:
+                offenders.append(f"{rel}:{n}: {bare}")
+    assert not offenders, ("a short-form task name is still compared:\n  "
+                           + "\n  ".join(offenders))
+
+
+def test_cpp_factory_reports_the_canonical_task_name():
+    src = _read("src/cpp_example/3d_object_detection/sfa3d/sfa3d_608x608/"
+                "factory/sfa3d_608x608_factory.hpp")
+    assert 'getTaskType() const override { return "3d_object_detection"; }' in src
+
+
+def test_the_3d_task_declares_no_default_video():
+    """SFA3D consumes LiDAR point clouds; there is no video form of that input."""
+    import ast
+    src = _read("src/python_example/common/runner/sync_runner.py")
+    start = src.index("_DEFAULT_SAMPLE_VIDEO = {")
+    table = src[start + len("_DEFAULT_SAMPLE_VIDEO = ") : src.index("\n}", start) + 2]
+    # resolve the module-level _VID_* constants the table refers to
+    env = {name: value for name, value in
+           re.findall(r'^(_VID_\w+)\s*=\s*"([^"]+)"', src, re.M)}
+    mapping = eval(table, {"__builtins__": {}}, env)  # noqa: S307 - literal table
+    assert mapping["3d_object_detection"] is None
+    assert "3d_detection" not in mapping
+
+
+def test_a_non_bin_input_is_rejected_for_the_lidar_example():
+    """The guard that makes the dead comparison matter.
+
+    Runs the real entry script: an image path must be refused BEFORE inference,
+    not silently fed to a point-cloud model.
+    """
+    script = ROOT / SFA3D_DIR / "sfa3d_608x608_sync.py"
+    model = ROOT / "assets" / "models" / "sfa3d_608x608.dxnn"
+    image = ROOT / "sample" / "img" / "sample_street.jpg"
+    if not model.is_file():
+        pytest.skip(f"{model.name} not downloaded")
+    result = subprocess.run(
+        [sys.executable, str(script), "-m", str(model), "-i", str(image),
+         "--no-display"],
+        capture_output=True, text=True, timeout=300, cwd=str(ROOT),
+    )
+    combined = result.stdout + result.stderr
+    assert "LiDAR point-cloud .bin" in combined, (
+        "a .jpg was accepted by the LiDAR example:\n" + combined[-1500:])
+    assert result.returncode != 0, "the guard must exit non-zero"

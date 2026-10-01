@@ -69,9 +69,9 @@ For E2E Tests (Additional)
 
 ## Test Infrastructure
 
-### Shared Module (`tests/common/`)
+### Shared Module (`tests/test_helpers/`)
 
-All test files import shared constants and utilities from `tests/common/`:  
+All test files import shared constants and utilities from `tests/test_helpers/`:  
 
 - `constants.py`: `TASK_IMAGE_MAP`, `MODEL_IMAGE_OVERRIDE`, `MULTI_MODEL_EXECUTABLES`, path constants  
 - `utils.py`: `setup_environment()`, `discover_cpp_executables()`, `normalize_model_name()`  

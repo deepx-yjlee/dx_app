@@ -49,7 +49,7 @@ call :grcat "OBB Detection"           "sync_obb_runner.hpp"            "[OBB]"
 call :grcat "Face Detection"          "sync_face_runner.hpp"           "[FACE]"
 call :grcat "Face Alignment"          "sync_face_alignment_runner.hpp" "[ALIGN]"
 call :grcat "Hand Landmark"           "sync_hand_landmark_runner.hpp"  "[HAND]"
-call :grcat "3D Object Detection"     "sync_3d_detection_runner.hpp"   "[3D]"
+call :grcat "3D Object Detection"     "sync_3d_object_detection_runner.hpp"   "[3D]"
 REM runner reuse (alias / include) - the output format is that of the reused runner
 call :grcat "Object Pose (->Pose)"        "sync_pose_runner.hpp"           "[POSE]"
 call :grcat "Keypoint Detection (->Pose)" "sync_pose_runner.hpp"           "[POSE]"

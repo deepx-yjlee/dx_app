@@ -138,18 +138,35 @@ def pytest_configure(config):
         sys.modules["dx_postprocess"] = mock_dx_postprocess
         print("[OK] dx_postprocess mocked")
 
-    # Dynamically register per-model markers (one per model directory)
+    # Dynamically register per-model markers. ``test_e2e.py`` builds one marker per
+    # model with ``getattr(pytest.mark, model_name)`` and pytest.ini sets
+    # ``--strict-markers``, so every name it can produce must be registered here or
+    # collection of the WHOLE suite dies with "not found in `markers` configuration
+    # option".
+    #
+    # Both depths are registered because the tree is ``<task>/<family>/<variant>/``:
+    # registering only the second level yields the FAMILY (``sfa3d``) while test_e2e
+    # asks for the VARIANT (``sfa3d_608x608``). That mismatch is latent until enough
+    # .dxnn files are on disk for the missing variant to be collected -- running
+    # ``./setup.sh --demo-models`` was enough to turn it into a hard collection error.
     if PYTHON_EXAMPLE_PATH.exists():
+        seen: set[str] = set()
         for task_dir in sorted(PYTHON_EXAMPLE_PATH.iterdir()):
-            if not task_dir.is_dir():
+            if not task_dir.is_dir() or task_dir.name == "__pycache__":
                 continue
-            for model_dir in sorted(task_dir.iterdir()):
-                if not model_dir.is_dir() or model_dir.name == "__pycache__":
+            for family_dir in sorted(task_dir.iterdir()):
+                if not family_dir.is_dir() or family_dir.name == "__pycache__":
                     continue
-                config.addinivalue_line(
-                    "markers",
-                    f"{model_dir.name}: {model_dir.name} model tests",
-                )
+                for name_dir in (family_dir, *sorted(family_dir.iterdir())):
+                    if not name_dir.is_dir() or name_dir.name == "__pycache__":
+                        continue
+                    if name_dir.name in seen:
+                        continue
+                    seen.add(name_dir.name)
+                    config.addinivalue_line(
+                        "markers",
+                        f"{name_dir.name}: {name_dir.name} model tests",
+                    )
 
     report_dir = PROJECT_ROOT / "reports"
     report_dir.mkdir(exist_ok=True)

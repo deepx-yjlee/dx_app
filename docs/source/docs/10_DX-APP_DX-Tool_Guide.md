@@ -132,7 +132,10 @@ This mode is better for:
 
 | Field | Purpose |
 |-------|---------|
-| `model_name` | Unique identifier (e.g., `yolov9s`) |
+| `model_name` | Registry key used by `./setup.sh --models` (e.g., `yolov9s`) |
+| `variant` | Example directory and `.dxnn` stem (e.g., `yolov9-s_640x640`) |
+| `family` | Family directory (e.g., `yolov9`) |
+| `task` | Task directory (e.g., `object_detection`) |
 | `dxnn_file` | Compiled model filename (e.g., `yolov9-s_640x640.dxnn`) |
 | `add_model_task` | Task category (e.g., `object_detection`) |
 | `postprocessor` | Which shared processor to use (e.g., `yolov8`) |
@@ -297,13 +300,13 @@ differ between runs either way.
 Use `extract_sln_package.bat` when you want to extract a single C++ example into a Visual Studio/CMake package that can be opened or built outside the full DX-APP solution.
 
 ```powershell
-.\scripts\extract_sln_package.bat classification/resnet50 --output-dir out_resnet50
+.\scripts\extract_sln_package.bat image_classification/resnet/resnet50_224x224 --output-dir out_resnet50
 ```
 
 The output is created under:
 
 ```text
-out_resnet50\sln\classification\resnet50\
+out_resnet50\sln\image_classification\resnet50_224x224\
 ```
 
 If CMake and the Visual Studio 2022 generator are available, the extractor also configures the package immediately and generates a solution file:
@@ -338,7 +341,7 @@ In the usual local developer environment, users should not need to edit Visual S
 To create only the package skeleton without configuring CMake or generating `.sln` files:
 
 ```powershell
-.\scripts\extract_sln_package.bat classification/resnet50 --output-dir out_resnet50 --no-generate-sln
+.\scripts\extract_sln_package.bat image_classification/resnet/resnet50_224x224 --output-dir out_resnet50 --no-generate-sln
 ```
 
 

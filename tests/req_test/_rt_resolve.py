@@ -699,7 +699,7 @@ def do_cpp_bin_input():
         # Precise match: only LiDAR 3D-detection examples require .bin input.
         # (Substring "3d" would wrongly catch "3ddfa" = 3D Dense Face Alignment,
         #  which is a face_alignment model with no .bin guard → would run + hang.)
-        if task not in ("3d_object_detection", "3d_detection") \
+        if task != "3d_object_detection" \
                 and not base.lower().startswith("sfa3d"):
             continue
         if not entry or not entry[0].exists():
@@ -841,7 +841,7 @@ def _doc_command_lines():
 def _doc_bin_cmdline(parts, exe, windows=None):
     """문서의 `./bin/<x>_sync ...` 를 현재 셸에서 실제로 실행 가능한 커맨드라인으로.
 
-    문서는 POSIX 표기(`./bin/yolov9s_sync`)로 적혀 있는데, Windows 에서 `shell=True`
+    문서는 POSIX 표기(`./bin/yolov9-s_640x640_sync`)로 적혀 있는데, Windows 에서 `shell=True`
     는 `cmd.exe /c <문자열>` 이고 cmd 는 이를 "`.` 라는 명령 + `/bin` 스위치" 로
     파싱해 버린다 → `'.' is not recognized as an internal or external command`.
     (`./bin/x_sync.exe` 처럼 확장자가 이미 붙어 있어도 똑같이 죽는다 — 확장자가

@@ -65,7 +65,7 @@ grcat "OBB Detection"           sync_obb_runner.hpp            "[OBB]"
 grcat "Face Detection"          sync_face_runner.hpp           "[FACE]"
 grcat "Face Alignment"          sync_face_alignment_runner.hpp "[ALIGN]"
 grcat "Hand Landmark"           sync_hand_landmark_runner.hpp  "[HAND]"
-grcat "3D Object Detection"     sync_3d_detection_runner.hpp   "[3D]"
+grcat "3D Object Detection"     sync_3d_object_detection_runner.hpp   "[3D]"
 # 러너 재사용 (alias / include) — 출력 포맷은 재사용하는 러너의 것
 grcat "Object Pose (→Pose)"        sync_pose_runner.hpp           "[POSE]"
 grcat "Keypoint Detection (→Pose)" sync_pose_runner.hpp           "[POSE]"

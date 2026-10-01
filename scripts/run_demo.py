@@ -56,7 +56,6 @@ DEMOS = [
     ("Image Enhancement        (Zero-DCE)", "Image Restoration", "zerodce", "low_light_enhancement/zerodce", "zerodce", "zerodce_400x600.dxnn", "assets/videos/lowlight.mp4", "sample/img/sample_lowlight.jpg", True, False),
     ("Embedding                (ArcFace)", "Recognition", "arcface", "face_recognition/arcface", "arcface", "arcface_mobilefacenet_112x112.dxnn", "assets/videos/face-pair-sofa.mp4", "sample/img/face_pair", True, True),
     ("Attribute Recognition    (DeepMAR-ResNet50)", "Recognition", "deepmar", "person_attribute/deepmar", "deepmar", "deepmar_resnet50_224x224.dxnn", "assets/videos/person-pair-hallway.mp4", "sample/img/sample_person_a1.jpg", True, True),
-    ("Person Re-ID             (CasViT-T)", "Recognition", "casvit", "image_classification/casvit", "casvit", "casvit-t_224x224.dxnn", "assets/videos/person-pair-hallway.mp4", "sample/img/person_pair", True, True),
     ("PPU Pipeline             (YOLOv7-PPU)", "PPU", "yolo_ppu", "object_detection/yolo_ppu", "yolo_ppu", "yolov7_640x640_ppu.dxnn", "assets/videos/snowboard.mp4", "sample/img/sample_street.jpg", True, False),
     ("Keypoint Detection       (SuperPoint)", "Keypoint & Pose", "superpoint", "keypoint_detection/superpoint", "superpoint", "superpoint_480x640.dxnn", "assets/videos/blackbox-city-road2.mov", "sample/img/sample_street.jpg", True, False),
     ("Object Pose Estimation   (DOPE)", "Keypoint & Pose", "dope", "object_pose_estimation/dope", "dope", "dope-hope-ketchup_480x640.dxnn", "assets/videos/snowboard.mp4", "sample/dope/000000.png", True, True),

@@ -49,7 +49,7 @@ public:
     std::string getModelName() const override {
         return "sfa3d_608x608";
     }
-    std::string getTaskType() const override { return "3d_detection"; }
+    std::string getTaskType() const override { return "3d_object_detection"; }
 
 private:
     float score_threshold_;

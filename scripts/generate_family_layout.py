@@ -100,16 +100,16 @@ def legacy_media(entry: dict, spec: dict) -> tuple[str | None, str | None, bool]
     prefix, exactly as ``_resolve_default_sample_image`` does.
     """
     lt = entry["task_legacy"]
-    # The runner calls the 3D task "3d_detection" internally.
-    lt_runner = "3d_detection" if lt == "3d_object_detection" else lt
-    image = LEGACY_IMAGE.get(lt_runner) or LEGACY_IMAGE.get(lt)
+    # task_legacy indexes the runner's tables directly -- both spell every task
+    # the same way, so no translation is needed.
+    image = LEGACY_IMAGE.get(lt)
     norm = "".join(c for c in (spec.get("source_dir") or "").lower() if c.isalnum())
     for prefix, override in LEGACY_IMAGE_OVERRIDE.items():
         if norm.startswith("".join(c for c in prefix.lower() if c.isalnum())):
             image = override
             break
-    video = LEGACY_VIDEO.get(lt_runner, LEGACY_VIDEO.get(lt))
-    image_only = lt_runner in LEGACY_IMAGE_ONLY or lt in LEGACY_IMAGE_ONLY
+    video = LEGACY_VIDEO.get(lt)
+    image_only = lt in LEGACY_IMAGE_ONLY
     return image, video, image_only
 
 

@@ -56,7 +56,7 @@ ALIASES: dict[str, str] = {
 }
 
 # src/python_example/common/runner/sync_runner.py::_IMAGE_ONLY_TASKS, expressed in
-# add_model_task terms ("3d_detection" is the runner's alias for this task).
+# add_model_task terms.
 IMAGE_ONLY_LEGACY_TASKS = {
     "embedding", "reid", "attribute_recognition",
     "object_pose_estimation", "3d_object_detection",

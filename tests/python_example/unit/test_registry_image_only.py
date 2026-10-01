@@ -23,11 +23,18 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 REGISTRY = PROJECT_ROOT / "config" / "model_registry.json"
 SYNC_RUNNER = (PROJECT_ROOT / "src" / "python_example" / "common" / "runner" / "sync_runner.py")
 
-# Mirror of sync_runner._IMAGE_ONLY_TASKS, translated from the runner's internal
-# "3d_detection" alias to the registry's add_model_task spelling.
+# Plain mirror of sync_runner._IMAGE_ONLY_TASKS -- both sides spell every task the
+# same way, so no translation is applied.
 IMAGE_ONLY_LEGACY_TASKS = frozenset({
+    # legacy task_legacy spellings -- these are the ones registry rows actually carry
     "embedding", "reid", "attribute_recognition",
     "object_pose_estimation", "3d_object_detection",
+    # current task names the runner also treats as image-only. No registry row has
+    # one of these as task_legacy, so they do not affect
+    # test_image_only_matches_legacy_task_membership; they are here because the
+    # runner's set is consulted with either spelling depending on the variant.
+    "face_recognition", "person_attribute", "face_attribute",
+    "person_reid", "image_retrieval", "visual_place_recognition",
 })
 
 
@@ -75,7 +82,7 @@ def test_runner_image_only_set_still_matches_this_mirror():
     names = {tok.strip().strip('"').strip("'")
              for tok in literal.split("{", 1)[1].rstrip("}").split(",")}
     names = {n for n in names if n}
-    expected = (set(IMAGE_ONLY_LEGACY_TASKS) - {"3d_object_detection"}) | {"3d_detection"}
+    expected = set(IMAGE_ONLY_LEGACY_TASKS)
     assert names == expected, (
         f"sync_runner._IMAGE_ONLY_TASKS is {sorted(names)}, this test mirrors "
         f"{sorted(expected)} -- update IMAGE_ONLY_LEGACY_TASKS and the migration "

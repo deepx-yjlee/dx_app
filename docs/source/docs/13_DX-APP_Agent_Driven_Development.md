@@ -310,9 +310,9 @@ execution.
 
 | Tool | How to Use |
 |---|---|
-| **Claude Code** | Type the prompt directly. Routes to `dx-agent-app-build-python` skill with `classification` task type. Generates top-K label prediction logic. |
+| **Claude Code** | Type the prompt directly. Routes to `dx-agent-app-build-python` skill with the `image_classification` task. Generates top-K label prediction logic. |
 | **GitHub Copilot** | `@dx-app-builder` followed by the prompt. Routes to `dx-python-builder` with classification postprocessing (softmax + top-K). |
-| **Cursor** | Type the prompt directly. `python-example.mdc` activates for generated files in `src/python_example/classification/`. |
+| **Cursor** | Type the prompt directly. `python-example.mdc` activates for generated files in `src/python_example/image_classification/`. |
 | **OpenCode** | `@dx-app-builder` followed by the prompt, or `/dx-agent-app-build-python` skill directly. |
 
 ### Scenario 8: Build an Async High-Performance App

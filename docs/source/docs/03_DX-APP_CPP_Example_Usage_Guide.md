@@ -10,29 +10,28 @@ The C++ examples are located under `src/cpp_example/` and are organized by:
 
 - **task**  
 - **model family**  
-- **execution variant**  
+- **variant** (the `.dxnn` stem; sync and async are separate entry files inside that folder)
 
-All examples share a common runtime layer under `src/cpp_example/common/` that provides base interfaces, processors, runners, input sources, visualizers, and utilities. This is the C++ counterpart of `src/python_example/common/` — both languages implement the same 7-module factory-based architecture. Each model directory contains thin entry-point source files and a factory that wires shared components together.  
+All examples share a common runtime layer under `src/cpp_example/common/` that provides base interfaces, processors, runners, input sources, visualizers, and utilities. This is the C++ counterpart of `src/python_example/common/` — both languages implement the same 7-module factory-based architecture. Each variant directory contains thin entry-point source files and a factory that wires shared components together.  
 
 Representative task directories include:
 
-- `classification/`  
-- `object_detection/`  
+- `image_classification/`  
+- `object_detection/` — PPU models are a family here, for example `yolo_ppu/`  
 - `face_detection/`  
 - `pose_estimation/`  
 - `semantic_segmentation/`  
 - `instance_segmentation/`  
 - `depth_estimation/`  
-- `embedding/`  
+- `face_recognition/`  
 - `image_denoising/`  
-- `image_enhancement/`  
+- `low_light_enhancement/`  
 - `super_resolution/`  
 - `hand_landmark/`  
-- `obb_detection/`  
-- `ppu/`  
-- `attribute_recognition/`  
-- `reid/`  
-- `face_alignment/`  
+- `oriented_object_detection/`  
+- `person_attribute/`  
+- `person_reid/`  
+- `face_landmark/`  
 
 For the full repository-level structure, refer to [DX-APP Example Source Structure](11_DX-APP_Example_Source_Structure.md).
 
@@ -60,52 +59,39 @@ Unlike Python's generic `SyncRunner`/`AsyncRunner`, C++ runners are **task-speci
 
 **Factory Pattern Implementation**  
 
-Each model directory has a `factory/{model}_factory.hpp` that implements `IFactory`:
+Each variant directory has a `factory/<variant>_factory.hpp` that implements the task factory:
 
 ```cpp
-// factory/yolov9s_factory.hpp
-#include "common/processors/yolov8_postprocessor.hpp"
-#include "common/visualizers/detection_visualizer.hpp"
-
-class YOLOv9sFactory : public IFactory {
-    IProcessor* createProcessor() override { return new YOLOv8Postprocessor(config); }
-    IVisualizer* createVisualizer() override { return new DetectionVisualizer(); }
-};
-```
-
-The entry-point delegates to a task-specific runner:
-
-```cpp
-// yolov9s_sync.cpp
-auto factory = YOLOv9sFactory(config);
-SyncDetectionRunner runner(factory);
-runner.run();
+// object_detection/yolov9/yolov9-s_640x640/yolov9-s_640x640_sync.cpp
+auto factory = std::make_unique<dxapp::Yolov9Factory>();
+dxapp::SyncDetectionRunner<dxapp::Yolov9Factory> runner(std::move(factory));
+return runner.run(argc, argv);
 ```
 
 ### Directory Pattern & File Pattern 
 
-Each model family has one directory. The factory and family entries stay there.
-Each variant directory is named after the `.dxnn` stem and holds `config.json` only.
-The family entry selects the variant from that stem.
+Each task directory contains model families. Each variant directory is named after the `.dxnn` stem and holds that variant's factory, `config.json`, and sync/async entries.
 
 Example:
 
 ```text
-src/cpp_example/object_detection/yolov8/
-├── factory/
-│   └── yolov8_factory.hpp       # One factory for every yolov8 variant
-├── yolov8_sync.cpp              # Entry → sync_detection_runner
-├── yolov8_async.cpp             # Entry → async_detection_runner
-└── yolov8-n_640x640/
-    └── config.json              # This variant's runtime settings
+src/cpp_example/object_detection/yolov9/
+└── yolov9-s_640x640/
+    ├── factory/
+    │   └── yolov9-s_640x640_factory.hpp
+    ├── yolov9-s_640x640_sync.cpp
+    ├── yolov9-s_640x640_async.cpp
+    └── config.json
 ```
+
+The CMake target and `bin/` executable use the same stem: `yolov9-s_640x640_sync`.
 
 Common files:
 
-- `<family>/<variant>/config.json`: that variant's runtime settings
-- `factory/`: factory header wiring shared `common/` components
-- `<family>_sync.cpp`: synchronous entry for every variant of the family
-- `<family>_async.cpp`: asynchronous entry for every variant of the family  
+- `<task>/<family>/<variant>/config.json`: that variant's runtime settings
+- `<variant>/factory/<variant>_factory.hpp`: factory header wiring shared `common/` components
+- `<variant>_sync.cpp`: synchronous entry for that variant
+- `<variant>_async.cpp`: asynchronous entry for that variant  
 
 ---
 
@@ -152,7 +138,17 @@ All C++ examples use `cxxopts` for argument parsing and share a consistent inter
 - **Input source:** `--image_path`, `--video_path`, `--camera_index`, and `--rtsp_url` form a mutually exclusive group. If none is specified, a **default sample image** is automatically selected based on the task type.
 
 !!! note "NOTE"
-    **Image-only tasks:** `embedding`, `reid`, and `attribute_recognition` tasks accept `--image_path` input only. `--video_path`, `--camera_index`, and `--rtsp_url` are not supported for these tasks because meaningful inference requires a crop of a pre-detected subject (face or person). Running a single embedding model on a raw video stream without a preceding detector would not produce valid results.
+    **Image-only tasks:** 11 tasks accept `--image_path` input only; `--video_path`, `--camera_index` and `--rtsp_url`
+    are rejected at runtime with an error. The authoritative list is
+    `_IMAGE_ONLY_TASKS` in `src/python_example/common/runner/sync_runner.py`.
+
+    `embedding`, `reid`, `attribute_recognition`, `face_recognition`, `face_attribute`, `person_attribute`, `person_reid`, `image_retrieval`, `visual_place_recognition` need a crop of a pre-detected subject, or a committed gallery to rank
+    against. Running a single embedding model on a raw stream without a preceding
+    detector would not produce valid results.
+
+    `object_pose_estimation`, `3d_object_detection` do not take a video frame at all: `3d_object_detection` (SFA3D) consumes a
+    LiDAR point cloud (`sample/kitti/velodyne/*.bin`) and refuses any other file
+    type, and DOPE scores the pose of a static object from a single image.
 
 ---
 
@@ -173,8 +169,8 @@ All C++ examples use `cxxopts` for argument parsing and share a consistent inter
 **Step 3. Run a C++ example**  
 
 ```bash
-./bin/yolov9s_sync -m assets/models/yolov9-s_640x640.dxnn -i sample/img/sample_kitchen.jpg
-./bin/yolov9s_async -m assets/models/yolov9-s_640x640.dxnn -v assets/videos/dance-group.mov
+./bin/yolov9-s_640x640_sync -m assets/models/yolov9-s_640x640.dxnn -i sample/img/sample_kitchen.jpg
+./bin/yolov9-s_640x640_async -m assets/models/yolov9-s_640x640.dxnn -v assets/videos/dance-group.mov
 ```
 
 ---
@@ -201,7 +197,7 @@ When `--save` is enabled, a timestamped directory is created (e.g., `artifacts/c
 
 **Configuration Management (`--config`)**  
 
-Runtime parameters (thresholds, top-k, etc.) live in `<family>/<variant>/config.json`. The family entry picks that folder from the `.dxnn` stem. A single-model extract may keep `config.json` beside the entry.
+Runtime parameters (thresholds, top-k, etc.) live in `<task>/<family>/<variant>/config.json`, next to that variant's entry. A single-model extract may keep `config.json` beside the entry.
 
 ### Verification & Diagnostics
 

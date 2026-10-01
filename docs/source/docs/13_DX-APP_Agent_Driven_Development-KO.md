@@ -306,9 +306,9 @@ dx_app 에이전틱 개발은 4가지 AI 코딩 도구에서 작동합니다. �
 
 | 도구 | 사용 방법 |
 |---|---|
-| **Claude Code** | 프롬프트를 직접 입력. `dx-agent-app-build-python` 스킬이 `classification` 작업 유형으로 라우팅. Top-K 레이블 예측 로직 생성. |
+| **Claude Code** | 프롬프트를 직접 입력. `dx-agent-app-build-python` 스킬이 `image_classification` 작업 유형으로 라우팅. Top-K 레이블 예측 로직 생성. |
 | **GitHub Copilot** | `@dx-app-builder` 뒤에 프롬프트 입력. 분류 후처리(softmax + Top-K)와 함께 `dx-python-builder`로 라우팅. |
-| **Cursor** | 프롬프트를 직접 입력. `src/python_example/classification/` 파일 생성 시 `python-example.mdc` 활성화. |
+| **Cursor** | 프롬프트를 직접 입력. `src/python_example/image_classification/` 파일 생성 시 `python-example.mdc` 활성화. |
 | **OpenCode** | `@dx-app-builder` 뒤에 프롬프트 입력, 또는 `/dx-agent-app-build-python` 스킬 직접 사용. |
 
 ### 시나리오 8: 비동기 고성능 앱 빌드
