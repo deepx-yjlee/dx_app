@@ -89,5 +89,6 @@ def test_verify_disabled_by_default(script, model, test_input, tmp_path):
     assert not verify_dir.exists() or not any(verify_dir.iterdir())
 
 
+@pytest.mark.verify
 def test_verify_prerequisites():
     assert SYNC_CASES and ASYNC_CASES, "no downloaded model has a Python example"
