@@ -1301,6 +1301,7 @@ class AsyncRunner:
                              daemon=True),
         ]
 
+        finished = False
         try:
             # Inside the try: a stop request while the writer opens or the
             # workers start still releases the writer and joins what started.
@@ -1317,12 +1318,18 @@ class AsyncRunner:
                         time.sleep(0.01)
             else:
                 self._drain_display_queue(queues)
+            finished = True
         except KeyboardInterrupt:
             logger.info("\nInterrupted by user.")
             self._set_stop(queues)
+            finished = True
         finally:
             # Also on an interrupt that lands after the loop: the video must be finalized.
             try:
+                if not finished:
+                    # Any other error: stop the workers before joining them,
+                    # or each join waits its full 5 s and the error surfaces late.
+                    self._set_stop(queues)
                 # A thread that never started cannot be joined (RuntimeError).
                 self._join_workers([t for t in threads if t.ident is not None], queues)
                 elapsed = time.perf_counter() - start_time
