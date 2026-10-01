@@ -24,9 +24,10 @@ import pytest
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 VERIFIER = PROJECT_ROOT / "scripts" / "verify_preopt_contract.py"
 
-# Override with DXAPP_PREOPT_MODELS_DIR when the models live elsewhere.
-MODELS_DIR = Path(os.environ.get("DXAPP_PREOPT_MODELS_DIR",
-                                 "/home/yjlee/git-src/dx_yolo26/models"))
+# The models are looked up where every other model lives, PROJECT_ROOT/assets/models;
+# override with DXAPP_PREOPT_MODELS_DIR when they live elsewhere.
+DEFAULT_MODELS_DIR = PROJECT_ROOT / "assets" / "models"
+MODELS_DIR = Path(os.environ.get("DXAPP_PREOPT_MODELS_DIR", str(DEFAULT_MODELS_DIR)))
 
 REQUIRED = (
     "pre_optimized_yolo26-n-od.dxnn",
@@ -38,10 +39,11 @@ REQUIRED = (
 @pytest.mark.e2e
 @pytest.mark.e2e_image
 def test_preopt_contract_holds_on_real_hardware():
-    missing = [name for name in REQUIRED if not (MODELS_DIR / name).is_file()]
-    if missing:
-        pytest.skip(f"pre-optimized models not present in {MODELS_DIR}: {missing}. "
-                    "Set DXAPP_PREOPT_MODELS_DIR to a directory holding them.")
+    where = ("assets/models" if MODELS_DIR == DEFAULT_MODELS_DIR else str(MODELS_DIR))
+    for name in REQUIRED:
+        if not (MODELS_DIR / name).is_file():
+            pytest.skip(f"pre-optimized model {name} not in {where} "
+                        "(or set DXAPP_PREOPT_MODELS_DIR to a directory holding it)")
 
     result = subprocess.run(
         [sys.executable, str(VERIFIER), "--models-dir", str(MODELS_DIR)],

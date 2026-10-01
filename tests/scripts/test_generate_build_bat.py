@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 import shutil
 import subprocess
 import sys
 from pathlib import Path
+
+import pytest
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -146,6 +149,7 @@ def test_targets_with_hyphens_sanitize_batch_variable_names():
     assert "FOUND_my_target_v2" in text
 
 
+@pytest.mark.skipif(os.name != "nt", reason="runs a .bat through cmd.exe")
 def test_run_bat_executes_bare_relative_filename(tmp_path, monkeypatch):
     """Regression test for a Windows cmd.exe quoting bug in run_bat().
 

@@ -6,4 +6,3 @@
 # A plain `pytest tests/scripts` ignores this file and shows them failing.
 #
 # <test id, relative to this directory> | <reason>
-test_generate_build_bat.py::test_run_bat_executes_bare_relative_filename | 8d0b748: a Windows cmd.exe regression test with no platform guard; on Linux /bin/sh cannot run the .bat (rc 126, Permission denied)

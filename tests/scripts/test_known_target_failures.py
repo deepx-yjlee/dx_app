@@ -132,9 +132,19 @@ def test_the_real_conftest_wires_the_hooks():
     assert imported == {"pytest_addoption", "pytest_configure", "pytest_collection_modifyitems"}
 
 
+def test_an_empty_or_header_only_list_is_accepted(tmp_path):
+    # The real list may hold no entry at all (only its header) once every
+    # TARGET failure is fixed: ci_checks.sh keeps passing it, so it must load.
+    for listing in ("", "# header only\n#\n# <test id> | <reason>\n\n"):
+        root = _suite(tmp_path, listing)
+        assert known_failures.load(root / "known.txt") == {}
+        r = _pytest(root, "--known-failures", "known.txt", "test_demo.py::test_passes")
+        assert r.returncode == 0, r.stdout + r.stderr
+        assert "1 passed" in r.stdout
+
+
 def test_every_known_target_failure_names_a_test_that_exists():
     entries = known_failures.load(LIST)
-    assert entries, "the list is empty: drop --known-failures from ci_checks.sh instead"
     for test_id in entries:
         path, name = test_id.split("::", 1)
         source = (HERE / path).read_text(encoding="utf-8")

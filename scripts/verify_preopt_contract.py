@@ -35,7 +35,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src" / "python_example"))
 
-DEFAULT_MODELS_DIR = Path("/home/yjlee/git-src/dx_yolo26/models")
+DEFAULT_MODELS_DIR = ROOT / "assets" / "models"
 
 # (file stem, postprocessor class name, expected row width, config, sample image)
 #
