@@ -1641,6 +1641,7 @@ def test_readmes_document_model_load_non_finite_values_and_device_memory():
         assert '"NaN"' in text and '"Infinity"' in text and '"-Infinity"' in text, path
         assert "Device memory" in text, path
         assert "realesrgan-x2_192x192" in text, path
+        assert "cannot hold a second realesrgan_x2" not in text, path  # M2: the old names
 
 
 @pytest.mark.graph

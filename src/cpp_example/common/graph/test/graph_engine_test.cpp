@@ -1779,6 +1779,9 @@ void TestBuildReportsAnEngineThatWillNotLoadAsModelLoad() {
                              "memory cache") == 0);
     GRAPH_CHECK(message.find("device memory may be full") != std::string::npos);
     GRAPH_CHECK(message.find("loaded 1 model(s) before this one") != std::string::npos);
+    // M2: the example names the models as variants, as the READMEs do.
+    GRAPH_CHECK(message.find("DX-M1 cannot hold a second realesrgan-x2_192x192 next to "
+                             "yolov8-n_640x640 and resnet50_224x224") != std::string::npos);
     if (code != GraphErrorCode::kModelLoad) std::printf("      %s\n", message.c_str());
 
     // The second copy of one model: DX-M1's realesrgan_x2 case, in miniature.

@@ -392,8 +392,8 @@ void StageGraph::Build(const GraphSpec& spec, const IModelRegistry& registry,
                     << engines_opened << " model(s) before this one, and every node "
                     << "loads its own copy, even of the same model (another process "
                     << "on the NPU uses memory too); remove a node or use a smaller "
-                    << "model - DX-M1 cannot hold a second realesrgan_x2 next to "
-                    << "yolov8n and resnet50";
+                    << "model - DX-M1 cannot hold a second realesrgan-x2_192x192 next to "
+                    << "yolov8-n_640x640 and resnet50_224x224";
             }
             throw GraphError(GraphErrorCode::kModelLoad, "node \"" + node.id + "\"",
                              "model \"" + node.model + "\" (" + info->dxnn_file +
