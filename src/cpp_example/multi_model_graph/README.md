@@ -121,17 +121,12 @@ Which to use:
   cascade's fused summary. A graph has no fuse or CPU node (see *Not in this
   release*).
 * The **hand cascade** and **worker safety** exist in both forms
-  (`hand_cascade.json`, `worker_safety.json` above). For `hand_cascade` the
-  two find the same palms and hands, but their crops can differ by one pixel
-  row or column: the graph clips the padded box to the frame and truncates
-  its width and height once (`ClipBoxToFrame` in `common/utility/roi_crop.hpp`),
-  while `multi_model_run` truncates each corner (`cropBoxes` in
-  `multi_model/runner.cpp`). They differ whenever the fractional part of the
-  far edge is smaller than that of the near edge. On the sample image the
-  graph's crop is one row shorter, and after the landmark model's resize to
-  224×224 that moves hand landmarks by up to 6.45 px. On the same crop the
-  two landmark stages agree to 3.1e-5 px. Each runtime is consistent with
-  itself; compare their landmarks only on the same crop.
+  (`hand_cascade.json`, `worker_safety.json` above). Both runtimes cut an
+  ROI crop by one rule, `PaddedCropRect` in `common/utility/roi_crop.hpp`:
+  pad the box around its centre, clamp it to the frame in float, then
+  truncate the corner and the size once. For `hand_cascade` the two find the
+  same palms and hands, cut the same crops, and their hand landmarks agree
+  within 1e-3 px on the sample image (v8 and v9 models).
 
 ---
 

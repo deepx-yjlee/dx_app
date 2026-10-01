@@ -12,21 +12,15 @@
  *
  *   1. runs MultiModelRunner::runFrame on the frame and keeps its count line;
  *   2. builds the same two stages through dxapp::createRegisteredStage (the
- *      public registry.hpp API) and runs palm -> crops -> landmarks. The crop
- *      rule is a copy of cropBoxes() in multi_model/runner.cpp, which sits in
- *      an anonymous namespace there;
+ *      public registry.hpp API) and runs palm -> crops -> landmarks. The crops
+ *      are cut by PaddedCropRect (common/utility/roi_crop.hpp), as
+ *      cropBoxes() in multi_model/runner.cpp cuts them (it sits in an
+ *      anonymous namespace there); the graph engine's RouteRois crops by the
+ *      same header;
  *   3. fails unless its own palm and hand counts equal the count line, which
- *      ties the copied crop rule to the real runner;
+ *      ties its crops to the real runner;
  *   4. prints one JSON object: per palm, the crop box and the landmarks in
  *      frame coordinates (x + crop.left, y + crop.top).
- *
- * The graph engine cuts a crop by another rounding rule (ClipBoxToFrame in
- * common/utility/roi_crop.hpp truncates the clamped width and height, the
- * runner truncates each corner), so its crop can be one pixel shorter, and
- * the landmark model moves by several pixels over that one row. Each palm
- * therefore also carries "graph_rule": the crop the engine cuts and the same
- * landmark stage's output on it. The test requires that crop to equal the
- * graph report's src_box exactly, so a change to either copy fails loudly.
  *
  * Test-only. It links multi_model/{pipeline,registry,runner}.cpp unchanged.
  */
@@ -36,6 +30,7 @@
 #include "multi_model/runner.hpp"
 
 #include "common/third_party/nlohmann_json.hpp"
+#include "common/utility/roi_crop.hpp"
 
 #include <opencv2/imgcodecs.hpp>
 
@@ -115,75 +110,32 @@ double boxArea(const std::vector<float>& box) {
     return width * height;
 }
 
-// Copy of cropBoxes() in multi_model/runner.cpp (lines 150-184 at 8d0b748):
-// integer truncation of each corner, pad by a ratio of the truncated size,
-// clamp to the frame. bind "roi" passes padRatio 0.
+// The runner's crops (cropBoxes() in multi_model/runner.cpp): the detector
+// box as x, y, x2 - x, y2 - y through PaddedCropRect; a crop with no whole
+// pixel is skipped. bind "roi" passes padRatio 0.
 std::vector<ProbeCrop> cropLikeTheRunner(
-    const cv::Mat& frame, const std::vector<dxapp::BoxRecord>& records, double padRatio) {
+    const cv::Mat& frame, const std::vector<dxapp::BoxRecord>& records, float padRatio) {
     std::vector<ProbeCrop> crops;
-    const int frameWidth = frame.cols;
-    const int frameHeight = frame.rows;
     for (std::size_t i = 0; i < records.size(); ++i) {
         const std::vector<float>& raw = records[i].box;
         if (raw.size() < 4) {
             continue;
         }
-        const int x1 = static_cast<int>(raw[0]);
-        const int y1 = static_cast<int>(raw[1]);
-        const int x2 = static_cast<int>(raw[2]);
-        const int y2 = static_cast<int>(raw[3]);
-        if (x2 <= x1 || y2 <= y1) {
-            continue;
-        }
-        const int padX = static_cast<int>((x2 - x1) * padRatio);
-        const int padY = static_cast<int>((y2 - y1) * padRatio);
-        const int left = std::max(0, x1 - padX);
-        const int top = std::max(0, y1 - padY);
-        const int right = std::min(frameWidth, x2 + padX);
-        const int bottom = std::min(frameHeight, y2 + padY);
-        if (right <= left || bottom <= top) {
+        const cv::Rect2f box(raw[0], raw[1], raw[2] - raw[0], raw[3] - raw[1]);
+        const cv::Rect rect = dxapp::PaddedCropRect(box, padRatio, frame.cols, frame.rows);
+        if (rect.width <= 0 || rect.height <= 0) {
             continue;
         }
         ProbeCrop crop;
         crop.palmIndex = i;
-        crop.box.push_back(static_cast<float>(left));
-        crop.box.push_back(static_cast<float>(top));
-        crop.box.push_back(static_cast<float>(right));
-        crop.box.push_back(static_cast<float>(bottom));
-        crop.image = frame(cv::Rect(left, top, right - left, bottom - top)).clone();
+        crop.box.push_back(static_cast<float>(rect.x));
+        crop.box.push_back(static_cast<float>(rect.y));
+        crop.box.push_back(static_cast<float>(rect.x + rect.width));
+        crop.box.push_back(static_cast<float>(rect.y + rect.height));
+        crop.image = frame(rect).clone();
         crops.push_back(crop);
     }
     return crops;
-}
-
-// Copy of the graph engine's crop for an roi edge with pad 0: the detector
-// box as x, y, x2 - x, y2 - y (ToRect in common/graph/result_to_shape.hpp),
-// then ClipBoxToFrame (common/utility/roi_crop.hpp): clamp in float, truncate
-// the corner and the size once.
-bool cropLikeTheGraph(const cv::Mat& frame, const std::vector<float>& raw, ProbeCrop& crop) {
-    if (raw.size() < 4) {
-        return false;
-    }
-    const cv::Rect2f box(raw[0], raw[1], raw[2] - raw[0], raw[3] - raw[1]);
-    const float x1 = std::max(0.f, box.x);
-    const float y1 = std::max(0.f, box.y);
-    const float x2 = std::min(static_cast<float>(frame.cols), box.x + box.width);
-    const float y2 = std::min(static_cast<float>(frame.rows), box.y + box.height);
-    if (x2 <= x1 || y2 <= y1) {
-        return false;
-    }
-    const cv::Rect clipped(static_cast<int>(x1), static_cast<int>(y1),
-                           static_cast<int>(x2 - x1), static_cast<int>(y2 - y1));
-    if (clipped.width <= 0 || clipped.height <= 0) {
-        return false;
-    }
-    crop.box.clear();
-    crop.box.push_back(static_cast<float>(clipped.x));
-    crop.box.push_back(static_cast<float>(clipped.y));
-    crop.box.push_back(static_cast<float>(clipped.x + clipped.width));
-    crop.box.push_back(static_cast<float>(clipped.y + clipped.height));
-    crop.image = frame(clipped).clone();
-    return true;
 }
 
 // The landmark stage's hands on one crop, moved into frame coordinates.
@@ -307,7 +259,7 @@ int main(int argc, char** argv) {
                 ++palmCount;
             }
         }
-        const std::vector<ProbeCrop> crops = cropLikeTheRunner(frame, palms.boxes, 0.0);
+        const std::vector<ProbeCrop> crops = cropLikeTheRunner(frame, palms.boxes, 0.f);
 
         nlohmann::json report = nlohmann::json::object();
         report["count_line"] = countLine;
@@ -322,29 +274,20 @@ int main(int argc, char** argv) {
         }
         report["palm_boxes"] = palmBoxes;
 
-        // 3. Landmarks per crop, moved into frame coordinates, on the
-        //    runner's crop and on the graph engine's crop of the same palm.
+        // 3. Landmarks per crop, moved into frame coordinates.
         nlohmann::json cropsJson = nlohmann::json::array();
         for (std::size_t i = 0; i < crops.size(); ++i) {
             nlohmann::json cropJson = nlohmann::json::object();
             cropJson["palm_index"] = static_cast<int>(crops[i].palmIndex);
             cropJson["crop"] = boxJson(crops[i].box);
             cropJson["hands"] = handsInFrame(*landmarkStage, crops[i]);
-            ProbeCrop graphCrop;
-            graphCrop.palmIndex = crops[i].palmIndex;
-            if (cropLikeTheGraph(frame, palms.boxes[crops[i].palmIndex].box, graphCrop)) {
-                nlohmann::json graphJson = nlohmann::json::object();
-                graphJson["crop"] = boxJson(graphCrop.box);
-                graphJson["hands"] = handsInFrame(*landmarkStage, graphCrop);
-                cropJson["graph_rule"] = graphJson;
-            }
             cropsJson.push_back(cropJson);
         }
         report["crops"] = cropsJson;
 
         std::cout << report.dump(2) << std::endl;
 
-        // 4. The copied crop rule must reproduce the runner's counts.
+        // 4. The probe's crops must reproduce the runner's counts.
         if (palmCount != runnerPalms || static_cast<int>(crops.size()) != runnerHands) {
             std::cerr << "probe counts palms=" << palmCount << " hands=" << crops.size()
                       << " differ from the runner's line: " << countLine << std::endl;

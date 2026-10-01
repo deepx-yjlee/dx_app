@@ -2789,8 +2789,12 @@ HAND_CASCADE = "hand_cascade.json"
 WORKER_SAFETY = "worker_safety.json"
 HAND_IMAGE = "sample/img/sample_hand.jpg"
 HAND_MODELS = ("mediapipe-hand-detector_192x192.dxnn", "mediapipe-hands-lite_224x224.dxnn")
-# Spec N21: a landmark may move this far between the two runtimes.
-LANDMARK_TOLERANCE_PX = 2.0
+# Spec N21: a palm box may move this far between the two runtimes.
+PALM_BOX_TOLERANCE_PX = 2.0
+# I17: both runtimes cut the crop by common/utility/roi_crop.hpp, so the
+# landmark stage sees the same pixels and a landmark differs only by float
+# rounding (measured 0.0000 px on v8, 0.0001 px on v9).
+LANDMARK_TOLERANCE_PX = 1e-3
 
 
 def _hand_count_line(text):
@@ -2811,12 +2815,11 @@ def test_hand_cascade_graph_matches_the_pipeline_runtime(tmp_path):
 
     multi_model_run gives the palm and hand counts. hand_cascade_probe runs
     the same runtime's stages and reports each palm's crop and landmarks in
-    frame coordinates, on two crops: the runner's (each corner truncated)
-    and the one the graph engine cuts (the clamped size truncated), which
-    can be one pixel shorter. The landmark model moves by several pixels
-    over that one row (6.4 px on this image), so the 2 px comparison is made
-    on the graph engine's crop, and the two crops must differ by at most one
-    pixel per edge.
+    frame coordinates. Both runtimes crop by one rule
+    (common/utility/roi_crop.hpp), so the graph's crop equals the runtime's
+    exactly and every landmark agrees within LANDMARK_TOLERANCE_PX. Before
+    the rule was shared, the runtime's crop was one row taller on this image
+    and the landmarks moved by 6.45 px (v8) and 11.87 px (v9).
     """
     bin_dir = resolve_bin_dir()
     for tool in ("multi_model_run", "hand_cascade_probe"):
@@ -2850,24 +2853,22 @@ def test_hand_cascade_graph_matches_the_pipeline_runtime(tmp_path):
         mine = by_palm[origin["parent_index"]]
         palm_box = _corners(palm_items[origin["parent_index"]]["box"])
         their_palm = theirs["palm_boxes"][origin["parent_index"]]["box"]
-        assert all(abs(a - b) <= LANDMARK_TOLERANCE_PX for a, b in zip(palm_box, their_palm)), \
+        assert all(abs(a - b) <= PALM_BOX_TOLERANCE_PX for a, b in zip(palm_box, their_palm)), \
             (palm_box, their_palm)
 
         graph_crop = _corners(origin["src_box"])
-        assert graph_crop == mine["graph_rule"]["crop"], (graph_crop, mine["graph_rule"]["crop"])
-        assert all(abs(a - b) <= 1 for a, b in zip(graph_crop, mine["crop"])), \
-            (graph_crop, mine["crop"])
-
         ours_hands = crop["payload"]["items"]
         assert len(ours_hands) == len(mine["hands"]), (ours_hands, mine["hands"])
-        expected = mine["graph_rule"]["hands"]
-        assert len(ours_hands) == len(expected)
-        for ours_hand, their_hand in zip(ours_hands, expected):
+        worst = 0.0
+        for ours_hand, their_hand in zip(ours_hands, mine["hands"]):
             assert len(ours_hand["keypoints"]) == len(their_hand["landmarks"]), origin
             for point, (tx, ty) in zip(ours_hand["keypoints"], their_hand["landmarks"]):
                 x, y = to_source(origin["inv_align"], point["x"], point["y"])
-                assert abs(x - tx) <= LANDMARK_TOLERANCE_PX and \
-                    abs(y - ty) <= LANDMARK_TOLERANCE_PX, ((x, y), (tx, ty), origin)
+                worst = max(worst, abs(x - tx), abs(y - ty))
+        assert worst <= LANDMARK_TOLERANCE_PX, \
+            "landmarks differ by {:.4f} px; crops: graph {}, runtime {}".format(
+                worst, graph_crop, mine["crop"])
+        assert graph_crop == mine["crop"], (graph_crop, mine["crop"])
 
 
 @pytest.mark.graph

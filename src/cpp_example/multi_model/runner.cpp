@@ -7,6 +7,7 @@
 #include "multi_model/registry.hpp"
 
 #include "common/utility/common_util.hpp"
+#include "common/utility/roi_crop.hpp"
 
 #include <opencv2/calib3d.hpp>
 #include <opencv2/imgproc.hpp>
@@ -148,37 +149,27 @@ struct Crop {
     cv::Mat image;
 };
 
+// Crop windows by the graph engine's rule (common/utility/roi_crop.hpp):
+// pad around the box's centre, clamp to the frame in float, truncate once.
+// A box with no whole pixel inside the frame is skipped.
 std::vector<Crop> cropBoxes(const cv::Mat& frame, const std::vector<BoxRecord>& records, double padRatio) {
     std::vector<Crop> crops;
-    const int frameWidth = frame.cols;
-    const int frameHeight = frame.rows;
     for (std::size_t i = 0; i < records.size(); ++i) {
         const std::vector<float>& raw = records[i].box;
         if (raw.size() < 4) {
             continue;
         }
-        const int x1 = static_cast<int>(raw[0]);
-        const int y1 = static_cast<int>(raw[1]);
-        const int x2 = static_cast<int>(raw[2]);
-        const int y2 = static_cast<int>(raw[3]);
-        if (x2 <= x1 || y2 <= y1) {
-            continue;
-        }
-        const int padX = static_cast<int>((x2 - x1) * padRatio);
-        const int padY = static_cast<int>((y2 - y1) * padRatio);
-        const int left = std::max(0, x1 - padX);
-        const int top = std::max(0, y1 - padY);
-        const int right = std::min(frameWidth, x2 + padX);
-        const int bottom = std::min(frameHeight, y2 + padY);
-        if (right <= left || bottom <= top) {
+        const cv::Rect2f box(raw[0], raw[1], raw[2] - raw[0], raw[3] - raw[1]);
+        const cv::Rect rect = PaddedCropRect(box, static_cast<float>(padRatio), frame.cols, frame.rows);
+        if (rect.width <= 0 || rect.height <= 0) {
             continue;
         }
         Crop crop;
-        crop.box.push_back(static_cast<float>(left));
-        crop.box.push_back(static_cast<float>(top));
-        crop.box.push_back(static_cast<float>(right));
-        crop.box.push_back(static_cast<float>(bottom));
-        crop.image = frame(cv::Rect(left, top, right - left, bottom - top)).clone();
+        crop.box.push_back(static_cast<float>(rect.x));
+        crop.box.push_back(static_cast<float>(rect.y));
+        crop.box.push_back(static_cast<float>(rect.x + rect.width));
+        crop.box.push_back(static_cast<float>(rect.y + rect.height));
+        crop.image = frame(rect).clone();
         crops.push_back(crop);
     }
     return crops;
