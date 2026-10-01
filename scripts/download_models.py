@@ -765,7 +765,7 @@ def _setup_session():
     else:
         info("TLS CA bundle: requests default (certifi)")
     if relax_x509_strict_requested():
-        # No bundle found: keep requests' own default, certifi.
+        # The bundle, or certifi (requests' own default) when none was found.
         context = build_ssl_context(bundle or _certs.where(), relax_x509_strict=True)
         session.mount("https://", _ssl_context_adapter(_adapters.HTTPAdapter, context))
         warn(f"${RELAX_X509_STRICT_ENV}=1: X.509 strict mode is off for these downloads; "

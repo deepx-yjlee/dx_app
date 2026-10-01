@@ -19,8 +19,9 @@ model_name, where it differs, is the variant's old name, and an alias_of row
 is an alias of the row it names; both become ModelAlias entries
 (registry->AddAlias(name, variant, kind)), never a second model.
 scripts/check_model_registry.py's resolve_registry() decides which is which,
-imported, so the guard and this generator cannot disagree. --list-models
-lists every ModelInfo plus the ModelAlias::kAliasOf aliases.
+imported, so the guard and this generator cannot disagree. The graph CLI's
+--list-models (multi_model_graph_{sync,async}) lists every ModelInfo plus
+the ModelAlias::kAliasOf aliases.
 
 What the generated sources expect of the engine:
   ModelInfo::variant, ::family (TypedStage reads

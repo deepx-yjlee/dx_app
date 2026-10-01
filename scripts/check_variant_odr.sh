@@ -20,7 +20,7 @@ probe s object_detection/yolo11/yolo11-s_640x640/factory/yolo11-s_640x640_factor
 printf '#include <iostream>\n#include <string>\nstd::string from_n(); std::string from_s();\nint main() { std::cout << from_n() << "\\n" << from_s() << "\\n"; }\n' > "$W/main.cpp"
 g++ "${F[@]}" -c "$W/main.cpp" -o "$W/main.o"
 g++ "${F[@]}" -c "$ROOT/src/utility/common_util.cpp" -o "$W/cu.o"
-L=($(pkg-config --libs opencv4) -ldxrt -lstdc++fs ${ODR_EXTRA_LDFLAGS:-})   # ODR_EXTRA_LDFLAGS: only until C5
+L=($(pkg-config --libs opencv4) -ldxrt -lstdc++fs)
 for order in "n s" "s n"; do
   set -- $order
   g++ "$W/$1.o" "$W/$2.o" "$W/main.o" "$W/cu.o" -o "$W/probe" "${L[@]}"

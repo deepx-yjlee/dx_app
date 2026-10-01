@@ -326,12 +326,12 @@ bash scripts/ci_checks.sh --require-dxrt   # a check skipped for want of the dxr
 | Check | What it runs | Needs |
 |---|---|---|
 | `guard-graph-boundary` | `scripts/check_graph_boundary.py`: the engine never names a concrete registry | Python |
-| `guard-factory-uniqueness` | `scripts/check_factory_uniqueness.py`: no two factory headers declare the same class name | Python |
+| `guard-factory-uniqueness` | `scripts/check_factory_uniqueness.py`: no two factory headers declare the same fully qualified class (`dxapp::v_<variant>::<Class>`) | Python |
 | `guard-model-registry` | `scripts/check_model_registry.py`: `config/model_registry.json` matches the factory tree | Python |
 | `guard-variant-scope` | `scripts/generate_cpp_family_layout.py --variant-scope src/cpp_example --check`: every per-variant factory header is wrapped in its own `dxapp::v_<variant>` namespace, so two variants of one family linked into one program cannot silently share one class definition | Python |
 | `codegen-strict` | `scripts/gen_model_registry.py --strict` into a temporary directory | Python |
 | `codegen-check-docs` | `scripts/check_graph_models_doc.py`: `docs/graph_models.md` is not stale | Python |
-| `header-odr` | `scripts/check_header_odr.sh`: two translation units including every shared header link | dxrt and OpenCV headers, g++ |
+| `header-odr` | `scripts/check_header_odr.sh`: two translation units including every shared header link; then two variants of one family linked into one program keep their own postprocessor (`scripts/check_variant_odr.sh`) | dxrt and OpenCV headers, g++ |
 | `cxx14-headers` | `scripts/check_cxx14.sh`: the headers that own `g_interrupted()` compile as C++14 with `-Werror` | dxrt and OpenCV headers, g++ |
 | `cross-compile` | `scripts/check_cross_compile.sh`: the graph engine and CLI compile for aarch64 | `aarch64-linux-gnu-g++`, dxrt and OpenCV headers |
 | `python-compile` | `python -m compileall` over `src/python_example`, `src/bindings/python`, `scripts` and `tests` | Python |
