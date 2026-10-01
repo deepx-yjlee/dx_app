@@ -476,6 +476,38 @@ def test_docs_only_writes_the_doc_and_no_sources(tmp_path):
     assert not (tmp_path / "generated").exists()
 
 
+def _main_in_fake_root(monkeypatch, tmp_path, *argv):
+    """main() with ROOT patched to an empty fake repository (the defaults
+    that name the tracked doc point there), on a one-model tree."""
+    gen = load("gen_model_registry")
+    cpp_root, registry = write_tree(
+        tmp_path, {("object_detection", "widget"): GOOD_HEADER},
+        [entry("widget", "object_detection")])
+    fake_root = tmp_path / "root"
+    (fake_root / "docs").mkdir(parents=True, exist_ok=True)
+    monkeypatch.setattr(gen, "ROOT", fake_root)
+    monkeypatch.setattr(sys, "argv", ["gen_model_registry.py", "--cpp-root", str(cpp_root),
+                                      "--registry", str(registry)] + list(argv))
+    return gen.main(), fake_root / "docs" / "graph_models.md"
+
+
+def test_a_plain_run_writes_the_doc_under_out_dir_not_the_tracked_one(tmp_path, monkeypatch):
+    """Only --docs-only writes the tracked docs/graph_models.md: a run that
+    emits sources and names no --docs writes its table next to them."""
+    out_dir = tmp_path / "generated"
+    code, tracked = _main_in_fake_root(monkeypatch, tmp_path, "--out-dir", str(out_dir))
+    assert code == 0
+    assert (out_dir / "graph_models.md").is_file()
+    assert not tracked.exists()
+
+
+def test_docs_only_and_check_docs_default_to_the_tracked_doc(tmp_path, monkeypatch):
+    code, tracked = _main_in_fake_root(monkeypatch, tmp_path, "--docs-only")
+    assert code == 0 and tracked.is_file()
+    code, _ = _main_in_fake_root(monkeypatch, tmp_path, "--check-docs")
+    assert code == 0
+
+
 def test_docs_count_only_what_a_camera_graph_can_run(tmp_path):
     """U-19: the doc's count is what a graph can run. A boxes3d model is ready
     but refused in every graph (its input is a LiDAR point cloud; a graph's
