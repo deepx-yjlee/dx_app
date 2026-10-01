@@ -21,7 +21,9 @@ import pytest
 # conftest.py puts tests/ on sys.path; hence the noqa: E402 imports below.
 from test_helpers.proc import example_python, run_bounded  # noqa: E402
 from test_helpers.constants import IMAGE_ONLY_TASKS, PROJECT_ROOT  # noqa: E402
-from test_helpers.utils import discover_python_scripts, setup_environment  # noqa: E402
+from test_helpers.utils import (  # noqa: E402
+    discover_python_scripts, py_script_task, py_variant_image_only, setup_environment,
+)
 
 
 # Two passes exercise the reopen between loops (as the C++ multi-loop test,
@@ -134,11 +136,16 @@ def test_multi_loop_video(script: Path, model: Path):
 
     # Image-only tasks (3d_object_detection/sfa3d, embedding, reid, …) reject
     # --video: their runners sys.exit(1) (SDKREQ-517 excludes them from stream
-    # inference). Scripts live at src/python_example/<task>/<model>/<script>.py,
-    # so the task is the grandparent dir name.
-    task = script.parent.parent.name
+    # inference). Scripts live at src/python_example/<task>/<family>/<variant>/,
+    # so the task is the first directory under src/python_example/.
+    task = py_script_task(script)
     if task in IMAGE_ONLY_TASKS:
         pytest.skip(f"[{task}] {script.name}: image-only task; no video/stream path")
+    # A variant of a video-capable task can still be image-only (casvit under
+    # image_classification): the runner reads the variant's config.json.
+    if py_variant_image_only(script):
+        pytest.skip(f"[{task}] {script.name}: image-only variant (config.json); "
+                    "no video/stream path")
 
     clip_frames = _clip_frames(_TEST_VIDEO)
     assert clip_frames, f"could not count the frames of {_TEST_VIDEO}"

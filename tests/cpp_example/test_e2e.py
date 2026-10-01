@@ -35,6 +35,7 @@ from test_helpers.constants import (  # noqa: E402
 from test_helpers import platform_paths  # noqa: E402
 from test_helpers.utils import (  # noqa: E402
     binary_path,
+    cpp_exe_task_map,
     dxnn_for_exe,
     resolve_cpp_exe_input,
     setup_environment,
@@ -225,22 +226,9 @@ def get_model_group(executable: str) -> str:
     return re.sub(r'_(async|sync)$', '', executable)
 
 
-def _build_exe_task_map() -> dict:
-    """Build executable-base-name → task mapping from src/cpp_example/<task>/<model>/."""
-    cpp_example_dir = PROJECT_ROOT / "src" / "cpp_example"
-    mapping: dict = {}
-    if not cpp_example_dir.exists():
-        return mapping
-    for task_dir in cpp_example_dir.iterdir():
-        if not task_dir.is_dir() or task_dir.name in ("common", "ppu"):
-            continue
-        for model_dir in task_dir.iterdir():
-            if model_dir.is_dir():
-                mapping[model_dir.name] = task_dir.name
-    return mapping
-
-
-_EXE_TASK_MAP = _build_exe_task_map()
+# Executable name (``<variant>_sync`` / ``<variant>_async``) → task, read from
+# the src/cpp_example/<task>/<family>/<variant>/ layout.
+_EXE_TASK_MAP = cpp_exe_task_map()
 
 
 def _resolve_input_for_exe(executable: str) -> Path:
@@ -401,8 +389,7 @@ def test_stream_inference_e2e(executable, model_path, bin_dir):
     # Image-only tasks (embedding/reid/attribute/object_pose/3d_det/hand_*) do
     # not support video/stream input — skip by the model's task category.
     # (Previously keyword-only, which missed eigenplaces, dope, sfa3d, etc.)
-    base_name = executable.rsplit("_", 1)[0] if executable.endswith(("_sync", "_async")) else executable
-    task = _EXE_TASK_MAP.get(base_name, "")
+    task = _EXE_TASK_MAP.get(executable, "")
     if task in IMAGE_ONLY_TASKS:
         pytest.skip(f"{executable}: image-only task ({task}), video input not supported")
 
@@ -477,7 +464,7 @@ def test_stream_inference_e2e(executable, model_path, bin_dir):
             
             # Store model info (only once per group)
             if model_group not in collector.model_info:
-                task = _EXE_TASK_MAP.get(model_group, "")
+                task = _EXE_TASK_MAP.get(executable, "")
                 collector.set_model_info(
                     model_group,
                     str(model_path if isinstance(model_path, Path) else model_path[0]),
@@ -512,7 +499,13 @@ def test_e2e_prerequisites():
 
 SR_STREAM_FRAMES = 6
 SR_STREAM_PARAMS = [p for p in EXECUTABLE_PARAMS
-                    if _EXE_TASK_MAP.get(p.values[0].rsplit("_", 1)[0]) == "super_resolution"]
+                    if _EXE_TASK_MAP.get(p.values[0]) == "super_resolution"]
+# The SR video path keeps a small-clip case whenever an SR binary is built: an
+# empty parametrization here once hid that the task lookup never matched.
+assert SR_STREAM_PARAMS or not any(
+    exe.endswith("_sync") and _EXE_TASK_MAP.get(exe) == "super_resolution"
+    for exe, _model in DISCOVERED_CASES
+), "super_resolution binaries are built but SR_STREAM_PARAMS is empty"
 
 
 @pytest.fixture(scope="module")

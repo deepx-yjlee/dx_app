@@ -336,6 +336,42 @@ def cpp_exe_task_map(
     return mapping
 
 
+def py_script_task(path) -> str:
+    """Task category of a Python example script.
+
+    e.g. ``"super_resolution"`` for
+    ``src/python_example/super_resolution/espcn/espcn-x2_17x17/espcn-x2_17x17_sync.py``.
+    Derived purely from the ``src/python_example/<task>/<family>/<variant>/``
+    source layout, as :func:`cpp_exe_task_map` is for C++: the task is the first
+    directory under ``src/python_example/``. The script's grandparent is the
+    FAMILY, so ``script.parent.parent.name`` is not the task. Used by stream/video
+    tests to skip image-only tasks (see ``IMAGE_ONLY_TASKS``). A relative *path*
+    is taken relative to the project root; a path outside
+    ``src/python_example/`` raises ``ValueError``.
+    """
+    path = Path(path)
+    if not path.is_absolute():
+        path = PROJECT_ROOT / path
+    rel = path.resolve().relative_to((PROJECT_ROOT / "src" / "python_example").resolve())
+    if len(rel.parts) < 2:
+        raise ValueError(f"not an example script under src/python_example/: {path}")
+    return rel.parts[0]
+
+
+def py_variant_image_only(path) -> bool:
+    """``image_only`` of a Python example script's variant ``config.json``.
+
+    The runner decides image-only-ness from the variant config, so a variant of a
+    video-capable task can still reject ``--video`` (casvit under
+    ``image_classification``); ``IMAGE_ONLY_TASKS`` alone misses it. False when
+    the script's directory has no ``config.json``.
+    """
+    config = Path(path).parent / "config.json"
+    if not config.is_file():
+        return False
+    return bool(json.loads(config.read_text(encoding="utf-8")).get("image_only"))
+
+
 @lru_cache(maxsize=1)
 def _cpp_exe_task_map_cached() -> dict:
     """Read-only, cached ``cpp_exe_task_map()`` for per-test input resolution.

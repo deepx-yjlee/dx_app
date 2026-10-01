@@ -25,16 +25,16 @@ from test_helpers.constants import (  # noqa: E402
     SAMPLE_DIR,
     STREAM_REJECTING_TASKS_PY,
 )
-from test_helpers.utils import discover_python_scripts, setup_environment  # noqa: E402
+from test_helpers.utils import discover_python_scripts, py_script_task, setup_environment  # noqa: E402
 
 
 def _task_of(script: Path) -> str:
     """Task category for a python example script.
 
-    Scripts live at ``src/python_example/<task>/<model>/<script>.py``, so the
-    task is the grandparent directory name.
+    Scripts live at ``src/python_example/<task>/<family>/<variant>/<script>.py``;
+    the grandparent is the family, so the task comes from the layout root.
     """
-    return script.parent.parent.name
+    return py_script_task(script)
 
 TEST_IMAGE = SAMPLE_DIR / "img" / "sample_kitchen.jpg"
 TEST_VIDEO = ASSETS_DIR / "videos" / "dance-group.mov"

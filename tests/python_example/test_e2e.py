@@ -29,7 +29,10 @@ import pytest
 # conftest.py puts tests/ on sys.path; hence the noqa: E402 imports below.
 from test_helpers.proc import example_python, run_bounded  # noqa: E402
 from test_helpers.constants import PROJECT_ROOT, TASK_IMAGE_MAP, MODEL_IMAGE_OVERRIDE, E2E_SHORT_MODELS, IMAGE_ONLY_TASKS, e2e_effective_loop, video_too_slow  # noqa: E402
-from test_helpers.utils import discover_python_scripts, setup_environment, resolve_image_for_model  # noqa: E402
+from test_helpers.utils import (  # noqa: E402
+    discover_python_scripts, py_script_task, py_variant_image_only, setup_environment,
+    resolve_image_for_model,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -232,8 +235,9 @@ def _build_params() -> Tuple[List, List]:
                 marks.append(pytest.mark.e2e_short)
             param = pytest.param(script, model_path, image_path, id=script.stem, marks=marks)
             image_params.append(param)
-            # Skip image-only tasks from stream (video) tests
-            if task not in _IMAGE_ONLY_TASKS:
+            # Skip image-only tasks, and image-only variants of other tasks
+            # (config.json image_only, e.g. casvit), from stream (video) tests
+            if task not in _IMAGE_ONLY_TASKS and not py_variant_image_only(script):
                 stream_param = pytest.param(script, model_path, id=script.stem, marks=marks)
                 stream_params.append(stream_param)
 
@@ -301,7 +305,7 @@ def test_image_inference_e2e(script: Path, model: Optional[Path], image: Path, l
     )
 
     # Collect performance metrics from stdout if FPS data is present
-    task = script.parent.parent.name
+    task = py_script_task(script)
     metrics = _collector.parse_output(
         result.stdout + result.stderr,
         task=task,
@@ -364,7 +368,7 @@ def test_stream_inference_e2e(script: Path, model: Optional[Path]):
     )
 
     # Collect performance metrics from stdout if FPS data is present
-    task = script.parent.parent.name
+    task = py_script_task(script)
     metrics = _collector.parse_output(
         result.stdout + result.stderr,
         task=task,
