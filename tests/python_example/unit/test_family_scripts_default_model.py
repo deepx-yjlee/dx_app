@@ -15,12 +15,12 @@ from __future__ import annotations
 
 import json
 import os
-import subprocess
 import sys
 from pathlib import Path
 
 import pytest
 
+from test_helpers.proc import example_python, run_bounded
 from common.runner.entry import ort_off_variant_dir
 from common.runner.sync_runner import _resolve_default_model_path
 
@@ -73,7 +73,7 @@ def test_an_unknown_name_falls_back_to_the_family_default(tmp_path):
 @pytest.mark.parametrize("script", FAMILY_SCRIPTS, ids=lambda p: p.name)
 def test_a_family_script_starts(script):
     env = {**os.environ, "PYTHONDONTWRITEBYTECODE": "1"}
-    result = subprocess.run([sys.executable, str(script), "--help"], cwd=PROJECT_ROOT,
-                            capture_output=True, text=True, timeout=120, env=env)
+    result = run_bounded([example_python(), str(script), "--help"], cwd=PROJECT_ROOT,
+                         capture_output=True, text=True, timeout=120, env=env)
     assert result.returncode == 0, result.stderr[-2000:]
     assert "--image" in result.stdout
