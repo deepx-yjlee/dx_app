@@ -12,8 +12,9 @@
  * error.
  *
  * Known table: a container <= 8 loads on every DX-RT 3.x this repository
- * supports; 9 needs DX-RT >= 3.5.0; a newer one needs a DX-RT newer than
- * the running one. The runtime version is the caller's
+ * supports; 9 needs DX-RT >= 3.5.0. A newer container is not refused here:
+ * which DX-RT first loads it is not known yet, so the runtime's own loader
+ * decides. The runtime version is the caller's
  * (dxrt::Configuration::GetInstance().GetVersion()), so nothing here needs
  * the runtime.
  */
@@ -93,18 +94,15 @@ inline std::string VersionText(const int parts[3]) {
  * @brief Why DX-RT `runtime` cannot load a .dxnn container of `version`,
  *        in short ("needs DX-RT >= 3.5.0"); "" when it can.
  *
- * Also "" when `runtime` is not a version this can read: then nothing is
+ * Also "" for a container newer than 9, whose DX-RT floor is not known
+ * here, and when `runtime` is not a version this can read: then nothing is
  * refused here, and the runtime's own loader decides.
  */
 inline std::string ContainerRequirement(uint32_t version, const std::string& runtime) {
     int parts[3];
-    if (version <= 8 || !detail::ParseRuntimeVersion(runtime, parts)) return std::string();
-    if (version == 9) {
-        const bool below_350 =
-            parts[0] < 3 || (parts[0] == 3 && parts[1] < 5);
-        return below_350 ? "needs DX-RT >= 3.5.0" : std::string();
-    }
-    return "needs a DX-RT newer than v" + detail::VersionText(parts);
+    if (version != 9 || !detail::ParseRuntimeVersion(runtime, parts)) return std::string();
+    const bool below_350 = parts[0] < 3 || (parts[0] == 3 && parts[1] < 5);
+    return below_350 ? "needs DX-RT >= 3.5.0" : std::string();
 }
 
 /**
@@ -117,19 +115,18 @@ inline std::string ContainerRequirement(uint32_t version, const std::string& run
 inline std::string ContainerSupportError(uint32_t version, const std::string& runtime) {
     const std::string requirement = ContainerRequirement(version, runtime);
     if (requirement.empty()) return std::string();
+    // Only v9 is refused (ContainerRequirement), so the text is v9's.
     int parts[3];
     detail::ParseRuntimeVersion(runtime, parts);
-    const std::string container = ".dxnn container v" + std::to_string(version) + " ";
-    if (version == 9) {
-        return container + requirement + ", but this runtime is " + detail::VersionText(parts) +
-               ". Use the v8 file (dxnn/2_4_0) or upgrade DX-RT.";
-    }
-    return container + requirement + " (this runtime). Upgrade DX-RT.";
+    return ".dxnn container v" + std::to_string(version) + " " + requirement +
+           ", but this runtime is " + detail::VersionText(parts) +
+           ". Use the v8 file (dxnn/2_4_0) or upgrade DX-RT.";
 }
 
 /**
  * @brief What to do about a container ContainerSupportError refuses: the v8
- *        file or DX-RT >= 3.5.0 for v9, a newer DX-RT for anything newer.
+ *        file or DX-RT >= 3.5.0 for v9 (the only one it refuses); "upgrade
+ *        DX-RT" for any other version.
  */
 inline std::string ContainerSupportHint(uint32_t version) {
     return version == 9 ? "use the v8 file (dxnn/2_4_0) or upgrade DX-RT to >= 3.5.0"

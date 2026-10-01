@@ -11166,11 +11166,12 @@ void TestContainerSupportRefusesV9BelowDxrt350() {
     GRAPH_CHECK(ContainerSupportError(9, "v3.5.0").empty());
     GRAPH_CHECK(ContainerSupportError(9, "3.10.0").empty());  // numeric, not text order
     GRAPH_CHECK(ContainerSupportError(9, "4.0").empty());
-    const std::string newer = ContainerSupportError(10, "v3.5.0");
-    GRAPH_CHECK(newer.find(".dxnn container v10 ") == 0);
-    GRAPH_CHECK(newer.find("needs a DX-RT newer than v3.5.0") != std::string::npos);
-    GRAPH_CHECK(ContainerSupportError(10, "3.4.1").find("needs a DX-RT newer than v3.4.1") !=
-                std::string::npos);
+    // A container newer than v9: no DX-RT floor is known yet, so nothing is
+    // refused here on any runtime; dxrt decides.
+    GRAPH_CHECK(ContainerSupportError(10, "v3.5.0").empty());
+    GRAPH_CHECK(ContainerSupportError(10, "3.4.1").empty());
+    GRAPH_CHECK(ContainerSupportError(10, "4.0").empty());
+    GRAPH_CHECK(ContainerRequirement(10, "3.4.1").empty());
     // A runtime string this cannot read: no verdict; dxrt decides.
     GRAPH_CHECK(ContainerSupportError(9, "").empty());
     GRAPH_CHECK(ContainerSupportError(9, "unknown").empty());
