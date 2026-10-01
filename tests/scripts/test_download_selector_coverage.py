@@ -10,7 +10,7 @@ An example run without ``-m`` that finds its model missing calls
 For every registry row with ``published: true``, each selector must select
 exactly one manifest entry, and that entry must download the row's
 ``dxnn_file``. Rows that are not published are listed with their reason (run
-with ``-s``) and not asserted.
+with ``-s``); none of them may have a downloadable manifest entry.
 
 Hermetic: the downloader's own matcher runs on the committed manifest and
 registry. Nothing is downloaded and nothing is written.
@@ -74,7 +74,11 @@ def test_every_published_row_selects_exactly_its_dxnn(dm, registry, manifest, se
 
 
 def test_unpublished_rows_are_listed_with_their_reason(dm, registry, manifest):
+    """An unpublished row's file must not be downloadable: absent from the
+    manifest or pending there. A downloadable manifest entry for it means the
+    registry and the manifest disagree."""
     by_file = {dm._dxnn_filename(entry): entry for entry in manifest}
+    downloadable = []
     for row in registry:
         if row.get("published") is True:
             continue
@@ -85,6 +89,10 @@ def test_unpublished_rows_are_listed_with_their_reason(dm, registry, manifest):
             reason = "manifest entry is pending (declared, not downloadable)"
         else:
             reason = "listed in scripts/modelzoo_manifest.json"
+            downloadable.append("{} ({})".format(row["variant"], row["dxnn_file"]))
         print("unpublished: {} ({}): published={!r} in config/model_registry.json; "
               "{}: {}".format(row["model_name"], row["variant"], row.get("published"),
                               row["dxnn_file"], reason))
+    assert not downloadable, (
+        "unpublished in config/model_registry.json but downloadable from "
+        "scripts/modelzoo_manifest.json:\n  " + "\n  ".join(downloadable))
