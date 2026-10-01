@@ -29,6 +29,7 @@
 #include "common/registry/static_model_registry.hpp"
 #include "common/third_party/nlohmann_json.hpp"
 #include "common/utility/dxnn_container.hpp"
+#include "common/utility/repo_path.hpp"
 #include "multi_model_graph/graph_cli_interrupt.hpp"
 #include "multi_model_graph/graph_cli_output.hpp"
 #include "multi_model_graph/graph_consumer.hpp"
@@ -483,16 +484,21 @@ int PrintModels(const IModelRegistry& registry, const GraphCliArgs& args) {
 // ---------------------------------------------------------------------
 
 /// The --check line of one resource a node needs (R9).
-std::string ResourceLine(const std::string& node, const ResourceInfo& resource,
+std::string ResourceLine(const NodeSpec& node, const ResourceInfo& resource,
                          const std::string& model_dir) {
-    const std::string who = "node \"" + node + "\": ";
+    const std::string who = "node \"" + node.id + "\": ";
     if (resource.kind == ResourceInfo::kNote) return "note: " + who + resource.value;
     if (resource.kind == ResourceInfo::kCompanion) {
         return "resource: " + who + "companion " + resource.value +
                (FileExists(model_dir + "/" + resource.value) ? " [present]" : " [MISSING]");
     }
-    // A gallery path is relative to the repository.
-    const std::string path = std::string(PROJECT_ROOT_DIR) + "/" + resource.value;
+    // The gallery the run opens: the node's "gallery" param over the
+    // registry's (config.json), read against the repository unless it is
+    // absolute - the stage overlay's rule (GalleryAgainstRoot).
+    const std::map<std::string, std::string>::const_iterator param =
+        node.params.text.find("gallery");
+    const std::string gallery = param != node.params.text.end() ? param->second : resource.value;
+    const std::string path = ResolveRepoRelative(gallery);
     std::string status = "[MISSING]";
     if (FileExists(path)) {
         char magic[8] = {0};
@@ -503,7 +509,7 @@ std::string ResourceLine(const std::string& node, const ResourceInfo& resource,
                      ? "[present, DXGAL1]"
                      : "[present, but not a DXGAL1 gallery]";
     }
-    return "resource: " + who + "gallery " + resource.value + " " + status;
+    return "resource: " + who + "gallery " + gallery + " " + status;
 }
 
 void PrintCheckSummary(const GraphSpec& spec, const IModelRegistry& registry,
@@ -584,7 +590,7 @@ void PrintCheckSummary(const GraphSpec& spec, const IModelRegistry& registry,
         const ModelInfo* info = registry.find(node.model);
         if (info == NULL) continue;
         for (std::size_t r = 0; r < info->resources.size(); ++r) {
-            resources << ResourceLine(node.id, info->resources[r], model_dir) << "\n";
+            resources << ResourceLine(node, info->resources[r], model_dir) << "\n";
         }
     }
     if (!resources.str().empty()) std::printf("\n%s", resources.str().c_str());

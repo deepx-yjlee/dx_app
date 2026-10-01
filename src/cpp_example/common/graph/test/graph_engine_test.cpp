@@ -51,6 +51,7 @@
 #include "common/registry/typed_stage.hpp"
 #include "visual_place_recognition/eigenplaces/eigenplaces-resnet18_512x512/factory/eigenplaces-resnet18_512x512_factory.hpp"
 #include "common/utility/dxnn_container.hpp"
+#include "common/utility/repo_path.hpp"
 #include "multi_model_graph/graph_cli_output.hpp"
 #include "multi_model_graph/graph_consumer.hpp"
 #include "multi_model_graph/graph_report_writer.hpp"
@@ -11498,6 +11499,20 @@ void TestARelativeGalleryIsReadAgainstTheRepository() {
     ::rmdir(elsewhere.c_str());
 }
 
+// I18: --check and the stage overlay read a repository-relative path by one
+// rule (common/utility/repo_path.hpp): absolute as given, relative joined to
+// PROJECT_ROOT_DIR, empty left empty.
+void TestResolveRepoRelativeKeepsAbsoluteAndJoinsRelative() {
+    const std::string root = PROJECT_ROOT_DIR;
+    GRAPH_CHECK(ResolveRepoRelative("/data/g.bin") == "/data/g.bin");
+    GRAPH_CHECK(ResolveRepoRelative("C:\\data\\g.bin") == "C:\\data\\g.bin");
+    GRAPH_CHECK(ResolveRepoRelative("sample/gallery/g.bin") == root + "/sample/gallery/g.bin");
+    GRAPH_CHECK(ResolveRepoRelative("").empty());
+    GRAPH_CHECK(ResolveAgainstRoot("/repo", "my/g.bin") == "/repo/my/g.bin");
+    GRAPH_CHECK(ResolveAgainstRoot("/repo", "/data/g.bin") == "/data/g.bin");
+    GRAPH_CHECK(ResolveAgainstRoot("/repo", "").empty());
+}
+
 // PP-Matting's soft alpha matte is the "alpha" port: a spatial CV_32F map.
 // The primary output stays the thresholded class map.
 void TestMattingAlphaBecomesADenseMapPort() {
@@ -11918,6 +11933,7 @@ int main() {
     TestStageConfigIsTheVariantsConfigJson();
     TestStageConfigPathRefusesAModelInfoWithoutFamilyOrVariant();
     TestARelativeGalleryIsReadAgainstTheRepository();
+    TestResolveRepoRelativeKeepsAbsoluteAndJoinsRelative();
     TestMattingAlphaBecomesADenseMapPort();
     TestDepthConversionOwnsItsValues();
     TestGalleryMatchesBecomeAScoresPort();

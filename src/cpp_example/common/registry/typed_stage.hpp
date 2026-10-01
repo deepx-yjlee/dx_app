@@ -84,6 +84,7 @@
 #include "common/graph/result_to_shape.hpp"
 #include "common/utility/common_util.hpp"
 #include "common/utility/dxnn_container.hpp"
+#include "common/utility/repo_path.hpp"
 
 namespace dxapp {
 namespace graph {
@@ -404,12 +405,7 @@ inline std::string ParamsToJson(const std::map<std::string, double>& numeric) {
     return ParamsToJson(params, std::map<std::string, std::string>());
 }
 
-/// "/a", "\\a" and "C:..." are absolute; "" and "sample/x" are not.
-inline bool IsAbsolutePath(const std::string& path) {
-    if (path.empty()) return false;
-    if (path[0] == '/' || path[0] == '\\') return true;
-    return path.size() > 1 && path[1] == ':';
-}
+using ::dxapp::IsAbsolutePath;  // common/utility/repo_path.hpp
 
 /**
  * @brief `params`, with a relative "gallery" read against `root`.
@@ -419,21 +415,20 @@ inline bool IsAbsolutePath(const std::string& path) {
  * working directory. So a relative node param is made absolute here, and a
  * relative config.json value a node does not override is added as one, so
  * a run from any directory opens the gallery --check found. An absolute
- * path is kept as given.
+ * path is kept as given. The rule is ResolveAgainstRoot (repo_path.hpp),
+ * the one --check reads a gallery by.
  */
 inline StageParams GalleryAgainstRoot(const StageParams& params, const ModelConfig& file_config,
                                       const std::string& root) {
     StageParams out = params;
     std::map<std::string, std::string>::iterator node = out.text.find("gallery");
     if (node != out.text.end()) {
-        if (!node->second.empty() && !IsAbsolutePath(node->second)) {
-            node->second = root + "/" + node->second;
-        }
+        node->second = ResolveAgainstRoot(root, node->second);
         return out;
     }
     const std::string from_file = file_config.get<std::string>("gallery", std::string());
     if (!from_file.empty() && !IsAbsolutePath(from_file)) {
-        out.text["gallery"] = root + "/" + from_file;
+        out.text["gallery"] = ResolveAgainstRoot(root, from_file);
     }
     return out;
 }

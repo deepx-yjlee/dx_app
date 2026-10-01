@@ -20,6 +20,7 @@ non-zero exit, an empty image - is a failure, never a skip.
 import json
 import os
 import re
+import shutil
 import signal
 import subprocess
 import sys
@@ -2793,6 +2794,30 @@ def test_check_prints_the_resources_a_node_needs(tmp_path):
     assert 'resource: node "vpr": gallery {} [present, DXGAL1]'.format(gallery) in result.stdout, \
         result.stdout
     assert 'note: node "clip": the CLIP prompt bank is Python-only' in result.stdout, result.stdout
+
+
+@pytest.mark.graph
+def test_check_reads_a_node_gallery_as_the_run_does(tmp_path):
+    """I18: a node's "gallery" param is the gallery --check reports, read
+    as the stage overlay reads it (GalleryAgainstRoot): an absolute path as
+    given, a relative one against the repository."""
+    repo_gallery = "sample/gallery/vpr_eigenplaces-resnet18_512x512.bin"
+    copied = tmp_path / "copied_gallery.bin"
+    shutil.copyfile(PROJECT_ROOT / repo_gallery, copied)
+    gone = tmp_path / "no_such_gallery.bin"
+    path = _write_graph(tmp_path, [
+        {"id": "abs", "model": "eigenplaces-resnet18_512x512", "params": {"gallery": str(copied)}},
+        {"id": "rel", "model": "eigenplaces-resnet18_512x512", "params": {"gallery": repo_gallery}},
+        {"id": "gone", "model": "eigenplaces-resnet18_512x512", "params": {"gallery": str(gone)}}])
+    for binary in BINARIES:
+        result = run(binary, "--check", str(path), "--model-dir", str(tmp_path))
+        assert result.returncode == 0, result.stdout + result.stderr
+        lines = [line for line in result.stdout.splitlines() if line.startswith("resource: ")]
+        assert lines == [
+            'resource: node "abs": gallery {} [present, DXGAL1]'.format(copied),
+            'resource: node "rel": gallery {} [present, DXGAL1]'.format(repo_gallery),
+            'resource: node "gone": gallery {} [MISSING]'.format(gone),
+        ], result.stdout
 
 
 # The multi_model runtime (teammate code, Decision 3) runs hand_cascade and
