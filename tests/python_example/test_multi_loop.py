@@ -27,17 +27,17 @@ from test_helpers.utils import (  # noqa: E402
 
 
 # Two passes exercise the reopen between loops (as the C++ multi-loop test,
-# -l 2). A short clip keeps every model inside the budget: at the slowest
-# measured Python throughput (superpoint_sync, ~1.1 FPS; zero_dce_sync ~2.6 FPS)
-# 2 x 478 frames of dance-group.mov took 350-900 s, 2 x 192 frames here ~350 s.
+# -l 2). A short clip keeps every model inside the budget. The slowest measured
+# Python throughput is ppmatting-hrnet-w48 from Model Zoo 2_5_0 (~0.65 FPS):
+# 2 x 192 frames here took 551-601 s. superpoint_sync (~1.1 FPS) took ~350 s.
 _SHORT_VIDEO = PROJECT_ROOT / "assets" / "videos" / "person-pair-hallway.mp4"  # 192 frames
 _TEST_VIDEO = (_SHORT_VIDEO if _SHORT_VIDEO.exists()
                else PROJECT_ROOT / "assets" / "videos" / "dance-group.mov")
 _LOOP_COUNT = 2
-# 600 s holds the slowest script on the 192-frame clip with margin; the
+# 1200 s holds the slowest script on the 192-frame clip with a 2x margin; the
 # budget scales with the clip actually used (dance-group.mov, 478 frames,
-# gets ~1500 s: it needed ~870 s at the slowest).
-_BASE_TIMEOUT_S = 600
+# gets ~3000 s).
+_BASE_TIMEOUT_S = 1200
 _BASE_FRAMES = 192
 
 _DECODE_FRAMES = (
@@ -115,6 +115,8 @@ def test_timeout_scales_with_the_clip():
     assert _timeout_for(_BASE_FRAMES) == _BASE_TIMEOUT_S
     assert _timeout_for(100) == _BASE_TIMEOUT_S           # never below the base
     assert _timeout_for(478) >= 1.5 * 870                 # dance-group.mov, slowest ~870 s
+    # ppmatting-hrnet-w48 (Model Zoo 2_5_0) took 551-601 s for 2 x 192 frames.
+    assert _timeout_for(_BASE_FRAMES) >= 1.5 * 601
 
 
 def test_total_frames_is_the_summary_s_last_count():
