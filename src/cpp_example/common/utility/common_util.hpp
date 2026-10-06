@@ -25,6 +25,7 @@
 #include <utility>
 
 #include "common/utility/interrupt_flag.hpp"
+#include "common/utility/display_pump.hpp"
 
 #if __cplusplus >= 201703L || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
 #include <filesystem>
@@ -367,6 +368,20 @@ inline std::pair<int, int> getScreenResolution() {
 }
 
 /**
+ * @brief Apply the run-time display choices to a DisplayPump, once per run.
+ *
+ * - The window is sized on creation like the Python runners' show_image():
+ *   fitted into half the screen (getScreenResolution(), 1920x1080 fallback).
+ * - `--drop-frames` turns the depth-1 lossy preview back on; by default the
+ *   pump is lossless and a slow window paces the pipeline (2026-10-06).
+ */
+inline void configureDisplayPump(DisplayPump& pump, bool drop_frames) {
+    const std::pair<int, int> screen = getScreenResolution();
+    pump.setScreenSize(screen.first, screen.second);
+    pump.setDropStale(drop_frames);
+}
+
+/**
  * @brief Display frame in a resizable window, sized to ~1/4 screen area on first call.
  *
  * On the first frame, detects screen resolution and sets the window to
@@ -422,6 +437,7 @@ inline void showOutput(const cv::Mat& frame) {
 
     static bool window_sized = false;
     try {
+        prepareGuiBackend();
         cv::namedWindow("Output", cv::WINDOW_NORMAL);
     } catch (const cv::Exception& e ) {
         if (!headless_warned) {

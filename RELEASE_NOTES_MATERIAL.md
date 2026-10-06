@@ -19,14 +19,13 @@
 - Fixed the Python `run_pipeline.py` head pose of `dms_clip` pairing the face landmarks with the wrong points of its 3D face model (for example pitch -101.8°, roll 122.0° for a turned head); it now takes the landmarks in the face result's order (left eye, right eye, nose, left mouth, right mouth), as `multi_model_run` does, and both report the same pitch, yaw and roll
 ### 3. Added
 - Multi-model graph engine: a node-graph JSON of registry models wired by frame, ROI and image hand-off edges; CLI `multi_model_graph_sync` / `multi_model_graph_async` (`--check` without the NPU, `--list-models`, `--report`) and the Python module `dx_graph`; sync and async reports are byte-identical
-- Shipped sample graphs, including `hand_cascade.json` and `worker_safety.json` (worker_safety as structure only, see Known issues)
+- Shipped sample graphs, including `hand_cascade.json`
 - `.dxnn` container check: before loading, the graph names a file this DX-RT cannot load (`.dxnn container v9 needs DX-RT >= 3.5.0 ...`); `--check` and `--list-models` show each file's container version
 - Architecture guards (graph boundary, factory uniqueness, model registry, header ODR, C++14, graph models doc, variant scope) in `scripts/ci_checks.sh`, run by the `dxapp-checks` GitHub Actions workflow
 ### 4. Known issues
 - C++ async super-resolution runs each frame's tiles with a blocking `Run`, so it is slow on long videos
 - espcn-x2 sync on a video is slow (more than 20 minutes on the test device)
 - The C++ DX-RT version check runs after the inference engine is created, so on an older DX-RT the runtime's own error about the `.dxnn` may appear first
-- worker_safety's PPE model is not distributed (in neither the model registry nor the Model Zoo manifest), so the scenario runs without its PPE stage
 - yolov5-s6-pose's `registry_config` lists score threshold 0.25, while both runtimes use 0.3 (Python's default); the variant's `"config"` is empty and neither runtime reads `registry_config`
 - One pytest session over `tests/cpp_example` and `tests/python_example` together does not collect; run each suite on its own
 - `scripts/add_model.sh` still targets the old flat `<task>/<model>/` layout, and it copies the reference model's C++ factory with its `namespace v_<reference variant>` unchanged, so `python3 scripts/generate_cpp_family_layout.py --variant-scope src/cpp_example --check` refuses the new example. Until `add_model.sh` supports the per-variant layout (a follow-up), rename by hand the factory's namespace to `v_<new variant>` (every character other than a letter or digit becomes `_`) and the `dxapp::v_<...>::` qualifier in the new `_sync.cpp` / `_async.cpp`

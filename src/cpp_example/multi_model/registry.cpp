@@ -1,9 +1,8 @@
 /**
  * @file registry.cpp
- * @brief Factories used by the four pipeline demos.
+ * @brief Factories used by the three pipeline demos.
  *
  * JSON selects among these variants. An unknown variant fails at startup.
- * ppe_yolo26n.dxnn reuses the yolo26-n detection factory with another file.
  */
 
 #include "multi_model/registry.hpp"
@@ -12,7 +11,6 @@
 #include "object_detection/yolo26/yolo26-n_640x640/factory/yolo26-n_640x640_factory.hpp"
 #include "instance_segmentation/yolo26_seg/yolo26-n-seg_640x640/factory/yolo26-n-seg_640x640_factory.hpp"
 #include "depth_estimation/yolo26_depth/yolo26-depth-n_768x768/factory/yolo26-depth-n_768x768_factory.hpp"
-#include "pose_estimation/yolo26_pose/yolo26-n-pose_640x640/factory/yolo26-n-pose_640x640_factory.hpp"
 #include "pose_estimation/yolo11_pose/yolo11-n-pose_640x640/factory/yolo11-n-pose_640x640_factory.hpp"
 #include "face_detection/scrfd/scrfd-500m_640x640/factory/scrfd-500m_640x640_factory.hpp"
 #include "hand_detection/mediapipe_hand_detector/mediapipe-hand-detector_192x192/factory/mediapipe-hand-detector_192x192_factory.hpp"
@@ -44,8 +42,6 @@ const FactoryEntry kEntries[] = {
      &makeStage<dxapp::v_yolo26_n_seg_640x640::Yolo26SegFactory, InstanceSegmentationResult, true>},
     {"depth_estimation", "yolo26_depth", "yolo26-depth-n_768x768",
      &makeStage<dxapp::v_yolo26_depth_n_768x768::Yolo26DepthFactory, DepthResult, false>},
-    {"pose_estimation", "yolo26_pose", "yolo26-n-pose_640x640",
-     &makeStage<dxapp::v_yolo26_n_pose_640x640::Yolo26PoseFactory, PoseResult, true>},
     {"pose_estimation", "yolo11_pose", "yolo11-n-pose_640x640",
      &makeStage<dxapp::v_yolo11_n_pose_640x640::Yolo11PoseFactory, PoseResult, true>},
     {"face_detection", "scrfd", "scrfd-500m_640x640",

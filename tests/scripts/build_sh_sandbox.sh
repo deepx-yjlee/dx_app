@@ -53,6 +53,7 @@ log="${sandbox}/log"
 mkdir -p "${repo}/scripts" "${repo}/cmake" "${fakebin}" "${log}"
 cp "${src}" "${repo}/build.sh"
 cp "${root}/scripts/color_env.sh" "${root}/scripts/common_util.sh" \
+   "${root}/scripts/gui_env.sh" \
    "${root}/scripts/build_target_resolver.sh" "${repo}/scripts/"
 cp "${root}"/cmake/toolchain.*.cmake "${repo}/cmake/"
 for d in build_x86_64 build_aarch64 bin lib include; do

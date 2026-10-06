@@ -22,7 +22,10 @@
  *
  *   - **I1 — No GUI on the submit path.** All HighGUI calls happen in `pump()`,
  *     which is driven by the GUI thread only. Producers only ever call `offer()`.
- *   - **I2 — Lossy sink, depth 1.** `offer()` takes a mutex, replaces the pending
+ *   - **I2 — Depth-1 sink, lossless by default.** `offer()` hands one frame to
+ *     the GUI thread and waits for the slot to free (every frame is shown, so a
+ *     slow window paces the producer). With `setDropStale(true)` (`--drop-frames`)
+ *     it instead takes a mutex, replaces the pending
  *     frame and returns. `cv::Mat` assignment is a refcount bump, so this is O(1)
  *     with no pixel copy, and it can never block. Stale frames are dropped, and
  *     the drop count is reported so the behaviour stays visible.
@@ -42,9 +45,12 @@
 
 #include <opencv2/opencv.hpp>
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <cstdlib>
+#include <cstring>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -74,6 +80,58 @@ inline bool hasDisplay() {
 #endif
 }
 
+/**
+ * @brief True when Qt will load its Wayland platform plugin.
+ *
+ * An explicit QT_QPA_PLATFORM wins. Otherwise Qt follows XDG_SESSION_TYPE,
+ * and a pure Wayland session (WAYLAND_DISPLAY set, no session type) too.
+ */
+inline bool qtWillUseWayland() {
+    // Platform the user pinned, e.g. "xcb" or "wayland".
+    const char* platform = std::getenv("QT_QPA_PLATFORM");
+    if (platform != nullptr && platform[0] != '\0') {
+        return std::strstr(platform, "wayland") != nullptr;
+    }
+    // Session type the desktop set ("wayland", "x11", "tty", ...).
+    const char* session = std::getenv("XDG_SESSION_TYPE");
+    if (session != nullptr && session[0] != '\0') {
+        return std::strcmp(session, "wayland") == 0;
+    }
+    const char* wayland_display = std::getenv("WAYLAND_DISPLAY");
+    return wayland_display != nullptr && wayland_display[0] != '\0';
+}
+
+/**
+ * @brief Quiet HighGUI before the first window is created.
+ *
+ * GTK loads the AT-SPI bridge during `cv::namedWindow()`. When
+ * `/run/user/<uid>/at-spi/bus` is missing, dbind prints
+ * "Couldn't connect to accessibility bus". `NO_AT_BRIDGE=1` skips that
+ * bridge. A value already set by the user is left unchanged.
+ *
+ * On Wayland, Qt loads the ibus input-method plugin while QApplication is
+ * still starting, before the main thread has an event dispatcher. That plugin
+ * builds a QFileSystemWatcher and Qt prints "QSocketNotifier: Can only be
+ * used with threads started with QThread". The preview does not take text
+ * input, so ibus is replaced with the compose plugin in that one case.
+ *
+ * Call this before every first `cv::namedWindow()` in the process.
+ */
+inline void prepareGuiBackend() {
+#ifndef _WIN32
+    // Skip the accessibility bridge when the at-spi socket is not there.
+    if (std::getenv("NO_AT_BRIDGE") == nullptr) {
+        ::setenv("NO_AT_BRIDGE", "1", 0);
+    }
+    // Input method the desktop asked Qt to load. Only "ibus" trips the warning.
+    const char* input_module = std::getenv("QT_IM_MODULE");
+    if (input_module != nullptr && std::strcmp(input_module, "ibus") == 0 &&
+        qtWillUseWayland()) {
+        ::setenv("QT_IM_MODULE", "compose", 1);
+    }
+#endif
+}
+
 /** Default preview rate. Beyond this the user cannot perceive the difference. */
 constexpr double DISPLAY_PUMP_DEFAULT_FPS = 60.0;
 
@@ -95,20 +153,45 @@ public:
     DisplayPump& operator=(const DisplayPump&) = delete;
 
     /**
-     * @brief Publish a frame for display. Never blocks, never copies pixels.
+     * @brief Publish a frame for display. Never copies pixels.
      *
-     * If a previously offered frame has not been shown yet it is discarded --
-     * showing the newest frame is always more useful than showing a backlog.
+     * Lossless (default): if a previously offered frame has not been taken by
+     * the GUI thread yet, wait until it is (or until stop()), so every frame is
+     * shown in order and a slow window paces the producer.
+     * Drop mode (setDropStale(true)): never blocks; a pending frame is discarded
+     * and counted -- showing the newest frame beats showing a backlog.
      */
     void offer(const cv::Mat& frame) {
         if (!gui_available_) return;   // headless: nothing will ever show it
         if (frame.empty() || stopped_.load(std::memory_order_acquire)) return;
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::unique_lock<std::mutex> lock(mutex_);
         if (has_pending_) {
-            dropped_.fetch_add(1, std::memory_order_relaxed);
+            if (drop_stale_.load(std::memory_order_acquire)) {
+                dropped_.fetch_add(1, std::memory_order_relaxed);
+            } else {
+                slot_free_.wait(lock, [this] {
+                    return !has_pending_ || stopped_.load(std::memory_order_acquire);
+                });
+                if (stopped_.load(std::memory_order_acquire)) return;
+            }
         }
         pending_ = frame;  // refcount bump only
         has_pending_ = true;
+        frame_ready_.notify_one();
+    }
+
+    /**
+     * @brief Wait up to @p timeout for a frame to be offered (or for stop()).
+     *
+     * The GUI thread's idle gap: in lossless mode a frame must be shown as soon
+     * as it arrives, or the waiting producer would be paced by the gap itself.
+     */
+    template <class Rep, class Period>
+    void waitForFrame(const std::chrono::duration<Rep, Period>& timeout) {
+        std::unique_lock<std::mutex> lock(mutex_);
+        frame_ready_.wait_for(lock, timeout, [this] {
+            return has_pending_ || stopped_.load(std::memory_order_acquire);
+        });
     }
 
     /**
@@ -129,7 +212,9 @@ public:
         const auto now = std::chrono::steady_clock::now();
         {
             std::lock_guard<std::mutex> lock(mutex_);
-            const bool due = !window_created_ || min_interval_.count() <= 0.0 ||
+            // The preview rate limit only exists to skip frames; lossless shows all.
+            const bool due = !drop_stale_.load(std::memory_order_acquire) ||
+                             !window_created_ || min_interval_.count() <= 0.0 ||
                              (now - last_show_) >= min_interval_;
             if (has_pending_ && due) {
                 frame = std::move(pending_);
@@ -138,6 +223,7 @@ public:
                 last_show_ = now;
             }
         }
+        if (!frame.empty()) slot_free_.notify_all();   // producer may offer the next one
 
         if (!frame.empty() && !showFrame(frame)) return false;
 
@@ -149,7 +235,30 @@ public:
     }
 
     /** Stop the pump. Idempotent; subsequent pump() calls return false. */
-    void stop() { stopped_.store(true, std::memory_order_release); }
+    void stop() {
+        stopped_.store(true, std::memory_order_release);
+        { std::lock_guard<std::mutex> lock(mutex_); }   // no lost wake-up vs. the predicates
+        slot_free_.notify_all();
+        frame_ready_.notify_all();
+    }
+
+    /**
+     * @brief Drop stale frames instead of pacing the producer (`--drop-frames`).
+     *
+     * Off by default: every frame is shown and a slow window slows the pipeline.
+     * On: depth-1 lossy sink with the preview rate limit, as before 2026-10-06.
+     */
+    void setDropStale(bool on) { drop_stale_.store(on, std::memory_order_release); }
+    bool dropStale() const { return drop_stale_.load(std::memory_order_acquire); }
+
+    /**
+     * @brief Screen size used to fit the window on creation. Non-positive values
+     *        fall back to 1920x1080, the same fallback the Python runners use.
+     */
+    void setScreenSize(int w, int h) {
+        screen_w_ = (w > 0 && h > 0) ? w : 1920;
+        screen_h_ = (w > 0 && h > 0) ? h : 1080;
+    }
 
     bool stopped() const { return stopped_.load(std::memory_order_acquire); }
 
@@ -171,6 +280,7 @@ public:
      */
     bool wouldShow() const {
         if (!gui_available_ || stopped_.load(std::memory_order_acquire)) return false;
+        if (!drop_stale_.load(std::memory_order_acquire)) return true;   // lossless: render all
         std::lock_guard<std::mutex> lock(mutex_);
         if (min_interval_.count() <= 0.0) return true;
         const auto now = std::chrono::steady_clock::now();
@@ -202,6 +312,7 @@ public:
 private:
     bool showFrame(const cv::Mat& frame) {
         if (!window_created_) {
+            prepareGuiBackend();
             try {
                 cv::namedWindow(winname_, cv::WINDOW_NORMAL);
             } catch (const cv::Exception&) {
@@ -211,8 +322,19 @@ private:
                 return false;
             }
             window_created_ = true;
-            if (win_w_ > 0 && win_h_ > 0) {
-                try { cv::resizeWindow(winname_, win_w_, win_h_); }
+            int w = win_w_, h = win_h_;
+            if ((w <= 0 || h <= 0) && frame.cols > 0 && frame.rows > 0) {
+                // Same rule as the Python runners' show_image(): fit the frame
+                // into half the screen width and height, aspect preserved,
+                // truncating like int().
+                const double target_w = static_cast<double>(screen_w_ / 2);
+                const double target_h = static_cast<double>(screen_h_ / 2);
+                const double scale = std::min(target_w / frame.cols, target_h / frame.rows);
+                w = static_cast<int>(frame.cols * scale);
+                h = static_cast<int>(frame.rows * scale);
+            }
+            if (w > 0 && h > 0) {
+                try { cv::resizeWindow(winname_, w, h); }
                 catch (const cv::Exception&) { /* non-fatal */ }
             }
         }
@@ -281,6 +403,9 @@ private:
     bool gui_available_;
 
     mutable std::mutex mutex_;
+    std::condition_variable slot_free_;    // pending slot taken by the GUI thread
+    std::condition_variable frame_ready_;  // a frame was offered
+    std::atomic<bool> drop_stale_{false};  // --drop-frames; default lossless
     cv::Mat pending_;
     bool has_pending_ = false;
     std::chrono::steady_clock::time_point last_show_{};
@@ -295,6 +420,8 @@ private:
     bool prop_supported_ = true;
     int win_w_ = 0;
     int win_h_ = 0;
+    int screen_w_ = 1920;
+    int screen_h_ = 1080;
 
     std::atomic<bool> stopped_{false};
     std::atomic<int> shown_{0};
@@ -396,7 +523,11 @@ void runPipelineWithDisplay(PipelineFn&& pipeline, DisplayPump& pump,
                 on_user_quit();
                 break;
             }
-            std::this_thread::sleep_for(kGuiPollIdle);
+            if (pump.dropStale()) {
+                std::this_thread::sleep_for(kGuiPollIdle);
+            } else {
+                pump.waitForFrame(kGuiPollIdle);   // lossless: show frames as they arrive
+            }
         }
         // The idle gap can outlast a short pipeline: the last offered frame is
         // still pending when the worker sets done. Show it once. A user quit
@@ -406,6 +537,28 @@ void runPipelineWithDisplay(PipelineFn&& pipeline, DisplayPump& pump,
         }
     }
     worker.join();
+}
+
+/**
+ * @brief Keep servicing the window until @p thread exits, then join it.
+ *
+ * The lossless tail: when the pipeline finishes, the display thread may still
+ * be rendering and offering its last frames. Stopping the pump first would
+ * leave them unshown (offer() returns at once after stop()). After a user quit
+ * the pump is already stopped, so this only joins -- producers are released.
+ */
+template <typename Thread>
+void pumpUntilJoined(DisplayPump& pump, Thread& thread) {
+    if (!thread.joinable()) return;
+    std::atomic<bool> joined{false};
+    std::thread joiner([&] { thread.join(); joined.store(true, std::memory_order_release); });
+    constexpr auto kGuiPollIdle = std::chrono::milliseconds(8);
+    while (!joined.load(std::memory_order_acquire)) {
+        if (pump.stopped()) break;
+        pump.pump();
+        pump.waitForFrame(kGuiPollIdle);
+    }
+    joiner.join();
 }
 
 }  // namespace dxapp

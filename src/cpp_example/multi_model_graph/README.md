@@ -73,12 +73,11 @@ Two binaries are built from one engine and differ in exactly one value:
 
 Both produce the same `FrameReport` for the same input — `--report` writes
 it as JSON, and `tests/cpp_example/test_graph_cli.py` compares the two files
-byte for byte on real hardware for **eleven of the twelve shipped sample
-graphs** (all but `worker_safety.json`, which is compared with its
-`pipeline.json` by structure only, because one of its models is not
-available here; a graph whose model file is missing is skipped), covering
+byte for byte on real hardware for **all thirteen shipped sample graphs**
+(a graph whose model file is missing is skipped), covering
 every payload shape they produce — `frame`, `boxes`, `obboxes`,
-`keypoints`, `labelmap`, `densemap`, `image`, `scores` and `vector`. The C++
+`keypoints`, `labelmap`, `densemap`, `image`, `scores`, `vector` and
+`records`. The C++
 `FrameReport::operator==`, used by the unit suite, compares every shape
 exactly too, `obboxes` included.
 
@@ -97,11 +96,14 @@ Shipped samples, next to the CLI sources in `src/cpp_example/multi_model_graph/`
 | `chain_sr_od_pose.json` | super-resolve ×2, then detect on the large image → per-person crop → top-down pose | `realesrgan-x2_192x192` → `yolov8-n_640x640` → `vitpose-s_256x192` |
 | `chain_zerodce_od_pose_emb.json` | low-light enhancement, then detect on the enhanced image → per-person crop → top-down pose, and an embedding per person | `zerodce_400x600` → `yolov8-n_640x640` → `vitpose-s_256x192` + `casvit-t_224x224` |
 | `hand_cascade.json` | palm detector → per-palm crop → 21 hand landmarks; the graph form of `multi_model/hand_cascade/pipeline.json` | `mediapipe-hand-detector_192x192` → `mediapipe-hands-lite_224x224` |
-| `worker_safety.json` | person detector and pose model in parallel; the graph form of `multi_model/worker_safety/pipeline.json` without its `ppe` stage, whose `ppe_yolo26n.dxnn` is in neither the registry nor the model-zoo manifest | `yolo26-n_640x640` + `yolo26-n-pose_640x640` |
+| `dms_headpose.json` | face detector → head pose (pitch, yaw, roll) on a cpu node | `scrfd-500m_640x640` → `headpose` |
+| `logistics_volume.json` | detector, instance mask and depth in parallel → package volume proxy on a cpu node | `yolo26-n_640x640` + `yolo26-n-seg_640x640` + `yolo26-depth-n_768x768` → `volume` |
 
-`hand_cascade.json` and `worker_safety.json` are the two scenarios of the
-other multi-model runtime in this release that a graph can express; see
-*Two multi-model runtimes in this release* below.
+`hand_cascade.json`, `dms_headpose.json` and `logistics_volume.json` are the
+scenarios of the other multi-model runtime that a graph can express. The
+hand cascade is the crop chain; head pose and volume are cpu nodes. CLIP
+prompt scores stay on `multi_model_run`. See *Two multi-model runtimes in
+this release* below.
 
 ### Two multi-model runtimes in this release
 
@@ -110,10 +112,10 @@ They share the per-variant factories and the ROI crop rule, and nothing else.
 
 | | `multi_model_graph_{sync,async}` and `dx_graph` (this directory) | `multi_model_run` and `run_pipeline.py` (`src/cpp_example/multi_model/`, `src/python_example/multi_model/`) |
 |---|---|---|
-| Written as | a node-graph JSON (`"nodes"`, `"edges"`, `"roi"`, `"track"`, `"port"`) | a `pipeline.json` of `"stages"` with `"depends_on"` and `"bind"`, plus a named `"fuse"` step |
-| Models | any of the 494 models `docs/graph_models.md` lists as running in a graph, by variant or old name | the variants compiled into `multi_model/registry.cpp` (9 in this release) |
-| Input | images, videos, `camera:<N>`, `rtsp://`, several sources at once | one image per run (`--image`) |
-| Scenario logic | none: models, crops, hand-offs, tracking and ports only | a C++ fuse step per scenario (`hand_cascade`, `logistics_volume`, `worker_safety`, `dms`) and CPU stages such as `face_solvepnp` |
+| Written as | a node-graph JSON (`"nodes"`, `"edges"`, `"roi"`, `"track"`, `"port"`, `"carry"`) | a `pipeline.json` of `"stages"` with `"depends_on"` and `"bind"`, plus a named `"fuse"` step |
+| Models | any of the 494 models `docs/graph_models.md` lists as running in a graph, by variant or old name | the variants compiled into `multi_model/registry.cpp` (8 in this release) |
+| Input | images, videos, `camera:<N>`, `rtsp://`, several sources at once | one image (`--image`) or one video (`--video`, optional `--frames N`) |
+| Scenario logic | cpu nodes `headpose` and `volume`, joined by `"carry": "result"` | a C++ fuse step per scenario (`hand_cascade`, `logistics_volume`, `dms`) and CPU stages such as `face_solvepnp` |
 | Coordinates | every result mapped back to the source frame (`origin`) | a crop's results stay in crop coordinates, next to the crop box |
 | Checks | `--check` without the NPU; sync and async reports byte-identical | none before the run |
 
@@ -122,13 +124,12 @@ Which to use:
 * **Use a graph** to combine registry models on images or streams, to swap
   a model by editing one string, or when you need tracking, several sources,
   ports, `--report` or Python (`dx_graph`).
-* **Use `multi_model_run`** for the four scenarios whose answer is computed
-  after the models: logistics volume, driver monitoring (head pose by
-  solvePnP and CLIP scores), worker safety with its PPE model, and the hand
-  cascade's fused summary. A graph has no fuse or CPU node (see *Not in this
-  release*).
-* The **hand cascade** and **worker safety** exist in both forms
-  (`hand_cascade.json`, `worker_safety.json` above). The graph and both
+* **Use `multi_model_run`** for the hand cascade's fused HANDS/NO_HAND
+  summary, and for driver monitoring's CLIP crop count. Head pose and
+  package volume now run as graph cpu nodes (`dms_headpose.json`,
+  `logistics_volume.json`). A generic `"type": "fuse"` node is still
+  reserved (see *Not in this release*).
+* The **hand cascade** exists in both forms (`hand_cascade.json` above). The graph and both
   `multi_model` runtimes cut an ROI crop by one rule, `PaddedCropRect` in
   `common/utility/roi_crop.hpp` (`multi_model_run`'s `cropBoxes` calls it;
   `run_pipeline.py` has the same rule in float32, `padded_crop_rect` in
@@ -140,14 +141,15 @@ Which to use:
 
 ---
 
-## The whole vocabulary: two node kinds, two edge kinds
+## The whole vocabulary: three node kinds, three edge kinds
 
 **Nodes**
 
 | Kind | Written as | Meaning |
 |---|---|---|
-| source | `{ "id": "cam", "type": "source", "uri": "..." }` | where frames come from: an image, a video file, `camera:0`, or an `rtsp://` URL. A relative `uri` is resolved against the repository root, so the samples run from any directory. `"source"` is the only `"type"` value the schema defines. A graph may have several source nodes; each one is its own stream (see *Several sources: one stream each*) |
+| source | `{ "id": "cam", "type": "source", "uri": "..." }` | where frames come from: an image, a video file, `camera:0`, or an `rtsp://` URL. A relative `uri` is resolved against the repository root, so the samples run from any directory. A graph may have several source nodes; each one is its own stream (see *Several sources: one stream each*) |
 | model | `{ "id": "od", "model": "yolov8-n_640x640" }` | one model from the registry — note there is **no `"type"`** on a model node. `--list-models` and [`docs/graph_models.md`](../../../docs/graph_models.md) say which names exist |
+| cpu | `{ "id": "headpose", "type": "cpu", "op": "headpose" }` | one named reduction, run once per frame after its parents finish. `"op"` is `headpose` or `volume`. No `"model"`, no `"track"`. `headpose` takes no params. `volume` accepts `scale_factor` (number, default 1), `classes` and `class_ids` (string arrays; omit them for the defaults, pass `[]` to disable that match) |
 
 **Edges**
 
@@ -155,7 +157,8 @@ Which to use:
 |---|---|---|
 | frame | `{ "from": "cam", "to": "od" }` | the consumer gets the whole frame: the source frame, or the image the producer made (see below) |
 | ROI | `{ "from": "od", "to": "reid", "roi": { ... } }` | the consumer gets one cropped region per box the producer found, and runs once per crop |
-| `port` | `{ "from": "drive", "to": "x", "port": "lane" }` | reads one named output of the producer; without it, the primary output (this example is refused today: no shipped port has an edge-carryable shape; see *Output ports*) |
+| result | `{ "from": "face", "to": "headpose", "carry": "result" }` | the consumer, which must be a cpu node, receives the producer payload. Not a crop and not a frame. `headpose` needs one `boxes` result. `volume` needs one `boxes`, one `instances` and one `densemap` |
+| `port` | `{ "from": "drive", "to": "x", "port": "lane" }` | reads one named output of the producer; without it, the primary output (this example is refused today: no shipped port has an edge-carryable shape; see *Output ports*). A result edge cannot also name a port |
 
 A model node accepts a frame edge only if it `consumes` `frame` or `either`,
 and a ROI edge only if it `consumes` `roi` or `either`. A ROI edge's producer
@@ -832,7 +835,7 @@ of them.
 | **Condition / rule expressions on edges** | No key in v1; an expression language is a small language and permanently binding once shipped |
 | **3D / LiDAR models** (`boxes3d`) | Rejected in every graph (`GRAPH_EDGE`: `consumes LiDAR point clouds, not camera frames`): every source is a camera frame |
 | **Anomaly detection** | The four anomaly models are registered but not graph-ready (`MODEL_NOT_READY`); EfficientAD's companion engines have no graph stage |
-| **CPU nodes and scenario reducers** (solvePnP, CLIP prompt scores, volume estimation, PPE rules) | Not graph nodes; the other multi-model runtime has them (see *Two multi-model runtimes in this release*) |
+| **CPU nodes besides `headpose` and `volume`** (CLIP prompt scores) | Not graph nodes; `multi_model_run`'s `dms` fuse still counts CLIP crops |
 | **SuperPoint tracks in a graph** | Needs an ordered per-stream step; the descriptors port is available |
 | **DnCNN resized back to the input size** | Hand-off hands off as produced: DnCNN's image stays 512×512 |
 
@@ -938,9 +941,13 @@ run, as Ctrl-C does. A stop request stops
 reading every stream, finishes the frames in flight in every stream, and
 finalizes `--report` and every output file.
 
-**Messages.** With several sources the `input:` lines name their streams,
-a failed frame is reported on stderr as `stream cam1 frame 3: <error>`, and
-the summary gives one `stream <source_id>: N frames, F failed` line per
+**Messages.** Every frame prints one stdout line, in node order, with no
+window: `frame 3: palm boxes=1 landmark keypoints=1`. A records node adds
+its numbers (`headpose records=1 pitch=-5.98 yaw=13.74 roll=2.09`); more
+than three items keeps the first three and a `+|N` tail. With several
+sources the line is `stream cam1 frame 3: ...`. A failed frame is also
+reported on stderr as `stream cam1 frame 3: <error>` (or `frame 3: <error>`
+with one source), and the summary gives one `stream <source_id>: N frames, F failed` line per
 stream before the total (lines from the runtime left out):
 
 ```console

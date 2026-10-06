@@ -1,6 +1,6 @@
 /**
  * @file runner.cpp
- * @brief Wave execution, ROI binds, CPU head pose, and the four demo fusers.
+ * @brief Wave execution, ROI binds, CPU head pose, and the three demo fusers.
  */
 
 #include "multi_model/runner.hpp"
@@ -23,7 +23,6 @@ namespace dxapp {
 namespace {
 
 const double kFaceRoiPadRatio = 0.15;
-const int kPersonClassId = 0;
 const double kDefaultScaleFactor = 1.0;
 const double kSingularSy = 1e-6;
 
@@ -178,10 +177,6 @@ bool isPackage(const BoxRecord& record) {
     const std::string name = lowerCopy(record.className);
     return name == "backpack" || name == "handbag" || name == "suitcase" ||
            name == "box" || name == "package" || name == "luggage";
-}
-
-bool isPerson(const BoxRecord& record) {
-    return record.classId == kPersonClassId || lowerCopy(record.className) == "person";
 }
 
 struct Crop {
@@ -530,33 +525,6 @@ std::string fuseLogistics(
     return text.str();
 }
 
-std::string fuseSafety(const std::map<std::string, StageBundle>& outputs) {
-    int persons = 0;
-    int ppe = 0;
-    int poses = 0;
-    std::map<std::string, StageBundle>::const_iterator person = outputs.find("person");
-    if (person != outputs.end()) {
-        const std::vector<BoxRecord>& boxes = boxesOf(person->second);
-        for (std::size_t i = 0; i < boxes.size(); ++i) {
-            if (isPerson(boxes[i])) {
-                ++persons;
-            }
-        }
-    }
-    std::map<std::string, StageBundle>::const_iterator ppeIt = outputs.find("ppe");
-    if (ppeIt != outputs.end()) {
-        ppe = static_cast<int>(boxesOf(ppeIt->second).size());
-    }
-    std::map<std::string, StageBundle>::const_iterator pose = outputs.find("pose");
-    if (pose != outputs.end()) {
-        poses = static_cast<int>(boxesOf(pose->second).size());
-    }
-    std::ostringstream text;
-    text << "event=" << (persons > 0 ? "PERSONS" : "NO_PERSON")
-         << " persons=" << persons << " ppe=" << ppe << " poses=" << poses;
-    return text.str();
-}
-
 std::string fuseDms(const std::map<std::string, StageBundle>& outputs) {
     int faces = 0;
     int poses = 0;
@@ -601,9 +569,6 @@ std::string fuseOutputs(
     }
     if (name == "logistics_volume") {
         return fuseLogistics(outputs, config);
-    }
-    if (name == "worker_safety") {
-        return fuseSafety(outputs);
     }
     if (name == "dms") {
         return fuseDms(outputs);

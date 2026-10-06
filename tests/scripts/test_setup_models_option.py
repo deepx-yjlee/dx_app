@@ -28,6 +28,8 @@ printf '%s\\0' "$@" > "$(dirname "$0")/{name}.argv"
 exit ${{STUB_RC:-0}}
 """
 
+GUI_ENV_STUB = "dxapp_link_cv2_qt_fonts() { :; }\ndxapp_prepare_gui_env() { :; }\n"
+
 
 def _tree(tmp_path: Path, real_downloader: bool = False) -> Path:
     """<tmp>/suite/runtime/dx_app with setup.sh and what it needs."""
@@ -36,6 +38,8 @@ def _tree(tmp_path: Path, real_downloader: bool = False) -> Path:
     shutil.copy2(SETUP_SH, app / "setup.sh")
     for f in ("color_env.sh", "common_util.sh"):
         shutil.copy2(ROOT / "scripts" / f, app / "scripts" / f)
+    # The real helper would link fonts into the caller's venv.
+    (app / "scripts" / "gui_env.sh").write_text(GUI_ENV_STUB)
     if real_downloader:
         shutil.copy2(ROOT / "setup_sample_models.sh", app / "setup_sample_models.sh")
         for f in ("download_models.py", "modelzoo_manifest.json"):

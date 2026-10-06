@@ -52,6 +52,7 @@ struct CommandLineArgs {
     int cameraIndex = -1;
     int loopTest = -1;
     bool no_display = false;
+    bool drop_frames = false;  // --drop-frames: lossy preview (default: lossless)
     bool saveMode = false;
     bool dumpTensors = false;
     bool verbose = false;
@@ -216,6 +217,7 @@ public:
 
         // Parse command line arguments
         CommandLineArgs args = parseCommandLine(argc, argv);
+        dxapp::configureDisplayPump(display_pump_, args.drop_frames);
         verbose_ = args.verbose;
         // Apply default sample image if no input specified
         if (args.imageFilePath.empty() && args.videoFile.empty() && args.cameraIndex < 0 && args.rtspUrl.empty()) {
@@ -608,8 +610,10 @@ public:
                                });
         running_ = false;
         display_queue_.shutdown();
+        // Lossless tail: keep pumping until the display thread has offered and
+        // the window has shown its last frames, then stop the pump.
+        dxapp::pumpUntilJoined(display_pump_, displayThr);
         display_pump_.stop();
-        displayThr.join();
         cv::destroyAllWindows();
 
         auto e_time = std::chrono::high_resolution_clock::now();
@@ -804,6 +808,8 @@ private:
              cxxopts::value<int>(args.loopTest)->default_value("-1"))
             ("no-display", "will not visualize, only show fps",
              cxxopts::value<bool>(args.no_display)->default_value("false"))
+            ("drop-frames", "display: drop stale frames instead of pacing the pipeline (default: off, every frame is shown)",
+             cxxopts::value<bool>(args.drop_frames)->default_value("false"))
             ("config", "Model configuration JSON file path",
              cxxopts::value<std::string>(args.configPath))
             ("show-log", "Enable verbose log output (default: quiet)",
@@ -1036,8 +1042,11 @@ private:
         if (display_pump_.shown() > 0) {
             const double avg_display = display_pump_.avgShowMs();
             printRow("Display", avg_display, avg_display > 0 ? 1000.0/avg_display : 0.0);
-            std::cout << " Display shown    : " << std::setw(6) << display_pump_.shown()
-                      << "   dropped (stale): " << display_pump_.dropped() << std::endl;
+            std::cout << " Display shown    : " << std::setw(6) << display_pump_.shown();
+            if (display_pump_.dropStale()) {
+                std::cout << "   dropped (stale): " << display_pump_.dropped();
+            }
+            std::cout << std::endl;
         }
         std::cout << "--------------------------------------------------" << std::endl;
         std::cout << " * Async: turnaround latency (submit to callback)" << std::endl;

@@ -2143,7 +2143,7 @@ bool SameBoxes3dPayload(const Detection3DResult& x, const Detection3DResult& y) 
 /// so two calls give identical contents in distinct objects. No default:
 /// a Shape added without a case here is a build error (-Werror=switch).
 /// True only for the last Shape enumerator. Exhaustive, no default: a
-/// Shape appended after kBoxes3d is a build error here (-Werror=switch)
+/// Shape appended after kRecords is a build error here (-Werror=switch)
 /// until it is given a case, and moving the "true" to it is what makes
 /// the every-shape loop below visit it.
 bool IsLastShape(Shape shape) {
@@ -2160,6 +2160,8 @@ bool IsLastShape(Shape shape) {
         case Shape::kVector:
             return false;
         case Shape::kBoxes3d:
+            return false;
+        case Shape::kRecords:
             return true;
     }
     return true;  // outside the enum: stop the loop
@@ -2228,6 +2230,14 @@ StageDataPtr MakeIdenticalPayloadForShape(Shape shape) {
         case Shape::kBoxes3d: {
             std::shared_ptr<Boxes3dData> data(new Boxes3dData());
             data->items.push_back(MakeDetection3DForEquality());
+            return data;
+        }
+        case Shape::kRecords: {
+            std::shared_ptr<RecordsData> data(new RecordsData());
+            RecordItem item;
+            item.numbers.push_back(std::make_pair(std::string("pitch"), 1.5));
+            item.text.push_back(std::make_pair(std::string("class_name"), std::string("box")));
+            data->items.push_back(item);
             return data;
         }
     }
@@ -11641,6 +11651,226 @@ void TestGalleryMatchesBecomeAScoresPort() {
     GRAPH_CHECK(ToStagePorts(std::vector<EmbeddingResult>()).at("matches") != NULL);
 }
 
+bool CpuValidateThrows(const std::string& text, const IModelRegistry& registry,
+                       GraphErrorCode expected, std::string* message) {
+    try {
+        const GraphSpec spec = ParseGraphText(text, "cpu.json");
+        ValidateGraph(spec, registry);
+    } catch (const GraphError& error) {
+        *message = error.what();
+        return error.code() == expected;
+    } catch (...) {
+        *message = "non-GraphError exception";
+        return false;
+    }
+    *message = "no exception";
+    return false;
+}
+
+ModelInfo CpuFixtureModel(const std::string& name, Shape shape) {
+    ModelInfo info;
+    info.model_name = name;
+    info.task = "object_detection";
+    info.dxnn_file = name + ".dxnn";
+    info.output_shape = shape;
+    info.input_contract = InputContract::kFullFrame;
+    info.ready = true;
+    info.published = true;
+    return info;
+}
+
+const RecordsData* RecordsOf(const FrameReport& report, const std::string& id) {
+    std::map<std::string, StageResult>::const_iterator it = report.node_results.find(id);
+    if (it == report.node_results.end() || !it->second.data) return NULL;
+    return dynamic_cast<const RecordsData*>(it->second.data.get());
+}
+
+bool NamedNumber(const RecordItem& item, const std::string& name, double* value) {
+    for (std::size_t i = 0; i < item.numbers.size(); ++i) {
+        if (item.numbers[i].first != name) continue;
+        *value = item.numbers[i].second;
+        return true;
+    }
+    return false;
+}
+
+FrameReport RunSync(const std::string& text, FakeModelRegistry* registry, const cv::Mat& frame) {
+    const GraphSpec spec = ParseGraphText(text, "cpu.json");
+    ValidateGraph(spec, *registry);
+    StageGraph graph;
+    graph.Build(spec, *registry, "/models", false);
+    return SyncExecutor().RunFrame(graph, frame, 0);
+}
+
+FrameReport RunAsync(const std::string& text, FakeModelRegistry* registry, const cv::Mat& frame) {
+    const GraphSpec spec = ParseGraphText(text, "cpu.json");
+    StageGraph graph;
+    graph.Build(spec, *registry, "/models", false);
+    return AsyncExecutor(StageJobs(4)).RunFrame(graph, frame, 0);
+}
+
+void TestCpuNodeRejectsAGenericFuseAndABadResultEdge() {
+    std::string message;
+    GRAPH_CHECK(ThrowsWithCode(
+        "{\"version\":1,\"nodes\":[{\"id\":\"cam\",\"type\":\"source\",\"uri\":\"a.jpg\"},"
+        "{\"id\":\"pose\",\"type\":\"cpu\",\"op\":\"tilt\"}],\"edges\":[]}",
+        GraphErrorCode::kGraphSchema, &message));
+    GRAPH_CHECK(message.find("unknown cpu op") != std::string::npos);
+
+    GRAPH_CHECK(ThrowsWithCode(
+        "{\"version\":1,\"nodes\":[{\"id\":\"cam\",\"type\":\"source\",\"uri\":\"a.jpg\"},"
+        "{\"id\":\"pose\",\"type\":\"cpu\",\"op\":\"headpose\",\"track\":{\"algo\":\"iou\"}}],"
+        "\"edges\":[]}",
+        GraphErrorCode::kGraphSchema, &message));
+    GRAPH_CHECK(message.find("cannot track") != std::string::npos);
+
+    FakeModelRegistry registry;
+    registry.AddModel(CpuFixtureModel("face", Shape::kBoxes),
+                      StageDataPtr(new BoxesData(Shape::kBoxes)));
+    GRAPH_CHECK(CpuValidateThrows(
+        "{\"version\":1,\"nodes\":["
+        "{\"id\":\"cam\",\"type\":\"source\",\"uri\":\"a.jpg\"},"
+        "{\"id\":\"face\",\"model\":\"face\"},"
+        "{\"id\":\"pose\",\"type\":\"cpu\",\"op\":\"headpose\",\"params\":{\"scale_factor\":1}}],"
+        "\"edges\":[{\"from\":\"cam\",\"to\":\"face\"},"
+        "{\"from\":\"face\",\"to\":\"pose\",\"carry\":\"result\"}]}",
+        registry, GraphErrorCode::kGraphSchema, &message));
+    GRAPH_CHECK(message.find("takes no params") != std::string::npos);
+
+    GRAPH_CHECK(CpuValidateThrows(
+        "{\"version\":1,\"nodes\":["
+        "{\"id\":\"cam\",\"type\":\"source\",\"uri\":\"a.jpg\"},"
+        "{\"id\":\"face\",\"model\":\"face\"},"
+        "{\"id\":\"od\",\"model\":\"face\"},"
+        "{\"id\":\"pose\",\"type\":\"cpu\",\"op\":\"headpose\"}],"
+        "\"edges\":[{\"from\":\"cam\",\"to\":\"face\"},{\"from\":\"cam\",\"to\":\"od\"},"
+        "{\"from\":\"face\",\"to\":\"pose\",\"carry\":\"result\"},"
+        "{\"from\":\"od\",\"to\":\"pose\",\"carry\":\"result\"}]}",
+        registry, GraphErrorCode::kGraphEdge, &message));
+    GRAPH_CHECK(message.find("one boxes result") != std::string::npos);
+
+    GRAPH_CHECK(CpuValidateThrows(
+        "{\"version\":1,\"nodes\":["
+        "{\"id\":\"cam\",\"type\":\"source\",\"uri\":\"a.jpg\"},"
+        "{\"id\":\"face\",\"model\":\"face\"},"
+        "{\"id\":\"od\",\"model\":\"face\"}],"
+        "\"edges\":[{\"from\":\"cam\",\"to\":\"face\"},"
+        "{\"from\":\"face\",\"to\":\"od\",\"carry\":\"result\"}]}",
+        registry, GraphErrorCode::kGraphEdge, &message));
+    GRAPH_CHECK(message.find("only by a cpu node") != std::string::npos);
+}
+
+void TestHeadPoseMatchesSyncAndAsync() {
+    std::shared_ptr<BoxesData> boxes(new BoxesData(Shape::kBoxes));
+    BoxItem face;
+    face.box = cv::Rect2f(200.f, 120.f, 80.f, 100.f);
+    face.class_id = 0;
+    face.class_name = "face";
+    face.landmarks.push_back(Keypoint(220.f, 150.f, 1.f));
+    face.landmarks.push_back(Keypoint(260.f, 150.f, 1.f));
+    face.landmarks.push_back(Keypoint(240.f, 180.f, 1.f));
+    face.landmarks.push_back(Keypoint(225.f, 200.f, 1.f));
+    face.landmarks.push_back(Keypoint(255.f, 200.f, 1.f));
+    boxes->items.push_back(face);
+
+    const std::string text =
+        "{\"version\":1,\"name\":\"headpose\",\"nodes\":["
+        "{\"id\":\"cam\",\"type\":\"source\",\"uri\":\"a.jpg\"},"
+        "{\"id\":\"face\",\"model\":\"face\"},"
+        "{\"id\":\"pose\",\"type\":\"cpu\",\"op\":\"headpose\"}],"
+        "\"edges\":[{\"from\":\"cam\",\"to\":\"face\"},"
+        "{\"from\":\"face\",\"to\":\"pose\",\"carry\":\"result\"}]}";
+    const cv::Mat frame = cv::Mat::zeros(480, 640, CV_8UC3);
+
+    FakeModelRegistry sync_registry;
+    sync_registry.AddModel(CpuFixtureModel("face", Shape::kBoxes), boxes);
+    const FrameReport expected = RunSync(text, &sync_registry, frame);
+
+    FakeModelRegistry async_registry;
+    async_registry.AddModel(CpuFixtureModel("face", Shape::kBoxes), boxes);
+    const FrameReport actual = RunAsync(text, &async_registry, frame);
+
+    GRAPH_CHECK(expected.error.empty());
+    GRAPH_CHECK(expected == actual);
+    const RecordsData* records = RecordsOf(expected, "pose");
+    GRAPH_CHECK(records != NULL && records->items.size() == 1);
+    if (records == NULL || records->items.empty()) return;
+    double pitch = 0.0;
+    double yaw = 0.0;
+    double roll = 0.0;
+    GRAPH_CHECK(NamedNumber(records->items[0], "pitch", &pitch));
+    GRAPH_CHECK(NamedNumber(records->items[0], "yaw", &yaw));
+    GRAPH_CHECK(NamedNumber(records->items[0], "roll", &roll));
+    GRAPH_CHECK(std::isfinite(pitch) && std::isfinite(yaw) && std::isfinite(roll));
+}
+
+void TestVolumeProxyMatchesSyncAndAsync() {
+    std::shared_ptr<BoxesData> boxes(new BoxesData(Shape::kBoxes));
+    BoxItem package;
+    package.box = cv::Rect2f(0.f, 0.f, 4.f, 4.f);
+    package.class_id = 24;
+    package.class_name = "backpack";
+    boxes->items.push_back(package);
+    BoxItem person;
+    person.box = cv::Rect2f(10.f, 10.f, 4.f, 4.f);
+    person.class_id = 0;
+    person.class_name = "person";
+    boxes->items.push_back(person);
+
+    std::shared_ptr<BoxesData> instances(new BoxesData(Shape::kInstances));
+    BoxItem segment = package;
+    segment.mask = cv::Mat::zeros(4, 4, CV_8UC1);
+    segment.mask.at<unsigned char>(0, 0) = 255;
+    segment.mask.at<unsigned char>(0, 1) = 255;
+    segment.mask.at<unsigned char>(1, 0) = 255;
+    segment.mask.at<unsigned char>(1, 1) = 255;
+    instances->items.push_back(segment);
+
+    std::shared_ptr<DenseMapData> depth(new DenseMapData());
+    depth->values = cv::Mat(4, 4, CV_32FC1, cv::Scalar(3.0f));
+
+    const std::string text =
+        "{\"version\":1,\"name\":\"volume\",\"nodes\":["
+        "{\"id\":\"cam\",\"type\":\"source\",\"uri\":\"a.jpg\"},"
+        "{\"id\":\"det\",\"model\":\"det\"},"
+        "{\"id\":\"seg\",\"model\":\"seg\"},"
+        "{\"id\":\"depth\",\"model\":\"depth\"},"
+        "{\"id\":\"volume\",\"type\":\"cpu\",\"op\":\"volume\","
+        "\"params\":{\"scale_factor\":2.0}}],"
+        "\"edges\":[{\"from\":\"cam\",\"to\":\"det\"},{\"from\":\"cam\",\"to\":\"seg\"},"
+        "{\"from\":\"cam\",\"to\":\"depth\"},"
+        "{\"from\":\"det\",\"to\":\"volume\",\"carry\":\"result\"},"
+        "{\"from\":\"seg\",\"to\":\"volume\",\"carry\":\"result\"},"
+        "{\"from\":\"depth\",\"to\":\"volume\",\"carry\":\"result\"}]}";
+    const cv::Mat frame = cv::Mat::zeros(32, 32, CV_8UC3);
+
+    FakeModelRegistry sync_registry;
+    sync_registry.AddModel(CpuFixtureModel("det", Shape::kBoxes), boxes);
+    sync_registry.AddModel(CpuFixtureModel("seg", Shape::kInstances), instances);
+    sync_registry.AddModel(CpuFixtureModel("depth", Shape::kDenseMap), depth);
+    const FrameReport expected = RunSync(text, &sync_registry, frame);
+
+    FakeModelRegistry async_registry;
+    async_registry.AddModel(CpuFixtureModel("det", Shape::kBoxes), boxes);
+    async_registry.AddModel(CpuFixtureModel("seg", Shape::kInstances), instances);
+    async_registry.AddModel(CpuFixtureModel("depth", Shape::kDenseMap), depth);
+    const FrameReport actual = RunAsync(text, &async_registry, frame);
+
+    GRAPH_CHECK(expected.error.empty());
+    GRAPH_CHECK(expected == actual);
+    const RecordsData* records = RecordsOf(expected, "volume");
+    GRAPH_CHECK(records != NULL && records->items.size() == 1);
+    if (records == NULL || records->items.size() != 1) return;
+    double area = 0.0;
+    double median = 0.0;
+    double volume = 0.0;
+    GRAPH_CHECK(NamedNumber(records->items[0], "mask_area_px", &area) && area == 4.0);
+    GRAPH_CHECK(NamedNumber(records->items[0], "median_depth", &median) && median == 3.0);
+    GRAPH_CHECK(NamedNumber(records->items[0], "volume_proxy", &volume) && volume == 24.0);
+    GRAPH_CHECK(records->items[0].text.size() == 1 &&
+                records->items[0].text[0].second == "backpack");
+}
+
 }  // namespace graph
 }  // namespace dxapp
 
@@ -11983,6 +12213,10 @@ int main() {
     TestMattingAlphaBecomesADenseMapPort();
     TestDepthConversionOwnsItsValues();
     TestGalleryMatchesBecomeAScoresPort();
+
+    TestCpuNodeRejectsAGenericFuseAndABadResultEdge();
+    TestHeadPoseMatchesSyncAndAsync();
+    TestVolumeProxyMatchesSyncAndAsync();
 
     std::printf("%d checks, %d failures, %d skipped\n",
                 g_checks, g_failures, g_skipped);

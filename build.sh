@@ -13,6 +13,7 @@ fi
 # color env settings
 source "${SCRIPT_DIR}/scripts/color_env.sh"
 source "${SCRIPT_DIR}/scripts/common_util.sh"
+source "${SCRIPT_DIR}/scripts/gui_env.sh"
 source "${SCRIPT_DIR}/scripts/build_target_resolver.sh"
 
 pushd "${DX_APP_PATH}" >&2
@@ -125,6 +126,7 @@ install_dx_postprocess_module() {
         if [ $? -eq 0 ]; then
             echo -e "${COLOR_GREEN}  ✓ Installed to: ${INSTALL_LOCATION}${COLOR_RESET}"
         fi
+        dxapp_link_cv2_qt_fonts "${python_exec}"
     else
         echo -e "${COLOR_RED}${COLOR_BOLD}dx_postprocess installation failed!${COLOR_RESET}"
         echo -e "${TAG_ERROR} Python module installation is required for complete build"

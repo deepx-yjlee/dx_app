@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cerrno>
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -334,7 +335,7 @@ bool ParseArgs(int argc, char** argv, ExecutorKind kind, GraphCliArgs* args,
 const Shape kAllShapes[] = {
     Shape::kFrame,    Shape::kBoxes,    Shape::kObBoxes, Shape::kInstances,
     Shape::kKeypoints, Shape::kLabelMap, Shape::kDenseMap, Shape::kImage,
-    Shape::kScores,   Shape::kVector,   Shape::kBoxes3d};
+    Shape::kScores,   Shape::kVector,   Shape::kBoxes3d, Shape::kRecords};
 
 /// Matches --consumes. Its value has already been validated.
 bool ConsumesMatches(const std::string& wanted, InputContract contract) {
@@ -517,7 +518,7 @@ void PrintCheckSummary(const GraphSpec& spec, const IModelRegistry& registry,
                        const std::string& model_dir) {
     std::size_t model_nodes = 0;
     for (std::size_t i = 0; i < spec.nodes.size(); ++i) {
-        if (!spec.nodes[i].is_source) ++model_nodes;
+        if (!spec.nodes[i].is_source && !spec.nodes[i].is_cpu) ++model_nodes;
     }
     std::printf("OK: graph \"%s\" is valid (%u nodes, %u edges, %u models)\n",
                 spec.name.empty() ? graph_path.c_str() : spec.name.c_str(),
@@ -536,6 +537,10 @@ void PrintCheckSummary(const GraphSpec& spec, const IModelRegistry& registry,
     std::size_t model_width = 30;
     for (std::size_t i = 0; i < spec.nodes.size(); ++i) {
         id_width = std::max(id_width, spec.nodes[i].id.size() + 1);
+        if (spec.nodes[i].is_cpu) {
+            model_width = std::max(model_width, std::string("(cpu ").size() + spec.nodes[i].op.size() + 2);
+            continue;
+        }
         if (!spec.nodes[i].is_source) {
             const ModelInfo* info = registry.find(spec.nodes[i].model);
             const std::string& name = info != NULL ? info->model_name : spec.nodes[i].model;
@@ -557,6 +562,11 @@ void PrintCheckSummary(const GraphSpec& spec, const IModelRegistry& registry,
                   << std::setw(11) << "-" << node.uri << "\n";
             continue;
         }
+        if (node.is_cpu) {
+            table << std::setw(model_w) << ("(cpu " + node.op + ")")
+                  << std::setw(11) << "records" << std::setw(11) << "result" << "-\n";
+            continue;
+        }
         const ModelInfo* info = registry.find(node.model);
         if (info == NULL) continue;
         // A present file names its container version, as --list-models
@@ -576,7 +586,7 @@ void PrintCheckSummary(const GraphSpec& spec, const IModelRegistry& registry,
     std::ostringstream resources;
     for (std::size_t i = 0; i < spec.nodes.size(); ++i) {
         const NodeSpec& node = spec.nodes[i];
-        if (node.is_source) continue;
+        if (node.is_source || node.is_cpu) continue;
         const ModelInfo* info = registry.find(node.model);
         if (info == NULL) continue;
         for (std::size_t r = 0; r < info->resources.size(); ++r) {
@@ -633,7 +643,7 @@ std::vector<std::string> UnloadableContainers(const GraphSpec& spec,
     std::vector<std::string> errors;
     for (std::size_t i = 0; i < spec.nodes.size(); ++i) {
         const NodeSpec& node = spec.nodes[i];
-        if (node.is_source) continue;
+        if (node.is_source || node.is_cpu) continue;
         const ModelInfo* info = registry.find(node.model);
         if (info == NULL) continue;
         const std::string error =
@@ -756,6 +766,141 @@ void WarnAboutEmptyRoiEdges(const GraphSpec& spec, const FrameReport& report,
     }
 }
 
+std::string FormatNumber(double value) {
+    char buffer[64];
+    if (std::isfinite(value) && std::fabs(value) < 1e9 &&
+        std::fabs(value - std::round(value)) < 1e-4) {
+        std::snprintf(buffer, sizeof(buffer), "%.0f", value);
+    } else {
+        std::snprintf(buffer, sizeof(buffer), "%.2f", value);
+    }
+    return buffer;
+}
+
+/// One payload reduced to a count, plus the measurements of a records payload.
+std::string DescribePayload(const StageData* data) {
+    if (data == NULL) return "none";
+    switch (data->shape()) {
+        case Shape::kBoxes:
+        case Shape::kObBoxes:
+        case Shape::kInstances: {
+            const BoxesData* boxes = dynamic_cast<const BoxesData*>(data);
+            if (boxes == NULL) return ToString(data->shape());
+            return std::string(ToString(data->shape())) + "=" +
+                   std::to_string(boxes->items.size());
+        }
+        case Shape::kKeypoints: {
+            const KeypointsData* poses = dynamic_cast<const KeypointsData*>(data);
+            if (poses == NULL) return "keypoints";
+            return "keypoints=" + std::to_string(poses->items.size());
+        }
+        case Shape::kScores: {
+            const ScoresData* scores = dynamic_cast<const ScoresData*>(data);
+            if (scores == NULL) return "scores";
+            return "scores=" + std::to_string(scores->items.size());
+        }
+        case Shape::kVector: {
+            const VectorData* vector = dynamic_cast<const VectorData*>(data);
+            if (vector == NULL) return "vector";
+            return "vector=" + std::to_string(vector->values.size());
+        }
+        case Shape::kBoxes3d: {
+            const Boxes3dData* boxes = dynamic_cast<const Boxes3dData*>(data);
+            if (boxes == NULL) return "boxes3d";
+            return "boxes3d=" + std::to_string(boxes->items.size());
+        }
+        case Shape::kRecords: {
+            const RecordsData* records = dynamic_cast<const RecordsData*>(data);
+            if (records == NULL) return "records";
+            std::ostringstream text;
+            text << "records=" << records->items.size();
+            const std::size_t kMaxItems = 3;
+            const std::size_t shown = std::min(records->items.size(), kMaxItems);
+            for (std::size_t i = 0; i < shown; ++i) {
+                text << (i == 0 ? "" : " |");
+                const RecordItem& item = records->items[i];
+                for (std::size_t n = 0; n < item.numbers.size(); ++n) {
+                    text << " " << item.numbers[n].first << "="
+                         << FormatNumber(item.numbers[n].second);
+                }
+                for (std::size_t n = 0; n < item.text.size(); ++n) {
+                    text << " " << item.text[n].first << "=" << item.text[n].second;
+                }
+            }
+            if (records->items.size() > kMaxItems) {
+                text << " | +" << (records->items.size() - kMaxItems);
+            }
+            return text.str();
+        }
+        case Shape::kFrame:
+        case Shape::kImage:
+        case Shape::kLabelMap:
+        case Shape::kDenseMap:
+            return ToString(data->shape());
+    }
+    return ToString(data->shape());
+}
+
+/// Sum countable payloads that share one shape. A records node keeps each
+/// item, because the numbers are the result a video run is watched for.
+std::string DescribePayloads(const std::vector<const StageData*>& payloads) {
+    std::vector<const StageData*> present;
+    for (std::size_t i = 0; i < payloads.size(); ++i) {
+        if (payloads[i] != NULL) present.push_back(payloads[i]);
+    }
+    if (present.empty()) return "none";
+    const Shape shape = present[0]->shape();
+    bool same = true;
+    for (std::size_t i = 1; i < present.size(); ++i) {
+        if (present[i]->shape() != shape) same = false;
+    }
+    if (!same || shape == Shape::kRecords || present.size() == 1) {
+        if (present.size() == 1) return DescribePayload(present[0]);
+        std::ostringstream text;
+        text << "rois=" << present.size();
+        for (std::size_t i = 0; i < present.size(); ++i) {
+            text << " " << DescribePayload(present[i]);
+        }
+        return text.str();
+    }
+    std::size_t count = 0;
+    for (std::size_t i = 0; i < present.size(); ++i) {
+        const std::string one = DescribePayload(present[i]);
+        const std::size_t eq = one.rfind('=');
+        if (eq == std::string::npos) return "rois=" + std::to_string(present.size()) + " " + ToString(shape);
+        count += static_cast<std::size_t>(std::atoi(one.c_str() + eq + 1));
+    }
+    return std::string(ToString(shape)) + "=" + std::to_string(count);
+}
+
+/// One stdout line per frame, so a video run is readable without a window.
+void PrintFrameLine(const GraphSpec& spec, const FrameReport& report, bool several) {
+    std::ostringstream line;
+    if (several) line << "stream " << report.stream << " ";
+    line << "frame " << report.frame_index << ":";
+    if (!report.error.empty()) line << " error";
+    for (std::size_t n = 0; n < spec.nodes.size(); ++n) {
+        const NodeSpec& node = spec.nodes[n];
+        if (node.is_source) continue;
+        std::map<std::string, StageResult>::const_iterator full =
+            report.node_results.find(node.id);
+        std::map<std::string, std::vector<StageResult> >::const_iterator rois =
+            report.roi_results.find(node.id);
+        if (full == report.node_results.end() && rois == report.roi_results.end()) continue;
+        std::vector<const StageData*> payloads;
+        if (full != report.node_results.end()) {
+            payloads.push_back(full->second.data.get());
+        } else {
+            for (std::size_t i = 0; i < rois->second.size(); ++i) {
+                payloads.push_back(rois->second[i].data.get());
+            }
+        }
+        line << " " << node.id << " " << DescribePayloads(payloads);
+    }
+    std::printf("%s\n", line.str().c_str());
+    std::fflush(stdout);
+}
+
 /// Where one stream's rendered frames go.
 struct StreamSink {
     std::unique_ptr<VideoOutput> video;
@@ -834,6 +979,7 @@ int RunInputLoop(StageGraph& graph, FrameExecutor& executor, const GraphSpec& sp
                              static_cast<unsigned>(report.frame_index), report.error.c_str());
             }
         }
+        PrintFrameLine(spec, report, several);
         WarnAboutEmptyRoiEdges(spec, report, &warned_edges);
         if (report_file.is_open() &&
             !report_file.Append(ReportToJson(report, several), &problem)) {

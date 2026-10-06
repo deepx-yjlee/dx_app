@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import shutil
+import subprocess
 from pathlib import Path
 
 import numpy as np
@@ -64,21 +65,28 @@ def test_a_later_missing_model_fails_before_any_engine_is_created(tmp_path):
 
 
 def test_a_custom_model_file_gets_no_model_zoo_download_line(tmp_path):
-    """worker_safety's ppe stage names its own file, which ./setup.sh cannot fetch."""
-    source = json.loads((PIPELINE_DIR / "worker_safety" / "pipeline.json")
-                        .read_text(encoding="utf-8"))
-    ppe = next(stage for stage in source["stages"] if stage["id"] == "ppe")
+    """A stage whose file is not <variant>.dxnn cannot be fetched by ./setup.sh."""
     work = tmp_path / "pipeline"
     work.mkdir()
     pipeline = work / "pipeline.json"
-    pipeline.write_text(json.dumps({**source, "name": "ppe_only", "stages": [ppe]}),
-                        encoding="utf-8")
+    model = "not_in_zoo.dxnn"
+    pipeline.write_text(json.dumps({
+        "name": "custom_file",
+        "fuse": "hand_cascade",
+        "stages": [{
+            "id": "custom",
+            "task": "object_detection",
+            "family": "yolo26",
+            "variant": "yolo26-n_640x640",
+            "model": model,
+        }],
+    }), encoding="utf-8")
     empty = tmp_path / "models"
     empty.mkdir()
 
     message, _ = _run(pipeline, empty)
-    assert "stage 'ppe'" in message, message
-    assert str(empty / ppe["model"]) in message, message
+    assert "stage 'custom'" in message, message
+    assert str(empty / model) in message, message
     assert "./setup.sh --models" not in message, message
     assert "--models-dir" in message, message
 
@@ -156,3 +164,33 @@ def test_the_search_stops_at_the_repository_root(tmp_path, monkeypatch):
     searched = [line.strip() for line in str(excinfo.value).splitlines()[1:]]
     assert searched[-1] == str(store / "absent.dxnn"), searched
     assert all(path.startswith(str(root) + "/") for path in searched), searched
+
+
+def test_run_pipeline_accepts_video_and_keeps_image():
+    from test_helpers.proc import example_python, run_bounded
+
+    script = PIPELINE_DIR / "run_pipeline.py"
+    help_text = run_bounded(
+        [example_python(), str(script), "--help"],
+        cwd=str(PIPELINE_DIR), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        universal_newlines=True, timeout=60)
+    assert help_text.returncode == 0, help_text.stderr
+    assert "--video" in help_text.stdout
+    assert "--image" in help_text.stdout
+    assert "--frames" in help_text.stdout
+
+    both = run_bounded(
+        [example_python(), str(script), "--pipeline", "unused.json",
+         "--image", "a.jpg", "--video", "a.mp4"],
+        cwd=str(PIPELINE_DIR), stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        universal_newlines=True, timeout=60)
+    assert both.returncode != 0
+    assert "not allowed with argument" in both.stdout
+
+    frames = run_bounded(
+        [example_python(), str(script), "--pipeline", "unused.json",
+         "--image", "a.jpg", "--frames", "2"],
+        cwd=str(PIPELINE_DIR), stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        universal_newlines=True, timeout=60)
+    assert frames.returncode != 0
+    assert "--frames applies to --video" in frames.stdout

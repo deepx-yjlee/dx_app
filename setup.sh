@@ -7,6 +7,7 @@ DX_AS_PATH=$(realpath -s "${RUNTIME_PATH}/..")
 # color env settings
 source ${SCRIPT_DIR}/scripts/color_env.sh
 source ${SCRIPT_DIR}/scripts/common_util.sh
+source ${SCRIPT_DIR}/scripts/gui_env.sh
 
 # --- Initialize variables ---
 ENABLE_DEBUG_LOGS=0   # New flag for debug logging
@@ -335,8 +336,24 @@ setup_assets() {
     print_colored "[OK] Sample models and videos setup complete" "INFO"
 }
 
+# Python the examples run with, in the order the help text documents.
+resolve_gui_python() {
+    if [ -n "${DXAPP_SETUP_PYTHON}" ]; then
+        echo "${DXAPP_SETUP_PYTHON}"
+    elif [ -n "${VIRTUAL_ENV}" ] && [ -x "${VIRTUAL_ENV}/bin/python3" ]; then
+        echo "${VIRTUAL_ENV}/bin/python3"
+    elif [ -x "${RUNTIME_PATH}/venv-dx-runtime/bin/python3" ]; then
+        echo "${RUNTIME_PATH}/venv-dx-runtime/bin/python3"
+    else
+        echo "python3"
+    fi
+}
+
 main() {
     setup_assets
+    if [ -z "$LIST_ARG" ] && [ -z "$DRY_RUN_ARG" ]; then
+        dxapp_link_cv2_qt_fonts "$(resolve_gui_python)"
+    fi
 }
 
 main

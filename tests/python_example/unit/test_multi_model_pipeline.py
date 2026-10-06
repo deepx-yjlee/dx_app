@@ -17,7 +17,6 @@ _MULTI_ROOT = (
 _PIPELINES = (
     "hand_cascade/pipeline.json",
     "logistics_volume/pipeline.json",
-    "worker_safety/pipeline.json",
     "dms_clip/pipeline.json",
 )
 
@@ -71,11 +70,10 @@ def test_cycle_is_rejected() -> None:
         parse_pipeline(load_pipeline_payload)
 
 
-def test_fuse_names_match_the_four_demos() -> None:
+def test_fuse_names_match_the_demos() -> None:
     for relative, fuse_name in (
         ("hand_cascade/pipeline.json", "hand_cascade"),
         ("logistics_volume/pipeline.json", "logistics_volume"),
-        ("worker_safety/pipeline.json", "worker_safety"),
         ("dms_clip/pipeline.json", "dms"),
     ):
         pipeline = load_pipeline(_MULTI_ROOT / relative)

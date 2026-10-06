@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <string>
 
+#include "common/graph/cpu_reduce.hpp"
 #include "common/graph/result_to_shape.hpp"
 #include "common/graph/roi_router.hpp"
 
@@ -36,6 +37,8 @@ FrameReport SyncExecutor::RunFrame(StageGraph& graph, std::size_t stream,
     std::map<std::size_t, std::vector<RoiCrop> > roi_inbox;
     // node index -> the view its full-frame input comes from
     std::map<std::size_t, FrameView> frame_inbox;
+    // node index -> parent payloads on carry-result edges
+    std::map<std::size_t, std::vector<StageDataPtr> > result_inbox;
     // node index -> the view it actually ran on (full-frame nodes only)
     std::map<std::size_t, FrameView> view;
     // node index -> why its hand-off input was unusable
@@ -60,6 +63,19 @@ FrameReport SyncExecutor::RunFrame(StageGraph& graph, std::size_t stream,
             StageResult result;
             result.data = produced;
             report.node_results[node.id] = result;
+            view[index] = source_view;
+        } else if (node.is_cpu) {
+            const std::vector<StageDataPtr> empty_inputs;
+            std::map<std::size_t, std::vector<StageDataPtr> >::const_iterator found =
+                result_inbox.find(index);
+            const std::vector<StageDataPtr>& inputs =
+                found == result_inbox.end() ? empty_inputs : found->second;
+            const CpuReduction reduced = ReduceCpu(node.op, node.params, inputs, frame.size());
+            report.node_results[node.id] = reduced.result;
+            if (!reduced.error.empty() && report.error.empty()) {
+                report.error = std::string("node \"") + node.id + "\": " + reduced.error;
+            }
+            produced = reduced.result.data;
             view[index] = source_view;
         } else if (frame_inbox.count(index) != 0) {
             const FrameView& in = frame_inbox[index];
@@ -131,6 +147,10 @@ FrameReport SyncExecutor::RunFrame(StageGraph& graph, std::size_t stream,
         for (std::size_t e = 0; e < outgoing.size(); ++e) {
             const EdgeRuntime& edge = graph.edges()[outgoing[e]];
             const EdgeCargo cargo = SelectEdgeCargo(edge, produced, boxes, ports);
+            if (edge.carry_result) {
+                if (cargo.payload) result_inbox[edge.to].push_back(cargo.payload);
+                continue;
+            }
             if (!edge.roi.present) {
                 if (node.is_source) {
                     frame_inbox[edge.to] = source_view;

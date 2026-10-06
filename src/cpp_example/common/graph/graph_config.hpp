@@ -2,9 +2,10 @@
  * @file graph_config.hpp
  * @brief Graph file structs, parsing and validation.
  *
- * Two node kinds (source, model) and two edge kinds (frame, ROI) express
- * every pipeline this example supports. Keeping that surface small is the
- * point: the schema is the only interface a customer sees.
+ * Three node kinds (source, model, cpu) and three edge kinds (frame, ROI,
+ * result) express every pipeline this example supports. A result edge is
+ * accepted only by a cpu node. Keeping that surface small is the point: the
+ * schema is the only interface a customer sees.
  */
 #ifndef DXAPP_GRAPH_GRAPH_CONFIG_HPP
 #define DXAPP_GRAPH_GRAPH_CONFIG_HPP
@@ -44,12 +45,14 @@ struct TrackSpec {
 struct NodeSpec {
     std::string id;
     bool is_source;
+    bool is_cpu;
     std::string uri;    ///< source only
     std::string model;  ///< model only
+    std::string op;     ///< cpu only: "headpose" or "volume"
     StageParams params;
     TrackSpec track;
 
-    NodeSpec() : is_source(false) {}
+    NodeSpec() : is_source(false), is_cpu(false) {}
 };
 
 struct EdgeSpec {
@@ -57,6 +60,9 @@ struct EdgeSpec {
     std::string to;
     RoiSpec roi;
     std::string port;  ///< "" = primary
+    bool carry_result;  ///< true: the producer payload, consumed only by a cpu node
+
+    EdgeSpec() : carry_result(false) {}
 };
 
 struct GraphSpec {

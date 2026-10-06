@@ -83,6 +83,8 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/videoio.hpp>
 
+#include "common/utility/display_pump.hpp"
+
 namespace dxapp {
 namespace graph {
 namespace cli {
@@ -296,6 +298,7 @@ inline bool DisplayOpens() {
             ::dup2(null_fd, 2);
         }
         try {
+            prepareGuiBackend();
             cv::namedWindow("multi_model_graph_probe", cv::WINDOW_NORMAL);
             cv::destroyWindow("multi_model_graph_probe");
         } catch (...) {
@@ -388,6 +391,7 @@ class DisplayWindow {
         if (broken_) return false;
         try {
             if (!opened_) {
+                prepareGuiBackend();
                 cv::namedWindow(name_, cv::WINDOW_NORMAL);
                 opened_ = true;
             }

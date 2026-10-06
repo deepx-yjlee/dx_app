@@ -57,6 +57,8 @@ SAMPLE_GRAPHS = [
     "chain_zerodce_od_pose_emb.json",
     "chain_sr_od_pose.json",
     "hand_cascade.json",
+    "dms_headpose.json",
+    "logistics_volume.json",
 ]
 ONE_SOURCE_SAMPLES = [g for g in SAMPLE_GRAPHS if g != MULTISTREAM]
 
@@ -1462,7 +1464,9 @@ def test_every_sample_graph_is_retargetable_without_a_rebuild(tmp_path, graph):
              (("dncnn_color_blind", "dncnn-color_512x512"), "dncnn-15_512x512"),
              (("realesrgan_x2", "realesrgan-x2_192x192"), "realesrgan-x4_192x192"),
              (("mediapipe_hand_detector_1", "mediapipe-hand-detector_192x192"),
-              "scrfd-500m_640x640")]
+              "scrfd-500m_640x640"),
+             (("scrfd500m", "scrfd-500m_640x640"), "yolov8-n_640x640"),
+             (("yolo26n", "yolo26-n_640x640"), "yolov8-n_640x640")]
     swaps = {name: target for names, target in pairs for name in names}
     swapped = False
     for node in spec["nodes"]:
@@ -1658,7 +1662,11 @@ def test_readmes_document_several_sources():
     # The parity claim counts what SAMPLE_GRAPHS compares against what ships.
     words = {11: "eleven", 12: "twelve", 13: "thirteen", 14: "fourteen"}
     shipped = len(list(GRAPH_DIR.glob("*.json")))
-    claim = "{} of the {} shipped sample graphs".format(words[len(SAMPLE_GRAPHS)], words[shipped])
+    if len(SAMPLE_GRAPHS) == shipped:
+        claim = "all {} shipped sample graphs".format(words[shipped])
+    else:
+        claim = "{} of the {} shipped sample graphs".format(
+            words[len(SAMPLE_GRAPHS)], words[shipped])
     assert claim in " ".join(text.split()), claim
     assert "more than one full-frame image into one node in one stream" in text
     py = DX_GRAPH_README.read_text(encoding="utf-8")
@@ -2843,12 +2851,11 @@ def test_check_names_the_container_version_of_a_loadable_file(tmp_path):
         assert "yolov8-n_640x640.dxnn  [present, v9]" in check.stdout, check.stdout
 
 
-# The multi_model runtime (teammate code, Decision 3) runs hand_cascade and
-# worker_safety from its own pipeline.json files. The graph engine ships the
-# same two scenarios as graph JSON; these tests hold the two side by side.
+# The multi_model runtime runs hand_cascade from its own pipeline.json. The
+# graph engine ships the same scenario as graph JSON; this test holds the two
+# side by side.
 PIPELINE_DIR = PROJECT_ROOT / "src" / "cpp_example" / "multi_model"
 HAND_CASCADE = "hand_cascade.json"
-WORKER_SAFETY = "worker_safety.json"
 HAND_IMAGE = "sample/img/sample_hand.jpg"
 HAND_MODELS = ("mediapipe-hand-detector_192x192.dxnn", "mediapipe-hands-lite_224x224.dxnn")
 # Spec N21: a palm box may move this far between the two runtimes.
@@ -2931,43 +2938,3 @@ def test_hand_cascade_graph_matches_the_pipeline_runtime(tmp_path):
             "landmarks differ by {:.4f} px; crops: graph {}, runtime {}".format(
                 worst, graph_crop, mine["crop"])
         assert graph_crop == mine["crop"], (graph_crop, mine["crop"])
-
-
-@pytest.mark.graph
-def test_worker_safety_graph_mirrors_the_pipeline_structure():
-    """worker_safety.json against multi_model/worker_safety/pipeline.json,
-    structure only: the ppe stage needs ppe_yolo26n.dxnn, which is in
-    neither the registry nor the manifest ([RULED Q2-3: BLOCKED])."""
-    pipeline = json.loads((PIPELINE_DIR / "worker_safety" / "pipeline.json")
-                          .read_text(encoding="utf-8"))
-    ours = json.loads((GRAPH_DIR / WORKER_SAFETY).read_text(encoding="utf-8"))
-    assert ours["name"] == "worker_safety"
-
-    stages = [stage for stage in pipeline["stages"]
-              if stage.get("kind", "npu") == "npu" and stage["id"] != "ppe"]
-    models = {node["id"]: node["model"] for node in ours["nodes"] if "model" in node}
-    assert models == {stage["id"]: stage["variant"] for stage in stages}
-
-    their_edges = set()
-    for stage in stages:
-        for upstream in stage.get("depends_on", []):
-            their_edges.add((upstream, stage["id"]))
-        if "bind" in stage:
-            their_edges.add((stage["bind"]["source"], stage["id"]))
-    sources = {node["id"] for node in ours["nodes"] if node.get("type") == "source"}
-    our_edges = {(edge["from"], edge["to"]) for edge in ours["edges"]
-                 if edge["from"] not in sources}
-    assert our_edges == their_edges
-    # A fan-out: every model reads the source frame, as every stage without
-    # depends_on reads the frame in the pipeline runtime.
-    assert {edge["to"] for edge in ours["edges"] if edge["from"] in sources} == set(models)
-
-    for binary in BINARIES:
-        result = run(binary, "--check", "{}/{}".format(GRAPHS, WORKER_SAFETY))
-        assert result.returncode == 0, result.stdout + result.stderr
-        assert "OK" in result.stdout, result.stdout
-        # --check exits 0 when only model files are absent; the one it may
-        # name is the person detector's (not in the pinned v8 store).
-        missing = [line for line in result.stdout.splitlines()
-                   if "[MISSING]" in line or line.lstrip().startswith('node "')]
-        assert all("yolo26-n_640x640" in line for line in missing), missing

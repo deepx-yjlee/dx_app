@@ -131,6 +131,7 @@ All C++ examples use `cxxopts` for argument parsing and share a consistent inter
 | `--dump-tensors` | — | bool | Dump input/output tensors to `.bin` files |
 | `--loop` | `-l` | int | Inference repeat count (default: auto) |
 | `--no-display` | — | bool | Disable visualization window, output FPS only |
+| `--drop-frames` | — | bool | Preview drops stale frames instead of pacing the pipeline (default: off, every frame is shown) |
 | `--show-log` | — | bool | Enable verbose log output (default: quiet) |
 | `--config` | — | string | Model config JSON path (auto-detected if omitted) |
 | `--help` | `-h` | — | Show usage |
@@ -192,6 +193,8 @@ If no input source is provided, the runner automatically selects a default sampl
 All C++ binaries - every single-model runner (`installSignalHandlers()`) and `multi_model_graph_sync`/`multi_model_graph_async` - install SIGINT/SIGTERM handlers. Pressing Ctrl+C triggers a graceful shutdown with clean resource release (the graph CLI finishes the frames in flight in every stream and finalizes `--report`/`--output`). A later Ctrl+C, more than 200 ms after the first, terminates the process at once (for a shutdown that is itself stuck); repeats within 200 ms count as the same request. SIGTERM is always graceful, however often it arrives.
 
 **Output order (async runners)**  
+
+**Preview window.** The window opens at half the screen size with the frame's aspect ratio kept (`DXAPP_SCREEN_W`/`DXAPP_SCREEN_H`, else `xdpyinfo`, else 1920x1080), the same rule as the Python runners' `show_image()`. Every frame is shown by default: a window slower than the NPU paces the pipeline, so measure throughput with `--no-display`. `--drop-frames` restores the depth-1 preview that discards stale frames (the sync preview is then capped at 10 fps, the async one at 60 fps, and the summary prints `dropped (stale)`).
 
 Async runners get results back from dxrt's completion threads in any order. Each frame gets an index when it is submitted, and the display thread releases frames through a reorder buffer (`common/utility/frame_reorder.hpp`), so display, save and `DXAPP_VERIFY` output (written where the buffer releases a frame) follow the input order and equal the sync runner's frame by frame. The runner's one postprocessor is shared by dxrt's callback threads and serialized (`common/processors/serialized_postprocessor.hpp`). SuperPoint's tracker is updated by its visualizer, after the reorder buffer, so it also sees frames in input order.
 

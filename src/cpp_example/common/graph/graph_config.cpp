@@ -2,7 +2,9 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cerrno>
 #include <cmath>
+#include <cstdlib>
 #include <fstream>
 #include <limits>
 #include <map>
@@ -118,15 +120,17 @@ const json& RequireArray(const json& parent, const char* key,
 // tolerated key is somewhere a typo can hide.
 const char* const kTopKeys[] = {"version", "name", "nodes", "edges",
                                 "$schema"};
-const char* const kNodeKeys[] = {"id", "type", "uri", "model", "params",
+const char* const kNodeKeys[] = {"id", "type", "uri", "model", "op", "params",
                                  "track"};
 const char* const kTrackKeys[] = {"algo", "iou", "max_age"};
-const char* const kEdgeKeys[] = {"from", "to", "roi", "port"};
+const char* const kEdgeKeys[] = {"from", "to", "roi", "port", "carry"};
 const char* const kRoiKeys[] = {"classes", "min_score", "min_area", "pad",
                                 "max", "align"};
-/// The only node type v1 defines. "fuse" is reserved and answered by
+/// Node types v1 defines. "fuse" is reserved and answered by
 /// RejectReserved() before the type check runs, with a better message.
 const char kSourceType[] = "source";
+const char kCpuType[] = "cpu";
+const char* const kCpuOps[] = {"headpose", "volume"};
 
 /**
  * @brief Damerau-Levenshtein (optimal string alignment) distance.
@@ -426,13 +430,17 @@ void RejectUnknownNodeType(const json& node, const std::string& origin,
                          "\"type\" must be a string", "");
     }
     const std::string value = type->get<std::string>();
-    if (value == kSourceType) return;
+    if (value == kSourceType || value == kCpuType) return;
 
     std::string how;
-    if (Closeness(value, kSourceType) < kNoSuggestion) {
+    const std::size_t source_distance = Closeness(value, kSourceType);
+    const std::size_t cpu_distance = Closeness(value, kCpuType);
+    if (source_distance < kNoSuggestion && source_distance <= cpu_distance) {
         how = "did you mean \"source\"? ";
+    } else if (cpu_distance < kNoSuggestion) {
+        how = "did you mean \"cpu\"? ";
     }
-    how += "\"source\" is the only node type; a model node carries a "
+    how += "accepted node types are \"source\" and \"cpu\"; a model node carries a "
            "\"model\" name and no \"type\"";
     throw GraphError(GraphErrorCode::kGraphSchema, Where(origin, detail),
                      "unknown node type " + Quote(value), how);
@@ -490,7 +498,8 @@ void RejectReserved(const json& node, const std::string& origin,
             GraphErrorCode::kGraphReserved, Where(origin, detail),
             "node type \"fuse\" is reserved for multi-model fusion and is not "
             "supported in this release",
-            "remove the node; see README.md for the node kinds this build runs");
+            "use a cpu node (\"op\": \"headpose\" or \"volume\") with "
+            "\"carry\": \"result\" edges; a generic fuse is not a node type");
     }
 }
 
@@ -669,16 +678,46 @@ GraphSpec ParseGraphText(const std::string& json_text,
         json::const_iterator type = node.find("type");
         const bool declared_source =
             type != node.end() && type->is_string() &&
-            type->get<std::string>() == "source";
+            type->get<std::string>() == kSourceType;
+        const bool declared_cpu =
+            type != node.end() && type->is_string() &&
+            type->get<std::string>() == kCpuType;
         json::const_iterator model = node.find("model");
+        json::const_iterator op = node.find("op");
 
         if (declared_source) {
+            if (op != node.end()) {
+                throw GraphError(GraphErrorCode::kGraphSchema, Where(origin, node_label),
+                                 "\"op\" belongs on a cpu node",
+                                 "remove \"op\" from this source");
+            }
             parsed.is_source = true;
             parsed.uri = RequireString(
                 node, "uri", origin, node_label,
                 "add \"uri\": an image or video path, camera:<N>, or "
                 "rtsp://...");
+        } else if (declared_cpu) {
+            if (model != node.end() || node.find("uri") != node.end()) {
+                throw GraphError(GraphErrorCode::kGraphSchema, Where(origin, node_label),
+                                 "a cpu node has no \"model\" and no \"uri\"",
+                                 "keep \"type\": \"cpu\" and \"op\" only");
+            }
+            parsed.is_cpu = true;
+            parsed.op = RequireString(
+                node, "op", origin, node_label,
+                "add \"op\": \"headpose\" or \"volume\"");
+            const char* const* op_end = kCpuOps + sizeof(kCpuOps) / sizeof(kCpuOps[0]);
+            if (std::find(kCpuOps, op_end, parsed.op) == op_end) {
+                throw GraphError(GraphErrorCode::kGraphSchema, Where(origin, node_label),
+                                 "unknown cpu op " + Quote(parsed.op),
+                                 "accepted \"op\" values: " + JoinKeys(kCpuOps));
+            }
         } else if (model != node.end()) {
+            if (op != node.end()) {
+                throw GraphError(GraphErrorCode::kGraphSchema, Where(origin, node_label),
+                                 "\"op\" belongs on a cpu node",
+                                 "remove \"op\", or set \"type\": \"cpu\" and drop \"model\"");
+            }
             if (!model->is_string()) {
                 throw GraphError(GraphErrorCode::kGraphSchema,
                                  Where(origin, node_label),
@@ -689,8 +728,9 @@ GraphSpec ParseGraphText(const std::string& json_text,
             throw GraphError(
                 GraphErrorCode::kGraphSchema, Where(origin, node_label),
                 "node \"" + parsed.id +
-                    "\" is neither a source nor a model",
-                "add \"type\": \"source\" with a \"uri\", or a \"model\" name");
+                    "\" is neither a source, a cpu node, nor a model",
+                "add \"type\": \"source\" with a \"uri\", \"type\": \"cpu\" "
+                "with an \"op\", or a \"model\" name");
         }
 
         json::const_iterator params = node.find("params");
@@ -769,6 +809,12 @@ GraphSpec ParseGraphText(const std::string& json_text,
             bad.ThrowIfAny(Where(origin, detail.str()));
         }
 
+        if (parsed.is_cpu && parsed.track.present) {
+            throw GraphError(GraphErrorCode::kGraphSchema, Where(origin, node_label),
+                             "a cpu node cannot track",
+                             "put \"track\" on the detector that produces the boxes");
+        }
+
         spec.nodes.push_back(parsed);
     }
 
@@ -800,6 +846,25 @@ GraphSpec ParseGraphText(const std::string& json_text,
                                  "--list-models shows them");
             }
             parsed.port = port->get<std::string>();
+        }
+        json::const_iterator carry = edge.find("carry");
+        if (carry != edge.end()) {
+            if (!carry->is_string() || carry->get<std::string>() != "result") {
+                throw GraphError(GraphErrorCode::kGraphSchema, Where(origin, edge_label),
+                                 "\"carry\" must be \"result\"",
+                                 "a result edge hands the producer payload to a cpu node");
+            }
+            parsed.carry_result = true;
+        }
+        if (parsed.carry_result && parsed.roi.present) {
+            throw GraphError(GraphErrorCode::kGraphSchema, Where(origin, edge_label),
+                             "a result edge cannot also crop",
+                             "remove \"roi\" from this edge");
+        }
+        if (parsed.carry_result && !parsed.port.empty()) {
+            throw GraphError(GraphErrorCode::kGraphSchema, Where(origin, edge_label),
+                             "a result edge carries the primary payload",
+                             "remove \"port\" from this edge");
         }
         spec.edges.push_back(parsed);
     }
@@ -962,6 +1027,88 @@ std::vector<StreamSpec> ListStreams(const GraphSpec& spec) {
     return streams;
 }
 
+bool WholeInteger(const std::string& text) {
+    if (text.empty()) return false;
+    const char* begin = text.c_str();
+    char* end = NULL;
+    errno = 0;
+    const long parsed = std::strtol(begin, &end, 10);
+    if (end == begin || *end != '\0' || errno == ERANGE) return false;
+    return parsed >= static_cast<long>(std::numeric_limits<int>::min()) &&
+           parsed <= static_cast<long>(std::numeric_limits<int>::max());
+}
+
+void CheckCpuParams(const NodeSpec& node, Violations* bad) {
+    if (node.op == "headpose") {
+        if (!node.params.numeric.empty() || !node.params.text.empty() ||
+            !node.params.lists.empty()) {
+            bad->Add("headpose takes no params", "remove \"params\"");
+        }
+        return;
+    }
+    for (std::map<std::string, double>::const_iterator it = node.params.numeric.begin();
+         it != node.params.numeric.end(); ++it) {
+        if (it->first != "scale_factor") {
+            bad->Add("unknown param " + Quote(it->first),
+                     "volume accepts \"scale_factor\", \"classes\" and \"class_ids\"");
+            continue;
+        }
+        if (!std::isfinite(it->second) || it->second < 0.0) {
+            bad->Add("\"scale_factor\" must be a finite number >= 0",
+                     "1.0 leaves the proxy in mask-pixels times depth");
+        }
+    }
+    for (std::map<std::string, std::string>::const_iterator it = node.params.text.begin();
+         it != node.params.text.end(); ++it) {
+        const std::string hint = it->first == "classes" || it->first == "class_ids"
+            ? "write " + Quote(it->first) + " as an array of strings"
+            : "volume accepts \"scale_factor\", \"classes\" and \"class_ids\"";
+        bad->Add("unknown param " + Quote(it->first), hint);
+    }
+    for (std::map<std::string, std::vector<std::string> >::const_iterator it =
+             node.params.lists.begin();
+         it != node.params.lists.end(); ++it) {
+        if (it->first != "classes" && it->first != "class_ids") {
+            bad->Add("unknown param " + Quote(it->first),
+                     "volume accepts \"scale_factor\", \"classes\" and \"class_ids\"");
+            continue;
+        }
+        if (it->first != "class_ids") continue;
+        for (std::size_t i = 0; i < it->second.size(); ++i) {
+            if (!WholeInteger(it->second[i])) {
+                bad->Add("\"class_ids\"[" + std::to_string(i) + "] must be an integer",
+                         "write class ids as strings, for example \"24\"");
+            }
+        }
+    }
+}
+
+void CheckCpuInputs(const NodeSpec& node, const std::vector<Shape>& got) {
+    std::map<Shape, int> count;
+    std::string listed;
+    for (std::size_t i = 0; i < got.size(); ++i) {
+        count[got[i]] += 1;
+        if (!listed.empty()) listed += ", ";
+        listed += ToString(got[i]);
+    }
+    if (listed.empty()) listed = "nothing";
+    const std::string where = "node \"" + node.id + "\"";
+    if (node.op == "headpose") {
+        if (got.size() == 1 && got[0] == Shape::kBoxes) return;
+        throw GraphError(GraphErrorCode::kGraphEdge, where,
+                         "headpose needs one boxes result, got " + listed,
+                         "connect one detector with \"carry\": \"result\"");
+    }
+    const bool volume_ok = got.size() == 3 && count[Shape::kBoxes] == 1 &&
+                           count[Shape::kInstances] == 1 && count[Shape::kDenseMap] == 1;
+    if (volume_ok) return;
+    throw GraphError(GraphErrorCode::kGraphEdge, where,
+                     "volume needs one boxes, one instances and one densemap result, got " +
+                         listed,
+                     "connect a detector, a segmenter and a depth model with "
+                     "\"carry\": \"result\"");
+}
+
 void ValidateGraph(const GraphSpec& spec, const IModelRegistry& registry) {
     // 1. Resolve every node against the registry.
     std::map<std::string, ResolvedNode> resolved;
@@ -975,6 +1122,8 @@ void ValidateGraph(const GraphSpec& spec, const IModelRegistry& registry) {
         if (node.is_source) {
             has_source = true;
             entry.output_shape = Shape::kFrame;
+        } else if (node.is_cpu) {
+            entry.output_shape = Shape::kRecords;
         } else {
             const ModelInfo* info = registry.find(node.model);
             if (info == NULL) {
@@ -1062,6 +1211,12 @@ void ValidateGraph(const GraphSpec& spec, const IModelRegistry& registry) {
     for (std::size_t i = 0; i < spec.nodes.size(); ++i) {
         const NodeSpec& node = spec.nodes[i];
         if (node.is_source) continue;
+        if (node.is_cpu) {
+            Violations cpu_bad;
+            CheckCpuParams(node, &cpu_bad);
+            cpu_bad.ThrowIfAny("node \"" + node.id + "\" \"params\"");
+            continue;
+        }
         const ModelInfo& info = *resolved[node.id].info;
         Violations bad;
         CheckParams(node.params, info, &bad);
@@ -1145,6 +1300,7 @@ void ValidateGraph(const GraphSpec& spec, const IModelRegistry& registry) {
     std::map<std::string, bool> has_roi_in;
     for (std::size_t i = 0; i < spec.edges.size(); ++i) {
         const EdgeSpec& edge = spec.edges[i];
+        if (edge.carry_result) continue;
         if (edge.roi.present) {
             has_roi_in[edge.to] = true;
         } else {
@@ -1153,12 +1309,12 @@ void ValidateGraph(const GraphSpec& spec, const IModelRegistry& registry) {
     }
 
     // 4. Shape and input-contract compatibility.
+    std::map<std::string, std::vector<Shape> > carried;
     for (std::size_t i = 0; i < spec.edges.size(); ++i) {
         const EdgeSpec& edge = spec.edges[i];
         const std::string label = EdgeLabel(edge);
         const ResolvedNode& producer = resolved[edge.from];
         const ResolvedNode& consumer = resolved[edge.to];
-        const InputContract contract = consumer.info->input_contract;
 
         // U-08: the output this edge reads. Without "port" (or with the
         // primary's own name) it is the primary, and every message below
@@ -1171,6 +1327,11 @@ void ValidateGraph(const GraphSpec& spec, const IModelRegistry& registry) {
                 throw GraphError(GraphErrorCode::kGraphEdge, label,
                                  "\"" + edge.from + "\" is a source; \"port\" selects one "
                                  "of a model's outputs",
+                                 "remove \"port\" from this edge");
+            }
+            if (producer.info == NULL) {
+                throw GraphError(GraphErrorCode::kGraphEdge, label,
+                                 "\"" + edge.from + "\" is a cpu node and has no output ports",
                                  "remove \"port\" from this edge");
             }
             if (edge.port != ToString(producer.output_shape)) {
@@ -1186,6 +1347,27 @@ void ValidateGraph(const GraphSpec& spec, const IModelRegistry& registry) {
                 primary_output = false;
             }
         }
+
+        if (consumer.spec->is_cpu || edge.carry_result) {
+            if (!consumer.spec->is_cpu) {
+                throw GraphError(GraphErrorCode::kGraphEdge, label,
+                                 "\"carry\": \"result\" is accepted only by a cpu node",
+                                 "point this edge at a node with \"type\": \"cpu\"");
+            }
+            if (!edge.carry_result) {
+                throw GraphError(GraphErrorCode::kGraphEdge, label,
+                                 "a cpu node accepts only \"carry\": \"result\" edges",
+                                 "add \"carry\": \"result\" and remove \"roi\" or a plain frame edge");
+            }
+            if (producer.spec->is_source) {
+                throw GraphError(GraphErrorCode::kGraphEdge, label,
+                                 "\"" + edge.from + "\" is a source and produces a frame, not a result",
+                                 "carry the result of a model node");
+            }
+            carried[edge.to].push_back(out_shape);
+            continue;
+        }
+        const InputContract contract = consumer.info->input_contract;
 
         if (edge.roi.present) {
             if (!ProducesRoi(out_shape)) {
@@ -1282,6 +1464,13 @@ void ValidateGraph(const GraphSpec& spec, const IModelRegistry& registry) {
         }
     }
 
+    for (std::size_t i = 0; i < spec.nodes.size(); ++i) {
+        if (!spec.nodes[i].is_cpu) continue;
+        const std::vector<Shape> none;
+        std::map<std::string, std::vector<Shape> >::const_iterator got = carried.find(spec.nodes[i].id);
+        CheckCpuInputs(spec.nodes[i], got == carried.end() ? none : got->second);
+    }
+
     // 4a. One full-frame input image per node IN EACH STREAM (SP2). A stream
     // is a source and everything reachable from it (ListStreams); a frame of
     // that stream brings a node one input per plain in-edge whose producer
@@ -1302,7 +1491,7 @@ void ValidateGraph(const GraphSpec& spec, const IModelRegistry& registry) {
         std::map<std::string, std::vector<std::string> > plain_from;
         for (std::size_t i = 0; i < spec.edges.size(); ++i) {
             const EdgeSpec& edge = spec.edges[i];
-            if (!edge.roi.present && member.count(edge.from) != 0) {
+            if (!edge.roi.present && !edge.carry_result && member.count(edge.from) != 0) {
                 plain_from[edge.to].push_back(edge.from);
             }
         }

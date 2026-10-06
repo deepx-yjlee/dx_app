@@ -18,6 +18,7 @@ const char* ToString(Shape shape) {
         case Shape::kScores:    return "scores";
         case Shape::kVector:    return "vector";
         case Shape::kBoxes3d:   return "boxes3d";
+        case Shape::kRecords:   return "records";
     }
     return "unknown";
 }

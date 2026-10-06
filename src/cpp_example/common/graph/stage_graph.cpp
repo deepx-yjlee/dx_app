@@ -100,6 +100,15 @@ bool SameBoxes3dData(const Boxes3dData& a, const Boxes3dData& b) {
     return true;
 }
 
+bool SameRecords(const RecordsData& a, const RecordsData& b) {
+    if (a.items.size() != b.items.size()) return false;
+    for (std::size_t i = 0; i < a.items.size(); ++i) {
+        if (a.items[i].numbers != b.items[i].numbers) return false;
+        if (a.items[i].text != b.items[i].text) return false;
+    }
+    return true;
+}
+
 bool SameVectorData(const VectorData& a, const VectorData& b) {
     return a.values == b.values;  // vector<float>::operator==, exact
 }
@@ -240,6 +249,12 @@ bool SamePayload(const StageData& a, const StageData& b) {
             if (ta == NULL || tb == NULL) return false;
             return SameBoxes3dData(*ta, *tb);
         }
+        case Shape::kRecords: {
+            const RecordsData* ra = dynamic_cast<const RecordsData*>(&a);
+            const RecordsData* rb = dynamic_cast<const RecordsData*>(&b);
+            if (ra == NULL || rb == NULL) return false;
+            return SameRecords(*ra, *rb);
+        }
     }
     // Every Shape has a case above, so this is reached only for a value
     // outside the enum. Fail closed: never report parity on a payload this
@@ -318,13 +333,20 @@ void StageGraph::Build(const GraphSpec& spec, const IModelRegistry& registry,
         NodeRuntime& runtime = nodes_[i];
         runtime.id = node.id;
         runtime.is_source = node.is_source;
+        runtime.is_cpu = node.is_cpu;
         runtime.uri = node.uri;
         runtime.model_name = node.model;
+        runtime.op = node.op;
+        runtime.params = node.params;
         index_of[node.id] = i;
 
         if (node.is_source) {
             runtime.output_shape = Shape::kFrame;
             sources_.push_back(i);
+            continue;
+        }
+        if (node.is_cpu) {
+            runtime.output_shape = Shape::kRecords;
             continue;
         }
 
@@ -412,6 +434,7 @@ void StageGraph::Build(const GraphSpec& spec, const IModelRegistry& registry,
         edge.to = index_of[spec.edges[i].to];
         edge.roi = spec.edges[i].roi;
         edge.port = spec.edges[i].port;
+        edge.carry_result = spec.edges[i].carry_result;
         if (edge.port == ToString(nodes_[edge.from].output_shape)) edge.port.clear();
         edges_.push_back(edge);
     }

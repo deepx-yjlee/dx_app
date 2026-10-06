@@ -16,6 +16,7 @@ MIN_PY_VERSION="3.8.0"
 # color env settings
 source ${SCRIPT_DIR}/scripts/color_env.sh
 source ${SCRIPT_DIR}/scripts/common_util.sh
+source ${SCRIPT_DIR}/scripts/gui_env.sh
 
 # dependencies install script in host
 pushd ${DX_APP_PATH} >&2
@@ -322,38 +323,14 @@ function install_python() {
         fi
         print_colored "[OK] Python dependencies installed." "INFO"
 
-        # Ensure Qt font directory exists for OpenCV's bundled Qt5.
-        # pip's opencv-python bundles Qt5 without fontconfig, so it looks for
-        # fonts at a hardcoded path (cv2/qt/fonts/). If that directory is missing
-        # (e.g. corrupted install), symlink system DejaVu fonts as a fallback.
-        local PYTHON_CMD=""
+        # Python that received the dependencies above.
+        local PYTHON_CMD="python3"
         if [ -n "${VENV_PATH}" ] && [ -f "${VENV_PATH}/bin/python3" ]; then
             PYTHON_CMD="${VENV_PATH}/bin/python3"
         elif [ -f "${DX_APP_PATH}/.venv/bin/python3" ]; then
             PYTHON_CMD="${DX_APP_PATH}/.venv/bin/python3"
-        else
-            PYTHON_CMD="python3"
         fi
-        local CV2_QT_FONTS
-        CV2_QT_FONTS=$("${PYTHON_CMD}" -c "
-import os
-try:
-    import cv2
-    fonts_dir = os.path.join(os.path.dirname(cv2.__file__), 'qt', 'fonts')
-    print(fonts_dir)
-except Exception:
-    pass
-" 2>/dev/null)
-        if [ -n "${CV2_QT_FONTS}" ] && [ ! -d "${CV2_QT_FONTS}" ]; then
-            local SYS_FONT_DIR="/usr/share/fonts/truetype/dejavu"
-            if [ -d "${SYS_FONT_DIR}" ]; then
-                mkdir -p "$(dirname "${CV2_QT_FONTS}")"
-                ln -sf "${SYS_FONT_DIR}" "${CV2_QT_FONTS}"
-                print_colored "[OK] Created symlink: ${CV2_QT_FONTS} -> ${SYS_FONT_DIR}" "INFO"
-            else
-                print_colored "Qt font directory missing and system DejaVu fonts not found. Run: sudo apt install fonts-dejavu-core" "WARNING"
-            fi
-        fi
+        dxapp_link_cv2_qt_fonts "${PYTHON_CMD}"
     fi
 
     print_colored "[OK] Completed to setup python" "INFO"

@@ -24,9 +24,12 @@ namespace graph {
 struct NodeRuntime {
     std::string id;
     bool is_source;
+    bool is_cpu;
     std::string uri;
     std::string model_name;
-    std::unique_ptr<IStage> stage;   ///< null for a source
+    std::string op;                  ///< cpu only
+    StageParams params;              ///< cpu only
+    std::unique_ptr<IStage> stage;   ///< null for a source and a cpu node
     Shape output_shape;
     bool tracked;
     /// Per stream (StageGraph::streams() order), for a tracked node: its own
@@ -35,7 +38,7 @@ struct NodeRuntime {
     std::vector<std::shared_ptr<IouTracker> > trackers;
 
     NodeRuntime()
-        : is_source(false), output_shape(Shape::kFrame), tracked(false) {}
+        : is_source(false), is_cpu(false), output_shape(Shape::kFrame), tracked(false) {}
 };
 
 struct EdgeRuntime {
@@ -43,6 +46,9 @@ struct EdgeRuntime {
     std::size_t to;
     RoiSpec roi;
     std::string port;  ///< "" = primary
+    bool carry_result;
+
+    EdgeRuntime() : from(0), to(0), carry_result(false) {}
 };
 
 /// What one edge hands on (U-08): the producer's primary payload, or the

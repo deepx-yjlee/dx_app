@@ -1,5 +1,7 @@
 #include "common/graph/graph_runner_async.hpp"
 
+#include "common/graph/cpu_reduce.hpp"
+
 #include <algorithm>
 #include <chrono>
 #include <condition_variable>
@@ -177,6 +179,7 @@ struct FrameCtx {
     cv::Mat frame;  ///< an owned copy: sources reuse their buffer
     std::vector<int> pending_inputs;
     std::vector<std::vector<RoiCrop> > inbox;
+    std::vector<std::vector<StageDataPtr> > result_in;  ///< carry-result payloads, per node
     std::vector<char> got_frame;
     /// The view a released plain edge delivered; valid where got_frame is 1.
     std::vector<FrameView> frame_in;
@@ -254,7 +257,9 @@ void ReleaseSuccessors(const StageGraph& graph, std::size_t index,
         const EdgeRuntime& edge = edges[outgoing[e]];
         if (produced) {
             const EdgeCargo cargo = SelectEdgeCargo(edge, produced, boxes, ports);
-            if (!edge.roi.present) {
+            if (edge.carry_result) {
+                if (cargo.payload) ctx.result_in[edge.to].push_back(cargo.payload);
+            } else if (!edge.roi.present) {
                 if (graph.nodes()[index].is_source) {
                     ctx.frame_in[edge.to] = ctx.view[index];
                     ctx.got_frame[edge.to] = 1;
@@ -399,6 +404,7 @@ struct AsyncExecutor::Engine {
         // the one edge this stream brings it.
         ctx->pending_inputs = plan.in_edges;
         ctx->inbox.assign(n, std::vector<RoiCrop>());
+        ctx->result_in.assign(n, std::vector<StageDataPtr>());
         ctx->got_frame.assign(n, 0);
         ctx->frame_in.assign(n, FrameView());
         ctx->view.assign(n, FrameView());
@@ -429,6 +435,25 @@ struct AsyncExecutor::Engine {
                 source.image = ctx->frame;
                 ctx->view[index] = source;
                 ReleaseSuccessors(*graph, index, StageDataPtr(data), NULL, StagePorts(), *ctx);
+                continue;
+            }
+            if (node.is_cpu) {
+                const CpuReduction reduced =
+                    ReduceCpu(node.op, node.params, ctx->result_in[index], ctx->frame.size());
+                ctx->report.node_results[node.id] = reduced.result;
+                bool earlier_error = !ctx->report.error.empty();
+                const std::vector<std::size_t>& order = graph->streams()[ctx->stream].order;
+                for (std::size_t o = 0; o < order.size() && order[o] != index && !earlier_error; ++o) {
+                    earlier_error = ctx->node_errors.count(order[o]) != 0;
+                }
+                if (!reduced.error.empty() && !earlier_error) {
+                    ctx->node_errors[index] =
+                        std::string("node \"") + node.id + "\": " + reduced.error;
+                }
+                FrameView source;
+                source.image = ctx->frame;
+                ctx->view[index] = source;
+                ReleaseSuccessors(*graph, index, reduced.result.data, NULL, StagePorts(), *ctx);
                 continue;
             }
             Dispatch(ctx, index);

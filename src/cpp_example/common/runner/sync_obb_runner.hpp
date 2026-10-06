@@ -250,6 +250,8 @@ private:
              cxxopts::value<int>(args.loopTest)->default_value("-1"))
             ("no-display", "will not visualize, only show fps",
              cxxopts::value<bool>(args.no_display)->default_value("false"))
+            ("drop-frames", "display: drop stale frames instead of pacing the pipeline (default: off, every frame is shown)",
+             cxxopts::value<bool>(args.drop_frames)->default_value("false"))
             ("config", "Model configuration JSON file path",
              cxxopts::value<std::string>(args.configPath))
             ("show-log", "Enable verbose log output (default: quiet)",
@@ -257,6 +259,8 @@ private:
             ("h, help", "print usage");
 
         auto cmd = options.parse(argc, argv);
+
+        dxapp::configureDisplayPump(dxapp::syncPreviewPump(), args.drop_frames);
         if (cmd.count("help")) {
             std::cout << options.help() << std::endl;
             exit(0);

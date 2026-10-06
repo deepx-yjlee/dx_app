@@ -15,7 +15,6 @@ from .pipeline import PipelineError
 
 # COCO ids the logistics demo treats as a package.
 _PACKAGE_CLASS_IDS = {24, 26, 28}
-_PERSON_CLASS_ID = 0
 
 Fuser = Callable[[Mapping[str, Any], Mapping[str, Any]], dict[str, Any]]
 
@@ -59,23 +58,6 @@ def fuse_logistics_volume(outputs: Mapping[str, Any], config: Mapping[str, Any])
     }
 
 
-def fuse_worker_safety(outputs: Mapping[str, Any], _config: Mapping[str, Any]) -> dict[str, Any]:
-    """Person, PPE, and pose counts for one frame."""
-    persons = [
-        item for item in _result_list(outputs.get("person"))
-        if int(getattr(item, "class_id", -1)) == _PERSON_CLASS_ID
-        or str(getattr(item, "class_name", "")).lower() == "person"
-    ]
-    ppe = _result_list(outputs.get("ppe"))
-    poses = _result_list(outputs.get("pose"))
-    return {
-        "event": "PERSONS" if persons else "NO_PERSON",
-        "persons": len(persons),
-        "ppe": len(ppe),
-        "poses": len(poses),
-    }
-
-
 def fuse_dms(outputs: Mapping[str, Any], _config: Mapping[str, Any]) -> dict[str, Any]:
     """Driver face, pose count, whether CLIP ran on the face crop, and head pose."""
     faces = _result_list(outputs.get("face"))
@@ -95,7 +77,6 @@ def fuse_dms(outputs: Mapping[str, Any], _config: Mapping[str, Any]) -> dict[str
 FUSERS: dict[str, Fuser] = {
     "hand_cascade": fuse_hand_cascade,
     "logistics_volume": fuse_logistics_volume,
-    "worker_safety": fuse_worker_safety,
     "dms": fuse_dms,
 }
 

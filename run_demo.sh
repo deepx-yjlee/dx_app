@@ -17,6 +17,7 @@ DX_APP_PATH=$(realpath -s "${SCRIPT_DIR}")
 
 source "${DX_APP_PATH}/scripts/color_env.sh"
 source "${DX_APP_PATH}/scripts/common_util.sh"
+source "${DX_APP_PATH}/scripts/gui_env.sh"
 
 # =============================================================================
 # Demo Registry (26 entries)
@@ -722,8 +723,8 @@ esac
 case "$selected_mode" in
     py_*)
         _missing_deps=()
-        python3 -c "import cv2" 2>/dev/null || _missing_deps+=("opencv-python")
-        python3 -c "import numpy" 2>/dev/null || _missing_deps+=("numpy")
+        "$PY_EXE" -c "import cv2" 2>/dev/null || _missing_deps+=("opencv-python")
+        "$PY_EXE" -c "import numpy" 2>/dev/null || _missing_deps+=("numpy")
         if [ ${#_missing_deps[@]} -gt 0 ]; then
             print_colored "Python dependency missing: ${_missing_deps[*]}" "ERROR"
             print_colored "Install with:  pip3 install -r ${DX_APP_PATH}/requirements.txt" "INFO"
@@ -731,8 +732,10 @@ case "$selected_mode" in
             popd > /dev/null
             exit 1
         fi
+        dxapp_link_cv2_qt_fonts "$PY_EXE"
         ;;
 esac
+dxapp_prepare_gui_env
 
 echo ""
 printf "${COLOR_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${COLOR_RESET}\n"

@@ -228,6 +228,27 @@ json PayloadToJson(const StageDataPtr& data) {
             out["count"] = static_cast<unsigned>(boxes->items.size());
             break;
         }
+        case Shape::kRecords: {
+            const RecordsData* records = static_cast<const RecordsData*>(data.get());
+            json items = json::array();
+            for (std::size_t i = 0; i < records->items.size(); ++i) {
+                const RecordItem& item = records->items[i];
+                json entry = json::object();
+                json numbers = json::object();
+                for (std::size_t n = 0; n < item.numbers.size(); ++n) {
+                    numbers[item.numbers[n].first] = item.numbers[n].second;
+                }
+                json text = json::object();
+                for (std::size_t t = 0; t < item.text.size(); ++t) {
+                    text[item.text[t].first] = item.text[t].second;
+                }
+                entry["numbers"] = numbers;
+                entry["text"] = text;
+                items.push_back(entry);
+            }
+            out["items"] = items;
+            break;
+        }
     }
     return out;
 }
@@ -305,7 +326,7 @@ std::vector<MissingArtifact> CollectMissing(const GraphSpec& spec,
     std::vector<MissingArtifact> missing;
     for (std::size_t i = 0; i < spec.nodes.size(); ++i) {
         const NodeSpec& node = spec.nodes[i];
-        if (node.is_source) continue;
+        if (node.is_source || node.is_cpu) continue;
         const ModelInfo* info = registry.find(node.model);
         if (info == NULL) continue;  // ValidateGraph already rejected this
         const std::string path = model_dir + "/" + info->dxnn_file;
@@ -388,7 +409,7 @@ std::string AliasNotes(const GraphSpec& spec, const IModelRegistry& registry) {
     std::string text;
     for (std::size_t i = 0; i < spec.nodes.size(); ++i) {
         const NodeSpec& node = spec.nodes[i];
-        if (node.is_source) continue;
+        if (node.is_source || node.is_cpu) continue;
         const ModelInfo* info = registry.find(node.model);
         if (info == NULL) continue;
         const std::string note = AliasNote(node.model, *info, alias_by_name);

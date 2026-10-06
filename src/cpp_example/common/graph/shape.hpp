@@ -3,7 +3,7 @@
  * @brief The engine's entire type vocabulary.
  *
  * The graph engine switches on Shape, never on task name. 22 registry tasks
- * and 15 factory interfaces collapse onto 11 shapes; a new task that lands on
+ * and 15 factory interfaces collapse onto 12 shapes; a new task that lands on
  * an existing shape needs no engine change.
  *
  * C++14: no std::variant, so payloads are a polymorphic hierarchy held by
@@ -35,7 +35,8 @@ enum class Shape {
     kImage,
     kScores,
     kVector,
-    kBoxes3d
+    kBoxes3d,
+    kRecords
 };
 
 /// Stable lower-case name used in JSON, error messages and generated docs.
@@ -130,6 +131,17 @@ struct VectorData : StageData {
 struct Boxes3dData : StageData {
     std::vector<Detection3DResult> items;
     Shape shape() const { return Shape::kBoxes3d; }
+};
+
+/// One named measurement from a cpu reducer (headpose, volume).
+struct RecordItem {
+    std::vector<std::pair<std::string, double> > numbers;
+    std::vector<std::pair<std::string, std::string> > text;
+};
+
+struct RecordsData : StageData {
+    std::vector<RecordItem> items;
+    Shape shape() const { return Shape::kRecords; }
 };
 
 /**

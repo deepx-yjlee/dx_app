@@ -286,6 +286,8 @@ private:
              cxxopts::value<int>(args.loopTest)->default_value("-1"))
             ("no-display", "will not visualize, only show fps",
              cxxopts::value<bool>(args.no_display)->default_value("false"))
+            ("drop-frames", "display: drop stale frames instead of pacing the pipeline (default: off, every frame is shown)",
+             cxxopts::value<bool>(args.drop_frames)->default_value("false"))
             ("config", "Model configuration JSON file path",
              cxxopts::value<std::string>(args.configPath))
             ("show-log", "Enable verbose log output (default: quiet)",
@@ -302,6 +304,8 @@ private:
             ("h, help", "print usage");
 
         auto cmd = options.parse(argc, argv);
+
+        dxapp::configureDisplayPump(dxapp::syncPreviewPump(), args.drop_frames);
         if (cmd.count("help")) {
             std::cout << options.help() << std::endl;
             exit(0);
@@ -691,10 +695,9 @@ if (!no_display) {
     // 10 fps, not the 60 fps default: that default assumes the display sits
     // OFF the critical path, which holds for the async runner. The sync
     // pipeline is serial, so every imshow is charged to frame time.
-    constexpr double SYNC_PREVIEW_FPS = 10.0;
-    static DisplayPump pump{"Output", SYNC_PREVIEW_FPS};
-    // waitKey only when a preview slot is due. Calling it on every frame
-    // sits on this serial loop and caps end-to-end FPS at the GUI rate.
+    // Lossless (default): every frame is shown. --drop-frames keeps the
+    // 10 fps preview slot so waitKey is not on every frame of this loop.
+    auto& pump = dxapp::syncPreviewPump();  // shared, configured in run()
     if (pump.wouldShow()) {
     auto display_start = std::chrono::high_resolution_clock::now();
     pump.offer(result_frame);
