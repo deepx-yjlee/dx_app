@@ -421,7 +421,7 @@ task_to_postprocessors() {
         super_resolution)        echo "espcn" ;;
         image_enhancement)       echo "zero_dce" ;;
         embedding)               echo "arcface embedding" ;;
-        ppu)                     echo "yolov5_ppu yolov7_ppu yolov8n_ppu yolov8s_ppu scrfd_ppu yolov5pose_ppu" ;;
+        ppu)                     echo "yolov5_ppu yolov7_ppu yolov8n_ppu yolov8s_ppu" ;;
         hand_landmark)           echo "hand_landmark" ;;
         attribute_recognition)   echo "classification" ;;
         reid)                    echo "embedding" ;;

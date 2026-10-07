@@ -533,6 +533,10 @@ function(add_variant_example VARIANT_DIR VARIANT_NAME KIND)
     endif()
 endfunction()
 
+# Sources stay under src/cpp_example. These variants are not registered and
+# are not built (SCRFD500M_PPU, YOLOV5Pose_PPU).
+set(DXAPP_EXCLUDED_VARIANTS SCRFD500M_PPU YOLOV5Pose_PPU)
+
 foreach(CATEGORY ${CATEGORIES})
     file(GLOB _FAMILY_DIRS RELATIVE ${CPP_EXAMPLE_DIR}/${CATEGORY}
          ${CPP_EXAMPLE_DIR}/${CATEGORY}/*)
@@ -544,6 +548,9 @@ foreach(CATEGORY ${CATEGORIES})
 
         file(GLOB _VARIANT_DIRS RELATIVE ${_FAMILY_DIR} ${_FAMILY_DIR}/*)
         foreach(VARIANT ${_VARIANT_DIRS})
+            if(VARIANT IN_LIST DXAPP_EXCLUDED_VARIANTS)
+                continue()
+            endif()
             set(_VARIANT_DIR ${_FAMILY_DIR}/${VARIANT})
             if(NOT IS_DIRECTORY ${_VARIANT_DIR})
                 continue()

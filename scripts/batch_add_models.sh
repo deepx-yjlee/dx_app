@@ -36,7 +36,7 @@ supported_pp = {
     "yolov8seg", "yolov5seg", "yolact", "yolov26seg",
     "espcn", "zero_dce", "arcface", "clip_image", "clip_text",
     "hand_landmark", "dncnn", "fastdepth",
-    "yolov5_ppu", "yolov7_ppu", "yolov5pose_ppu", "scrfd_ppu",
+    "yolov5_ppu", "yolov7_ppu",
     "efficientnet",
 }
 

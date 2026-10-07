@@ -25,6 +25,7 @@ import re
 from pathlib import Path
 
 import pytest
+from test_helpers.constants import EXCLUDED_EXAMPLE_VARIANTS
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 HTML = PROJECT_ROOT / "DX Model Zoo.html"
@@ -34,13 +35,9 @@ REGISTRY = PROJECT_ROOT / "config" / "model_registry.json"
 PENDING = "/2_5_0/"
 URL = re.compile(r"https://sdk\.deepx\.ai/modelzoo/([a-z0-9-]+)/([0-9_]+)/([^\"' ]+\.dxnn)")
 
-# The zoo page lists PPU models only under the current naming (<arch>_<res>_ppu), and
-# these two predate it. Their manifest rows therefore point at the LEGACY
-# `modelzoo/dxnn/` tier, which the page does not list at all -- and which still
-# resolves: both were measured at HTTP 200 there, and 403 under q-lite. So the entries
-# are correct and the page is simply silent about them; rewriting them to a tier the
-# page does list is what breaks them.
-LEGACY_TIER_ROWS = {"SCRFD500M_PPU", "YOLOV5Pose_PPU"}
+# SCRFD500M_PPU and YOLOV5Pose_PPU used to live on the legacy dxnn/2_4_0 tier.
+# Those manifest rows are gone; nothing else is exempt from the page check.
+LEGACY_TIER_ROWS: set[str] = set()
 
 
 def _requires_html():
@@ -90,7 +87,10 @@ def test_every_manifest_url_is_a_modelzoo_url(manifest):
 def test_the_manifest_covers_every_example_variant(manifest, variant_configs):
     """An example whose model is in no manifest row cannot be downloaded at all."""
     files = {parts[2] for _row, parts in _parsed(manifest) if parts}
-    orphans = sorted(v for v in variant_configs if f"{v}.dxnn" not in files)
+    orphans = sorted(
+        v for v in variant_configs
+        if v not in EXCLUDED_EXAMPLE_VARIANTS and f"{v}.dxnn" not in files
+    )
     assert not orphans, f"example variants with no manifest row: {orphans}"
 
 

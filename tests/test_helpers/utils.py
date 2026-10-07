@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import List, Optional, Tuple
 
 from .constants import (
+    EXCLUDED_EXAMPLE_VARIANTS,
     BIN_DIR,
     LIB_DIR,
     MODELS_DIR,
@@ -247,6 +248,8 @@ def discover_cpp_executables(
         task = task_dir.name
 
         for cpp_file in sorted(task_dir.rglob("*.cpp")):
+            if cpp_file.parent.name in EXCLUDED_EXAMPLE_VARIANTS:
+                continue
             result = _resolve_cpp_candidate(cpp_file.stem, task, suffixes)
             if result is not None:
                 cases.append(result)
@@ -330,6 +333,8 @@ def cpp_exe_task_map(
         if not task_dir.is_dir() or task_dir.name in _SKIP_DIRS:
             continue
         for cpp_file in sorted(task_dir.rglob("*.cpp")):
+            if cpp_file.parent.name in EXCLUDED_EXAMPLE_VARIANTS:
+                continue
             stem = cpp_file.stem
             if any(stem.endswith(s) for s in suffixes):
                 mapping[stem] = task_dir.name
@@ -521,6 +526,8 @@ def discover_python_scripts(
             variant_dirs = _variant_dirs(family_dir)
             if variant_dirs:
                 for variant_dir in variant_dirs:
+                    if variant_dir.name in EXCLUDED_EXAMPLE_VARIANTS:
+                        continue
                     sync_scripts, async_scripts = _discover_scripts_in_dir(
                         variant_dir, suffixes,
                     )

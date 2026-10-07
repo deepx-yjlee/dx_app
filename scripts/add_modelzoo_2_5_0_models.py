@@ -157,9 +157,9 @@ def manifest_entry(row: dict) -> dict:
     so q-lite/2_5_0 is now the ordinary case: 492 of the 496 files the page offers live
     there, and the remaining 4 keep their measured q-master/2_4_0 URLs.
 
-    The tier comes from the row, not from `published`. The two were the same fact only
-    while 2_5_0 was unreleased; a model can now be q-lite AND unpublished, which is
-    exactly what vit-l-p16_512x512_swag is.
+    The tier comes from the row, not from `published`. A q-lite URL can still be
+    unpublished when its variant is in UNPUBLISHED; that set is empty, so
+    vit-l-p16_512x512_swag is published like the other q-lite rows.
     """
     stem = row["variant"]
     base, version = row["manifest_tier"]

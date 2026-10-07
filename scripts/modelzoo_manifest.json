@@ -642,12 +642,6 @@
     "json_url": null
   },
   {
-    "name": "SCRFD500M_PPU",
-    "category": "PPU",
-    "dxnn_url": "https://sdk.deepx.ai/modelzoo/dxnn/2_4_0/SCRFD500M_PPU.dxnn",
-    "json_url": null
-  },
-  {
     "name": "segformer_b0_512x1024",
     "category": "Semantic Segmentation",
     "dxnn_url": "https://sdk.deepx.ai/modelzoo/q-lite-dxnn/2_5_0/segformer_mit-b0_512x1024.dxnn",
@@ -1305,12 +1299,6 @@
     "name": "yolov5xs_wo_spp_512",
     "category": "Object Detection",
     "dxnn_url": "https://sdk.deepx.ai/modelzoo/q-lite-dxnn/2_5_0/yolov5-xs_512x512_nospp.dxnn",
-    "json_url": null
-  },
-  {
-    "name": "YOLOV5Pose_PPU",
-    "category": "PPU",
-    "dxnn_url": "https://sdk.deepx.ai/modelzoo/dxnn/2_4_0/YOLOV5Pose_PPU.dxnn",
     "json_url": null
   },
   {
@@ -2457,8 +2445,7 @@
     "name": "vit_l_p16_512x512_swag",
     "category": "Classification",
     "dxnn_url": "https://sdk.deepx.ai/modelzoo/q-lite-dxnn/2_5_0/vit-l-p16_512x512_swag.dxnn",
-    "json_url": null,
-    "pending": true
+    "json_url": null
   },
   {
     "name": "vit_t_p16_224x224",

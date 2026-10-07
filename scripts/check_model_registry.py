@@ -95,6 +95,13 @@ def resolve_registry(entries):
     return models, aliases, errors
 
 
+# Example sources kept on disk. They are not registry rows and are not built.
+KEPT_UNREGISTERED = {
+    ("face_detection", "scrfd", "SCRFD500M_PPU"),
+    ("pose_estimation", "yolov5_pose", "YOLOV5Pose_PPU"),
+}
+
+
 def factory_dirs(base, suffix):
     """(task, family, variant) of every <task>/<family>/<variant>/factory/<variant><suffix>."""
     return {tuple(p.parts[-5:-2]) for p in Path(base).glob("*/*/*/factory/*" + suffix)
@@ -130,7 +137,7 @@ def main(argv=None):
             print("NO PY FACTORY   {} ({})".format(entry.get("variant"), where))
             failures += 1
 
-    for orphan in sorted((cpp | py) - registered):
+    for orphan in sorted((cpp | py) - registered - KEPT_UNREGISTERED):
         print("UNREGISTERED    {} (factory exists, no registry entry)".format("/".join(orphan)))
         failures += 1
 

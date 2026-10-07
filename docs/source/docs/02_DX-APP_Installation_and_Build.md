@@ -167,7 +167,7 @@ The PPU is engineered to offload computationally intensive post-processing tasks
 
 **PPU-Enabled Models**  
 
-DX-APP includes 11 PPU-accelerated model variants across multiple tasks. To run PPU models interactively, use `./run_demo.sh` and select "PPU Pipeline", or use the example runner / DX Model Tool:
+DX-APP registers 14 PPU-accelerated object-detection variants. `SCRFD500M_PPU` and `YOLOV5Pose_PPU` example sources stay on disk and are not registered or built. To run PPU models interactively, use `./run_demo.sh` and select "PPU Pipeline", or use the example runner / DX Model Tool:
 
 ```bash
 # Interactive — select PPU from the category menu
@@ -178,7 +178,7 @@ scripts/run_examples.sh
 ./scripts/dx_tool.sh run --lang cpp --category ppu
 ```
 
-Available PPU models: YOLOv5S, YOLOv7, YOLOv7x, YOLOv8N, YOLOv8S, YOLOv9T, YOLOv10N, YOLOv11N, YOLOv12N, SCRFD500M, YOLOv5Pose.
+Available PPU models: YOLOv3-tiny, YOLOv3 (416 and 608), YOLOv4, YOLOv5-S, YOLOv7, YOLOv7-X, YOLOv8-N, YOLOv8-S, YOLOv9-T, YOLOv10-N, YOLO11-N, YOLO12-N, YOLOX-S.
 
 **Step 4. Resolve Shared Library Errors**  
 

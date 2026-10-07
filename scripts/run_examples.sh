@@ -219,8 +219,6 @@ CATEGORY_ORDER=(
 # x8 output stays a sane size).
 declare -A MODEL_IMAGE_OVERRIDE MODEL_VIDEO_OVERRIDE
 MODEL_IMAGE_OVERRIDE=(
-    [scrfd500m_ppu]="sample/img/sample_face.jpg"
-    [yolov5pose_ppu]="sample/img/sample_people.jpg"
     [handlandmarklite_1]="sample/img/sample_hand.jpg"
     [unet_mobilenet_v2]="sample/img/sample_dog.jpg"
     [realesrgan_x2]="sample/img/sample_lowres165x90.png"
@@ -228,8 +226,6 @@ MODEL_IMAGE_OVERRIDE=(
     [realesrgan_x8]="sample/img/sample_lowres165x90.png"
 )
 MODEL_VIDEO_OVERRIDE=(
-    [scrfd500m_ppu]="assets/videos/dance-solo.mov"
-    [yolov5pose_ppu]="assets/videos/dance-solo.mov"
     [handlandmarklite_1]="assets/videos/hand.mp4"
 )
 

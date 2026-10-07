@@ -29,8 +29,9 @@ SPECS = PROJECT_ROOT / "tests" / "data" / "processor_specs.json"
 MANIFEST = PROJECT_ROOT / "scripts" / "modelzoo_manifest.json"
 
 # 353 before the additions (352 distinct variants plus the retained
-# deit_base384_distilled alias) + 147 = 500 entries describing 499 variants.
-EXPECTED_REGISTRY_ENTRIES = 353 + 147
+# deit_base384_distilled alias) + 147, minus SCRFD500M_PPU and YOLOV5Pose_PPU
+# (example sources kept, not registered) = 498 entries describing 497 variants.
+EXPECTED_REGISTRY_ENTRIES = 353 + 147 - 2
 
 ALLOWED_URL_PREFIXES = (
     "https://sdk.deepx.ai/modelzoo/dxnn/2_4_0/",
@@ -184,8 +185,8 @@ def test_the_four_q_master_models_are_marked_published():
         assert registry[variant]["published"] is True, variant
         assert "q-master-dxnn" in manifest[variant]["dxnn_url"], variant
     unpublished = [e["variant"] for e in registry.values() if e["published"] is False]
-    assert unpublished == ["vit-l-p16_512x512_swag"], (
-        f"expected only the model DEEPX reported as failing to build, got {unpublished}")
+    assert unpublished == [], (
+        f"expected every registered model to be published, got {unpublished}")
 
 
 def test_specs_and_registry_agree_on_the_additions():

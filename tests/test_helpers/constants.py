@@ -98,15 +98,16 @@ TASK_IMAGE_MAP: dict[str, str] = {
 # ======================================================================
 # Per-model image overrides  (model_name → relative image path)
 # ======================================================================
+# Example sources kept on disk, excluded from the build, the registry, and tests.
+EXCLUDED_EXAMPLE_VARIANTS = frozenset({"SCRFD500M_PPU", "YOLOV5Pose_PPU"})
+
 MODEL_IMAGE_OVERRIDE: dict[str, str] = {
-    "yolov5pose_ppu":             _SAMPLE_PEOPLE,
     "yolov5pose":                 _SAMPLE_PEOPLE,
     "yolov8m_pose":               _SAMPLE_PEOPLE,
     "yolov8s_pose":               _SAMPLE_PEOPLE,
     "centerpose_regnetx_800mf":   _SAMPLE_PEOPLE,
     "unet_mobilenet_v2":          _SAMPLE_DOG,
     "mediapipe_hand_detector":    _SAMPLE_PERSON_A2,
-    "scrfd500m_ppu":              _SAMPLE_PERSON_A2,
     # Super-resolution: ESPCN upscales a 275x150 crop; Real-ESRGAN takes a
     # smaller 165x90 one so the x8 output stays a sane size.
     "espcn_x2":                   _SAMPLE_LOWRES_275x150,
@@ -407,6 +408,9 @@ E2E_HEAVY_MODELS: frozenset = frozenset({
     # obb_detection
     "yolo26-n-obb_1024x1024",
     "yolo26-s-obb_1024x1024",
+    # image_matting: a full C++ -l 50 does not finish quickly. Cap at 2.
+    "ppmatting-hrnet-w48-composition_512x512",
+    "ppmatting-hrnet-w48-distinctions_512x512",
 })
 
 # Loop-count cap applied to every model in :data:`E2E_HEAVY_MODELS`.

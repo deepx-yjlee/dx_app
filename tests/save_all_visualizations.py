@@ -77,7 +77,6 @@ TASK_IMAGE_MAP = {
 
 # Per-model image overrides (used instead of task defaults)
 MODEL_IMAGE_OVERRIDE = {
-    "ppu/yolov5pose_ppu":  "sample/img/sample_people.jpg",
     # Super-resolution: ESPCN upscales a 275x150 crop; Real-ESRGAN takes a
     # smaller 165x90 one so the x8 output stays a sane size.
     "super_resolution/espcn_x2":      "sample/img/sample_lowres275x150.png",

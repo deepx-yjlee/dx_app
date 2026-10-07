@@ -3748,8 +3748,8 @@ void TestStaticRegistryResolvesKnownModel() {
 // casvit-t_224x224 (IEmbeddingFactory) under image_classification, beside
 // alexnet_224x224 (IClassificationFactory). If the generator ever went back
 // to deriving shape from the task string, these two models would be given
-// the same shape. The two PPU models (one "ppu" task before the per-variant
-// tree) still differ in the landmark flag, by interface.
+// the same shape. A face model and a PPU detector still differ in the
+// landmark flag, by interface.
 void TestStaticRegistryShapeComesFromFactoryNotTask() {
     StaticModelRegistry registry;
     const ModelInfo* scores = registry.find("alexnet_224x224");
@@ -3761,7 +3761,9 @@ void TestStaticRegistryShapeComesFromFactoryNotTask() {
         GRAPH_CHECK(vector->output_shape == Shape::kVector);
     }
 
-    const ModelInfo* ppu_face = registry.find("scrfd500m_ppu");
+    // SCRFD500M_PPU is example source only (not registered). scrfd500m is the
+    // face model that still carries landmarks beside a PPU detector.
+    const ModelInfo* ppu_face = registry.find("scrfd500m");
     const ModelInfo* ppu_det = registry.find("yolov5s_ppu");
     GRAPH_CHECK(ppu_face != NULL);
     GRAPH_CHECK(ppu_det != NULL);
@@ -11409,13 +11411,14 @@ void TestRegistryCarriesPublishedAndResources() {
     GRAPH_CHECK(plain != NULL && plain->resources.empty());
 }
 
-// M1: Build's MODEL_MISSING fallback offers setup.sh only for a model the
-// zoo publishes; an unpublished one says that setup.sh cannot fetch it.
-void TestBuildDoesNotOfferADownloadOfAnUnpublishedModel() {
+// A published model's missing file is offered setup.sh. vit-l-p16_512x512_swag
+// used to be the unpublished exception; the zoo now serves it.
+void TestBuildOffersADownloadOfAPublishedModel() {
     StaticModelRegistry registry;
     const ModelInfo* swag = registry.find("vit-l-p16_512x512_swag");
-    GRAPH_CHECK(swag != NULL && !swag->published);
+    GRAPH_CHECK(swag != NULL && swag->published);
     const char* models[] = {"vit-l-p16_512x512_swag", "yolov8n"};
+    const char* downloads[] = {"vit_l_p16_512x512_swag", "YoloV8N"};
     for (std::size_t m = 0; m < 2; ++m) {
         const GraphSpec spec = ParseGraphText(
             std::string("{\"version\":1,\"name\":\"m\",\"nodes\":["
@@ -11431,13 +11434,9 @@ void TestBuildDoesNotOfferADownloadOfAnUnpublishedModel() {
             GRAPH_CHECK(error.code() == GraphErrorCode::kModelMissing);
             message = error.what();
         }
-        if (m == 0) {
-            GRAPH_CHECK(message.find("\n  -> vit-l-p16_512x512_swag is not published by the model "
-                                     "zoo yet; setup.sh cannot download it") != std::string::npos);
-            GRAPH_CHECK(message.find("./setup.sh --models") == std::string::npos);
-        } else {
-            GRAPH_CHECK(message.find("\n  -> ./setup.sh --models YoloV8N") != std::string::npos);
-        }
+        GRAPH_CHECK(message.find(std::string("\n  -> ./setup.sh --models ") + downloads[m]) !=
+                    std::string::npos);
+        GRAPH_CHECK(message.find("is not published") == std::string::npos);
     }
 }
 
@@ -12205,7 +12204,7 @@ int main() {
     TestAStageRefusesAV9FileBeforeOpeningAnEngine();
     TestRegistryResolvesOldNamesAndAliasesToTheVariant();
     TestRegistryCarriesPublishedAndResources();
-    TestBuildDoesNotOfferADownloadOfAnUnpublishedModel();
+    TestBuildOffersADownloadOfAPublishedModel();
     TestStageConfigIsTheVariantsConfigJson();
     TestStageConfigPathRefusesAModelInfoWithoutFamilyOrVariant();
     TestARelativeGalleryIsReadAgainstTheRepository();

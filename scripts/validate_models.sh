@@ -460,7 +460,6 @@ REFERENCE_DIRS=(
     "embedding/arcface_mobilefacenet"
     "ppu/yolov5s_ppu"
     "ppu/yolov7_ppu"
-    "ppu/yolov5pose_ppu"
     "hand_landmark/handlandmarklite_1"
     "attribute_recognition/deepmar_resnet50"
 )

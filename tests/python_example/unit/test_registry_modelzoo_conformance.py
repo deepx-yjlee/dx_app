@@ -18,6 +18,8 @@ from pathlib import Path
 
 import pytest
 
+from test_helpers.constants import EXCLUDED_EXAMPLE_VARIANTS
+
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 REGISTRY = PROJECT_ROOT / "config" / "model_registry.json"
 SNAPSHOT = PROJECT_ROOT / "tests" / "data" / "modelzoo_cv_tree.json"
@@ -31,11 +33,9 @@ NEW_FIELDS = ("variant", "family", "task", "task_legacy", "image_only",
 PUBLICATION_FIELDS = ("published",)
 
 # model_name -> (variant, task, family). The ONLY entries allowed to miss the
-# dx-modelzoo snapshot. See the spec's "Documented exceptions" table.
-EXCEPTIONS: dict[str, tuple[str, str, str]] = {
-    "scrfd500m_ppu":          ("SCRFD500M_PPU",              "face_detection",       "scrfd"),
-    "yolov5pose_ppu":         ("YOLOV5Pose_PPU",             "pose_estimation",      "yolov5_pose"),
-}
+# dx-modelzoo snapshot. SCRFD500M_PPU and YOLOV5Pose_PPU are no longer rows;
+# their example sources stay on disk and are listed in EXCLUDED_EXAMPLE_VARIANTS.
+EXCEPTIONS: dict[str, tuple[str, str, str]] = {}
 # efficientnet_lite0 was here while dx_app called the model 256x256 and the snapshot
 # called it 224x224. The two .dxnn files are BYTE-IDENTICAL on the CDN (md5
 # 5c966e8e...) and the binary self-reports [1, 224, 224, 3], so 256x256 was simply a
@@ -344,6 +344,8 @@ def test_variant_config_lives_only_in_the_registry_model_folder(registry):
         found = _on_disk_variant_families(tree)
         stems = set(assigned) | set(found)
         for stem in sorted(stems):
+            if stem in EXCLUDED_EXAMPLE_VARIANTS:
+                continue
             want = assigned.get(stem, set())
             got = found.get(stem, set())
             if got == want:

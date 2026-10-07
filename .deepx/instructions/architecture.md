@@ -8,7 +8,7 @@ or any streaming components.
 
 dx_app provides a three-layer architecture for building AI inference applications
 on DEEPX NPU hardware. Applications are organized by AI task (28 categories) and
-model (500 variants), with a shared framework providing common runners, factories,
+model (497 variants), with a shared framework providing common runners, factories,
 preprocessors, postprocessors, and visualizers.
 
 ## Three-Layer Architecture

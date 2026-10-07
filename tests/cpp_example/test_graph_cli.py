@@ -925,32 +925,31 @@ def test_missing_models_are_named_as_the_model_zoo_spells_them(tmp_path):
     assert "  -> ./setup.sh --models YoloV8N casvit_t\n" in result.stdout, result.stdout
 
 
-UNPUBLISHED_LINE = ('  node "cls": vit-l-p16_512x512_swag is not published by the model zoo '
-                    'yet; setup.sh cannot download it\n')
+SWAG_DOWNLOAD = "  -> ./setup.sh --models vit_l_p16_512x512_swag\n"
 
 
 @pytest.mark.graph
-def test_missing_unpublished_models_are_not_offered_a_download(tmp_path):
-    """M1: an unpublished model (registry "published": false, manifest
-    "pending") is left out of the setup.sh command, which could not fetch
-    it, and gets a line of its own - in --check and in a run alike."""
+def test_missing_published_swag_is_offered_a_download(tmp_path):
+    """vit-l-p16_512x512_swag is published. A missing file is offered
+    setup.sh under the manifest download name, in --check and in a run."""
     graph = _write_graph(tmp_path, [{"id": "od", "model": "yolov8n"},
                                     {"id": "cls", "model": "vit-l-p16_512x512_swag"}])
     empty = tmp_path / "models"
     empty.mkdir()
     check = run(BINARIES[0], "--check", str(graph), "--model-dir", str(empty))
     assert check.returncode == 0, check.stdout + check.stderr
-    assert UNPUBLISHED_LINE + "  -> ./setup.sh --models YoloV8N\n" in check.stdout, check.stdout
+    assert "  -> ./setup.sh --models YoloV8N vit_l_p16_512x512_swag\n" in check.stdout, check.stdout
+    assert "is not published" not in check.stdout
     for binary in BINARIES:
         result = run(binary, "--graph", str(graph), "--model-dir", str(empty))
         assert result.returncode == 1, result.stdout + result.stderr
-        assert result.stderr.endswith(UNPUBLISHED_LINE + "  -> ./setup.sh --models YoloV8N\n"), \
+        assert result.stderr.endswith("  -> ./setup.sh --models YoloV8N vit_l_p16_512x512_swag\n"), \
             result.stderr
 
     alone = _write_graph(tmp_path, [{"id": "cls", "model": "vit-l-p16_512x512_swag"}])
     check = run(BINARIES[0], "--check", str(alone), "--model-dir", str(empty))
-    assert check.stdout.endswith(UNPUBLISHED_LINE), check.stdout
-    assert "setup.sh --models" not in check.stdout
+    assert check.stdout.endswith(SWAG_DOWNLOAD), check.stdout
+    assert "is not published" not in check.stdout
 
 
 @pytest.mark.graph

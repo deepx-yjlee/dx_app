@@ -29,7 +29,7 @@ detector, change one string:
 No `cmake`, no `ninja`, no recompilation — the same binary, reading a
 different word out of a JSON file. The same edit works for the segmenter,
 the pose model, and every second-stage model in the cascade samples: any of
-the 494 models that [`docs/graph_models.md`](../../../docs/graph_models.md)
+the 492 models that [`docs/graph_models.md`](../../../docs/graph_models.md)
 counts as running in a graph, as long as its `produces` and `consumes`
 columns fit the slot.
 `--check` tells you before you run whether they fit.
@@ -42,11 +42,11 @@ line per node (`note: node "od": "yolov8n" is the old name of
 stderr, and the table at the end of `docs/graph_models.md` lists every old
 name. The shipped samples use variant names.
 
-**Model files**: `./setup.sh --models` downloads 498 of the 499 models: 492
-from the model zoo's current release, `q-lite-dxnn/2_5_0`, and 6 that 2_5_0
-does not publish from `2_4_0` (`SCRFD500M_PPU`, `YOLOV5Pose_PPU`,
-`beit-l-p16_384x384`, `levit-128s_224x224`, `vit-b-p16_384x384`,
-`vit-t-p16_224x224`); `vit-l-p16_512x512_swag` is not published yet. The
+**Model files**: `./setup.sh --models` downloads all 497 registered models: 493
+from the model zoo's current release, `q-lite-dxnn/2_5_0`, and 4 that 2_5_0
+does not publish from `2_4_0` (`beit-l-p16_384x384`, `levit-128s_224x224`,
+`vit-b-p16_384x384`, `vit-t-p16_224x224`).
+`SCRFD500M_PPU` and `YOLOV5Pose_PPU` are not registered. The
 2_5_0 files are `.dxnn` container **v9**; this release needs DX-RT 3.5.0 or
 later, the first runtime that loads them. Every graph path checks the container before it
 creates an engine, so on an older DX-RT it stops with
@@ -113,7 +113,7 @@ They share the per-variant factories and the ROI crop rule, and nothing else.
 | | `multi_model_graph_{sync,async}` and `dx_graph` (this directory) | `multi_model_run` and `run_pipeline.py` (`src/cpp_example/multi_model/`, `src/python_example/multi_model/`) |
 |---|---|---|
 | Written as | a node-graph JSON (`"nodes"`, `"edges"`, `"roi"`, `"track"`, `"port"`, `"carry"`) | a `pipeline.json` of `"stages"` with `"depends_on"` and `"bind"`, plus a named `"fuse"` step |
-| Models | any of the 494 models `docs/graph_models.md` lists as running in a graph, by variant or old name | the variants compiled into `multi_model/registry.cpp` (8 in this release) |
+| Models | any of the 492 models `docs/graph_models.md` lists as running in a graph, by variant or old name | the variants compiled into `multi_model/registry.cpp` (8 in this release) |
 | Input | images, videos, `camera:<N>`, `rtsp://`, several sources at once | one image (`--image`) or one video (`--video`, optional `--frames N`) |
 | Scenario logic | cpu nodes `headpose` and `volume`, joined by `"carry": "result"` | a C++ fuse step per scenario (`hand_cascade`, `logistics_volume`, `dms`) and CPU stages such as `face_solvepnp` |
 | Coordinates | every result mapped back to the source frame (`origin`) | a crop's results stay in crop coordinates, next to the crop box |
@@ -559,16 +559,15 @@ downloading again would fetch the same v9 file.
 Note the download command in `MODEL_MISSING`: the name it prints is the
 **model zoo's** spelling, which is almost never the variant (`yolov8-n_640x640`
 is `YoloV8N` there, `yolo26-l-obb_1024x1024` is `yolo26l-obb`): 488 of the
-499 registered models differ this way. `setup.sh --models` accepts the zoo's
+497 registered models differ this way. `setup.sh --models` accepts the zoo's
 name, the `.dxnn` file name with or without `.dxnn` (which is the variant),
 or the old registry name, in any letter case, but the zoo's name is the
 manifest's own spelling, so that is the one the CLI prints. It is compiled into
 the binary from `scripts/modelzoo_manifest.json` at build time, so a binary
-deployed without a source tree prints the same name. A model the zoo does not
-publish yet (`published` is `no` in `--list-models`, such as
-`vit-l-p16_512x512_swag`) is left out of the command, which could not fetch
-it, and gets its own line instead: `node "cls": vit-l-p16_512x512_swag is
-not published by the model zoo yet; setup.sh cannot download it`.
+deployed without a source tree prints the same name. Every registered model is
+published, so a missing file is always offered that command. A future row with
+`published` false is left out of the command and gets its own line:
+`is not published by the model zoo yet; setup.sh cannot download it`.
 
 **Every bad value in one object is reported at once**, as unknown keys are
 (below): one `roi`, `track` or `params` object with three bad values gives
@@ -689,7 +688,7 @@ name (`boxes`, `obboxes`, `instances`, `keypoints`, `labelmap`, `densemap`,
 `image`, `scores`, `vector`, `boxes3d`). Together they answer the question a
 task name cannot: *which model can I put in the second stage?*
 
-One row per registered model (499), named by its variant, then one
+One row per registered model (497), named by its variant, then one
 `alias of <variant>` row per `alias_of` name (the old registry names are not
 listed; `docs/graph_models.md` has them). `published` is `no` for a model the
 model zoo does not publish yet. `file` is the container version of the

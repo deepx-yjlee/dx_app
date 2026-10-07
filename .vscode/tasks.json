@@ -618,26 +618,6 @@
       "problemMatcher": ["$gcc"]
     },
     {
-      "label": "build: scrfd500m_ppu_sync",
-      "type": "shell",
-      "linux": {
-        "command": "bash",
-        "args": ["-c", "source venv/bin/activate 2>/dev/null || true && ./build.sh --type debug --target scrfd500m_ppu_sync"]
-      },
-      "group": "build",
-      "problemMatcher": ["$gcc"]
-    },
-    {
-      "label": "build: scrfd500m_ppu_async",
-      "type": "shell",
-      "linux": {
-        "command": "bash",
-        "args": ["-c", "source venv/bin/activate 2>/dev/null || true && ./build.sh --type debug --target scrfd500m_ppu_async"]
-      },
-      "group": "build",
-      "problemMatcher": ["$gcc"]
-    },
-    {
       "label": "build: scrfd_ppu_sync",
       "type": "shell",
       "linux": {
@@ -653,26 +633,6 @@
       "linux": {
         "command": "bash",
         "args": ["-c", "source venv/bin/activate 2>/dev/null || true && ./build.sh --type debug --target scrfd_ppu_async"]
-      },
-      "group": "build",
-      "problemMatcher": ["$gcc"]
-    },
-    {
-      "label": "build: yolov5pose_ppu_sync",
-      "type": "shell",
-      "linux": {
-        "command": "bash",
-        "args": ["-c", "source venv/bin/activate 2>/dev/null || true && ./build.sh --type debug --target yolov5pose_ppu_sync"]
-      },
-      "group": "build",
-      "problemMatcher": ["$gcc"]
-    },
-    {
-      "label": "build: yolov5pose_ppu_async",
-      "type": "shell",
-      "linux": {
-        "command": "bash",
-        "args": ["-c", "source venv/bin/activate 2>/dev/null || true && ./build.sh --type debug --target yolov5pose_ppu_async"]
       },
       "group": "build",
       "problemMatcher": ["$gcc"]
@@ -880,12 +840,6 @@
         "yolov12n_ppu_async",
         "yolov7x_ppu_sync",
         "yolov7x_ppu_async",
-        "scrfd500m_ppu_sync",
-        "scrfd500m_ppu_async",
-        "scrfd_ppu_sync",
-        "scrfd_ppu_async",
-        "yolov5pose_ppu_sync",
-        "yolov5pose_ppu_async",
         "yolov7_x_deeplabv3_sync",
         "yolov7_x_deeplabv3_async",
         "deepmar_resnet50_sync",

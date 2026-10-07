@@ -17,8 +17,8 @@ if _src not in sys.path:
 from common.runner.sync_runner import _resolve_default_model_path  # noqa: E402
 
 REGISTRY = _root / "config" / "model_registry.json"
-# 499 canonical rows on 2026-10-01 (500 rows, one alias_of).
-MIN_CANONICAL_ROWS = 499
+# 497 canonical rows (498 rows, one alias_of). Two PPU examples are not registered.
+MIN_CANONICAL_ROWS = 497
 
 
 def _rows():

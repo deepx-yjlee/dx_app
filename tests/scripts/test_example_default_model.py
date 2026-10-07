@@ -29,8 +29,8 @@ ROOT = Path(__file__).resolve().parents[2]
 CPP_ROOT = ROOT / "src" / "cpp_example"
 REGISTRY = ROOT / "config" / "model_registry.json"
 DXRT_INCLUDE = Path("/usr/local/include")
-# 499 canonical rows on 2026-10-01 (500 rows, one alias_of).
-MIN_CANONICAL_ROWS = 499
+# 497 canonical rows (498 rows, one alias_of). Two PPU examples are not registered.
+MIN_CANONICAL_ROWS = 497
 
 PROBE_SOURCE = r"""
 #include "common/utility/common_util.hpp"

@@ -28,9 +28,9 @@ ROOT = Path(__file__).resolve().parents[2]
 DOWNLOADER = ROOT / "scripts" / "download_models.py"
 REGISTRY = ROOT / "config" / "model_registry.json"
 MANIFEST = ROOT / "scripts" / "modelzoo_manifest.json"
-# 499 published rows on 2026-10-01. A lower count means the filter below no
-# longer sees them all.
-MIN_PUBLISHED_ROWS = 499
+# 498 published rows (497 variants plus one alias). A lower count means a
+# row was marked unpublished again.
+MIN_PUBLISHED_ROWS = 498
 
 SELECTORS = {
     "cpp_model_name": lambda row: row["model_name"],

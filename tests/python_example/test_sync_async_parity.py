@@ -24,7 +24,7 @@ NAMED = ["yolov5-s_640x640", "yolopv2_384x640", "superpoint_480x640",
          "nanodet-plus_416x416", "ssd-mobilenetv2-lite_300x300", "yolov10-n_640x640",
          "yolov7_640x640_nodecode", "yolov9-m_640x640", "yolox-t_416x416",
          "centerpose_repvgg-a0_416x416", "yolo26-n-pose_640x640", "yolov5-s6-pose_640x640",
-         "SCRFD500M_PPU", "YOLOV5Pose_PPU", "yolov5-s_640x640_ppu", "yolov8-n_640x640_ppu",
+         "yolov5-s_640x640_ppu", "yolov8-n_640x640_ppu",
          "bisenetv1_1024x2048", "segformer_mit-b0_512x1024"]
 SCRIPTS = {name: (sync_scripts, async_scripts, model)
            for _task, name, sync_scripts, async_scripts, model in discover_python_scripts()}

@@ -2819,55 +2819,6 @@
     "published": true
   },
   {
-    "model_name": "scrfd500m_ppu",
-    "dxnn_file": "SCRFD500M_PPU.dxnn",
-    "original_name": "SCRFD500M_PPU",
-    "csv_task": "FD",
-    "add_model_task": "ppu",
-    "postprocessor": "scrfd_ppu",
-    "input_width": 640,
-    "input_height": 640,
-    "config": {
-      "score_threshold": 0.5,
-      "nms_threshold": 0.45
-    },
-    "source": "manifest",
-    "supported": true,
-    "variant": "SCRFD500M_PPU",
-    "family": "scrfd",
-    "task": "face_detection",
-    "task_legacy": "ppu",
-    "image_only": false,
-    "zoo_canonical": false,
-    "alias_of": null,
-    "published": true
-  },
-  {
-    "model_name": "yolov5pose_ppu",
-    "dxnn_file": "YOLOV5Pose_PPU.dxnn",
-    "original_name": "YOLOV5Pose_PPU",
-    "csv_task": "POSE",
-    "add_model_task": "ppu",
-    "postprocessor": "yolov5pose_ppu",
-    "input_width": 640,
-    "input_height": 640,
-    "config": {
-      "obj_threshold": 0.5,
-      "score_threshold": 0.5,
-      "nms_threshold": 0.45
-    },
-    "source": "manifest",
-    "supported": true,
-    "variant": "YOLOV5Pose_PPU",
-    "family": "yolov5_pose",
-    "task": "pose_estimation",
-    "task_legacy": "ppu",
-    "image_only": false,
-    "zoo_canonical": false,
-    "alias_of": null,
-    "published": true
-  },
-  {
     "model_name": "yolov9c",
     "dxnn_file": "yolov9-c_640x640.dxnn",
     "original_name": "YoloV9C",
@@ -9575,7 +9526,7 @@
     "image_only": false,
     "zoo_canonical": false,
     "alias_of": null,
-    "published": false
+    "published": true
   },
   {
     "model_name": "vit_t_p16_224x224",

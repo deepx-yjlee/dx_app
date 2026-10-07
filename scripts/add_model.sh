@@ -329,15 +329,6 @@ get_reference_info() {
             REF_DIR="ppu/yolov8n_ppu"; REF_MODEL="yolov8n_ppu"
             CPP_FACTORY_CLASS="YOLOv8n_ppuFactory"; CPP_MODEL_CLASS="YOLOv8n_ppu"
             PY_FACTORY_CLASS="Yolov8nPpuFactory" ;;
-        scrfd_ppu)
-            REF_DIR="ppu/scrfd500m_ppu"; REF_MODEL="scrfd500m_ppu"
-            CPP_FACTORY_CLASS="SCRFD500m_ppuFactory"; CPP_MODEL_CLASS="SCRFD500m_ppu"
-            PY_FACTORY_CLASS="Scrfd500mPpuFactory" ;;
-        yolov5pose_ppu)
-            REF_DIR="ppu/yolov5pose_ppu"; REF_MODEL="yolov5pose_ppu"
-            CPP_FACTORY_CLASS="YOLOv5PosePPUFactory"; CPP_MODEL_CLASS="YOLOv5PosePPU"
-            PY_FACTORY_CLASS="Yolov5posePpuFactory" ;;
-
         # Extended: proper reference models for specialized architectures
         centernet)
             REF_DIR="object_detection/centernet_resnet18"; REF_MODEL="centernet_resnet18"
@@ -429,7 +420,7 @@ get_reference_info() {
             print_error "           yolov5pose yolov8pose yolov26pose yolov26obb"
             print_error "           efficientnet yolov26cls deeplabv3 bisenetv1 bisenetv2 fast_segmentation"
             print_error "           yolov8seg yolov5seg fastdepth depth dncnn"
-            print_error "           yolov5_ppu yolov7_ppu yolov8_ppu scrfd_ppu yolov5pose_ppu"
+            print_error "           yolov5_ppu yolov7_ppu yolov8_ppu"
             print_error "           centernet retinaface"
             print_error "           yolact espcn segformer obb"
             print_error "           zero_dce clip_image clip_text arcface"
@@ -997,7 +988,6 @@ def infer_pp(mn, category):
     # PPU
     if cat == "ppu":
         if "yolov7" in n: return "yolov7_ppu"
-        if "pose" in n:   return "yolov5pose_ppu"
         return "yolov5_ppu"
     # Hand landmark
     if cat == "hand_landmark":      return "hand_landmark"

@@ -78,17 +78,14 @@ This section guides you through the environment setup and the initial build proc
 
 ## Repository Layout
 
-> **On the counts below.** The trees carry **499 variants** across 28 AI tasks, and
-> since DX Model Zoo published release **2_5_0** on 2026-09-30, **498 of them have a
-> downloadable `.dxnn`**. Probing every manifest URL that day: 498 → HTTP 200, one →
-> 403.
+> **On the counts below.** The registry lists **497 variants** (498 rows, one alias)
+> across 28 AI tasks, and **all 497 have a downloadable `.dxnn`**.
+> `SCRFD500M_PPU` and `YOLOV5Pose_PPU` example sources stay in the trees; they are
+> not registered, not built, and not downloaded.
 >
-> That one is `vit-l-p16_512x512_swag`, which DEEPX reported as failing to build. It is
-> still declared -- registry entry, example code, variant config, build target -- and
-> its manifest row carries `pending: true`, so `scripts/download_models.py` reports it
-> as *Pending* rather than as an error. Which models are unpublished is declared, never
-> inferred from the version directory: 2_5_0 is now the ordinary release, so treating
-> it as "unpublished" would hide every real 403.
+> `vit-l-p16_512x512_swag` is published at `q-lite-dxnn/2_5_0`. Whether a model is
+> unpublished is declared (`published` / manifest `pending`), never inferred from the
+> version directory. That set is empty.
 >
 > **2_5_0 needs DX-RT 3.5.0.** Those `.dxnn` files are container **format version 9**,
 > which DX-RT 3.4.2 refuses (`Model file format version 9 is not supported`) while
@@ -122,7 +119,7 @@ The project is structured to separate core logic from language-specific implemen
 ```text
 dx_app/
 ├── src/
-│   ├── cpp_example/            # C++ end-to-end examples (499 variants / 28 tasks, 498 downloadable)
+│   ├── cpp_example/            # C++ end-to-end examples (497 registered variants / 28 tasks, all downloadable)
 │   │                           #   <task>/<family>/<variant>/ holds factory, config.json, and entries
 │   │                           #   bin/<variant>_sync is the built executable (.dxnn stem)
 │   │   └── common/             # ← Shared C++ runtime layer
@@ -133,7 +130,7 @@ dx_app/
 │   │       ├── visualizers/    #   12 task-specific visualizers
 │   │       ├── config/         #   ModelConfig loader
 │   │       └── utility/        #   Labels, preprocessing, profiling, run_dir, signal_handler, verify_serialize
-│   ├── python_example/         # Python end-to-end examples (499 variants / 28 tasks, 498 downloadable)
+│   ├── python_example/         # Python end-to-end examples (497 registered variants / 28 tasks, all downloadable)
 │   │                           #   <task>/<family>/<variant>/ holds factory, config.json, and thin entries
 │   │                           #   <variant>_sync.py fixes that variant
 │   │   └── common/             # ← Shared Python runtime layer
@@ -239,7 +236,7 @@ Two independent runtimes run several models together. Both build from the same p
 | Binaries | `bin/multi_model_graph_sync`, `bin/multi_model_graph_async`; Python module `dx_graph` | `bin/multi_model_run`; `src/python_example/multi_model/run_pipeline.py` |
 | Sources | [`src/cpp_example/multi_model_graph/`](./src/cpp_example/multi_model_graph/README.md), [`src/bindings/python/dx_graph/`](./src/bindings/python/dx_graph/README.md) | `src/cpp_example/multi_model/`, `src/python_example/multi_model/` |
 | Written as | a node-graph JSON: any registry models, wired by frame, ROI and image hand-off edges | a `pipeline.json` per scenario: stages, their dependencies, and a fuse step |
-| Models | the 494 models [`docs/graph_models.md`](./docs/graph_models.md) lists as running in a graph | the 8 variants compiled into `multi_model/registry.cpp` |
+| Models | the 492 models [`docs/graph_models.md`](./docs/graph_models.md) lists as running in a graph | the 8 variants compiled into `multi_model/registry.cpp` |
 | Input | images, videos, cameras and RTSP streams, several at once | one image (`--image`) or one video (`--video`, optional `--frames N`) |
 | Adds | `--check` without the NPU, tracking, output ports, `--report`, byte-identical sync and async reports | scenario logic after the models: volume, head pose (solvePnP), CLIP scores |
 
@@ -247,7 +244,7 @@ Use a graph to compose registry models on images or streams and to swap a model 
 
 The graph binaries and `dx_graph` are built by `./build.sh --all` (the default `--minimal` build does not build them); `./build.sh --all --python_exec <python>` builds `dx_graph` for that interpreter into `bin/python/dx_graph`.
 
-**Model files.** `./setup.sh` downloads 498 of the 499 models: 492 from DX Model Zoo 2_5_0, whose `.dxnn` files are container v9, which needs DX-RT 3.5.0 (see *Repository Layout* above), and 6 that 2_5_0 does not publish from 2_4_0 (`SCRFD500M_PPU`, `YOLOV5Pose_PPU`, `beit-l-p16_384x384`, `levit-128s_224x224`, `vit-b-p16_384x384`, `vit-t-p16_224x224`); `vit-l-p16_512x512_swag` is not published yet. The graph runtime checks the container before loading; on a DX-RT older than 3.5.0 it stops with `.dxnn container v9 needs DX-RT >= 3.5.0, but this runtime is <version>. Use the v8 file (dxnn/2_4_0) or upgrade DX-RT.`, and `--check` reports it and exits 1. The graphs were validated on DX-RT 3.4.1 with v8 files and on DX-RT 3.5.0 with both the v8 and the v9 files: the golden reports (9 sample graphs) are byte-identical between `multi_model_graph_sync` and `_async` on either store, and the v8 ones equal the DX-RT 3.4.1 results.
+**Model files.** `./setup.sh` downloads all 497 registered models: 493 from DX Model Zoo 2_5_0, whose `.dxnn` files are container v9, which needs DX-RT 3.5.0 (see *Repository Layout* above), and 4 that 2_5_0 does not publish from 2_4_0 (`beit-l-p16_384x384`, `levit-128s_224x224`, `vit-b-p16_384x384`, `vit-t-p16_224x224`). `SCRFD500M_PPU` and `YOLOV5Pose_PPU` are not in this set. The graph runtime checks the container before loading; on a DX-RT older than 3.5.0 it stops with `.dxnn container v9 needs DX-RT >= 3.5.0, but this runtime is <version>. Use the v8 file (dxnn/2_4_0) or upgrade DX-RT.`, and `--check` reports it and exits 1. The graphs were validated on DX-RT 3.4.1 with v8 files and on DX-RT 3.5.0 with both the v8 and the v9 files: the golden reports (9 sample graphs) are byte-identical between `multi_model_graph_sync` and `_async` on either store, and the v8 ones equal the DX-RT 3.4.1 results.
 
 ---
 
@@ -614,7 +611,7 @@ To download only specific demo models without running the demo:
 ```
 
 > **TIP — Running other models**  
-> `run_demo.sh` showcases 26 representative models. To run or benchmark **all 499 registered variants**,
+> `run_demo.sh` showcases 26 representative models. To run or benchmark **all 497 registered variants**,
 > use the **example runner** or the **DX Model Tool**:
 >
 > ```bash

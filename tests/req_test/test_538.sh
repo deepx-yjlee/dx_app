@@ -55,6 +55,25 @@ shn "extract_model_package.sh 실행 파싱(bash -n)" "scripts/extract_model_pac
 OUT="${TMPDIR:-/tmp}/req538_out"; rm -rf "$OUT"
 MODELD=$(ls -d src/cpp_example/object_detection/*/ 2>/dev/null | head -1); MODELB=$(basename "$MODELD")
 run "독립 패키지 추출 + CMakeLists 생성" "./scripts/extract_model_package.sh object_detection/$MODELB --lang cpp --output-dir \"$OUT\" >/dev/null 2>&1; ls \"$OUT\"/cpp/object_detection/*/CMakeLists.txt >/dev/null 2>&1"
+# Family export writes <task>/<family>/<variant>/<variant>_sync.cpp. Count must
+# match the source tree so a new variant cannot be dropped from the package.
+if [ -n "$MODELB" ]; then
+  __src_sync=$(find "src/cpp_example/object_detection/$MODELB" -mindepth 2 -maxdepth 2 -name '*_sync.cpp' | wc -l | tr -d ' ')
+  __out_sync=$(find "$OUT/cpp/object_detection/$MODELB" -name '*_sync.cpp' ! -path '*/common/*' | wc -l | tr -d ' ')
+  if [ "$__src_sync" -gt 0 ] && [ "$__src_sync" = "$__out_sync" ]; then
+    pass "family export 가 variant sync 소스를 모두 포함 (src=$__src_sync)"
+  else
+    fail "family export variant 수 불일치 (src=$__src_sync export=$__out_sync)"
+  fi
+  VARIANTD=$(ls -d "src/cpp_example/object_detection/$MODELB"/*/ 2>/dev/null | head -1)
+  VARIANTB=$(basename "$VARIANTD")
+  VOUT="${TMPDIR:-/tmp}/req538_variant"; rm -rf "$VOUT"
+  run "단일 variant 추출 (task/family/variant)" \
+      "./scripts/extract_model_package.sh object_detection/$MODELB/$VARIANTB --lang both --output-dir \"$VOUT\" >/dev/null 2>&1; \
+       test -f \"$VOUT/cpp/object_detection/$MODELB/$VARIANTB/CMakeLists.txt\" && \
+       test -f \"$VOUT/py/object_detection/$MODELB/$VARIANTB/${VARIANTB}_sync.py\" && \
+       test -f \"$VOUT/py/object_detection/$MODELB/$VARIANTB/${VARIANTB}_async.py\""
+fi
 
 # ── dx_tool.sh extract (대화형 래퍼) ─────────────────────────────────────────
 # extract 는 extract_model_package.sh 직접 호출 외에 dx_tool.sh 의 서브커맨드/메뉴로도
@@ -83,8 +102,9 @@ elif ! command -v timeout >/dev/null 2>&1; then
 else
   run "dx_tool extract C++ 추출 + CMakeLists 생성(prune 기본)" \
       "dxt 1 \"$DXT/cpp_prune\" '' >/dev/null 2>&1; ls \"$DXT\"/cpp_prune/cpp/object_detection/*/CMakeLists.txt >/dev/null 2>&1"
+  # Entries are <task>/<family>/<variant>/<variant>_sync.py, not family/<script>.
   run "dx_tool extract Python 추출" \
-      "dxt 2 \"$DXT/pylang\" '' >/dev/null 2>&1; ls \"$DXT\"/pylang/py/object_detection/*/*_sync.py >/dev/null 2>&1"
+      "dxt 2 \"$DXT/pylang\" '' >/dev/null 2>&1; ls \"$DXT\"/pylang/py/object_detection/*/*/*_sync.py >/dev/null 2>&1"
   run "dx_tool extract --no-prune 전체 common/ 복사" \
       "dxt 1 \"$DXT/cpp_noprune\" n >/dev/null 2>&1; ls \"$DXT\"/cpp_noprune/cpp/object_detection/*/CMakeLists.txt >/dev/null 2>&1"
   # prune 이 실제로 common/ 을 줄였는지: pruned < no-prune 이어야 한다(기본이 prune 이므로

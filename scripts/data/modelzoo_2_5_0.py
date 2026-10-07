@@ -725,14 +725,13 @@ Q_MASTER_ONLY = frozenset({
     "vit-b-p16_384x384", "vit-t-p16_224x224",
 })
 
-# Declared but NOT downloadable. DX Model Zoo published 2_5_0 on 2026-09-30 and all
-# but one of these models came with it: probing every URL in the manifest that day gave
-# 498 -> 200 and exactly one -> 403. DEEPX reported that one as failing to build.
+# Declared but NOT downloadable. Empty since vit-l-p16_512x512_swag was published
+# at q-lite-dxnn/2_5_0 (HTTP 200). A name in this set is registry published=false
+# and a manifest row with pending=true.
 #
-# This is the only thing that marks a model unpublished. Inferring it from the version
-# directory (anything under /2_5_0/) was correct only while 2_5_0 was unreleased; after
-# publication that rule marks 492 of 499 rows pending and hides every real 403.
-UNPUBLISHED = frozenset({"vit-l-p16_512x512_swag"})
+# Do not infer unpublished from the version directory. That was correct only while
+# 2_5_0 was unreleased; after publication it marks the whole q-lite tier pending.
+UNPUBLISHED = frozenset()
 
 
 def _legacy_model_name(variant: str) -> str:

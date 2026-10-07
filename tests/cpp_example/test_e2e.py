@@ -306,16 +306,17 @@ def test_image_inference_e2e(executable, model_path, bin_dir, loop_count):
             "-l", str(effective_loop),
         ]
 
-    # TTA models are significantly heavier (multiple forward passes per image)
-    # and require a longer timeout, especially on aarch64 platforms.
-    image_timeout = 300 if "tta" in exe_lower else 100
+    # TTA runs several forwards per image, so it keeps a wall-clock bound.
+    # Other image runs have none: a 100s cap ended ppmatting while it was
+    # still inferring. Slow models are limited by the heavy-model loop cap.
+    image_timeout = 300 if "tta" in exe_lower else None
 
     try:
         result = run_bounded(
             cmd,
             capture_output=True,
             text=True,
-            timeout=image_timeout,  # 100 seconds default, 300 for TTA models
+            timeout=image_timeout,
             env=env,
             cwd=PROJECT_ROOT,
         )

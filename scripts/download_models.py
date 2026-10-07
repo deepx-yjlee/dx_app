@@ -299,13 +299,9 @@ def _sizeof_fmt(num: float) -> str:
 # read as "expected, no action" rather than as an error -- while a 403 on a published
 # model stays loud.
 #
-# This used to be inferred from the URL: anything under /2_5_0/ was unpublished. That
-# held only while 2_5_0 was unreleased. The zoo published it on 2026-09-30 and moved the
-# whole q-lite tier there, so the rule would now mark 492 of 499 rows pending and turn
-# every real 403 into a silent skip. Probing all 499 URLs that day: 498 -> 200, and
-# exactly one -> 403 (vit-l-p16_512x512_swag, which DEEPX reported as failing to build).
-#
-# So it is DECLARED: the manifest row carries `pending: true` and nothing else means it.
+# Unpublished is DECLARED: the manifest row carries `pending: true`. Do not infer it
+# from the URL version. vit-l-p16_512x512_swag was the last pending row; it is now
+# published at q-lite-dxnn/2_5_0, so the pending set is empty.
 
 
 def is_pending(row: dict) -> bool:

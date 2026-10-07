@@ -376,7 +376,7 @@ print_intro() {
     printf "    ./run_demo.sh --show-log                   Enable verbose logs\n"
     printf "    ./run_demo.sh --help                       Show help\n"
     echo ""
-    printf "  ${COLOR_YELLOW}TIP:${COLOR_RESET} To run ${COLOR_BOLD}all 499 model variants${COLOR_RESET} (beyond the %d demo tasks),\n" "$DEMO_COUNT"
+    printf "  ${COLOR_YELLOW}TIP:${COLOR_RESET} To run ${COLOR_BOLD}all 497 model variants${COLOR_RESET} (beyond the %d demo tasks),\n" "$DEMO_COUNT"
     printf "       use the DX Model Tool:\n"
     printf "         ${COLOR_GREEN}./scripts/dx_tool.sh run${COLOR_RESET}    ← interactive category/model filter\n"
     printf "         ${COLOR_GREEN}./scripts/dx_tool.sh bench${COLOR_RESET}  ← benchmark with performance report\n"

@@ -6,9 +6,10 @@ Two configuration files that define **which models exist** and **how to run them
 
 ## `model_registry.json` — Single Source of Truth
 
-A JSON array with one row per model name: 500 rows, 499 models (one row per
-**variant**) plus one `alias_of` row. This file is the authoritative reference
-for the example tree, the graph engine's model registry and model downloads.
+A JSON array with one row per model name: 498 rows, 497 models (one row per
+**variant**) plus one `alias_of` row. `SCRFD500M_PPU` and `YOLOV5Pose_PPU`
+example sources stay on disk and are not rows here. This file is the authoritative reference
+for the registered example tree, the graph engine's model registry and model downloads.
 
 ### Format
 
@@ -68,7 +69,7 @@ is not a second model.
 | `task` | The AI task directory (e.g. `object_detection`, `image_classification`) |
 | `model_name` | The row's name. Equal to `variant`, or the variant's old name, which still resolves to it |
 | `alias_of` | `null`, or the `model_name` of the row this row aliases: an alias row names the same variant and `.dxnn` as that row and is not a second model (`deit_base384_distilled` is the one alias) |
-| `published` | `true` when the model zoo publishes the `.dxnn`; `false` for a model declared but not downloadable yet (`vit-l-p16_512x512_swag`) |
+| `published` | `true` when the model zoo publishes the `.dxnn`. Every current row is `true`. `false` is reserved for a declared model that is not downloadable yet (manifest `pending: true`) |
 | `dxnn_file` | Filename inside `assets/models/` (`<variant>.dxnn`) — case must match exactly |
 | `original_name` | The model zoo's display name (e.g., `YoloV8N`) |
 | `input_width` / `input_height` | Model input size in pixels |
