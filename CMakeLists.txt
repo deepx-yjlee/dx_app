@@ -75,7 +75,7 @@ if(MSVC)
     # unless _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING is defined,
     # and the shipped Windows build (DX-RT SDK, vcpkg OpenCV) has only ever
     # been built as C++17. C++14 conformance is enforced where it can be
-    # verified: GCC/Clang -Werror=c++17-extensions (cmake/DxappCxx14.cmake)
+    # verified: GCC/Clang -Werror=c++17-extensions (cmake/dxapp_cxx14.cmake)
     # and scripts/check_cross_compile.sh. Not built on Windows here.
     set(CMAKE_CXX_STANDARD 17)
 endif()
@@ -115,9 +115,9 @@ endif()
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake) # using function & cfg cmake file
 
-# CROSS_COMPILE: host processor != target processor (see cmake/DxappPlatform.cmake
+# CROSS_COMPILE: host processor != target processor (see cmake/dxapp_platform.cmake
 # for why CMAKE_CROSSCOMPILING is not the test).
-include(${CMAKE_SOURCE_DIR}/cmake/DxappPlatform.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/dxapp_platform.cmake)
 dxapp_detect_cross_compile()
 
 if(CROSS_COMPILE)
@@ -140,7 +140,7 @@ else()
 endif()
 # C++14 conformance (GCC/Clang): a C++17 extension fails the build. The same
 # module guards the separate dx_postprocess pip project.
-include(${CMAKE_SOURCE_DIR}/cmake/DxappCxx14.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/dxapp_cxx14.cmake)
 dxapp_cxx14_conformance_flags(DXAPP_CXX14_FLAGS)
 add_compile_options(${DXAPP_CXX14_FLAGS})
 

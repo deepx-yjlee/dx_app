@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-MODULE = ROOT / "cmake" / "DxappPlatform.cmake"
+MODULE = ROOT / "cmake" / "dxapp_platform.cmake"
 SCRIPT = ROOT / "scripts" / "check_cross_compile.sh"
 HOST = {"arm64": "aarch64", "AMD64": "x86_64"}.get(platform.machine(), platform.machine())
 OTHER = "aarch64" if HOST == "x86_64" else "x86_64"

@@ -37,7 +37,7 @@ if(MSVC)
     set(INCLUDE_DIRS ${DXRT_INSTALLED_DIR}/include)
 endif()
 # After the MSVC separator normalisation above, so the path is always '/'-separated.
-include("${PROJECT_ROOT}/cmake/DxappCxx14.cmake")
+include("${PROJECT_ROOT}/cmake/dxapp_cxx14.cmake")
 
 # Find pybind11 (pip-installed)
 find_package(pybind11 CONFIG REQUIRED)

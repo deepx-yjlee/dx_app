@@ -91,9 +91,9 @@ else()
 endif()
 set(COMMON_COMPILE_DEFINITIONS PROJECT_ROOT_DIR="${PROJECT_ROOT}")
 # The graph targets' per-compiler strictness and the codegen's Python check
-# (SP6): cmake/DxappGraphFlags.cmake, cmake/DxappCodegenPython.cmake.
-include(${PROJECT_ROOT}/cmake/DxappGraphFlags.cmake)
-include(${PROJECT_ROOT}/cmake/DxappCodegenPython.cmake)
+# (SP6): cmake/dxapp_graph_flags.cmake, cmake/dxapp_codegen_python.cmake.
+include(${PROJECT_ROOT}/cmake/dxapp_graph_flags.cmake)
+include(${PROJECT_ROOT}/cmake/dxapp_codegen_python.cmake)
 
 # =============================================================================
 # Runtime DLL Deployment — Windows/vcpkg only, stage once instead of per target
@@ -186,7 +186,7 @@ target_compile_options(dxapp_graph_obj PRIVATE ${COMMON_COMPILE_FLAGS})
 # fall through to a fail-closed return that only a test run would notice.
 # -Wreorder is an error here: an initializer list out of declaration order was
 # 1044 warning lines per build (SP1 U-13).
-# MSVC: /bigobj and its own spellings (cmake/DxappGraphFlags.cmake).
+# MSVC: /bigobj and its own spellings (cmake/dxapp_graph_flags.cmake).
 dxapp_graph_strict_flags(dxapp_graph_obj SWITCH)
 target_compile_definitions(dxapp_graph_obj PRIVATE ${COMMON_COMPILE_DEFINITIONS})
 target_include_directories(dxapp_graph_obj PRIVATE
@@ -288,7 +288,7 @@ if(DXAPP_BUILD_GRAPH_TESTS)
     # The test fake and the per-shape payload builders switch over enums
     # with no default, so an enumerator added without a matching case is a
     # build error here rather than a warning nobody reads.
-    # MSVC: /bigobj and its own spellings (cmake/DxappGraphFlags.cmake).
+    # MSVC: /bigobj and its own spellings (cmake/dxapp_graph_flags.cmake).
     dxapp_graph_strict_flags(graph_engine_test SWITCH)
     target_compile_definitions(graph_engine_test PRIVATE ${COMMON_COMPILE_DEFINITIONS})
     target_include_directories(graph_engine_test PRIVATE
@@ -429,11 +429,11 @@ endforeach()
 # The module is built for ONE interpreter: DXAPP_PYTHON (default: the active
 # virtualenv's python, else python3 on PATH). No pybind11 for it means no
 # module, not a failed configure - the CLI never needs Python. A cross build
-# skips it unless the target's Python is named (cmake/DxappPlatform.cmake).
+# skips it unless the target's Python is named (cmake/dxapp_platform.cmake).
 option(DXAPP_BUILD_PYTHON_GRAPH "Build the dx_graph Python module" ON)
 option(DXAPP_CROSS_PYTHON_GRAPH
     "Build dx_graph in a cross build too (needs -DPython_INCLUDE_DIR of the target Python)" OFF)
-include(${PROJECT_ROOT}/cmake/DxappPlatform.cmake)
+include(${PROJECT_ROOT}/cmake/dxapp_platform.cmake)
 dxapp_python_graph_decision(DXAPP_PYTHON_GRAPH_BUILD DXAPP_PYTHON_GRAPH_WHY)
 if(DXAPP_PYTHON_GRAPH_BUILD)
     if(NOT DXAPP_PYTHON)

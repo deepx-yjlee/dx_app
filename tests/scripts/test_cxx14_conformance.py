@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-MODULE = ROOT / "cmake" / "DxappCxx14.cmake"
+MODULE = ROOT / "cmake" / "dxapp_cxx14.cmake"
 PIP_CMAKE = ROOT / "src" / "bindings" / "python" / "dx_postprocess" / "CMakeLists.txt"
 
 needs_cmake = pytest.mark.skipif(shutil.which("cmake") is None or shutil.which("c++") is None,
@@ -80,7 +80,7 @@ def _code_lines(path: Path) -> list:
 def test_the_main_build_uses_the_module():
     text = (ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
     code = _code_lines(ROOT / "CMakeLists.txt")
-    assert "include(${CMAKE_SOURCE_DIR}/cmake/DxappCxx14.cmake)" in code
+    assert "include(${CMAKE_SOURCE_DIR}/cmake/dxapp_cxx14.cmake)" in code
     assert "dxapp_cxx14_conformance_flags(DXAPP_CXX14_FLAGS)" in code
     assert "add_compile_options(${DXAPP_CXX14_FLAGS})" in code
     assert 'check_cxx_compiler_flag("-Werror=c++17-extensions"' not in text  # spelled once
@@ -90,7 +90,7 @@ def test_the_main_build_uses_the_module():
 def test_the_pip_project_uses_the_module():
     text = PIP_CMAKE.read_text(encoding="utf-8")
     code = _code_lines(PIP_CMAKE)
-    assert 'include("${PROJECT_ROOT}/cmake/DxappCxx14.cmake")' in code
+    assert 'include("${PROJECT_ROOT}/cmake/dxapp_cxx14.cmake")' in code
     call = code.index("dxapp_cxx14_conformance_flags(DX_POSTPROCESS_CXX14_FLAGS)")
     assert any(line.startswith("pybind11_add_module(dx_postprocess") for line in code[:call])
     assert "target_compile_options(dx_postprocess PRIVATE ${DX_POSTPROCESS_CXX14_FLAGS})" in code

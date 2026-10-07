@@ -13,7 +13,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-MODULE = ROOT / "cmake" / "DxappGraphFlags.cmake"
+MODULE = ROOT / "cmake" / "dxapp_graph_flags.cmake"
 CPP_CMAKE = ROOT / "src" / "cpp_example" / "CMakeLists.txt"
 PY_CMAKE = ROOT / "src" / "bindings" / "python" / "dx_graph" / "CMakeLists.txt"
 

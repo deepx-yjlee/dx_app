@@ -6,7 +6,7 @@
 
   - B1: a C++17 extension (e.g. a structured binding) creeping back into any
     of the four headers (`-Werror=c++17-extensions` in the header check, and
-    `-Werror=c++17-extensions` from cmake/DxappCxx14.cmake for real
+    `-Werror=c++17-extensions` from cmake/dxapp_cxx14.cmake for real
     builds).
   - B2: `dxapp::g_interrupted()` losing its single shared definition again
     (declared-but-never-defined under a TU that only includes

@@ -13,7 +13,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-MODULE = ROOT / "cmake" / "DxappCodegenPython.cmake"
+MODULE = ROOT / "cmake" / "dxapp_codegen_python.cmake"
 CPP_CMAKE = ROOT / "src" / "cpp_example" / "CMakeLists.txt"
 
 needs_cmake = pytest.mark.skipif(shutil.which("cmake") is None, reason="needs cmake")
@@ -80,10 +80,10 @@ def _code_lines(path):
 def test_the_codegen_uses_the_check():
     text = CPP_CMAKE.read_text(encoding="utf-8")
     assert "find_package(Python3 COMPONENTS Interpreter REQUIRED)" not in text
-    assert "include(${PROJECT_ROOT}/cmake/DxappCodegenPython.cmake)" in text
+    assert "include(${PROJECT_ROOT}/cmake/dxapp_codegen_python.cmake)" in text
     assert text.index("dxapp_find_codegen_python()") < text.index(
         "COMMAND ${Python3_EXECUTABLE} ${PROJECT_ROOT}/scripts/gen_model_registry.py")
     code = _code_lines(CPP_CMAKE)
-    assert "include(${PROJECT_ROOT}/cmake/DxappCodegenPython.cmake)" in code
+    assert "include(${PROJECT_ROOT}/cmake/dxapp_codegen_python.cmake)" in code
     assert code.index("dxapp_find_codegen_python()") < code.index(
         "COMMAND ${Python3_EXECUTABLE} ${PROJECT_ROOT}/scripts/gen_model_registry.py")
