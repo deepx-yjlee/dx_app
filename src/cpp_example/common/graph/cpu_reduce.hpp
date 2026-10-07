@@ -30,9 +30,9 @@ struct CpuReduction {
 /**
  * @brief Run `op` ("headpose" or "volume") on `inputs`.
  *
- * `frame_size` is the stream frame. headpose builds the same pinhole camera
- * as multi_model's face_solvepnp (focal length = frame width). volume ignores
- * it. `inputs` are matched by shape, not by order.
+ * `frame_size` is the stream frame. headpose builds a pinhole camera with
+ * focal length equal to the frame width. volume ignores it. `inputs` are
+ * matched by shape, not by order.
  *
  * headpose records: numbers pitch, yaw, roll (degrees). Empty when the
  * largest face has fewer than five landmarks or solvePnP fails.

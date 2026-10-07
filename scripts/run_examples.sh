@@ -896,7 +896,7 @@ declare -a PY_MODELS=()  # "model_name|py_dir|category|family"
 if [[ "$LANG_MODE" == "py" || "$LANG_MODE" == "both" ]]; then
     for category_dir in "${PY_BASE}"/*/; do
         py_cat=$(basename "$category_dir")
-        [[ "$py_cat" == "common" || "$py_cat" == "__pycache__" || "$py_cat" == "utils" || "$py_cat" == "multi_model" ]] && continue
+        [[ "$py_cat" == "common" || "$py_cat" == "__pycache__" || "$py_cat" == "utils" ]] && continue
 
         for family_dir in "${category_dir}"*/; do
             [ -d "$family_dir" ] || continue

@@ -113,24 +113,3 @@ def test_dx_graph_module_uses_the_strict_flags():
 def test_no_werror_is_spelled_outside_the_module():
     for path in (CPP_CMAKE, PY_CMAKE):
         assert "-Werror=" not in path.read_text(encoding="utf-8"), path
-
-
-def test_the_hand_cascade_probe_builds_teammate_sources_with_their_own_flags():
-    """M9: hand_cascade_probe links the multi_model runtime's sources unchanged.
-    Our strict flags apply to the probe's own file only; the teammate sources
-    build as an object library with multi_model_run's flags, so an
-    initializer-order slip there cannot break our build while theirs passes."""
-    text = "\n".join(_code_lines(CPP_CMAKE))
-    probe = re.search(r"add_executable\(hand_cascade_probe\s+([^)]*)\)", text)
-    assert probe, "no hand_cascade_probe target"
-    assert "multi_model/" not in probe.group(1), probe.group(1)
-    sources = ("multi_model/pipeline.cpp", "multi_model/registry.cpp", "multi_model/runner.cpp")
-    libraries = re.findall(r"add_library\((\w+)\s+OBJECT\s+([^)]*)\)", text)
-    teammate = [name for name, body in libraries if all(s in body for s in sources)]
-    assert len(teammate) == 1, libraries
-    name = teammate[0]
-    assert "dxapp_graph_strict_flags({})".format(name) not in text
-    assert "-Werror" not in _compile_options(text, name)
-    assert "target_compile_options({} PRIVATE ${{COMMON_COMPILE_FLAGS}})".format(name) in text
-    assert re.search(r"target_link_libraries\(hand_cascade_probe [^)]*\b{}\b".format(name), text)
-    assert "dxapp_graph_strict_flags(hand_cascade_probe)" in _code_lines(CPP_CMAKE)

@@ -95,49 +95,18 @@ Shipped samples, next to the CLI sources in `src/cpp_example/multi_model_graph/`
 | `multistream_od_two_sources.json` | two sources, each its own stream, through one shared tracked detector and one reid | `yolov8-n_640x640` → `casvit-t_224x224` |
 | `chain_sr_od_pose.json` | super-resolve ×2, then detect on the large image → per-person crop → top-down pose | `realesrgan-x2_192x192` → `yolov8-n_640x640` → `vitpose-s_256x192` |
 | `chain_zerodce_od_pose_emb.json` | low-light enhancement, then detect on the enhanced image → per-person crop → top-down pose, and an embedding per person | `zerodce_400x600` → `yolov8-n_640x640` → `vitpose-s_256x192` + `casvit-t_224x224` |
-| `hand_cascade.json` | palm detector → per-palm crop → 21 hand landmarks; the graph form of `multi_model/hand_cascade/pipeline.json` | `mediapipe-hand-detector_192x192` → `mediapipe-hands-lite_224x224` |
+| `hand_cascade.json` | palm detector → per-palm crop → 21 hand landmarks | `mediapipe-hand-detector_192x192` → `mediapipe-hands-lite_224x224` |
 | `dms_headpose.json` | face detector → head pose (pitch, yaw, roll) on a cpu node | `scrfd-500m_640x640` → `headpose` |
 | `logistics_volume.json` | detector, instance mask and depth in parallel → package volume proxy on a cpu node | `yolo26-n_640x640` + `yolo26-n-seg_640x640` + `yolo26-depth-n_768x768` → `volume` |
 
-`hand_cascade.json`, `dms_headpose.json` and `logistics_volume.json` are the
-scenarios of the other multi-model runtime that a graph can express. The
-hand cascade is the crop chain; head pose and volume are cpu nodes. CLIP
-prompt scores stay on `multi_model_run`. See *Two multi-model runtimes in
-this release* below.
+`hand_cascade.json`, `dms_headpose.json` and `logistics_volume.json` are
+shipped scenarios. The hand cascade is a crop chain. Head pose and volume
+are cpu nodes. CLIP prompt scores are not a graph node (see *Not in this
+release*).
 
-### Two multi-model runtimes in this release
-
-This release ships two independent ways to run several models together.
-They share the per-variant factories and the ROI crop rule, and nothing else.
-
-| | `multi_model_graph_{sync,async}` and `dx_graph` (this directory) | `multi_model_run` and `run_pipeline.py` (`src/cpp_example/multi_model/`, `src/python_example/multi_model/`) |
-|---|---|---|
-| Written as | a node-graph JSON (`"nodes"`, `"edges"`, `"roi"`, `"track"`, `"port"`, `"carry"`) | a `pipeline.json` of `"stages"` with `"depends_on"` and `"bind"`, plus a named `"fuse"` step |
-| Models | any of the 492 models `docs/graph_models.md` lists as running in a graph, by variant or old name | the variants compiled into `multi_model/registry.cpp` (8 in this release) |
-| Input | images, videos, `camera:<N>`, `rtsp://`, several sources at once | one image (`--image`) or one video (`--video`, optional `--frames N`) |
-| Scenario logic | cpu nodes `headpose` and `volume`, joined by `"carry": "result"` | a C++ fuse step per scenario (`hand_cascade`, `logistics_volume`, `dms`) and CPU stages such as `face_solvepnp` |
-| Coordinates | every result mapped back to the source frame (`origin`) | a crop's results stay in crop coordinates, next to the crop box |
-| Checks | `--check` without the NPU; sync and async reports byte-identical | none before the run |
-
-Which to use:
-
-* **Use a graph** to combine registry models on images or streams, to swap
-  a model by editing one string, or when you need tracking, several sources,
-  ports, `--report` or Python (`dx_graph`).
-* **Use `multi_model_run`** for the hand cascade's fused HANDS/NO_HAND
-  summary, and for driver monitoring's CLIP crop count. Head pose and
-  package volume now run as graph cpu nodes (`dms_headpose.json`,
-  `logistics_volume.json`). A generic `"type": "fuse"` node is still
-  reserved (see *Not in this release*).
-* The **hand cascade** exists in both forms (`hand_cascade.json` above). The graph and both
-  `multi_model` runtimes cut an ROI crop by one rule, `PaddedCropRect` in
-  `common/utility/roi_crop.hpp` (`multi_model_run`'s `cropBoxes` calls it;
-  `run_pipeline.py` has the same rule in float32, `padded_crop_rect` in
-  `src/python_example/common/multi/binds.py`): pad the box around its
-  centre, clamp it to the frame in float, then truncate the corner and the
-  size once. For `hand_cascade` the graph and `multi_model_run` find the
-  same palms and hands, cut the same crops, and their hand landmarks agree
-  within 1e-3 px on the sample image (v8 and v9 models).
+An ROI crop uses one rule, `PaddedCropRect` in `common/utility/roi_crop.hpp`:
+pad the box around its centre, clamp it to the frame in float, then truncate
+the corner and the size once.
 
 ---
 
@@ -834,7 +803,7 @@ of them.
 | **Condition / rule expressions on edges** | No key in v1; an expression language is a small language and permanently binding once shipped |
 | **3D / LiDAR models** (`boxes3d`) | Rejected in every graph (`GRAPH_EDGE`: `consumes LiDAR point clouds, not camera frames`): every source is a camera frame |
 | **Anomaly detection** | The four anomaly models are registered but not graph-ready (`MODEL_NOT_READY`); EfficientAD's companion engines have no graph stage |
-| **CPU nodes besides `headpose` and `volume`** (CLIP prompt scores) | Not graph nodes; `multi_model_run`'s `dms` fuse still counts CLIP crops |
+| **CPU nodes besides `headpose` and `volume`** (CLIP prompt scores) | Not graph nodes |
 | **SuperPoint tracks in a graph** | Needs an ordered per-stream step; the descriptors port is available |
 | **DnCNN resized back to the input size** | Hand-off hands off as produced: DnCNN's image stays 512×512 |
 

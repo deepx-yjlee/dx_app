@@ -2,11 +2,8 @@
  * @file roi_crop.hpp
  * @brief The one rule that turns a detection box into a crop window.
  *
- * Both runtimes that cut a second-stage model's input out of a frame use it:
- * the graph engine (RouteRois in common/graph/roi_router.cpp) and the
- * multi_model pipeline runtime (cropBoxes in multi_model/runner.cpp). With
- * one rule they cut the same pixels from the same box, so a downstream model
- * (e.g. the hand landmark stage) gives the same result in both.
+ * The graph engine uses it (RouteRois in common/graph/roi_router.cpp) so
+ * every second-stage crop is cut from a detection box the same way.
  *
  * The rule:
  *   1. pad: grow the box by `pad` x its width (height) on each side, around

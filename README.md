@@ -225,22 +225,11 @@ bash scripts/ci_checks.sh
 
 ---
 
-# Multi-Model Pipelines
+# Multi-Model Graph
 
-## Two multi-model runtimes in this release
+The multi-model runtime is the node graph: `bin/multi_model_graph_sync`, `bin/multi_model_graph_async`, and the Python module `dx_graph`. Sources are [`src/cpp_example/multi_model_graph/`](./src/cpp_example/multi_model_graph/README.md) and [`src/bindings/python/dx_graph/`](./src/bindings/python/dx_graph/README.md).
 
-Two independent runtimes run several models together. Both build from the same per-variant factories.
-
-| | Multi-model graph | Scenario pipelines |
-|---|---|---|
-| Binaries | `bin/multi_model_graph_sync`, `bin/multi_model_graph_async`; Python module `dx_graph` | `bin/multi_model_run`; `src/python_example/multi_model/run_pipeline.py` |
-| Sources | [`src/cpp_example/multi_model_graph/`](./src/cpp_example/multi_model_graph/README.md), [`src/bindings/python/dx_graph/`](./src/bindings/python/dx_graph/README.md) | `src/cpp_example/multi_model/`, `src/python_example/multi_model/` |
-| Written as | a node-graph JSON: any registry models, wired by frame, ROI and image hand-off edges | a `pipeline.json` per scenario: stages, their dependencies, and a fuse step |
-| Models | the 492 models [`docs/graph_models.md`](./docs/graph_models.md) lists as running in a graph | the 8 variants compiled into `multi_model/registry.cpp` |
-| Input | images, videos, cameras and RTSP streams, several at once | one image (`--image`) or one video (`--video`, optional `--frames N`) |
-| Adds | `--check` without the NPU, tracking, output ports, `--report`, byte-identical sync and async reports | scenario logic after the models: volume, head pose (solvePnP), CLIP scores |
-
-Use a graph to compose registry models on images or streams and to swap a model by editing one name. Use `multi_model_run` for the three scenarios whose result is computed after the models (`hand_cascade`, `logistics_volume`, `dms_clip`). The hand cascade also ships as a graph. The graph and both `multi_model` runtimes (C++ `multi_model_run`, Python `run_pipeline.py`) cut a region by one crop rule (`common/utility/roi_crop.hpp`, ported to `src/python_example/common/multi/binds.py`), so the hand cascade's landmarks agree between the graph and `multi_model_run` within 1e-3 px on the sample image. Details and the rest of the comparison: *Two multi-model runtimes in this release* in the [multi-model graph README](./src/cpp_example/multi_model_graph/README.md).
+A graph is a JSON file of registry models wired by frame, ROI and image hand-off edges. It runs the 492 models [`docs/graph_models.md`](./docs/graph_models.md) lists as running in a graph, on images, videos, cameras and RTSP streams, several at once. Head pose and package volume are cpu nodes (`dms_headpose.json`, `logistics_volume.json`). An ROI crop uses `PaddedCropRect` in `common/utility/roi_crop.hpp`. Details: the [multi-model graph README](./src/cpp_example/multi_model_graph/README.md).
 
 The graph binaries and `dx_graph` are built by `./build.sh --all` (the default `--minimal` build does not build them); `./build.sh --all --python_exec <python>` builds `dx_graph` for that interpreter into `bin/python/dx_graph`.
 
@@ -552,22 +541,21 @@ The quickest way to explore all 24 AI task categories (26 demo tasks) is the uni
 | `--input NUM` | Pre-select input (1=video, 2=image) |
 | `--show-log` | Enable verbose log output (default: quiet) |
 
-Multi-model samples (the three pipelines and the shipped node graphs) have their own checker:
+Shipped multi-model graphs have their own checker:
 
 ```bash
 ./run_multi_model_demo.sh                              # menu
 ./run_multi_model_demo.sh --check                      # every sample graph, no NPU
 ./run_multi_model_demo.sh --all                        # --check, then each scenario
-./run_multi_model_demo.sh --scenario hand_cascade --runtime both
+./run_multi_model_demo.sh --scenario hand_cascade
 ```
 
 | Option | Description |
 |--------|-------------|
 | `--scenario ID\|NUM` | `hand_cascade`, `logistics_volume`, `dms`, or `0`–`2` |
-| `--runtime MODE` | `pipeline`, `graph`, `python`, or `both` |
-| `--async` | Graph runtime uses `multi_model_graph_async` |
+| `--async` | Use `multi_model_graph_async` |
 | `--check` | Validate every `src/cpp_example/multi_model_graph/*.json` |
-| `--all` | `--check`, then each scenario as C++ pipeline + graph sync |
+| `--all` | `--check`, then each scenario with `multi_model_graph_sync` |
 
 **Demo Task ↔ Model Reference**
 

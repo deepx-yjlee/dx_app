@@ -49,7 +49,7 @@ def test_the_vitpose_root_is_one_the_guard_resolves_against():
 
 
 def test_the_shared_roi_crop_header_is_the_only_utility_header_the_engine_may_include():
-    """I17: the graph engine and multi_model share common/utility/roi_crop.hpp;
+    """I17: the graph engine includes common/utility/roi_crop.hpp;
     the rest of common/utility/ stays outside the engine's include surface."""
     guard = load_guard()
     engine_file = ROOT / "src" / "cpp_example" / "common" / "graph" / "roi_router.cpp"

@@ -1928,8 +1928,7 @@ void TestSrPipelinedTilesWaitForSubmittedJobsWhenRunAsyncThrows() {
 }
 
 // =====================================================================
-// I17: one ROI crop rule (common/utility/roi_crop.hpp) for the graph
-// engine and the multi_model runtime.
+// I17: one ROI crop rule (common/utility/roi_crop.hpp) for the graph engine.
 // =====================================================================
 
 // The graph engine's rule before the extraction, verbatim from
@@ -1990,8 +1989,8 @@ void TestPaddedCropRectEdgeCases() {
     const int cols = 640;
     const int rows = 480;
     // Fractional coordinates: clamp in float, truncate the corner and the
-    // size once. y 10.7 .. 20.2 is 9 rows (the multi_model runner's old
-    // per-corner truncation cut 10 rows, 10 .. 20).
+    // size once. y 10.7 .. 20.2 is 9 rows (truncating each corner first
+    // would cut 10 rows, 10 .. 20).
     COMMON_CHECK(dxapp::PaddedCropRect(cv::Rect2f(3.5f, 10.7f, 5.f, 9.5f), 0.f, cols, rows) ==
                  cv::Rect(3, 10, 5, 9));
     // Over the right border: x 634.7 + 8.5 is clipped at 640.

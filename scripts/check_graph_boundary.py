@@ -225,9 +225,9 @@ ENGINE_INCLUDE_PREFIXES = (
     # purpose and it is already vendored, not a new third-party dependency.
     "common/third_party/",
 )
-# Single shared headers outside those prefixes, by exact path. The engine and
-# the multi_model runtime cut ROI crops by one rule (I17); the rest of
-# common/utility/ stays outside the engine's surface.
+# Single shared headers outside those prefixes, by exact path. ROI crops use
+# common/utility/roi_crop.hpp (I17); the rest of common/utility/ stays outside
+# the engine's surface.
 ENGINE_INCLUDE_SHARED_HEADERS = frozenset([
     "common/utility/roi_crop.hpp",
 ])

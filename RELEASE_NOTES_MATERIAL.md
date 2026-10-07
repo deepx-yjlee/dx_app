@@ -4,7 +4,7 @@
 - Each C++ variant's factory lives in its own namespace, `dxapp::v_<variant>`, so same-named factories of two variants no longer collide; after regenerating factories run `python3 scripts/generate_cpp_family_layout.py --variant-scope src/cpp_example`, which `scripts/ci_checks.sh` checks (`guard-variant-scope`)
 - `IPanopticDrivingFactory` gains two pure virtual methods, `createPanopticPostprocessor` and `createPanopticVisualizer`; an out-of-tree panoptic factory must implement them
 - `ModelConfig` applies the nested `"config"` object of a variant's `config.json` over the top level
-- `multi_model_run`, `run_pipeline.py` and the multi-model graph cut an ROI crop by one rule (`common/utility/roi_crop.hpp`; the same rule in `src/python_example/common/multi/binds.py`); hand_cascade landmarks of `multi_model_run` and the graph now agree within 1e-3 px
+- The multi-model graph cuts an ROI crop by `PaddedCropRect` in `common/utility/roi_crop.hpp`
 - C++ image classification results are now softmax probabilities, with the ImageNet class name for a 1000-class head, instead of raw logits without a name: this covers every C++ `image_classification` variant whose factory uses `EfficientNetPostprocessor` (134 of them, all but `casvit-m_224x224` and `casvit-t_224x224`). An output that already is a distribution is passed through unchanged; the top-k ranking is the same as before. The Python classification examples already reported softmax probabilities and now also carry the ImageNet class name
 ### 2. Fixed
 - Fixed VitPose and dark-hrnet heatmap decoding (keypoints now match the Python examples within 2.1e-5 px)
@@ -16,7 +16,6 @@
 - Fixed the example tests looking up a model's task on the old flat layout; they read it from the task/family/variant tree
 - Fixed examples run without `-m` not finding their own model (C++ and Python, [SDKREQ-529](https://deepx.atlassian.net/browse/SDKREQ-529))
 - Fixed retrieval/re-id thumbnails and `--check` gallery paths depending on the working directory; both resolve against the repository
-- Fixed the Python `run_pipeline.py` head pose of `dms_clip` pairing the face landmarks with the wrong points of its 3D face model (for example pitch -101.8°, roll 122.0° for a turned head); it now takes the landmarks in the face result's order (left eye, right eye, nose, left mouth, right mouth), as `multi_model_run` does, and both report the same pitch, yaw and roll
 ### 3. Added
 - Multi-model graph engine: a node-graph JSON of registry models wired by frame, ROI and image hand-off edges; CLI `multi_model_graph_sync` / `multi_model_graph_async` (`--check` without the NPU, `--list-models`, `--report`) and the Python module `dx_graph`; sync and async reports are byte-identical
 - Shipped sample graphs, including `hand_cascade.json`
