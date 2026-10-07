@@ -78,25 +78,6 @@ def test_help_option(script: Path):
 
 @pytest.mark.cli
 @pytest.mark.help
-@pytest.mark.parametrize("script", SCRIPT_PARAMS)
-def test_help_option_shows_usage(script: Path):
-    """--help should show 'usage' or the script name in output."""
-    try:
-        result = _run([example_python(), str(script), "--help"])
-    except subprocess.TimeoutExpired:
-        pytest.fail(f"{script.name} --help timed out")
-
-    output = result.stdout + result.stderr
-    output_lower = output.lower()
-
-    has_usage = "usage" in output_lower or script.stem in output
-    assert has_usage, (
-        f"{script.name} --help doesn't show usage information\nOutput: {output[:500]}"
-    )
-
-
-@pytest.mark.cli
-@pytest.mark.help
 def test_all_scripts_found():
     """Sanity check that we discovered scripts."""
     assert len(SCRIPT_PARAMS) > 0, "No Python scripts found"

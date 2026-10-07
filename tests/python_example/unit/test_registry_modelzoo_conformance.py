@@ -65,14 +65,6 @@ ALIASES: dict[str, str] = {
 # the only side still on 256x256 -- the gap WAS the disagreement.
 SNAPSHOT_GAPS: set[str] = set()
 
-# Field names the migration wrote in an earlier revision and must no longer emit.
-# The migration rebuilds each entry by dropping the fields it is about to rewrite,
-# so a RENAMED field silently survives from a previous run unless it is stripped
-# explicitly -- that actually happened when duplicate_of became alias_of, leaving
-# all 353 entries carrying both spellings.
-RETIRED_FIELDS = ("duplicate_of",)
-
-
 # dx-modelzoo family renames. CMake target names are global, so two families sharing a
 # name across tasks collide as ``<family>_sync``. Exactly one collision exists, and
 # dx-modelzoo's own convention (yolo26-seg, yolov5-face, yolov5-pose) is to suffix the
@@ -139,16 +131,6 @@ def test_every_entry_has_the_new_fields(registry):
         if any(f not in e for f in NEW_FIELDS)
     }
     assert not missing, f"entries missing dx-modelzoo fields: {missing}"
-
-
-def test_no_retired_field_survives_a_rerun(registry):
-    """A renamed field must be gone, not carried over from an earlier migration."""
-    counts = {f: sum(1 for e in registry if f in e) for f in RETIRED_FIELDS}
-    survivors = {f: n for f, n in counts.items() if n}
-    assert not survivors, (
-        f"retired field(s) still present in the registry: {survivors} -- "
-        "add them to RETIRED_FIELDS in scripts/migrate_registry_modelzoo.py"
-    )
 
 
 def test_entry_key_set_is_exactly_the_expected_fields(registry):

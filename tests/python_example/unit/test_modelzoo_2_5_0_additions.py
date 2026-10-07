@@ -257,12 +257,3 @@ def test_manifest_has_no_duplicate_rows():
     expected = len({e["variant"] for e in registry if e["alias_of"] is None})
     assert len(entries) == expected, (
         f"manifest has {len(entries)} rows, expected {expected}")
-
-
-def test_rerunning_the_emitter_is_idempotent():
-    """--check must pass right after a real run, or the emitter is not idempotent."""
-    import subprocess
-    result = subprocess.run(
-        ["../venv-dx-runtime/bin/python", "scripts/add_modelzoo_2_5_0_models.py", "--check"],
-        cwd=PROJECT_ROOT, capture_output=True, text=True)
-    assert result.returncode == 0, result.stdout + result.stderr

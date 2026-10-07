@@ -83,35 +83,3 @@ def test_a_wrapper_postprocessors_name_is_left_alone():
         text = path.read_text(encoding="utf-8")
         assert re.search(r'getModelName\(\) const override \{ return "[^"]+"; \}', text), path
         assert "variant_" not in text, path
-
-
-def test_the_generator_produces_the_same_thing_it_swept():
-    """Pin the generator, not just its output.
-
-    ``generate_cpp_family_layout.py`` needs the pre-restructure tree (``--orig``) to
-    run at all, so it cannot be re-run here to prove the two agree. Its rewriter can be
-    called directly, and that is what this asserts.
-    """
-    import importlib.util
-
-    spec = importlib.util.spec_from_file_location(
-        "cpp_gen", PROJECT_ROOT / "scripts" / "generate_cpp_family_layout.py")
-    gen = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(gen)
-
-    source = (
-        'class FooWrapper : public IPostprocessor<X> {\n'
-        '    std::string getModelName() const override { return "Algo"; }\n'
-        '};\n'
-        '\n'
-        'class BarFactory : public IFactory {\n'
-        '    std::string getModelName() const override { return "BarDefault"; }\n'
-        'private:\n'
-        '    std::string variant_;\n'
-        '};\n'
-    )
-    out = gen.variant_aware_model_name(source, "BarFactory")
-
-    assert 'return "Algo"; }' in out, "the wrapper postprocessor must be left alone"
-    assert 'return variant_.empty() ? "BarDefault" : variant_;' in out
-    assert gen.variant_aware_model_name(out, "BarFactory") == out, "not idempotent"

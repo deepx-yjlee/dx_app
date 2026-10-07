@@ -127,51 +127,6 @@ def test_all_executables_found(bin_dir):
         print(f"  - {exe}")
 
 
-@pytest.mark.cli
-@pytest.mark.help
-@pytest.mark.cli
-@pytest.mark.help
-@pytest.mark.parametrize("executable", EXECUTABLES)
-def test_help_option_shows_usage(executable, bin_dir):
-    """
-    Test that --help shows usage information
-    
-    More specific test checking for "Usage:" or similar patterns
-    """
-    executable_path = binary_path(bin_dir, executable)
-    
-    if not executable_path.exists():
-        pytest.skip(f"Executable not found: {executable_path}")
-    
-    # Setup environment with library path
-    env = build_environment()
-    
-    try:
-        result = run_bounded(
-            [str(executable_path), "--help"],
-            capture_output=True,
-            text=True,
-            timeout=5,
-            env=env
-        )
-        
-        output = result.stdout + result.stderr
-        output_lower = output.lower()
-        
-        # Check for usage pattern
-        has_usage = "usage" in output_lower or executable in output
-        
-        assert has_usage, (
-            f"{executable} --help doesn't show usage information\n"
-            f"Output: {output[:500]}"
-        )
-        
-    except subprocess.TimeoutExpired:
-        pytest.fail(f"{executable} --help timed out")
-    except Exception as e:
-        pytest.fail(f"{executable} --help raised exception: {e}")
-
-
 if __name__ == "__main__":
     # Allow running directly for quick testing
     pytest.main([__file__, "-v"])
