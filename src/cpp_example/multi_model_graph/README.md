@@ -91,9 +91,9 @@ Shipped samples, next to the CLI sources in `src/cpp_example/multi_model_graph/`
 | `cascade_od_attr.json` | detector → per-person crop → attributes | `yolov8-n_640x640` → `deepmar_resnet50_224x224` |
 | `cascade_obb_cls.json` | oriented detector → un-rotated crop → classifier | `yolo26-l-obb_1024x1024` → `resnet50_224x224` |
 | `handoff_denoise_od.json` | denoise, then detect on the denoised image (image hand-off on a plain edge) | `dncnn-color_512x512` → `yolov5-n_640x640` |
-| `handoff_sr_od_cls.json` | super-resolve ×2, then detect on the large image → per-person crop → classifier | `realesrgan-x2_192x192` → `yolov8-n_640x640` → `resnet50_224x224` |
+| `handoff_sr_od_cls.json` | super-resolve ×2, then detect on the large image → per-person crop → classifier. Not run on DX-M1: the three models exceed NPU weight memory | `realesrgan-x2_192x192` → `yolov8-n_640x640` → `resnet50_224x224` |
 | `multistream_od_two_sources.json` | two sources, each its own stream, through one shared tracked detector and one reid | `yolov8-n_640x640` → `casvit-t_224x224` |
-| `chain_sr_od_pose.json` | super-resolve ×2, then detect on the large image → per-person crop → top-down pose | `realesrgan-x2_192x192` → `yolov8-n_640x640` → `vitpose-s_256x192` |
+| `chain_sr_od_pose.json` | super-resolve ×2, then detect on the large image → per-person crop → top-down pose. Not run on DX-M1: the three models exceed NPU weight memory | `realesrgan-x2_192x192` → `yolov8-n_640x640` → `vitpose-s_256x192` |
 | `chain_zerodce_od_pose_emb.json` | low-light enhancement, then detect on the enhanced image → per-person crop → top-down pose, and an embedding per person | `zerodce_400x600` → `yolov8-n_640x640` → `vitpose-s_256x192` + `casvit-t_224x224` |
 | `hand_cascade.json` | palm detector → per-palm crop → 21 hand landmarks | `mediapipe-hand-detector_192x192` → `mediapipe-hands-lite_224x224` |
 | `dms_headpose.json` | face detector → head pose (pitch, yaw, roll) on a cpu node | `scrfd-500m_640x640` → `headpose` |

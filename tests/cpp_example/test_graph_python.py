@@ -8,7 +8,8 @@ import sys
 import pytest
 
 from conftest import PROJECT_ROOT, resolve_bin_dir
-from test_graph_cli import (ALIAS_NOTES, GRAPHS, GRAPH_DIR, MODEL_DIR, MULTISTREAM, SAMPLE_GRAPHS,
+from test_graph_cli import (ALIAS_NOTES, GRAPHS, GRAPH_DIR, MODEL_DIR, MULTISTREAM,
+                            RUNNABLE_SAMPLE_GRAPHS, SAMPLE_GRAPHS,
                             TWO_SR_GRAPH, V9_MODELS, _registry, missing_artifacts, one_node_graph, read_in_turn,
                             require_an_older_runtime, run, shifted_sample_frames, v9_model_dir,
                             write_moving_video, write_two_stream_videos)
@@ -275,7 +276,7 @@ def test_bad_options_are_rejected_before_building(kwargs):
 
 
 @pytest.mark.graph_e2e
-@pytest.mark.parametrize("graph", SAMPLE_GRAPHS)
+@pytest.mark.parametrize("graph", RUNNABLE_SAMPLE_GRAPHS)
 @pytest.mark.parametrize("executor", ["sync", "async"])
 def test_run_matches_cli(graph, executor, cli_single_image_report):
     require_artifacts(graph)
