@@ -65,7 +65,7 @@ def _addoption_once(parser, *names, **attrs) -> None:
 def add_loop_option(parser, default: str) -> None:
     """Register ``--loop``; tolerate a second conftest having added it already.
 
-    The two suites use different defaults (Python: 1, C++: 50), so the default
+    The two suites use different defaults (Python: 1, C++ image: 20), so the default
     is a parameter rather than a constant.
     """
     _addoption_once(

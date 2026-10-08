@@ -32,14 +32,14 @@ def _option_names(parser: Parser) -> list:
 
 def test_registering_the_shared_options_twice_keeps_one_of_each():
     parser = Parser()
-    for default in ("50", "1"):          # C++ conftest, then the Python one
+    for default in ("20", "1"):          # C++ image conftest, then the Python one
         add_loop_option(parser, default=default)
         add_stream_options(parser)
     names = _option_names(parser)
     for option in SHARED:
         assert names.count(option) == 1, (option, names)
     loop = next(o for o in parser._anonymous.options if "--loop" in o.names())
-    assert loop.default == "50", "the first registration must win"
+    assert loop.default == "20", "the first registration must win"
 
 
 def test_an_option_error_other_than_a_duplicate_still_raises():

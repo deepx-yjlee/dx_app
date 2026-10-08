@@ -85,7 +85,7 @@ and re-exported by both `conftest.py` files:
 
 | Option | Default | Consumed by |
 |--------|---------|-------------|
-| `--loop N` | 1 (Python) / 50 (C++) | `loop_count` fixture |
+| `--loop N` | 1 (Python) / 20 (C++ image) | `loop_count` fixture |
 | `--camera-index N` | unset → test skips | `e2e_camera` tests |
 | `--rtsp-url URL` | unset → test skips | `e2e_rtsp` tests |
 | `--stream-duration N` | 10 | camera / RTSP tests |

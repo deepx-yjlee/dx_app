@@ -49,6 +49,8 @@ LIB_DIR = PROJECT_ROOT / "lib"
 # Test data paths
 TEST_IMAGE = SAMPLE_DIR / "img" / "sample_kitchen.jpg"
 TEST_VIDEO = ASSETS_DIR / "videos" / "dance-group.mov"
+# One pass over the clip. Image E2E uses the --loop fixture (default 20).
+STREAM_LOOP_COUNT = 1
 
 # Multi-model executables expanded with sync/async suffix for E2E test use.
 # The base map lives in test_helpers.constants.MULTI_MODEL_EXECUTABLES.
@@ -357,13 +359,14 @@ def _build_video_cmd(executable_path, executable, model_path):
         cmd = [str(executable_path)]
         for (flag, _fname), mpath in zip(flag_model_pairs, model_path):
             cmd += [flag, str(mpath)]
-        cmd += ["-v", str(TEST_VIDEO), "--no-display"]
+        cmd += ["-v", str(TEST_VIDEO), "--no-display", "-l", str(STREAM_LOOP_COUNT)]
     else:
         cmd = [
             str(executable_path),
             "-m", str(model_path),
             "-v", str(TEST_VIDEO),
             "--no-display",
+            "-l", str(STREAM_LOOP_COUNT),
         ]
     return cmd
 
@@ -539,7 +542,8 @@ def test_super_resolution_stream_e2e(executable, model_path, bin_dir, sr_stream_
         pytest.skip(f"Executable not found: {executable_path}")
     if model_path is None:
         pytest.skip(f"Model .dxnn not found for {executable}")
-    cmd = [str(executable_path), "-m", str(model_path), "-v", str(sr_stream_clip), "--no-display"]
+    cmd = [str(executable_path), "-m", str(model_path), "-v", str(sr_stream_clip),
+           "--no-display", "-l", str(STREAM_LOOP_COUNT)]
     result = run_bounded(cmd, capture_output=True, text=True, timeout=300,
                          env=setup_environment(), cwd=PROJECT_ROOT)
     output = result.stdout + result.stderr

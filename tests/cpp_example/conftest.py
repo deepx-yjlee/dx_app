@@ -45,8 +45,9 @@ apply_headless_display(os.environ)
 
 logger = logging.getLogger(__name__)
 
-#: Default inference iterations for this suite (the Python suite uses 1).
-DEFAULT_LOOP_COUNT = 50
+#: Default inference iterations for C++ image E2E (the Python suite uses 1).
+#: Stream E2E does not use this; it passes ``-l 1``.
+DEFAULT_LOOP_COUNT = 20
 
 
 def resolve_bin_dir() -> Path:

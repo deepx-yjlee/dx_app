@@ -678,7 +678,7 @@ usage() {
     echo "  --rtsp            Run RTSP input inference tests (requires --rtsp-url)"
     echo "  --rtsp-url <URL>  RTSP stream URL (e.g., rtsp://192.168.30.100:8554/stream1)"
     echo "  --stream-duration <N>  Seconds to run each camera/RTSP test (default: 10)"
-    echo "  --loop <N>        Override loop count for E2E image tests (default: C++ 50, Python 1)"
+    echo "  --loop <N>        Override loop count for E2E image tests (default: C++ 20, Python 1)"
     echo "  --quick           Same as --cli"
     echo "  -h, --help        Show this help message"
     echo ""

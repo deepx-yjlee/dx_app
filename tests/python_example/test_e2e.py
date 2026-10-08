@@ -337,9 +337,9 @@ def test_stream_inference_e2e(script: Path, model: Optional[Path]):
     if "_async" in script.stem and display:
         pytest.skip("Async variants do not support display mode")
 
-    # No --loop for video: process the clip exactly once (mirrors the C++
-    # video test, which passes no -l). A single pass already exercises the
-    # full stream path, and looping heavy models here risks the 2000s timeout.
+    # No --loop for video: process the clip exactly once (the C++ video test
+    # passes -l 1). A single pass already exercises the full stream path, and
+    # looping heavy models here risks the 2000s timeout.
     cmd = [
         example_python(), str(script),
         "--model", str(model),

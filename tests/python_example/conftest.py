@@ -56,7 +56,7 @@ def pytest_report_header(config):
 _rng = np.random.default_rng(42)
 logger = logging.getLogger(__name__)
 
-#: Default inference iterations for this suite (the C++ suite uses 50).
+#: Default inference iterations for this suite (the C++ image suite uses 20).
 DEFAULT_LOOP_COUNT = 1
 
 
