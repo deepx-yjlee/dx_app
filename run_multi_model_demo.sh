@@ -36,7 +36,7 @@ SCENARIO_GRAPH=(
 )
 SCENARIO_IMAGE=(
     "$DX_APP_PATH/sample/img/sample_hand.jpg"
-    "$DX_APP_PATH/sample/img/sample_people.jpg"
+    "$DX_APP_PATH/sample/img/sample_baggage_cart_airport.jpg"
     "$DX_APP_PATH/sample/img/sample_face.jpg"
 )
 # In-cabin driver frame. Not shipped with the repo; used for DMS when present.
